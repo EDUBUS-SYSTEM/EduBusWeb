@@ -1,0 +1,128 @@
+// User types
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: 'admin' | 'user' | 'moderator';
+  avatar?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Auth types
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface RegisterCredentials {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface AuthResponse {
+  user: User;
+  token: string;
+  refreshToken: string;
+}
+
+// API Response types
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+  errors?: string[];
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+// Common types
+export interface BaseEntity {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Error types
+export interface ApiError {
+  message: string;
+  status: number;
+  errors?: Record<string, string[]>;
+}
+
+// Form types
+export interface FormField {
+  name: string;
+  label: string;
+  type: 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select';
+  required?: boolean;
+  placeholder?: string;
+  options?: { value: string; label: string }[];
+  validation?: {
+    min?: number;
+    max?: number;
+    pattern?: string;
+  };
+}
+
+// UI Component types
+export interface ButtonProps {
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+  size?: 'sm' | 'md' | 'lg';
+  loading?: boolean;
+  disabled?: boolean;
+  children: React.ReactNode;
+  onClick?: () => void;
+  type?: 'button' | 'submit' | 'reset';
+  className?: string;
+}
+
+export interface CardProps {
+  title?: string;
+  children: React.ReactNode;
+  className?: string;
+  shadow?: 'sm' | 'md' | 'lg';
+  padding?: 'sm' | 'md' | 'lg';
+}
+
+export interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title?: string;
+  children: React.ReactNode;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+}
+
+// Table types
+export interface TableColumn<T> {
+  key: keyof T;
+  header: string;
+  render?: (value: unknown, row: T) => React.ReactNode;
+  sortable?: boolean;
+  width?: string;
+}
+
+export interface TableProps<T> {
+  data: T[];
+  columns: TableColumn<T>[];
+  loading?: boolean;
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+  };
+  onRowClick?: (row: T) => void;
+  className?: string;
+}
+
+
