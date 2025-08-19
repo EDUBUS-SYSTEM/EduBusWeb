@@ -63,27 +63,22 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-yellow-100 to-white">
-      <div className="max-w-md w-full">
-        {/* Login Card with Logo Inside */}
-        <div className="bg-white rounded-3xl shadow-soft-lg border border-orange-100 p-8">
-          {/* Logo Section Inside Card */}
-          <div className="text-center mb-8">
-            <div className="flex justify-center mb-4">
-              <div className="relative">
-                <Image
-                  src="/bus.png"
-                  alt="EduBus Logo"
-                  width={120}
-                  height={120}
-                  className="mx-auto"
-                />
-              </div>
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Hello, Sign in !
-            </h2>
-          </div>
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[#FEFCE8]">
+      <div className="relative max-w-md w-full">
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2">
+          <Image
+            src="/edubus_logo.png"
+            alt="EduBus Logo"
+            width={260}
+            height={180}
+            className="mx-auto drop-shadow-lg"
+          />
+        </div>
+        {/* Login Card */}
+        <div className="bg-gradient-to-b from-[#EDE091] to-[#F2ECBD] rounded-3xl shadow-soft-lg p-8 pt-40">
+          <h2 className="text-4xl font-bold text-[#000000] mb-6 text-center">
+            Hello, Sign in !
+          </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {errors.general && (
@@ -99,29 +94,29 @@ export default function AdminLoginPage() {
               </label>
               <div className="relative">
                 <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-                  <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-[#D08700]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
-                <input
-                  id="email"
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="Enter your email"
-                  style={{ backgroundColor: 'white' }}
-                  className={`
-                    w-full pl-12 pr-4 py-4 rounded-3xl border bg-white
-                    transition-all duration-300 ease-in-out
-                    focus:outline-none focus:ring-2 focus:ring-orange-200
-                    placeholder:text-gray-400
-                    ${errors.email 
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-200 text-red-900' 
-                      : 'border-orange-200 focus:border-orange-400 text-gray-900 hover:border-orange-300'
-                    }
-                  `}
-                />
+                                 <input
+                   id="email"
+                   type="email"
+                   name="email"
+                   value={formData.email}
+                   onChange={handleChange}
+                   placeholder="Enter your email"
+                   style={{ backgroundColor: 'white' }}
+                   className={`
+                     w-full pl-12 pr-4 py-3 rounded-3xl border-2 bg-white
+                     transition-all duration-300 ease-in-out
+                     focus:outline-none focus:ring-2 focus:ring-[#FDC700]
+                     placeholder:text-[#99A1AF]
+                     ${errors.email 
+                       ? 'border-red-300 focus:border-red-500 focus:ring-red-200 text-red-900' 
+                       : 'border-[#FDC700] focus:border-[#FDC700] text-[#000000] hover:border-[#FDC700]'
+                     }
+                   `}
+                 />
               </div>
               {errors.email && (
                 <p className="text-red-600 text-sm ml-2">{errors.email}</p>
@@ -135,29 +130,29 @@ export default function AdminLoginPage() {
               </label>
               <div className="relative">
                 <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-                  <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-[#D08700]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                 </div>
-                <input
-                  id="password"
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Enter your password"
-                  style={{ backgroundColor: 'white' }}
-                  className={`
-                    w-full pl-12 pr-4 py-4 rounded-3xl border bg-white
-                    transition-all duration-300 ease-in-out
-                    focus:outline-none focus:ring-2 focus:ring-orange-200
-                    placeholder:text-gray-400
-                    ${errors.password 
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-200 text-red-900' 
-                      : 'border-orange-200 focus:border-orange-400 text-gray-900 hover:border-orange-300'
-                    }
-                  `}
-                />
+                                 <input
+                   id="password"
+                   type="password"
+                   name="password"
+                   value={formData.password}
+                   onChange={handleChange}
+                   placeholder="Enter your password"
+                   style={{ backgroundColor: 'white' }}
+                   className={`
+                     w-full pl-12 pr-4 py-3 rounded-3xl border-2 bg-white
+                     transition-all duration-300 ease-in-out
+                     focus:outline-none focus:ring-2 focus:ring-[#FDC700]
+                     placeholder:text-[#99A1AF]
+                     ${errors.password 
+                       ? 'border-red-300 focus:border-red-500 focus:ring-red-200 text-red-900' 
+                       : 'border-[#FDC700] focus:border-[#FDC700] text-[#000000] hover:border-[#FDC700]'
+                     }
+                   `}
+                 />
               </div>
               {errors.password && (
                 <p className="text-red-600 text-sm ml-2">{errors.password}</p>
@@ -165,21 +160,20 @@ export default function AdminLoginPage() {
             </div>
 
             {/* Sign In Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="
-                w-full py-4 px-6 rounded-3xl
-                bg-gradient-to-r from-yellow-400 to-orange-500
-                hover:from-yellow-500 hover:to-orange-600
-                text-white font-semibold text-lg
-                transition-all duration-300 ease-in-out
-                transform hover:scale-105
-                focus:outline-none focus:ring-4 focus:ring-orange-300
-                disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
-                shadow-lg hover:shadow-xl
-              "
-            >
+                         <button
+               type="submit"
+               disabled={loading}
+               className="
+                 w-full py-3 px-6 rounded-3xl
+                 bg-[#FDC700]
+                 text-white font-semibold text-xl
+                 transition-all duration-300 ease-in-out
+                 transform hover:scale-105 hover:brightness-95
+                 focus:outline-none focus:ring-4 focus:ring-[#FDC700]
+                 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
+                 shadow-lg hover:shadow-xl
+               "
+             >
               {loading ? (
                 <div className="flex items-center justify-center">
                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
