@@ -1,16 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Roboto_Slab } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/hooks/useAuth";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const robotoSlab = Roboto_Slab({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: "--font-roboto-slab",
 });
 
 export const metadata: Metadata = {
@@ -26,7 +21,7 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${robotoSlab.variable} font-roboto-slab antialiased`}
       >
         <AuthProvider>
           {children}
