@@ -145,7 +145,7 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
       {/* Driver's License Information Section */}
       <div className="bg-[#F9F7E3] rounded-2xl p-6 shadow-sm border border-gray-100">
         <h3 className="text-lg font-semibold text-gray-800 mb-6">
-          Driver's License Information
+          Driver&apos;s License Information
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

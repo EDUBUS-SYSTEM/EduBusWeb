@@ -190,7 +190,7 @@ export default function AdminLoginPage() {
             {/* Create Account Link */}
             <div className="text-center mt-6">
               <p className="text-gray-600 text-sm">
-                Don't have an account?{' '}
+                Don&apos;t have an account?{' '}
                 <button
                   type="button"
                   onClick={() => router.push('/create-account')}

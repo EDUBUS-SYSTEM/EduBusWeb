@@ -3,7 +3,7 @@
 import React, { forwardRef } from 'react';
 import { Calendar } from 'lucide-react';
 
-interface DateInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
+interface DateInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'onChange'> {
   label?: string;
   error?: string;
   helperText?: string;
