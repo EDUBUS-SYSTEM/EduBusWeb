@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, createContext, useContext } from 'react';
-import { User, LoginCredentials, RegisterCredentials, AuthResponse } from '@/types';
+import { User, LoginCredentials, RegisterCredentials, AuthResponse, ApiResponse } from '@/types';
 import { apiService } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: User | null;
@@ -18,6 +19,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   // Kiểm tra token khi component mount
   useEffect(() => {
@@ -25,11 +27,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const response = await apiService.get<AuthResponse>('/auth/me');
-          setUser(response.user);
+          //Place holder to fetch user info
         } catch {
-          localStorage.removeItem('token');
+          logout();
         }
+      } else {
+        logout();
       }
       setLoading(false);
     };
@@ -39,10 +42,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (credentials: LoginCredentials) => {
     try {
-      const response = await apiService.post<AuthResponse>('/auth/login', credentials);
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('refreshToken', response.refreshToken);
-      setUser(response.user);
+      const response = await apiService.post<ApiResponse<AuthResponse>>('/auth/login', credentials);
+      if (response?.data?.role.toLocaleLowerCase() != 'admin'){
+        throw Error("You dont have permissions to access the system");
+      }
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('refreshToken', response.data.refreshToken);
+      setUser({
+        id: "",
+        email: "",
+        createdAt: "",
+        updatedAt: "",
+        name: response.data.fullName,
+        role: response.data.role.toLowerCase() as 'admin' | 'user' | 'moderator',
+      });
     } catch (error) {
       throw error;
     }
@@ -50,10 +63,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (credentials: RegisterCredentials) => {
     try {
-      const response = await apiService.post<AuthResponse>('/auth/register', credentials);
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('refreshToken', response.refreshToken);
-      setUser(response.user);
+      const response = await apiService.post<ApiResponse<AuthResponse>>('/auth/register', credentials);
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('refreshToken', response.data.refreshToken);
+      setUser({
+        id: "",
+        email: "",
+        createdAt: "",
+        updatedAt: "",
+        name: response.data.fullName,
+        role: response.data.role.toLowerCase() as 'admin' | 'user' | 'moderator',
+      });
     } catch (error) {
       throw error;
     }
@@ -63,6 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     setUser(null);
+    router.replace('/');
   };
 
   const value = {

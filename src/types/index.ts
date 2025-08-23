@@ -23,7 +23,8 @@ export interface RegisterCredentials {
 }
 
 export interface AuthResponse {
-  user: User;
+  fullName: string,
+  role: 'admin' | 'user' | 'moderator';
   token: string;
   refreshToken: string;
 }

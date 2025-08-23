@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from "next/navigation";
 import { useAuth } from '@/hooks/useAuth';
 import Image from 'next/image';
-import { AxiosError } from 'axios';
+import axios, { AxiosError } from 'axios';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -15,6 +15,13 @@ export default function AdminLoginPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if(token){
+      router.push("/admin/dashboard");
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -51,12 +58,24 @@ export default function AdminLoginPage() {
     setLoading(true);
     try {
       await login(formData);
-      router.push('/dashboard');
+      router.push('/admin/dashboard');
     } catch (error: unknown) {
-      const axiosError = error as AxiosError<{ message: string }>;
-      setErrors({
-        general: axiosError.response?.data?.message || 'Login failed. Please try again.'
-      });
+      let errMsg = "Something went wrong.";
+      if (axios.isAxiosError(error)) {
+        // This will catch 401, 403, etc.
+        const status = error.response?.status;
+        console.log("Hello", status);
+
+        if (status === 401) {
+          errMsg = "Wrong username or password"; 
+        } else {
+          errMsg = error.response?.data?.message || "Login failed. Please try again.";
+        }
+      } else if (error instanceof Error) {
+        // Non-Axios JS errors (like your manual `throw Error`)
+        errMsg = error.message;
+      }
+      setErrors({ general: errMsg });
     } finally {
       setLoading(false);
     }
