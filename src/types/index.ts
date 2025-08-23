@@ -129,33 +129,38 @@ export interface TableProps<T> {
 export interface DriverAccountData {
   email: string;
   password: string;
-  idNumber?: string;
   driverPhoto?: File[];
-  fullName: string;
+  firstName: string;
+  lastName: string;
   address: string;
   phoneNumber: string;
   gender: string;
+  healthCertificate?: File[];
   licenseNumber?: string;
-  licenseClass?: string;
   dateOfIssue?: string;
   issuedBy?: string;
-  yearsOfExperience?: string;
-  healthCertificate?: File[];
   licenseImages?: File[];
+}
+
+export interface StudentInfo {
+  id: string;
+  fullName: string;
+  grade: string;
+  gender: string;
+  dateOfBirth: string;
+  images?: string[];
+  parentId?: string | null;
 }
 
 export interface ParentAccountData {
   email: string;
   password: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   phoneNumber: string;
   gender: string;
-  studentFullName: string;
-  studentIdNumber: string;
-  studentGrade: string;
-  studentGender: string;
-  studentDateOfBirth: string;
-  studentImages?: File[];
+  studentIds: string[];
+  students: StudentInfo[];
 }
 
 export interface AccountFormErrors {

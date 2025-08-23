@@ -1,0 +1,78 @@
+{
+  "students": [
+    {
+      "id": "STU001",
+      "fullName": "Nguyễn Văn An",
+      "grade": "grade5",
+      "gender": "male",
+      "dateOfBirth": "2018-03-15",
+      "images": ["student1_photo1.jpg", "student1_photo2.jpg"],
+      "parentId": null
+    },
+    {
+      "id": "STU002", 
+      "fullName": "Trần Thị Bình",
+      "grade": "grade3",
+      "gender": "female",
+      "dateOfBirth": "2020-07-22",
+      "images": ["student2_photo1.jpg"],
+      "parentId": "PAR001"
+    },
+    {
+      "id": "STU003",
+      "fullName": "Lê Văn Cường",
+      "grade": "grade7",
+      "gender": "male", 
+      "dateOfBirth": "2016-11-08",
+      "images": ["student3_photo1.jpg", "student3_photo2.jpg"],
+      "parentId": null
+    },
+    {
+      "id": "STU004",
+      "fullName": "Phạm Thị Dung",
+      "grade": "grade4",
+      "gender": "female",
+      "dateOfBirth": "2019-05-12",
+      "images": ["student4_photo1.jpg"],
+      "parentId": null
+    },
+    {
+      "id": "STU005",
+      "fullName": "Hoàng Văn Em",
+      "grade": "grade6",
+      "gender": "male",
+      "dateOfBirth": "2017-09-30",
+      "images": ["student5_photo1.jpg"],
+      "parentId": "PAR002"
+    },
+    {
+      "id": "STU006",
+      "fullName": "Vũ Thị Phương",
+      "grade": "grade2",
+      "gender": "female",
+      "dateOfBirth": "2021-01-25",
+      "images": ["student6_photo1.jpg"],
+      "parentId": "PAR002"
+    }
+  ],
+  "parents": [
+    {
+      "id": "PAR001",
+      "email": "parent1@example.com",
+      "firstName": "Nguyễn",
+      "lastName": "Văn A",
+      "phoneNumber": "0901234567",
+      "gender": "male",
+      "studentIds": ["STU002"]
+    },
+    {
+      "id": "PAR002", 
+      "email": "parent2@example.com",
+      "firstName": "Hoàng",
+      "lastName": "Thị B",
+      "phoneNumber": "0909876543",
+      "gender": "female",
+      "studentIds": ["STU005", "STU006"]
+    }
+  ]
+}

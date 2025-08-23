@@ -1,7 +1,6 @@
 'use client';
 
 import React, { forwardRef } from 'react';
-import { Calendar } from 'lucide-react';
 
 interface DateInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'onChange'> {
   label?: string;
@@ -33,7 +32,7 @@ const DateInput = forwardRef<HTMLInputElement, DateInputProps>(
     const classes = `
       ${baseClasses}
       ${stateClasses}
-      pr-12
+      pr-6
       ${className}
     `;
 
@@ -58,9 +57,6 @@ const DateInput = forwardRef<HTMLInputElement, DateInputProps>(
             onChange={handleChange}
             {...props}
           />
-          <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-            <Calendar className="w-5 h-5" />
-          </div>
         </div>
         {error && (
           <p className="mt-1 text-sm text-red-600 flex items-center">

@@ -20,18 +20,16 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
   const [formData, setFormData] = useState<DriverAccountData>({
     email: 'driver_1@gmail.com',
     password: '12345678@',
-    idNumber: '',
     driverPhoto: [],
-    fullName: '',
+    firstName: '',
+    lastName: '',
     address: '',
     phoneNumber: '',
     gender: '',
+    healthCertificate: [],
     licenseNumber: '',
-    licenseClass: '',
     dateOfIssue: '',
     issuedBy: '',
-    yearsOfExperience: '',
-    healthCertificate: [],
     licenseImages: [],
   });
 
@@ -87,13 +85,7 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
             required
           />
           
-          <Input
-            label="ID Number"
-            placeholder="Enter ID Number"
-            value={formData.idNumber}
-            onChange={(e) => handleInputChange('idNumber', e.target.value)}
-            error={errors.idNumber}
-          />
+
           
           <FileUpload
             label="Driver Photo"
@@ -104,11 +96,20 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
           />
           
           <Input
-            label="FullName*"
-            placeholder="Enter FullName"
-            value={formData.fullName}
-            onChange={(e) => handleInputChange('fullName', e.target.value)}
-            error={errors.fullName}
+            label="First Name*"
+            placeholder="Enter First Name"
+            value={formData.firstName}
+            onChange={(e) => handleInputChange('firstName', e.target.value)}
+            error={errors.firstName}
+            required
+          />
+          
+          <Input
+            label="Last Name*"
+            placeholder="Enter Last Name"
+            value={formData.lastName}
+            onChange={(e) => handleInputChange('lastName', e.target.value)}
+            error={errors.lastName}
             required
           />
           
@@ -139,6 +140,14 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
             error={errors.gender}
             required
           />
+          
+          <FileUpload
+            label="Health Certificate"
+            accept="image/*"
+            selectedFiles={formData.healthCertificate}
+            onFileSelect={(files) => handleFileChange('healthCertificate', files)}
+            error={errors.healthCertificate}
+          />
         </div>
       </div>
 
@@ -158,14 +167,6 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
           />
           
           <Input
-            label="License Class"
-            placeholder="Enter license class"
-            value={formData.licenseClass}
-            onChange={(e) => handleInputChange('licenseClass', e.target.value)}
-            error={errors.licenseClass}
-          />
-          
-          <Input
             label="Date of Issue"
             placeholder="Enter date of issue"
             value={formData.dateOfIssue}
@@ -179,22 +180,6 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
             value={formData.issuedBy}
             onChange={(e) => handleInputChange('issuedBy', e.target.value)}
             error={errors.issuedBy}
-          />
-          
-          <Input
-            label="Years of Driving Experience"
-            placeholder="Enter number of year"
-            value={formData.yearsOfExperience}
-            onChange={(e) => handleInputChange('yearsOfExperience', e.target.value)}
-            error={errors.yearsOfExperience}
-          />
-          
-          <FileUpload
-            label="Health Certificate"
-            accept="image/*"
-            selectedFiles={formData.healthCertificate}
-            onFileSelect={(files) => handleFileChange('healthCertificate', files)}
-            error={errors.healthCertificate}
           />
           
           <FileUpload

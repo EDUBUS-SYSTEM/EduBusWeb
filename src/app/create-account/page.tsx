@@ -37,7 +37,8 @@ const CreateAccountPage: React.FC = () => {
       
       if (!data.email) newErrors.email = 'Email is required';
       if (!data.password) newErrors.password = 'Password is required';
-      if (!data.fullName) newErrors.fullName = 'Full name is required';
+      if (!data.firstName) newErrors.firstName = 'First name is required';
+      if (!data.lastName) newErrors.lastName = 'Last name is required';
       if (!data.address) newErrors.address = 'Address is required';
       if (!data.phoneNumber) newErrors.phoneNumber = 'Phone number is required';
       if (!data.gender) newErrors.gender = 'Gender is required';
@@ -74,12 +75,11 @@ const CreateAccountPage: React.FC = () => {
       
       if (!data.email) newErrors.email = 'Email is required';
       if (!data.password) newErrors.password = 'Password is required';
-      if (!data.fullName) newErrors.fullName = 'Full name is required';
+      if (!data.firstName) newErrors.firstName = 'First name is required';
+      if (!data.lastName) newErrors.lastName = 'Last name is required';
       if (!data.phoneNumber) newErrors.phoneNumber = 'Phone number is required';
       if (!data.gender) newErrors.gender = 'Gender is required';
-      if (!data.studentIdNumber) newErrors.studentIdNumber = 'Student ID number is required';
-      if (!data.studentGender) newErrors.studentGender = 'Student gender is required';
-      if (!data.studentDateOfBirth) newErrors.studentDateOfBirth = 'Student date of birth is required';
+      if (data.students.length === 0) newErrors.students = 'At least one student is required';
 
       if (Object.keys(newErrors).length > 0) {
         setErrors(newErrors);
@@ -120,7 +120,7 @@ const CreateAccountPage: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-800">
               Create User Account
             </h1>
-            <UploadButton onClick={handleUploadFiles} />
+            <UploadButton onFileSelect={handleUploadFiles} />
           </div>
 
           {/* Error Message */}
