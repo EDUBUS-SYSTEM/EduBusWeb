@@ -125,4 +125,41 @@ export interface TableProps<T> {
   className?: string;
 }
 
+// Account Creation types
+export interface DriverAccountData {
+  email: string;
+  password: string;
+  idNumber?: string;
+  driverPhoto?: File[];
+  fullName: string;
+  address: string;
+  phoneNumber: string;
+  gender: string;
+  licenseNumber?: string;
+  licenseClass?: string;
+  dateOfIssue?: string;
+  issuedBy?: string;
+  yearsOfExperience?: string;
+  healthCertificate?: File[];
+  licenseImages?: File[];
+}
+
+export interface ParentAccountData {
+  email: string;
+  password: string;
+  fullName: string;
+  phoneNumber: string;
+  gender: string;
+  studentFullName: string;
+  studentIdNumber: string;
+  studentGrade: string;
+  studentGender: string;
+  studentDateOfBirth: string;
+  studentImages?: File[];
+}
+
+export interface AccountFormErrors {
+  [key: string]: string;
+}
+
 

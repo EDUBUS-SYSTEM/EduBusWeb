@@ -9,8 +9,8 @@ const robotoSlab = Roboto_Slab({
 });
 
 export const metadata: Metadata = {
-  title: "EduBus Admin - Hệ thống quản lý",
-  description: "Hệ thống quản lý đưa đón học sinh cho quản trị viên",
+  title: "EduBus Admin - Management System",
+  description: "Student transportation management system for administrators",
 };
 
 export default function RootLayout({
@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
+    <html lang="en">
       <body
         className={`${robotoSlab.variable} font-roboto-slab antialiased`}
       >

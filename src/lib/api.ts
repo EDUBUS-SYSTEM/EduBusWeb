@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-// Cấu hình base URL cho API
+// Configure base URL for API
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
-// Tạo axios instance với cấu hình mặc định
+// Create axios instance with default configuration
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
@@ -12,7 +12,7 @@ export const apiClient = axios.create({
   },
 });
 
-// Request interceptor để thêm token vào header
+// Request interceptor to add token to header
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -26,12 +26,12 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor để xử lý lỗi
+// Response interceptor to handle errors
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Xử lý khi token hết hạn
+      // Handle when token expires
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
@@ -39,7 +39,7 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Các hàm helper cho API calls
+// Helper functions for API calls
 export const apiService = {
   // GET request
   get: async <T>(url: string, params?: Record<string, unknown>): Promise<T> => {
