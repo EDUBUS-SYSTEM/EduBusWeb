@@ -3,7 +3,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'user' | 'moderator';
+  role: "admin";
   avatar?: string;
   createdAt: string;
   updatedAt: string;
@@ -15,15 +15,9 @@ export interface LoginCredentials {
   password: string;
 }
 
-export interface RegisterCredentials {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-}
-
 export interface AuthResponse {
-  user: User;
+  fullName: string;
+  role: "admin" | "user" | "moderator";
   token: string;
   refreshToken: string;
 }
@@ -64,7 +58,7 @@ export interface ApiError {
 export interface FormField {
   name: string;
   label: string;
-  type: 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select';
+  type: "text" | "email" | "password" | "number" | "textarea" | "select";
   required?: boolean;
   placeholder?: string;
   options?: { value: string; label: string }[];
@@ -77,13 +71,13 @@ export interface FormField {
 
 // UI Component types
 export interface ButtonProps {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
+  size?: "sm" | "md" | "lg";
   loading?: boolean;
   disabled?: boolean;
   children: React.ReactNode;
   onClick?: () => void;
-  type?: 'button' | 'submit' | 'reset';
+  type?: "button" | "submit" | "reset";
   className?: string;
 }
 
@@ -91,8 +85,8 @@ export interface CardProps {
   title?: string;
   children: React.ReactNode;
   className?: string;
-  shadow?: 'sm' | 'md' | 'lg';
-  padding?: 'sm' | 'md' | 'lg';
+  shadow?: "sm" | "md" | "lg";
+  padding?: "sm" | "md" | "lg";
 }
 
 export interface ModalProps {
@@ -100,7 +94,7 @@ export interface ModalProps {
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: "sm" | "md" | "lg" | "xl";
 }
 
 // Table types
@@ -124,5 +118,3 @@ export interface TableProps<T> {
   onRowClick?: (row: T) => void;
   className?: string;
 }
-
-

@@ -1,21 +1,21 @@
-import axios from 'axios';
+import axios from "axios";
 
-// Cấu hình base URL cho API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+// Configure base URL for API
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
-// Tạo axios instance với cấu hình mặc định
+// Create axios instance with default configuration
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
-// Request interceptor để thêm token vào header
+// Request interceptor to add token to header
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -26,20 +26,21 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor để xử lý lỗi
+// Response interceptor to handle errors
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Xử lý khi token hết hạn
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+    const url = error.config?.url || "";
+    if (error.response?.status === 401 && !url.includes("/auth/login")) {
+      // Handle when token expires
+      localStorage.removeItem("token");
+      window.location.href = "/";
     }
     return Promise.reject(error);
   }
 );
 
-// Các hàm helper cho API calls
+// Helper functions for API calls
 export const apiService = {
   // GET request
   get: async <T>(url: string, params?: Record<string, unknown>): Promise<T> => {
@@ -71,5 +72,3 @@ export const apiService = {
     return response.data;
   },
 };
-
-
