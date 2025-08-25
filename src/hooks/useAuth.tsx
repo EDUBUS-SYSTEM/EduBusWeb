@@ -1,15 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useEffect, createContext, useContext } from 'react';
-import { User, LoginCredentials, RegisterCredentials, AuthResponse, ApiResponse } from '@/types';
-import { apiService } from '@/lib/api';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, createContext, useContext } from "react";
+import { User, LoginCredentials, AuthResponse, ApiResponse } from "@/types";
+import { apiService } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
-  register: (credentials: RegisterCredentials) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -24,7 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Kiểm tra token khi component mount
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (token) {
         try {
           //Place holder to fetch user info
@@ -42,37 +41,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (credentials: LoginCredentials) => {
     try {
-      const response = await apiService.post<ApiResponse<AuthResponse>>('/auth/login', credentials);
-      if (response?.data?.role.toLocaleLowerCase() != 'admin'){
+      const response = await apiService.post<ApiResponse<AuthResponse>>(
+        "/auth/login",
+        credentials
+      );
+      if (response?.data?.role.toLocaleLowerCase() != "admin") {
         throw Error("You dont have permissions to access the system");
       }
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('refreshToken', response.data.refreshToken);
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("refreshToken", response.data.refreshToken);
       setUser({
         id: "",
         email: "",
         createdAt: "",
         updatedAt: "",
         name: response.data.fullName,
-        role: response.data.role.toLowerCase() as 'admin' | 'user' | 'moderator',
-      });
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const register = async (credentials: RegisterCredentials) => {
-    try {
-      const response = await apiService.post<ApiResponse<AuthResponse>>('/auth/register', credentials);
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('refreshToken', response.data.refreshToken);
-      setUser({
-        id: "",
-        email: "",
-        createdAt: "",
-        updatedAt: "",
-        name: response.data.fullName,
-        role: response.data.role.toLowerCase() as 'admin' | 'user' | 'moderator',
+        role: response.data.role.toLowerCase() as "admin",
       });
     } catch (error) {
       throw error;
@@ -80,17 +64,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
+    localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
     setUser(null);
-    router.replace('/');
+    router.replace("/");
   };
 
   const value = {
     user,
     loading,
     login,
-    register,
     logout,
     isAuthenticated: !!user,
   };
@@ -101,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }
