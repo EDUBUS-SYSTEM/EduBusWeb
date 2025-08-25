@@ -118,3 +118,45 @@ export interface TableProps<T> {
   onRowClick?: (row: T) => void;
   className?: string;
 }
+
+// Account Creation types
+export interface DriverAccountData {
+  email: string;
+  password: string;
+  driverPhoto?: File[];
+  firstName: string;
+  lastName: string;
+  address: string;
+  phoneNumber: string;
+  gender: string;
+  healthCertificate?: File[];
+  licenseNumber?: string;
+  dateOfIssue?: string;
+  issuedBy?: string;
+  licenseImages?: File[];
+}
+
+export interface StudentInfo {
+  id: string;
+  fullName: string;
+  grade: string;
+  gender: string;
+  dateOfBirth: string;
+  images?: string[];
+  parentId?: string | null;
+}
+
+export interface ParentAccountData {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  gender: string;
+  studentIds: string[];
+  students: StudentInfo[];
+}
+
+export interface AccountFormErrors {
+  [key: string]: string;
+}

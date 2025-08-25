@@ -39,31 +39,31 @@ export default function Header() {
               href="/" 
               className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
             >
-              Trang chủ
+              Home
             </Link>
             <Link 
               href="/tracking" 
               className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
             >
-              Theo dõi xe buýt
+              Bus Tracking
             </Link>
             <Link 
               href="/services" 
               className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
             >
-              Dịch vụ
+              Services
             </Link>
             <Link 
               href="/about" 
               className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
             >
-              Giới thiệu
+              About
             </Link>
             <Link 
               href="/contact" 
               className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
             >
-              Liên hệ
+              Contact
             </Link>
           </nav>
 
@@ -88,26 +88,26 @@ export default function Header() {
                       href="/profile" 
                       className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
                     >
-                      Hồ sơ cá nhân
+                      Profile
                     </Link>
                     <Link 
                       href="/bookings" 
                       className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
                     >
-                      Lịch sử đặt xe
+                      Booking History
                     </Link>
                     <Link 
                       href="/settings" 
                       className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
                     >
-                      Cài đặt
+                      Settings
                     </Link>
                     <hr className="my-2" />
                     <button 
                       onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-colors duration-200"
                     >
-                      Đăng xuất
+                      Logout
                     </button>
                   </div>
                 </div>
@@ -118,13 +118,13 @@ export default function Header() {
                   href="/login" 
                   className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
                 >
-                  Đăng nhập
+                  Login
                 </Link>
                 <Link 
                   href="/register" 
                   className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-2xl font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-soft"
                 >
-                  Đăng ký
+                  Register
                 </Link>
               </>
             )}
@@ -156,35 +156,35 @@ export default function Header() {
                 className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Trang chủ
+                Home
               </Link>
               <Link 
                 href="/tracking" 
                 className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Theo dõi xe buýt
+                Bus Tracking
               </Link>
               <Link 
                 href="/services" 
                 className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Dịch vụ
+                Services
               </Link>
               <Link 
                 href="/about" 
                 className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Giới thiệu
+                About
               </Link>
               <Link 
                 href="/contact" 
                 className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Liên hệ
+                Contact
               </Link>
               
               {isAuthenticated ? (
@@ -195,14 +195,14 @@ export default function Header() {
                     className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Hồ sơ cá nhân
+                    Profile
                   </Link>
                   <Link 
                     href="/bookings" 
                     className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Lịch sử đặt xe
+                    Booking History
                   </Link>
                   <button 
                     onClick={() => {
@@ -211,7 +211,7 @@ export default function Header() {
                     }}
                     className="text-left text-red-600 hover:text-red-700 transition-colors duration-200 font-medium"
                   >
-                    Đăng xuất
+                    Logout
                   </button>
                 </>
               ) : (
@@ -222,14 +222,14 @@ export default function Header() {
                     className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Đăng nhập
+                    Login
                   </Link>
                   <Link 
                     href="/register" 
                     className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-2xl font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-200 text-center"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Đăng ký
+                    Register
                   </Link>
                 </>
               )}

@@ -6,13 +6,14 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint", 
+    "lint": "next lint",
     "format": "prettier --write .",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "autoprefixer": "^10.4.21",
     "axios": "^1.11.0",
+    "lucide-react": "^0.541.0",
     "next": "15.4.6",
     "react": "19.1.0",
     "react-dom": "19.1.0",

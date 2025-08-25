@@ -2,16 +2,15 @@
 
 import React, { forwardRef } from 'react';
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface DateInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'onChange'> {
   label?: string;
   error?: string;
   helperText?: string;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
+  onChange?: (value: string) => void;
 }
 
-const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, helperText, leftIcon, rightIcon, className = '', ...props }, ref) => {
+const DateInput = forwardRef<HTMLInputElement, DateInputProps>(
+  ({ label, error, helperText, onChange, className = '', ...props }, ref) => {
     const baseClasses = `
       w-full px-4 py-3 rounded-2xl border-2
       transition-all duration-300 ease-in-out
@@ -33,10 +32,15 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const classes = `
       ${baseClasses}
       ${stateClasses}
-      ${leftIcon ? 'pl-12' : ''}
-      ${rightIcon ? 'pr-12' : ''}
+      pr-6
       ${className}
     `;
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (onChange) {
+        onChange(e.target.value);
+      }
+    };
 
     return (
       <div className="w-full">
@@ -46,21 +50,13 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           </label>
         )}
         <div className="relative">
-          {leftIcon && (
-            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-              {leftIcon}
-            </div>
-          )}
           <input
             ref={ref}
+            type="date"
             className={classes}
+            onChange={handleChange}
             {...props}
           />
-          {rightIcon && (
-            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-              {rightIcon}
-            </div>
-          )}
         </div>
         {error && (
           <p className="mt-1 text-sm text-red-600 flex items-center">
@@ -86,8 +82,6 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
   }
 );
 
-Input.displayName = 'Input';
+DateInput.displayName = 'DateInput';
 
-export default Input;
-
-
+export default DateInput;
