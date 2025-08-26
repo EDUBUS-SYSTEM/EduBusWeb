@@ -41,22 +41,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (credentials: LoginCredentials) => {
     try {
-      const response = await apiService.post<ApiResponse<AuthResponse>>(
+      const response = await apiService.post<any>(
         "/auth/login",
         credentials
       );
-      if (response?.data?.role.toLocaleLowerCase() != "admin") {
+      const success = response?.success === true;
+      const payload = response?.data;
+      if (!success || !payload) {
+        throw Error("Login failed");
+      }
+      if (payload?.role?.toLocaleLowerCase() != "admin") {
         throw Error("You dont have permissions to access the system");
       }
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("refreshToken", response.data.refreshToken);
+      localStorage.setItem("token", payload.accessToken);
+      localStorage.setItem("refreshToken", payload.refreshToken);
       setUser({
         id: "",
         email: "",
         createdAt: "",
         updatedAt: "",
-        name: response.data.fullName,
-        role: response.data.role.toLowerCase() as "admin",
+        name: payload.fullName,
+        role: payload.role.toLowerCase() as "admin",
       });
     } catch (error) {
       throw error;

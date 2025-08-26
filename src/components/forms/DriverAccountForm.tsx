@@ -26,6 +26,7 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
     address: '',
     phoneNumber: '',
     gender: '',
+    dateOfBirth: '',
     healthCertificate: [],
     licenseNumber: '',
     dateOfIssue: '',
@@ -34,9 +35,9 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
   });
 
   const genderOptions = [
-    { value: 'male', label: 'Male' },
-    { value: 'female', label: 'Female' },
-    { value: 'other', label: 'Other' },
+    { value: '1', label: 'Male' },
+    { value: '2', label: 'Female' },
+    { value: '3', label: 'Other' },
   ];
 
   const handleInputChange = (field: keyof DriverAccountData, value: string) => {
@@ -63,7 +64,7 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
       {/* Parent Information Section */}
       <div className="bg-[#F9F7E3] rounded-2xl p-6 shadow-sm border border-gray-100">
         <h3 className="text-lg font-semibold text-gray-800 mb-6">
-          Parent Information
+          Driver Information
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -140,6 +141,16 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
             error={errors.gender}
             required
           />
+
+          <Input
+            label="Date of Birth*"
+            type="date"
+            placeholder="Select date of birth"
+            value={formData.dateOfBirth}
+            onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+            error={errors.dateOfBirth}
+            required
+          />
           
           <FileUpload
             label="Health Certificate"
@@ -168,6 +179,7 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
           
           <Input
             label="Date of Issue"
+            type="date"
             placeholder="Enter date of issue"
             value={formData.dateOfIssue}
             onChange={(e) => handleInputChange('dateOfIssue', e.target.value)}

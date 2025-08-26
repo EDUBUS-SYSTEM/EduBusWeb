@@ -129,6 +129,7 @@ export interface DriverAccountData {
   address: string;
   phoneNumber: string;
   gender: string;
+  dateOfBirth?: string;
   healthCertificate?: File[];
   licenseNumber?: string;
   dateOfIssue?: string;
