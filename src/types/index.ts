@@ -3,10 +3,24 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'user' | 'moderator';
+  role: "admin" | "user" | "moderator";
   avatar?: string;
   createdAt: string;
   updatedAt: string;
+}
+// UserAccount types (API /UserAccount)
+export interface UserAccount {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  dateOfBirth?: string; // ISO string from backend
+  gender?: number;
+  userPhotoFileId?: string;
+  createdAt: string;
+  updatedAt?: string;
+  isDeleted: boolean;
 }
 
 // Auth types
@@ -23,9 +37,9 @@ export interface RegisterCredentials {
 }
 
 export interface AuthResponse {
-  fullName: string,
-  role: 'admin' | 'user' | 'moderator';
-  token: string;
+  fullName: string;
+  role: "admin" | "user" | "moderator";
+  accessToken: string;
   refreshToken: string;
 }
 
@@ -65,7 +79,7 @@ export interface ApiError {
 export interface FormField {
   name: string;
   label: string;
-  type: 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select';
+  type: "text" | "email" | "password" | "number" | "textarea" | "select";
   required?: boolean;
   placeholder?: string;
   options?: { value: string; label: string }[];
@@ -75,16 +89,15 @@ export interface FormField {
     pattern?: string;
   };
 }
-
 // UI Component types
 export interface ButtonProps {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
+  size?: "sm" | "md" | "lg";
   loading?: boolean;
   disabled?: boolean;
   children: React.ReactNode;
   onClick?: () => void;
-  type?: 'button' | 'submit' | 'reset';
+  type?: "button" | "submit" | "reset";
   className?: string;
 }
 
@@ -92,8 +105,8 @@ export interface CardProps {
   title?: string;
   children: React.ReactNode;
   className?: string;
-  shadow?: 'sm' | 'md' | 'lg';
-  padding?: 'sm' | 'md' | 'lg';
+  shadow?: "sm" | "md" | "lg";
+  padding?: "sm" | "md" | "lg";
 }
 
 export interface ModalProps {
@@ -101,7 +114,7 @@ export interface ModalProps {
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: "sm" | "md" | "lg" | "xl";
 }
 
 // Table types
@@ -125,5 +138,3 @@ export interface TableProps<T> {
   onRowClick?: (row: T) => void;
   className?: string;
 }
-
-
