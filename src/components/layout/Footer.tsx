@@ -17,8 +17,8 @@ export default function Footer() {
               <span className="text-xl font-bold">EduBus</span>
             </div>
             <p className="text-gray-300 text-sm">
-              Hệ thống đưa đón học sinh an toàn, tiện lợi và hiệu quả. 
-              Cam kết mang đến dịch vụ chất lượng cao cho gia đình Việt Nam.
+              Safe, convenient and efficient student transportation system. 
+              Committed to providing high-quality services for families.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-400 hover:text-white transition-colors duration-200">
@@ -41,31 +41,31 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Dịch vụ</h3>
+            <h3 className="text-lg font-semibold">Services</h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/services/daily" className="text-gray-300 hover:text-white transition-colors duration-200 text-sm">
-                  Đưa đón hàng ngày
+                  Daily Transportation
                 </Link>
               </li>
               <li>
                 <Link href="/services/rental" className="text-gray-300 hover:text-white transition-colors duration-200 text-sm">
-                  Thuê xe theo chuyến
+                  Trip Rental
                 </Link>
               </li>
               <li>
                 <Link href="/services/group" className="text-gray-300 hover:text-white transition-colors duration-200 text-sm">
-                  Nhóm học sinh
+                  Student Groups
                 </Link>
               </li>
               <li>
                 <Link href="/services/school" className="text-gray-300 hover:text-white transition-colors duration-200 text-sm">
-                  Giải pháp trường học
+                  School Solutions
                 </Link>
               </li>
               <li>
                 <Link href="/tracking" className="text-gray-300 hover:text-white transition-colors duration-200 text-sm">
-                  Theo dõi xe buýt
+                  Bus Tracking
                 </Link>
               </li>
             </ul>
@@ -73,31 +73,31 @@ export default function Footer() {
 
           {/* Company */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Công ty</h3>
+            <h3 className="text-lg font-semibold">Company</h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/about" className="text-gray-300 hover:text-white transition-colors duration-200 text-sm">
-                  Giới thiệu
+                  About Us
                 </Link>
               </li>
               <li>
                 <Link href="/careers" className="text-gray-300 hover:text-white transition-colors duration-200 text-sm">
-                  Tuyển dụng
+                  Careers
                 </Link>
               </li>
               <li>
                 <Link href="/news" className="text-gray-300 hover:text-white transition-colors duration-200 text-sm">
-                  Tin tức
+                  News
                 </Link>
               </li>
               <li>
                 <Link href="/partners" className="text-gray-300 hover:text-white transition-colors duration-200 text-sm">
-                  Đối tác
+                  Partners
                 </Link>
               </li>
               <li>
                 <Link href="/contact" className="text-gray-300 hover:text-white transition-colors duration-200 text-sm">
-                  Liên hệ
+                  Contact
                 </Link>
               </li>
             </ul>
@@ -105,7 +105,7 @@ export default function Footer() {
 
           {/* Contact Info */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Liên hệ</h3>
+            <h3 className="text-lg font-semibold">Contact</h3>
             <div className="space-y-3">
               <div className="flex items-start space-x-3">
                 <svg className="w-5 h-5 text-gray-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,8 +113,8 @@ export default function Footer() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 <div>
-                  <p className="text-gray-300 text-sm">123 Đường ABC, Quận 1</p>
-                  <p className="text-gray-300 text-sm">TP.HCM, Việt Nam</p>
+                  <p className="text-gray-300 text-sm">123 ABC Street, District 1</p>
+                  <p className="text-gray-300 text-sm">Ho Chi Minh City, Vietnam</p>
                 </div>
               </div>
               
@@ -139,17 +139,17 @@ export default function Footer() {
         <div className="border-t border-gray-800 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-gray-400 text-sm">
-              © 2024 EduBus. Tất cả quyền được bảo lưu.
+              © 2024 EduBus. All rights reserved.
             </p>
             <div className="flex space-x-6">
               <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors duration-200 text-sm">
-                Chính sách bảo mật
+                Privacy Policy
               </Link>
               <Link href="/terms" className="text-gray-400 hover:text-white transition-colors duration-200 text-sm">
-                Điều khoản sử dụng
+                Terms of Service
               </Link>
               <Link href="/cookies" className="text-gray-400 hover:text-white transition-colors duration-200 text-sm">
-                Chính sách cookie
+                Cookie Policy
               </Link>
             </div>
           </div>

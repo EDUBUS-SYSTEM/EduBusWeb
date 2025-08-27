@@ -21,8 +21,8 @@ export default function Sidebar() {
 
   const links = [
     { href: "/admin", label: "Admin Dashboard", icon: <FaHome /> },
-    { href: "/admin/users", label: "User Management", icon: <FaUsers /> },
     { href: "/admin/dashboard", label: "Personal Profile", icon: <FaUserCircle /> },
+    { href: "/admin/users", label: "User Management", icon: <FaUsers /> },
     { href: "/admin/shuttle", label: "Shuttle Register", icon: <FaClipboardList /> },
     { href: "/admin/revenue", label: "Revenue Statistic", icon: <FaChartBar /> },
     { href: "/admin/complaints", label: "Parent Complaint", icon: <FaCommentDots /> },
