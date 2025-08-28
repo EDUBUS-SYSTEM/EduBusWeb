@@ -41,10 +41,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (credentials: LoginCredentials) => {
     try {
-      const response = await apiService.post<any>(
-        "/auth/login",
-        credentials
-      );
+      const response = await apiService.post<{
+        success: boolean;
+        data: {
+          accessToken: string;
+          refreshToken: string;
+          fullName: string;
+          role: string;
+        };
+      }>("/auth/login", credentials);
       const success = response?.success === true;
       const payload = response?.data;
       if (!success || !payload) {

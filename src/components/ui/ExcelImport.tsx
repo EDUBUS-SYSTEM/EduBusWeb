@@ -1,7 +1,11 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { ImportDriversResponse, ImportUserSuccess, ImportUserError } from '@/services/api/drivers';
+import React, { useState } from "react";
+import {
+  ImportDriversResponse,
+  ImportUserSuccess,
+  ImportUserError,
+} from "@/services/api/drivers";
 
 interface ExcelImportProps {
   onImport: (file: File) => Promise<ImportDriversResponse>;
@@ -15,42 +19,49 @@ const ExcelImport: React.FC<ExcelImportProps> = ({
   onImport,
   onExport,
   title,
-  acceptFileType = '.xlsx',
-  templateDownloadUrl
+  acceptFileType = ".xlsx",
+  templateDownloadUrl,
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [importResult, setImportResult] = useState<ImportDriversResponse | null>(null);
-  const [error, setError] = useState<string>('');
+  const [importResult, setImportResult] =
+    useState<ImportDriversResponse | null>(null);
+  const [error, setError] = useState<string>("");
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (!file.name.toLowerCase().endsWith('.xlsx')) {
-        setError('Please select an .xlsx file');
+      if (!file.name.toLowerCase().endsWith(".xlsx")) {
+        setError("Please select an .xlsx file");
         return;
       }
       setSelectedFile(file);
-      setError('');
+      setError("");
       setImportResult(null);
     }
   };
 
   const handleImport = async () => {
     if (!selectedFile) {
-      setError('Please select a file first');
+      setError("Please select a file first");
       return;
     }
 
     setLoading(true);
-    setError('');
-    
+    setError("");
+
     try {
       const result = await onImport(selectedFile);
       setImportResult(result);
-    } catch (err: any) {
-      console.error('Import error:', err);
-      setError(err?.response?.data?.message || err?.message || 'Import failed');
+    } catch (err: unknown) {
+      console.error("Import error:", err);
+      const error = err as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+      setError(
+        error?.response?.data?.message || error?.message || "Import failed"
+      );
     } finally {
       setLoading(false);
     }
@@ -58,21 +69,27 @@ const ExcelImport: React.FC<ExcelImportProps> = ({
 
   const handleExport = async () => {
     if (!onExport) return;
-    
+
     setLoading(true);
     try {
       const blob = await onExport();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = 'drivers.xlsx';
+      a.download = "drivers.xlsx";
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-    } catch (err: any) {
-      console.error('Export error:', err);
-      setError(err?.response?.data?.message || err?.message || 'Export failed');
+    } catch (err: unknown) {
+      console.error("Export error:", err);
+      const error = err as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+      setError(
+        error?.response?.data?.message || error?.message || "Export failed"
+      );
     } finally {
       setLoading(false);
     }
@@ -80,9 +97,9 @@ const ExcelImport: React.FC<ExcelImportProps> = ({
 
   const downloadTemplate = () => {
     if (templateDownloadUrl) {
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = templateDownloadUrl;
-      a.download = 'driver_import_template.xlsx';
+      a.download = "driver_import_template.xlsx";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -92,7 +109,7 @@ const ExcelImport: React.FC<ExcelImportProps> = ({
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
       <h3 className="text-lg font-semibold text-gray-800 mb-4">{title}</h3>
-      
+
       {/* File Selection */}
       <div className="mb-4">
         <input
@@ -117,19 +134,19 @@ const ExcelImport: React.FC<ExcelImportProps> = ({
           disabled={!selectedFile || loading}
           className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? 'Importing...' : 'Import Excel'}
+          {loading ? "Importing..." : "Import Excel"}
         </button>
-        
+
         {onExport && (
           <button
             onClick={handleExport}
             disabled={loading}
             className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Exporting...' : 'Export to Excel'}
+            {loading ? "Exporting..." : "Export to Excel"}
           </button>
         )}
-        
+
         {templateDownloadUrl && (
           <button
             onClick={downloadTemplate}
@@ -148,23 +165,31 @@ const ExcelImport: React.FC<ExcelImportProps> = ({
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
                 <span className="font-medium">Total Processed:</span>
-                <span className="ml-2 text-blue-600">{importResult.totalProcessed}</span>
+                <span className="ml-2 text-blue-600">
+                  {importResult.totalProcessed}
+                </span>
               </div>
               <div>
                 <span className="font-medium">Successful:</span>
-                <span className="ml-2 text-green-600">{importResult.successfulUsers.length}</span>
+                <span className="ml-2 text-green-600">
+                  {importResult.successUsers.length}
+                </span>
               </div>
               <div>
                 <span className="font-medium">Failed:</span>
-                <span className="ml-2 text-red-600">{importResult.failedUsers.length}</span>
+                <span className="ml-2 text-red-600">
+                  {importResult.failedUsers.length}
+                </span>
               </div>
             </div>
           </div>
 
           {/* Successful Imports */}
-          {importResult.successfulUsers.length > 0 && (
+          {importResult.successUsers.length > 0 && (
             <div>
-              <h4 className="font-semibold text-green-700 mb-2">Successfully Imported ({importResult.successfulUsers.length})</h4>
+              <h4 className="font-semibold text-green-700 mb-2">
+                Successfully Imported ({importResult.successUsers.length})
+              </h4>
               <div className="max-h-60 overflow-y-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-green-50">
@@ -177,11 +202,13 @@ const ExcelImport: React.FC<ExcelImportProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {importResult.successfulUsers.map((user, index) => (
+                    {importResult.successUsers.map((user, index) => (
                       <tr key={index} className="border-b border-green-100">
                         <td className="p-2">{user.rowNumber}</td>
                         <td className="p-2">{user.email}</td>
-                        <td className="p-2">{user.firstName} {user.lastName}</td>
+                        <td className="p-2">
+                          {user.firstName} {user.lastName}
+                        </td>
                         <td className="p-2">{user.phoneNumber}</td>
                         <td className="p-2 font-mono text-xs bg-green-50 px-2 py-1 rounded">
                           {user.password}
@@ -197,7 +224,9 @@ const ExcelImport: React.FC<ExcelImportProps> = ({
           {/* Failed Imports */}
           {importResult.failedUsers.length > 0 && (
             <div>
-              <h4 className="font-semibold text-red-700 mb-2">Failed Imports ({importResult.failedUsers.length})</h4>
+              <h4 className="font-semibold text-red-700 mb-2">
+                Failed Imports ({importResult.failedUsers.length})
+              </h4>
               <div className="max-h-60 overflow-y-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-red-50">
@@ -214,9 +243,13 @@ const ExcelImport: React.FC<ExcelImportProps> = ({
                       <tr key={index} className="border-b border-red-100">
                         <td className="p-2">{error.rowNumber}</td>
                         <td className="p-2">{error.email}</td>
-                        <td className="p-2">{error.firstName} {error.lastName}</td>
+                        <td className="p-2">
+                          {error.firstName} {error.lastName}
+                        </td>
                         <td className="p-2">{error.phoneNumber}</td>
-                        <td className="p-2 text-red-600 text-xs">{error.errorMessage}</td>
+                        <td className="p-2 text-red-600 text-xs">
+                          {error.errorMessage}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
