@@ -160,6 +160,32 @@ export interface StudentInfo {
   parentId?: string | null;
 }
 
+// Student types based on backend model
+export interface Student {
+  id: string;
+  parentId: string;
+  firstName: string;
+  lastName: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  isDeleted: boolean;
+  parent: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    address: string;
+    dateOfBirth: string;
+    gender: 'Male' | 'Female';
+    createdAt: string;
+    updatedAt: string;
+    isDeleted: boolean;
+    role: 'parent';
+  };
+}
+
 export interface ParentAccountData {
   email: string;
   password: string;
