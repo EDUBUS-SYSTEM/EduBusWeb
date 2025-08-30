@@ -1,108 +1,52 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FaPlus, FaSearch, FaSort, FaEdit, FaTrash, FaEye, FaFileExcel } from 'react-icons/fa';
 import { AddStudentModal } from './index';
 import { Student } from '@/types';
+import { studentService } from '@/services/studentService/studentService.api';
+import { StudentDto, CreateStudentRequest } from '@/services/studentService/studentService.types';
 
 export default function StudentsList() {
-  const [students, setStudents] = useState<Student[]>([]);
-  const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
+  const [students, setStudents] = useState<StudentDto[]>([]);
+  const [filteredStudents, setFilteredStudents] = useState<StudentDto[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'firstName' | 'createdAt'>('firstName');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // Add ref for file input
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Mock data - replace with actual API call
+  const fetchStudents = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const studentsData = await studentService.getAll();
+      console.log(studentsData);
+      setStudents(studentsData);
+      setFilteredStudents(studentsData);
+    } catch (err) {
+      console.error('Error fetching students:', err);
+      setError('Failed to fetch students');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const mockStudents: Student[] = [
-      {
-        id: '1',
-        parentId: 'parent1',
-        firstName: 'Nguyễn',
-        lastName: 'Văn A',
-        isActive: true,
-        createdAt: '2024-01-15',
-        updatedAt: '2024-01-15',
-        isDeleted: false,
-        parent: {
-          id: 'parent1',
-          email: 'parent1@example.com',
-          firstName: 'Nguyễn',
-          lastName: 'Bố A',
-          phoneNumber: '0123456789',
-          address: 'Hà Nội',
-          dateOfBirth: '1980-01-01',
-          gender: 'Male',
-          createdAt: '2024-01-01',
-          updatedAt: '2024-01-01',
-          isDeleted: false,
-          role: 'parent'
-        }
-      },
-      {
-        id: '2',
-        parentId: 'parent2',
-        firstName: 'Trần',
-        lastName: 'Thị B',
-        isActive: true,
-        createdAt: '2024-01-16',
-        updatedAt: '2024-01-16',
-        isDeleted: false,
-        parent: {
-          id: 'parent2',
-          email: 'parent2@example.com',
-          firstName: 'Trần',
-          lastName: 'Mẹ B',
-          phoneNumber: '0987654321',
-          address: 'TP.HCM',
-          dateOfBirth: '1985-05-15',
-          gender: 'Female',
-          createdAt: '2024-01-02',
-          updatedAt: '2024-01-02',
-          isDeleted: false,
-          role: 'parent'
-        }
-      },
-      {
-        id: '3',
-        parentId: 'parent3',
-        firstName: 'Lê',
-        lastName: 'Văn C',
-        isActive: false,
-        createdAt: '2024-01-17',
-        updatedAt: '2024-01-17',
-        isDeleted: false,
-        parent: {
-          id: 'parent3',
-          email: 'parent3@example.com',
-          firstName: 'Lê',
-          lastName: 'Bố C',
-          phoneNumber: '0555666777',
-          address: 'Đà Nẵng',
-          dateOfBirth: '1975-12-20',
-          gender: 'Male',
-          createdAt: '2024-01-03',
-          updatedAt: '2024-01-03',
-          isDeleted: false,
-          role: 'parent'
-        }
-      }
-    ];
-    
-    setStudents(mockStudents);
-    setFilteredStudents(mockStudents);
-    setLoading(false);
+    fetchStudents();
   }, []);
 
   // Search functionality
   useEffect(() => {
     const filtered = students.filter(student =>
       student.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.parent.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.parent.phoneNumber.includes(searchTerm)
+      student.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.parentPhoneNumber.includes(searchTerm)
     );
     setFilteredStudents(filtered);
   }, [searchTerm, students]);
@@ -122,8 +66,9 @@ export default function StudentsList() {
     let bValue: string | number;
     
     if (sortBy === 'createdAt') {
-      aValue = new Date(a.createdAt).getTime();
-      bValue = new Date(b.createdAt).getTime();
+      // Note: createdAt might not be available in StudentDto, so we'll use firstName as fallback
+      aValue = a.firstName.toLowerCase();
+      bValue = b.firstName.toLowerCase();
     } else {
       aValue = a[sortBy].toLowerCase();
       bValue = b[sortBy].toLowerCase();
@@ -136,26 +81,27 @@ export default function StudentsList() {
     }
   });
 
-  const handleAddStudent = (newStudent: Omit<Student, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>) => {
-    const student: Student = {
-      ...newStudent,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      isDeleted: false
-    };
-    
-    setStudents(prev => [...prev, student]);
-    setIsAddModalOpen(false);
+  const handleAddStudent = async (newStudent: CreateStudentRequest) => {
+    try {
+      await studentService.create(newStudent);
+      // Refresh the students list
+      await fetchStudents();
+      setIsAddModalOpen(false);
+    } catch (err) {
+      console.error('Error creating student:', err);
+      setError('Failed to create student');
+    }
   };
 
   const handleDeleteStudent = (id: string) => {
     if (confirm('Are you sure you want to delete this student?')) {
+      // Note: The backend doesn't have a delete endpoint, so we'll just remove from state
+      // In a real implementation, you might want to add a delete endpoint or use soft delete
       setStudents(prev => prev.filter(student => student.id !== id));
     }
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -168,67 +114,45 @@ export default function StudentsList() {
 
     setUploading(true);
     
-    // Simulate file processing
-    setTimeout(() => {
-      // Mock data from Excel - in real app, you would parse the Excel file here
-      const mockExcelStudents: Student[] = [
-        {
-          id: Date.now().toString(),
-          parentId: `parent_${Date.now()}`,
-          firstName: 'John',
-          lastName: 'Doe',
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          isDeleted: false,
-          parent: {
-            id: `parent_${Date.now()}`,
-            email: 'john.doe@example.com',
-            firstName: 'John',
-            lastName: 'Parent',
-            phoneNumber: '0123456789',
-            address: 'New York',
-            dateOfBirth: '1980-01-01',
-            gender: 'Male',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            isDeleted: false,
-            role: 'parent'
-          }
-        },
-        {
-          id: (Date.now() + 1).toString(),
-          parentId: `parent_${Date.now() + 1}`,
-          firstName: 'Jane',
-          lastName: 'Smith',
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          isDeleted: false,
-          parent: {
-            id: `parent_${Date.now() + 1}`,
-            email: 'jane.smith@example.com',
-            firstName: 'Jane',
-            lastName: 'Parent',
-            phoneNumber: '0987654321',
-            address: 'Los Angeles',
-            dateOfBirth: '1985-05-15',
-            gender: 'Female',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            isDeleted: false,
-            role: 'parent'
-          }
-        }
-      ];
-
-      setStudents(prev => [...prev, ...mockExcelStudents]);
+    try {
+      const result = await studentService.importFromExcel(file);
+      alert(`Import completed!\nTotal processed: ${result.totalProcessed}\nSuccessful: ${JSON.stringify(result.successfulStudents)}\nFailed: ${JSON.stringify(result.failedStudents)}`);
+      // Refresh the students list
+      await fetchStudents();
+    } catch (err) {
+      console.error('Error importing students:', err);
+      setError('Failed to import students');
+    } finally {
       setUploading(false);
-      alert(`Successfully imported ${mockExcelStudents.length} students from Excel file!`);
-      
       // Reset file input
-      event.target.value = '';
-    }, 2000);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  // Function to trigger file input
+  const handleImportClick = () => {
+    if (fileInputRef.current && !uploading) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleExportStudents = async () => {
+    try {
+      const blob = await studentService.exportToExcel();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Students.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Error exporting students:', err);
+      setError('Failed to export students');
+    }
   };
 
   if (loading) {
@@ -246,20 +170,26 @@ export default function StudentsList() {
         <h1 className="text-xl font-bold text-gray-800">Student Management</h1>
         <div className="flex gap-3">
           <label className="relative">
+            {/* Hidden file input */}
             <input
+              ref={fileInputRef}
               type="file"
               accept=".xlsx,.xls"
               onChange={handleFileUpload}
               className="hidden"
               disabled={uploading}
             />
+            
+            {/* Import Excel Button */}
             <button
+              onClick={handleImportClick}
+              disabled={uploading}
               className={`flex items-center justify-center ${
                 uploading 
                   ? 'bg-gray-400 cursor-not-allowed' 
                   : 'bg-[#FAD23C] hover:bg-[#fad23c]/80'
               } text-white w-10 h-10 rounded-full transition-colors duration-200 shadow-md hover:shadow-lg`}
-              disabled={uploading}
+              title="Import from Excel"
             >
               {uploading ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
@@ -339,9 +269,9 @@ export default function StudentsList() {
                     {student.lastName} {student.firstName}
                   </div>
                 </td>
-                <td className="py-3 px-3 text-gray-600">{student.parent.email}</td>
-                <td className="py-3 px-3 text-gray-600">{student.parent.phoneNumber}</td>
-                <td className="py-3 px-3 text-gray-600">{student.parent.address}</td>
+                <td className="py-3 px-3 text-gray-600">parent email</td>
+                <td className="py-3 px-3 text-gray-600">{student.parentPhoneNumber}</td>
+                <td className="py-3 px-3 text-gray-600">address</td>
                 <td className="py-3 px-3">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                     student.isActive 
@@ -352,7 +282,8 @@ export default function StudentsList() {
                   </span>
                 </td>
                 <td className="py-3 px-3 text-gray-600">
-                  {new Date(student.createdAt).toLocaleDateString('en-US')}
+                  {/* {new Date(student.createdAt).toLocaleDateString('en-US')} */}
+                  todo
                 </td>
                 <td className="py-3 px-3">
                   <div className="flex justify-center gap-2">
