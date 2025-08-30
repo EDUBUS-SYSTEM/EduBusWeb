@@ -1,8 +1,9 @@
 import React from "react";
 import { ImportDriversResponse } from "@/services/api/drivers";
+import { ImportParentsResponse } from "@/services/api/parents";
 
 interface ImportResultsProps {
-  result: ImportDriversResponse;
+  result: ImportDriversResponse | ImportParentsResponse;
   onClose: () => void;
 }
 

@@ -10,6 +10,7 @@ interface DriverAccountFormProps {
   onSubmit: (data: DriverAccountData) => void;
   loading?: boolean;
   errors?: AccountFormErrors;
+  key?: string | number; // Add key prop to force re-render and reset form
 }
 
 const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
@@ -19,7 +20,6 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
 }) => {
   const [formData, setFormData] = useState<DriverAccountData>({
     email: 'driver_1@gmail.com',
-    password: '12345678@',
     driverPhoto: [],
     firstName: '',
     lastName: '',
@@ -74,15 +74,6 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
             value={formData.email}
             onChange={(e) => handleInputChange('email', e.target.value)}
             error={errors.email}
-            required
-          />
-          
-          <Input
-            label="Password*"
-            type="password"
-            value={formData.password}
-            onChange={(e) => handleInputChange('password', e.target.value)}
-            error={errors.password}
             required
           />
           

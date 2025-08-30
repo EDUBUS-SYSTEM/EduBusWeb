@@ -13,6 +13,7 @@ import {
   AccountFormErrors,
 } from "@/types";
 import { createDriver, uploadHealthCertificate } from "@/services/api/drivers";
+import { createParent } from "@/services/api/parents";
 import { uploadUserPhoto } from "@/services/api/userAccount";
 import {
   createDriverLicense,
@@ -20,6 +21,7 @@ import {
 } from "@/services/api/driverLicense";
 import { isAxiosError } from "axios";
 import { useDriverImport } from "@/hooks/useDriverImport";
+import { useParentImport } from "@/hooks/useParentImport";
 import ImportResults from "@/components/layout/ImportResults";
 import { validateDriver, validateParent } from "@/lib/validation";
 
@@ -28,17 +30,27 @@ const CreateAccountPage: React.FC = () => {
     useState<AccountType>("driver");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<AccountFormErrors>({});
+  const [formKey, setFormKey] = useState(0); // Add key to force form reset
   const {
-    importLoading,
-    importResult,
-    handleUploadFiles,
-    handleDownloadTemplate,
-    clearImportResult,
+    importLoading: driverImportLoading,
+    importResult: driverImportResult,
+    handleUploadFiles: handleDriverUploadFiles,
+    handleDownloadTemplate: handleDriverDownloadTemplate,
+    clearImportResult: clearDriverImportResult,
   } = useDriverImport();
+
+  const {
+    importLoading: parentImportLoading,
+    importResult: parentImportResult,
+    handleUploadFiles: handleParentUploadFiles,
+    handleDownloadTemplate: handleParentDownloadTemplate,
+    clearImportResult: clearParentImportResult,
+  } = useParentImport();
 
   const handleAccountTypeChange = (type: AccountType) => {
     setActiveAccountType(type);
     setErrors({}); // Clear errors when switching account types
+    setFormKey(prev => prev + 1); // Reset form when switching account types
   };
 
   const handleBack = () => {
@@ -134,6 +146,9 @@ const CreateAccountPage: React.FC = () => {
       // Show backend-generated password
       alert(`Driver created successfully. Temporary password: ${res.password}`);
 
+      // Reset form after successful creation
+      setFormKey(prev => prev + 1); // Force form re-render to reset
+
       // Optional uploads (if provided)
       const uploads: Promise<unknown>[] = [];
       if (data.driverPhoto && data.driverPhoto.length > 0) {
@@ -204,17 +219,97 @@ const CreateAccountPage: React.FC = () => {
         return;
       }
 
-      // TODO: Send data to API
-      console.log("Parent account data:", data);
+      // Map to backend payload
+      const dDob = new Date(data.dateOfBirth!);
+      const dobDateOnly = `${dDob.getFullYear()}-${String(dDob.getMonth() + 1).padStart(2, "0")}-${String(dDob.getDate()).padStart(2, "0")}`;
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Convert gender string to number
+      const genderMap: Record<string, number> = {
+        "male": 1,
+        "female": 2,
+        "other": 3
+      };
 
-      // Success - redirect or show success message
-      alert("Parent account created successfully!");
+      const payload = {
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phoneNumber: data.phoneNumber,
+        gender: genderMap[data.gender] || 1,
+        dateOfBirth: dobDateOnly,
+        address: data.address,
+      };
+
+      console.log("Sending parent payload to backend:", payload);
+      let res;
+      try {
+        res = await createParent(payload);
+      } catch (e: unknown) {
+        let status: number | undefined;
+        let data: unknown;
+        let msg = "";
+        if (isAxiosError(e)) {
+          status = e.response?.status;
+          data = e.response?.data;
+          msg = (data ?? e.message ?? "").toString();
+        } else if (e instanceof Error) {
+          msg = e.message;
+        }
+        if (status === 409) {
+          const conflictErrors: AccountFormErrors = {};
+          if (/email/i.test(msg))
+            conflictErrors.email = "Email already exists in the system";
+          if (/phone/i.test(msg))
+            conflictErrors.phoneNumber =
+              "Phone number already exists in the system";
+          setErrors({
+            ...conflictErrors,
+            general:
+              "Parent creation failed. Data was not saved to the database.",
+          });
+          return;
+        }
+        if (status === 400) {
+          const fieldErrors: AccountFormErrors = {};
+          if (typeof data === "object" && data) {
+            // ModelState  { Field: ["err1","err2"] }
+            const record = data as Record<string, unknown>;
+            for (const k of Object.keys(record)) {
+              const value = record[k];
+              const first = Array.isArray(value)
+                ? (value as unknown[])[0]
+                : value;
+              fieldErrors[k.charAt(0).toLowerCase() + k.slice(1)] =
+                first?.toString() || "Invalid value";
+            }
+          }
+          setErrors({
+            ...fieldErrors,
+            general:
+              "Parent creation failed. Data was not saved to the database.",
+          });
+          return;
+        }
+        setErrors({
+          general:
+            "Parent creation failed. Data was not saved to the database.",
+        });
+        return;
+      }
+      console.log("Backend response:", res);
+
+      // Show backend-generated password
+      alert(`Parent created successfully. Temporary password: ${res.password}`);
+
+      // Reset form after successful creation
+      setFormKey(prev => prev + 1); // Force form re-render to reset
+
     } catch (error) {
       console.error("Error creating parent account:", error);
-      setErrors({ general: "Failed to create account. Please try again." });
+      setErrors({
+        general:
+          "Failed to create parent account. Please check data or try again.",
+      });
     } finally {
       setLoading(false);
     }
@@ -237,18 +332,26 @@ const CreateAccountPage: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-800">
               Create User Account
             </h1>
-            {activeAccountType === "driver" && (
+            {(activeAccountType === "driver" || activeAccountType === "parent") && (
               <div className="flex items-center gap-3">
-                {importLoading && (
+                {(driverImportLoading || parentImportLoading) && (
                   <div className="text-sm text-blue-600">
                     <span className="animate-spin">⏳</span> Importing...
                   </div>
                 )}
                 <UploadButton
-                  onFileSelect={(files) =>
-                    activeAccountType === "driver" && handleUploadFiles(files)
+                  onFileSelect={(files) => {
+                    if (activeAccountType === "driver") {
+                      handleDriverUploadFiles(files);
+                    } else if (activeAccountType === "parent") {
+                      handleParentUploadFiles(files);
+                    }
+                  }}
+                  onDownloadTemplate={
+                    activeAccountType === "driver" 
+                      ? handleDriverDownloadTemplate 
+                      : handleParentDownloadTemplate
                   }
-                  onDownloadTemplate={handleDownloadTemplate}
                   showDownloadTemplate={true}
                   accept=".xlsx"
                   multiple={false}
@@ -265,20 +368,25 @@ const CreateAccountPage: React.FC = () => {
           )}
 
           {/* Import Results */}
-          {importResult && activeAccountType === "driver" && (
-            <ImportResults result={importResult} onClose={clearImportResult} />
+          {driverImportResult && activeAccountType === "driver" && (
+            <ImportResults result={driverImportResult} onClose={clearDriverImportResult} />
+          )}
+          {parentImportResult && activeAccountType === "parent" && (
+            <ImportResults result={parentImportResult} onClose={clearParentImportResult} />
           )}
 
           {/* Form Content */}
           <div className="bg-[#F9F7E3] rounded-2xl p-8 shadow-sm border border-gray-100">
             {activeAccountType === "driver" ? (
               <DriverAccountForm
+                key={formKey}
                 onSubmit={handleDriverSubmit}
                 loading={loading}
                 errors={errors}
               />
             ) : (
               <ParentAccountForm
+                key={formKey}
                 onSubmit={handleParentSubmit}
                 loading={loading}
                 errors={errors}
