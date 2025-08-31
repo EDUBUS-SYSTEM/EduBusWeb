@@ -58,8 +58,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (payload?.role?.toLocaleLowerCase() != "admin") {
         throw Error("You dont have permissions to access the system");
       }
-      localStorage.setItem("token", payload.accessToken);
-      localStorage.setItem("refreshToken", payload.refreshToken);
+      localStorage.setItem("token", response.data.accessToken);
+      localStorage.setItem("refreshToken", response.data.refreshToken);
       setUser({
         id: "",
         email: "",

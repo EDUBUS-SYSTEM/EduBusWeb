@@ -8,6 +8,21 @@ export interface User {
   createdAt: string;
   updatedAt: string;
 }
+// UserAccount types (API /UserAccount)
+export interface UserAccount {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  dateOfBirth?: string; // ISO string from backend
+  gender?: number;
+  role: "admin";
+  userPhotoFileId?: string;
+  createdAt: string;
+  updatedAt?: string;
+  isDeleted: boolean;
+}
 
 // Auth types
 export interface LoginCredentials {
@@ -18,7 +33,7 @@ export interface LoginCredentials {
 export interface AuthResponse {
   fullName: string;
   role: "admin" | "user" | "moderator";
-  token: string;
+  accessToken: string;
   refreshToken: string;
 }
 
@@ -68,7 +83,6 @@ export interface FormField {
     pattern?: string;
   };
 }
-
 // UI Component types
 export interface ButtonProps {
   variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
@@ -161,3 +175,4 @@ export interface ParentAccountData {
 export interface AccountFormErrors {
   [key: string]: string;
 }
+

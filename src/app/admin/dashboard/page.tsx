@@ -1,20 +1,18 @@
-'use client';
-import { useAuth } from '../../../hooks/useAuth';
-import Link from 'next/link';
+// app/admin/page.tsx
+import Sidebar from "@/components/layout/Sidebar";
+import Header from "@/components/layout/Header";
+import Profile from "@/components/admin/Profile";
 
 export default function AdminPage() {
-  const { logout, user} = useAuth();
-
   return (
     <div>
-    <h1>Admin Dashboard</h1>
-    <h2>{`Hello ${user?.name}`}</h2>
-    <Link href="/create-account">
-      <button>Create Account</button>
-    </Link>
-    <button onClick={()=>{
-      logout();
-    }}>Logout</button>
+      <Sidebar />
+      <Header />
+      <main className="flex justify-center px-6">
+        <div className="w-full max-w-3xl">
+          <Profile />
+        </div>
+      </main>
     </div>
   );
 }
