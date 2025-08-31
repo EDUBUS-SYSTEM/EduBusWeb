@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Configure base URL for API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7061/api";
 
 // Create axios instance with default configuration
 export const apiClient = axios.create({
@@ -31,7 +31,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     const url = error.config?.url || "";
-    if (error.response?.status === 401 && !url.includes("/auth/login")) {
+    if (error.response?.status === 401 && !url.includes("/auth/login") && !url.includes("localhost:5000")) {
       // Handle when token expires
       localStorage.removeItem("token");
       window.location.href = "/";

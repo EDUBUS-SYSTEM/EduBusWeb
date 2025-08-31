@@ -136,13 +136,13 @@ export interface TableProps<T> {
 // Account Creation types
 export interface DriverAccountData {
   email: string;
-  password: string;
   driverPhoto?: File[];
   firstName: string;
   lastName: string;
   address: string;
   phoneNumber: string;
   gender: string;
+  dateOfBirth?: string;
   healthCertificate?: File[];
   licenseNumber?: string;
   dateOfIssue?: string;
@@ -162,11 +162,12 @@ export interface StudentInfo {
 
 export interface ParentAccountData {
   email: string;
-  password: string;
   firstName: string;
   lastName: string;
   phoneNumber: string;
   gender: string;
+  dateOfBirth: string;
+  address: string;
   studentIds: string[];
   students: StudentInfo[];
 }
