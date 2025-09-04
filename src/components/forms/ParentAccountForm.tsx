@@ -38,20 +38,7 @@ const ParentAccountForm: React.FC<ParentAccountFormProps> = ({
     { value: 'other', label: 'Other' },
   ];
 
-  const gradeOptions = [
-    { value: 'grade1', label: 'Grade 1' },
-    { value: 'grade2', label: 'Grade 2' },
-    { value: 'grade3', label: 'Grade 3' },
-    { value: 'grade4', label: 'Grade 4' },
-    { value: 'grade5', label: 'Grade 5' },
-    { value: 'grade6', label: 'Grade 6' },
-    { value: 'grade7', label: 'Grade 7' },
-    { value: 'grade8', label: 'Grade 8' },
-    { value: 'grade9', label: 'Grade 9' },
-    { value: 'grade10', label: 'Grade 10' },
-    { value: 'grade11', label: 'Grade 11' },
-    { value: 'grade12', label: 'Grade 12' },
-  ];
+
 
   const handleInputChange = (field: keyof ParentAccountData, value: string) => {
     setFormData(prev => ({
@@ -60,12 +47,7 @@ const ParentAccountForm: React.FC<ParentAccountFormProps> = ({
     }));
   };
 
-  const handleFileChange = (field: keyof ParentAccountData, files: File[]) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: files,
-    }));
-  };
+
 
   const handleSearchStudent = async () => {
     if (!currentStudentId.trim()) return;
@@ -253,7 +235,7 @@ const ParentAccountForm: React.FC<ParentAccountFormProps> = ({
               </div>
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {formData.students.map((student, index) => (
+                {formData.students.map((student) => (
                   <div 
                     key={student.id} 
                     className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden"

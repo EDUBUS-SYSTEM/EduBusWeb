@@ -8,6 +8,8 @@ export interface VehicleDto extends BaseEntity {
 }
 
 export type VehicleListResponse = ApiResponse<VehicleDto[]>;
+export type VehicleGetResponse = ApiResponse<VehicleDto>;
+export type VehicleUpdateResponse = ApiResponse<VehicleDto>;
 
 export type VehiclePaginatedResponse = PaginatedResponse<VehicleDto>;
 
@@ -20,16 +22,31 @@ export interface VehicleFilters {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }
+
 export interface CreateVehicleRequest {
   licensePlate: string;
   capacity: number;
   status: number;
 }
+
+export interface UpdateVehicleRequest {
+  licensePlate: string;
+  capacity: number;
+  status: number;
+}
+
+export interface PartialUpdateVehicleRequest {
+  licensePlate?: string;
+  capacity?: number;
+  status?: number;
+}
+
 export interface CreateVehicleResponse {
   success: boolean;
   data: VehicleResponse;
   error?: string;
 }
+
 export interface VehicleResponse {
   id: string;
   capacity: number;
@@ -40,8 +57,48 @@ export interface VehicleResponse {
   updatedAt: string;
   isDeleted: boolean;
 }
+
 export interface VehicleFormErrors {
   licensePlate?: string;
   capacity?: string;
   status?: string;
+}
+
+// Driver Assignment Types
+export interface DriverAssignmentRequest {
+  driverId: string;
+  isPrimaryDriver: boolean;
+  startTimeUtc: string;
+  endTimeUtc?: string;
+}
+
+export interface DriverAssignmentResponse {
+  success: boolean;
+  data?: DriverAssignmentDto;
+  error?: string;
+}
+
+export interface DriverAssignmentDto {
+  id: string;
+  driverId: string;
+  vehicleId: string;
+  isPrimaryDriver: boolean;
+  startTimeUtc: string;
+  endTimeUtc?: string;
+  driver?: DriverInfoDto;
+  createdAt: string;
+  updatedAt?: string;
+  assignedByAdminId: string;
+}
+
+export interface DriverInfoDto {
+  id: string;
+  fullName: string;
+  phoneNumber: string;
+}
+
+export interface VehicleDriversResponse {
+  success: boolean;
+  data: DriverAssignmentDto[];
+  error?: string;
 }

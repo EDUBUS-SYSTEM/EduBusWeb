@@ -7,7 +7,7 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
-import { ArrowLeft, Plus, Save } from 'lucide-react';
+import { Save } from 'lucide-react';
 
 import { CreateVehicleRequest, VehicleFormErrors } from '@/types/vehicle';
 import vehicleService from '@/services/vehicleService';
@@ -34,8 +34,7 @@ export default function CreateVehicleForm() {
   const capacityOptions = [
     { value: '16', label: '16 seats' },
     { value: '24', label: '24 seats' },
-    { value: '32', label: '32 seats' },
-    { value: '45', label: '45 seats' }
+    { value: '32', label: '32 seats' }
   ];
 
   const handleInputChange = (field: keyof CreateVehicleRequest, value: string | number) => {
@@ -89,7 +88,7 @@ export default function CreateVehicleForm() {
       } else {
         setApiError('Failed to create vehicle');
       }
-    } catch (error) {
+    } catch {
       setApiError('Failed to create vehicle');
     } finally {
       setLoading(false);

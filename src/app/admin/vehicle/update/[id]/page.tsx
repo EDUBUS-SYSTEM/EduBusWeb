@@ -1,7 +1,6 @@
-
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
-import UpdateVehicleForm from "./UpdateVehicleForm";
+import UpdateVehicleForm from "../UpdateVehicleForm";
 
 export default function UpdateVehiclePage() {
   return (
