@@ -136,13 +136,13 @@ export interface TableProps<T> {
 // Account Creation types
 export interface DriverAccountData {
   email: string;
-  password: string;
   driverPhoto?: File[];
   firstName: string;
   lastName: string;
   address: string;
   phoneNumber: string;
   gender: string;
+  dateOfBirth?: string;
   healthCertificate?: File[];
   licenseNumber?: string;
   dateOfIssue?: string;
@@ -160,13 +160,40 @@ export interface StudentInfo {
   parentId?: string | null;
 }
 
+// Student types based on backend model
+export interface Student {
+  id: string;
+  parentId: string;
+  firstName: string;
+  lastName: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  isDeleted: boolean;
+  parent: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    address: string;
+    dateOfBirth: string;
+    gender: 'Male' | 'Female';
+    createdAt: string;
+    updatedAt: string;
+    isDeleted: boolean;
+    role: 'parent';
+  };
+}
+
 export interface ParentAccountData {
   email: string;
-  password: string;
   firstName: string;
   lastName: string;
   phoneNumber: string;
   gender: string;
+  dateOfBirth: string;
+  address: string;
   studentIds: string[];
   students: StudentInfo[];
 }
