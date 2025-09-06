@@ -43,7 +43,6 @@ const ParentAccountForm: React.FC<ParentAccountFormProps> = ({
       [field]: value,
     }));
   };
-
   const handleFileChange = (field: keyof ParentAccountData, files: File[]) => {
     setFormData((prev) => ({
       ...prev,
@@ -91,7 +90,6 @@ const ParentAccountForm: React.FC<ParentAccountFormProps> = ({
             error={errors.lastName}
             required
           />
-
                      <Input
              label="PhoneNumber*"
              placeholder="Enter PhoneNumber"

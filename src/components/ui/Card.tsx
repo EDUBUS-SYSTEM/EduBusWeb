@@ -24,8 +24,6 @@ const Card: React.FC<CardProps> = ({
 
   const baseClasses = `
     bg-white rounded-3xl border border-gray-100
-    transition-all duration-300 ease-in-out
-    hover:shadow-xl hover:scale-[1.02]
     backdrop-blur-sm bg-white/90
   `;
 

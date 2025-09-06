@@ -21,7 +21,7 @@ export default function AdminLoginPage() {
     if (token) {
       router.push("/admin/dashboard");
     }
-  }, []);
+  }, [router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
