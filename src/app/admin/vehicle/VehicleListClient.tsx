@@ -290,13 +290,6 @@ export default function VehicleListClient() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <Link
-                            href={`/admin/vehicle/update/${vehicle.id}`}
-                            className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-md hover:bg-blue-600 transition-colors"
-                            aria-label="Edit vehicle"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Link>
                           <button
                             onClick={() => openAssignDriverModal(vehicle.id)}
                             className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center shadow-md hover:bg-green-600 transition-colors"
@@ -304,6 +297,13 @@ export default function VehicleListClient() {
                           >
                             <User className="w-4 h-4" />
                           </button>
+                          <Link
+                            href={`/admin/vehicle/update/${vehicle.id}`}
+                            className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-md hover:bg-blue-600 transition-colors"
+                            aria-label="Edit vehicle"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Link>
                           <button
                             onClick={() => confirmDelete(vehicle.id)}
                             disabled={deleteLoading === vehicle.id}
