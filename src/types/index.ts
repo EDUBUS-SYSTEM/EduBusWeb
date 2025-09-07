@@ -202,3 +202,15 @@ export interface AccountFormErrors {
   [key: string]: string;
 }
 
+export interface BasicSuccessResponse {
+  success: boolean;
+  data?: {
+    message: string;
+    affectedRows?: number;
+  };
+  error?: {
+    message: string;
+    statusCode: number;
+    details?: string;
+  };
+}

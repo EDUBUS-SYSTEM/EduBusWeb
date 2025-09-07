@@ -1,7 +1,7 @@
 "use client";
 import { AxiosError } from "axios";
 import { useState, useEffect } from "react";
-import { userAccountService } from "@/services/userAccountService";
+import { userAccountService } from "@/services/userAccountService/userAccountService.api";
 import { UserAccount } from "@/types";
 
 export function useUserAccount(userId?: string) {
