@@ -21,11 +21,7 @@ export default function HomePage() {
     transition: { duration: 0.6, ease: "easeOut" }
   };
 
-  const fadeInRight = {
-    initial: { opacity: 0, x: 60 },
-    animate: { opacity: 1, x: 0 },
-    transition: { duration: 0.6, ease: "easeOut" }
-  };
+  // removed unused: fadeInRight
 
   const staggerContainer = {
     animate: {
@@ -35,11 +31,7 @@ export default function HomePage() {
     }
   };
 
-  const scaleIn = {
-    initial: { opacity: 0, scale: 0.8 },
-    animate: { opacity: 1, scale: 1 },
-    transition: { duration: 0.5, ease: "easeOut" }
-  };
+  // removed unused: scaleIn
 
   return (
     <div className="min-h-screen bg-white">
@@ -137,7 +129,7 @@ export default function HomePage() {
                 transition={{ duration: 0.6, delay: 0.8 }}
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => router.push('/map')}
+                onClick={() => router.push('/start')}
                 className="bg-[#FDC700] text-black px-8 py-4 rounded-2xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 Get Started
