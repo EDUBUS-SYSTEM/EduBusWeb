@@ -214,3 +214,125 @@ export interface BasicSuccessResponse {
     details?: string;
   };
 }
+
+// Schedule and Calendar types based on backend models
+export interface Schedule {
+  id: string;
+  name: string;
+  startTime: string;
+  endTime: string;
+  rrule: string;
+  timezone: string;
+  effectiveFrom: string;
+  effectiveTo?: string;
+  exceptions: string[];
+  scheduleType: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RouteSchedule {
+  id: string;
+  routeId: string;
+  scheduleId: string;
+  effectiveFrom: string;
+  effectiveTo?: string;
+  priority: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Route {
+  id: string;
+  routeName: string;
+  isActive: boolean;
+  vehicleId: number;
+  pickupPoints: PickupPointInfo[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PickupPointInfo {
+  pickupPointId: string;
+  sequenceOrder: number;
+  location: LocationInfo;
+}
+
+export interface LocationInfo {
+  latitude: number;
+  longitude: number;
+  address: string;
+}
+
+export interface Trip {
+  id: string;
+  routeId: string;
+  serviceDate: string;
+  plannedStartAt: string;
+  plannedEndAt: string;
+  startTime?: string;
+  endTime?: string;
+  status: string;
+  scheduleSnapshot: ScheduleSnapshot;
+  stops: TripStop[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ScheduleSnapshot {
+  scheduleId: string;
+  name: string;
+  startTime: string;
+  endTime: string;
+  rrule: string;
+}
+
+export interface TripStop {
+  sequenceOrder: number;
+  pickupPointId: string;
+  plannedAt: string;
+  arrivedAt?: string;
+  departedAt?: string;
+  location: LocationInfo;
+  attendance: Attendance[];
+}
+
+export interface Attendance {
+  studentId: string;
+  boardedAt?: string;
+  state: string;
+}
+
+// Calendar UI types
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  start: Date;
+  end: Date;
+  allDay?: boolean;
+  color?: string;
+  type: 'trip' | 'schedule' | 'maintenance' | 'other';
+  description?: string;
+  routeId?: string;
+  tripId?: string;
+  scheduleId?: string;
+  status?: 'planned' | 'in-progress' | 'completed' | 'cancelled';
+  metadata?: Record<string, any>;
+}
+
+export interface CalendarView {
+  type: 'day' | 'week' | 'month';
+  date: Date;
+}
+
+export interface CalendarProps {
+  events: CalendarEvent[];
+  view: CalendarView;
+  onViewChange: (view: CalendarView) => void;
+  onEventClick?: (event: CalendarEvent) => void;
+  onEventCreate?: (date: Date) => void;
+  onDateChange?: (date: Date) => void;
+  className?: string;
+}

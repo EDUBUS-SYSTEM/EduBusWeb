@@ -14,6 +14,7 @@ import {
   FaLock,
   FaMapMarkedAlt,
   FaList,
+  FaBus,
 } from "react-icons/fa";
 
 export default function Sidebar() {
@@ -26,10 +27,11 @@ export default function Sidebar() {
     { href: "/admin/shuttle", label: "Shuttle Register", icon: <FaClipboardList /> },
     { href: "/admin/revenue", label: "Revenue Statistic", icon: <FaChartBar /> },
     { href: "/admin/complaints", label: "Parent Complaint", icon: <FaCommentDots /> },
-    { href: "/admin/requests", label: "Driver’s Requests", icon: <FaFileAlt /> },
+    { href: "/admin/requests", label: "Driver's Requests", icon: <FaFileAlt /> },
     { href: "/admin/password", label: "Change Password", icon: <FaLock /> },
     { href: "/admin/trips", label: "Trip Management", icon: <FaMapMarkedAlt /> },
     { href: "/admin/students", label: "Students List", icon: <FaList /> },
+    { href: "/admin/vehicles", label: "Vehicles", icon: <FaBus /> },
   ];
 
   return (
