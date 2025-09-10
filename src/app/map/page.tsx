@@ -18,6 +18,11 @@ const SCHOOL_LOCATION = {
   lng: 108.2605
 };
 
+// Constants
+const DEFAULT_PRICE_PER_KM = 7000; // VND per kilometer
+const MAP_ZOOM_LEVEL = 14;
+const MAP_ZOOM_LEVEL_DETAILED = 15;
+
 export default function MapPage() {
   const router = useRouter();
   const mapRef = useRef<HTMLDivElement>(null);
@@ -46,6 +51,14 @@ export default function MapPage() {
 
   // Selected coords from clicks/search
   const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
+  
+  // Temporary selection state for better UX
+  const [tempCoords, setTempCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [, setShowConfirmModal] = useState(false);
+  const [tempDistance, setTempDistance] = useState<string>('');
+  const [tempDuration, setTempDuration] = useState<string>('');
+  const [tempFare, setTempFare] = useState<string>('');
+  const [showSubmitForm, setShowSubmitForm] = useState(false);
   
   // Submit request state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,8 +102,8 @@ export default function MapPage() {
             setDistance(`${distanceKm} km`);
             setDuration(hours > 0 ? `${hours} hours ${mins} minutes` : `${mins} minutes`);
 
-            // Calculate fare at 7,000 VND per km
-            const fareNumber = (totalMeters / 1000) * 7000;
+            // Calculate fare using configurable price per km
+            const fareNumber = (totalMeters / 1000) * DEFAULT_PRICE_PER_KM;
             const formattedFare = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Math.round(fareNumber));
             setFare(formattedFare);
 
@@ -130,18 +143,114 @@ export default function MapPage() {
     );
   }, [travelMode, isRouting]);
 
-  // Create home marker
-  const createHomeMarker = useCallback((lat: number, lng: number, map: google.maps.Map) => {
-    // Remove existing marker
+  // Draw temporary route with different styling
+  const drawTempRoute = useCallback((origin: { lat: number; lng: number }, destination: { lat: number; lng: number }) => {
+    if (!directionsServiceRef.current || !directionsRendererRef.current) return;
+    if (!(globalThis as { google?: typeof google }).google) return;
+
+    directionsServiceRef.current.route(
+      {
+        origin: new google.maps.LatLng(origin.lat, origin.lng),
+        destination: new google.maps.LatLng(destination.lat, destination.lng),
+        travelMode: (travelMode as unknown) as google.maps.TravelMode,
+        provideRouteAlternatives: false,
+      },
+      (result, status) => {
+        if (status === google.maps.DirectionsStatus.OK && result) {
+          // Create a temporary renderer with different styling
+          const tempRenderer = new google.maps.DirectionsRenderer({
+            suppressMarkers: true,
+            preserveViewport: true,
+            polylineOptions: {
+              strokeColor: '#3B82F6', // Blue color for temporary route
+              strokeWeight: 4,
+              strokeOpacity: 0.7
+            }
+          });
+          tempRenderer.setMap(mapInstanceRef.current);
+          tempRenderer.setDirections(result);
+          
+          // Store reference to remove later
+          (directionsRendererRef.current as { tempRenderer?: google.maps.DirectionsRenderer }).tempRenderer = tempRenderer;
+          
+          const route = result.routes?.[0];
+          if (route && route.legs && route.legs.length > 0) {
+            const totalMeters = route.legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0);
+            const totalSeconds = route.legs.reduce((sum, leg) => sum + (leg.duration?.value || 0), 0);
+            const distanceKm = (totalMeters / 1000).toFixed(2);
+            const minutes = Math.round(totalSeconds / 60);
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            setTempDistance(`${distanceKm} km`);
+            setTempDuration(hours > 0 ? `${hours} hours ${mins} minutes` : `${mins} minutes`);
+
+            // Calculate fare
+            const fareNumber = (totalMeters / 1000) * DEFAULT_PRICE_PER_KM;
+            const formattedFare = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Math.round(fareNumber));
+            setTempFare(formattedFare);
+          }
+        }
+      }
+    );
+  }, [travelMode]);
+
+  // Calculate temporary route for preview
+  const calculateTempRoute = useCallback((lat: number, lng: number) => {
+    if (!directionsServiceRef.current) return;
+
+    directionsServiceRef.current.route(
+      {
+        origin: new google.maps.LatLng(schoolLocation.lat, schoolLocation.lng),
+        destination: new google.maps.LatLng(lat, lng),
+        travelMode: (travelMode as unknown) as google.maps.TravelMode,
+        provideRouteAlternatives: false,
+      },
+      (result, status) => {
+        if (status === google.maps.DirectionsStatus.OK && result) {
+          const route = result.routes?.[0];
+          if (route && route.legs && route.legs.length > 0) {
+            const totalMeters = route.legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0);
+            const totalSeconds = route.legs.reduce((sum, leg) => sum + (leg.duration?.value || 0), 0);
+            const distanceKm = (totalMeters / 1000).toFixed(2);
+            const minutes = Math.round(totalSeconds / 60);
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            setTempDistance(`${distanceKm} km`);
+            setTempDuration(hours > 0 ? `${hours} hours ${mins} minutes` : `${mins} minutes`);
+
+            // Calculate fare
+            const fareNumber = (totalMeters / 1000) * DEFAULT_PRICE_PER_KM;
+            const formattedFare = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Math.round(fareNumber));
+            setTempFare(formattedFare);
+          }
+        }
+      }
+    );
+  }, [travelMode, schoolLocation]);
+
+  // Confirm location selection
+  const confirmLocationSelection = useCallback((lat: number, lng: number) => {
+    setSelectedCoords({ lat, lng });
+    setTempCoords(null);
+    setShowConfirmModal(false);
+    setShowSubmitForm(true);
+    
+    // Remove temporary renderer if exists
+    const renderer = directionsRendererRef.current as { tempRenderer?: google.maps.DirectionsRenderer };
+    if (renderer?.tempRenderer) {
+      renderer.tempRenderer.setMap(null);
+      renderer.tempRenderer = undefined;
+    }
+    
+    // Create final marker
     if (markerRef.current) {
       markerRef.current.setMap(null);
     }
 
-    // Create new marker
     markerRef.current = new google.maps.Marker({
       position: { lat, lng },
-      map: map,
-      title: 'Your Home',
+      map: mapInstanceRef.current!,
+      title: 'Confirmed Location',
       icon: {
         url: '/edubus_logo.png',
         scaledSize: new google.maps.Size(35, 35),
@@ -150,7 +259,7 @@ export default function MapPage() {
       draggable: true
     });
 
-    // Add drag listener
+    // Add drag listener for final marker
     markerRef.current.addListener('dragend', () => {
       const newPosition = markerRef.current?.getPosition();
       if (newPosition) {
@@ -161,10 +270,91 @@ export default function MapPage() {
       }
     });
 
-    // Draw route (driving) and update distance/duration from Directions result
-    setSelectedCoords({ lat, lng });
+    // Draw final route
     drawRoute(schoolLocation, { lat, lng });
   }, [drawRoute, schoolLocation]);
+
+  // Create temporary marker for preview
+  const createTempMarker = useCallback((lat: number, lng: number, map: google.maps.Map) => {
+    // Remove existing temp marker
+    if (markerRef.current) {
+      markerRef.current.setMap(null);
+    }
+
+    // Create new temporary marker
+    markerRef.current = new google.maps.Marker({
+      position: { lat, lng },
+      map: map,
+      title: 'Temporary Location - Click to Confirm',
+      icon: {
+        url: '/edubus_logo.png',
+        scaledSize: new google.maps.Size(35, 35),
+        anchor: new google.maps.Point(17.5, 17.5)
+      },
+      draggable: true,
+      animation: google.maps.Animation.BOUNCE
+    });
+
+    // Add click listener to confirm selection
+    markerRef.current.addListener('click', () => {
+      confirmLocationSelection(lat, lng);
+    });
+
+    // Add drag listener
+    markerRef.current.addListener('dragend', () => {
+      const newPosition = markerRef.current?.getPosition();
+      if (newPosition) {
+        const newLat = newPosition.lat();
+        const newLng = newPosition.lng();
+        setTempCoords({ lat: newLat, lng: newLng });
+        calculateTempRoute(newLat, newLng);
+        // Redraw route when dragging
+        drawTempRoute(schoolLocation, { lat: newLat, lng: newLng });
+      }
+    });
+
+    // Set temp coords and calculate route
+    setTempCoords({ lat, lng });
+    calculateTempRoute(lat, lng);
+    
+    // Draw temporary route to show the path
+    drawTempRoute(schoolLocation, { lat, lng });
+  }, [confirmLocationSelection, calculateTempRoute, drawTempRoute, schoolLocation]);
+
+  // Create home marker (legacy function for search)
+  const createHomeMarker = useCallback((lat: number, lng: number) => {
+    confirmLocationSelection(lat, lng);
+  }, [confirmLocationSelection]);
+
+  // Back to map selection
+  const backToMapSelection = useCallback(() => {
+    setShowSubmitForm(false);
+    setSelectedCoords(null);
+    setTempCoords(null);
+    setDistance('');
+    setDuration('');
+    setFare('');
+    setTempDistance('');
+    setTempDuration('');
+    setTempFare('');
+    setSubmitError('');
+    setSubmitSuccess('');
+    
+    // Clear markers and routes
+    if (markerRef.current) {
+      markerRef.current.setMap(null);
+      markerRef.current = null;
+    }
+    if (directionsRendererRef.current) {
+      directionsRendererRef.current.setDirections(null);
+      // Remove temporary renderer if exists
+      const renderer = directionsRendererRef.current as { tempRenderer?: google.maps.DirectionsRenderer };
+      if (renderer?.tempRenderer) {
+        renderer.tempRenderer.setMap(null);
+        renderer.tempRenderer = undefined;
+      }
+    }
+  }, []);
 
   // Initialize map
   useEffect(() => {
@@ -197,7 +387,7 @@ export default function MapPage() {
         // Initialize map with optimized settings
         const map = new Map(mapRef.current, {
           center: schoolLocation,
-          zoom: 14,
+          zoom: MAP_ZOOM_LEVEL,
           mapTypeControl: false,
           streetViewControl: false,
           fullscreenControl: false,
@@ -297,8 +487,8 @@ export default function MapPage() {
           if (event.latLng) {
             const lat = event.latLng.lat();
             const lng = event.latLng.lng();
-            setSelectedCoords({ lat, lng });
-            createHomeMarker(lat, lng, map);
+            createTempMarker(lat, lng, map);
+            setShowConfirmModal(true);
           }
         });
 
@@ -325,7 +515,7 @@ export default function MapPage() {
     return () => {
       isMounted = false;
     };
-  }, [createHomeMarker, schoolLocation]);
+  }, [createHomeMarker, createTempMarker, schoolLocation]);
 
   // Initialize Places Autocomplete on the input
   useEffect(() => {
@@ -347,7 +537,7 @@ export default function MapPage() {
           mapInstanceRef.current.setCenter({ lat, lng });
           mapInstanceRef.current.setZoom(15);
           setSelectedCoords({ lat, lng });
-          createHomeMarker(lat, lng, mapInstanceRef.current);
+          createHomeMarker(lat, lng);
         }
       });
     } catch {
@@ -376,12 +566,12 @@ export default function MapPage() {
 
           // Center map on searched location
           mapInstanceRef.current?.setCenter({ lat, lng });
-          mapInstanceRef.current?.setZoom(15);
+          mapInstanceRef.current?.setZoom(MAP_ZOOM_LEVEL_DETAILED);
 
           // Create home marker and draw route
           if (mapInstanceRef.current) {
             setSelectedCoords({ lat, lng });
-            createHomeMarker(lat, lng, mapInstanceRef.current);
+            createHomeMarker(lat, lng);
           }
         } else {
           // Fallback to Places text search if Geocoder doesn't find the address
@@ -397,10 +587,10 @@ export default function MapPage() {
                 const lat = loc.lat();
                 const lng = loc.lng();
                 mapInstanceRef.current?.setCenter({ lat, lng });
-                mapInstanceRef.current?.setZoom(15);
+                mapInstanceRef.current?.setZoom(MAP_ZOOM_LEVEL_DETAILED);
                 if (mapInstanceRef.current) {
                   setSelectedCoords({ lat, lng });
-                  createHomeMarker(lat, lng, mapInstanceRef.current);
+                  createHomeMarker(lat, lng);
                 }
               } else {
                 setError('Address not found. Please try a different address.');
@@ -456,7 +646,7 @@ export default function MapPage() {
         distanceKm: distanceKm,
         description: `Pickup point request for ${students.length} student(s)`,
         reason: 'Parent requested pickup point service',
-        unitPriceVndPerKm: 7000,
+        unitPriceVndPerKm: DEFAULT_PRICE_PER_KM,
         estimatedPriceVnd: estimatedPrice
       };
 
@@ -481,7 +671,10 @@ export default function MapPage() {
     try {
       const email = sessionStorage.getItem('parentEmail') || '';
       setParentEmail(email);
-    } catch {}
+    } catch (error) {
+      console.warn('Unable to access sessionStorage:', error);
+      setParentEmail('');
+    }
   }, []);
 
   // Load students from sessionStorage (set by verify-otp page)
@@ -505,7 +698,7 @@ export default function MapPage() {
       }
     } catch (error) {
       console.error('Error loading students from storage:', error);
-      setStudentsError('Unable to load students data.');
+      setStudentsError('Unable to load students data. Please refresh the page and try again.');
     }
   }, []);
 
@@ -542,7 +735,7 @@ export default function MapPage() {
               className="drop-shadow-lg"
             />
           </motion.div>
-          <span className="text-2xl font-bold text-[#D08700]">EduBus - Find route</span>
+          <span className="text-2xl font-bold text-[#D08700]">EduBus - Find Route</span>
         </motion.div>
         <motion.button
           initial={{ opacity: 0, x: 30 }}
@@ -611,13 +804,56 @@ export default function MapPage() {
             </div>
           </div>
 
-          {(distance || duration || fare) && (
+          {/* Show temporary info when location is selected but not confirmed */}
+          {tempCoords && (tempDistance || tempDuration || tempFare) && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mt-4 text-center"
+            >
+              <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 shadow-soft-lg inline-block">
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <span className="text-blue-600 text-lg">📍</span>
+                  <span className="text-blue-800 font-semibold">Temporary Location</span>
+                </div>
+                <div className="flex flex-col md:flex-row gap-3 items-center justify-center">
+                  {tempDistance && (
+                    <p className="text-lg font-semibold text-gray-800">
+                      Distance: <span className="text-blue-600 text-2xl font-bold">{tempDistance}</span>
+                    </p>
+                  )}
+                  {tempDuration && (
+                    <p className="text-lg font-semibold text-gray-800">
+                      Duration: <span className="text-blue-600 text-2xl font-bold">{tempDuration}</span>
+                    </p>
+                  )}
+                  {tempFare && (
+                    <p className="text-lg font-semibold text-gray-800">
+                      Estimated Fare: <span className="text-blue-600 text-2xl font-bold">{tempFare}</span>
+                      <span className="text-sm text-gray-500 ml-2">({DEFAULT_PRICE_PER_KM.toLocaleString('vi-VN')}₫/km)</span>
+                    </p>
+                  )}
+                </div>
+                <div className="mt-3 text-sm text-blue-700 flex items-center justify-center gap-2">
+                  <span className="text-blue-600">💡</span>
+                  <span>Click vào marker trên bản đồ để xác nhận vị trí này</span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Show confirmed info when location is confirmed */}
+          {selectedCoords && (distance || duration || fare) && (
             <motion.div 
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               className="mt-4 text-center"
             >
               <div className="bg-white rounded-2xl p-4 shadow-soft-lg inline-block">
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <span className="text-green-600 text-lg">✅</span>
+                  <span className="text-green-800 font-semibold">Confirmed Location</span>
+                </div>
                 <div className="flex flex-col md:flex-row gap-3 items-center justify-center">
                   {distance && (
                     <p className="text-lg font-semibold text-gray-800">
@@ -632,7 +868,7 @@ export default function MapPage() {
                   {fare && (
                     <p className="text-lg font-semibold text-gray-800">
                       Estimated Fare: <span className="text-[#D08700] text-2xl font-bold">{fare}</span>
-                      <span className="text-sm text-gray-500 ml-2">(7.000₫/km)</span>
+                      <span className="text-sm text-gray-500 ml-2">({DEFAULT_PRICE_PER_KM.toLocaleString('vi-VN')}₫/km)</span>
                     </p>
                   )}
                 </div>
@@ -649,13 +885,15 @@ export default function MapPage() {
           {/* Parent email and coordinate display */}
           <div className="mt-4 grid md:grid-cols-2 gap-4">
             <div className="bg-white rounded-2xl p-4 shadow-soft">
-              <p className="text-sm text-gray-500 mb-1">Parent email</p>
+              <p className="text-sm text-gray-500 mb-1">Parent Email</p>
               <p className="text-gray-800 font-semibold break-all">{parentEmail || '—'}</p>
             </div>
             <div className="bg-white rounded-2xl p-4 shadow-soft">
-              <p className="text-sm text-gray-500 mb-1">Selected coordinates</p>
+              <p className="text-sm text-gray-500 mb-1">Selected Coordinates</p>
               {selectedCoords ? (
                 <p className="text-gray-800 font-semibold">Lat: {selectedCoords.lat.toFixed(6)} — Lng: {selectedCoords.lng.toFixed(6)}</p>
+              ) : tempCoords ? (
+                <p className="text-blue-600 font-semibold">Lat: {tempCoords.lat.toFixed(6)} — Lng: {tempCoords.lng.toFixed(6)} <span className="text-sm text-gray-500">(temporary)</span></p>
               ) : (
                 <p className="text-gray-500">Click on the map to select a location</p>
               )}
@@ -674,7 +912,7 @@ export default function MapPage() {
             </motion.div>
           )}
 
-          {/* Submit Request Section */}
+          {/* Submit Request Section - Only Show When Location Is Confirmed */}
           {selectedCoords && students.length > 0 && (
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -731,17 +969,17 @@ export default function MapPage() {
         className="relative h-[600px] w-full"
       >
         {/* Students list (right top below buttons on desktop, above map on mobile) */}
-        {parentEmail && (
+        {!showSubmitForm && parentEmail && (
           <div className="absolute left-4 top-4 z-20 max-w-[360px]">
             <div className="bg-white/95 backdrop-blur rounded-2xl shadow p-4">
-              <p className="text-sm text-gray-500">Students linked to</p>
+              <p className="text-sm text-gray-500">Students Linked To</p>
               <p className="text-sm font-semibold text-gray-800 break-all mb-2">{parentEmail}</p>
               {false ? (
-                <p className="text-gray-500 text-sm">Loading students...</p>
+                <p className="text-gray-500 text-sm">Loading Students...</p>
               ) : studentsError ? (
                 <p className="text-red-600 text-sm">{studentsError}</p>
               ) : students.length === 0 ? (
-                <p className="text-gray-500 text-sm">No students found.</p>
+                <p className="text-gray-500 text-sm">No Students Found.</p>
               ) : (
                 <ul className="text-sm text-gray-800 space-y-1 max-h-40 overflow-auto pr-1">
                   {students.map((s, idx) => (
@@ -756,16 +994,17 @@ export default function MapPage() {
           </div>
         )}
         {/* Map action buttons */}
-        <div className="absolute z-20 right-4 top-4 flex flex-col gap-2">
+        {!showSubmitForm && (
+          <div className="absolute z-20 right-4 top-4 flex flex-col gap-2">
           <button
             onClick={() => {
               if (!mapInstanceRef.current) return;
               mapInstanceRef.current.setCenter(schoolLocation);
-              mapInstanceRef.current.setZoom(14);
+              mapInstanceRef.current.setZoom(MAP_ZOOM_LEVEL);
             }}
             className="bg-white/90 hover:bg-white text-gray-800 px-4 py-2 rounded-xl shadow"
           >
-            Center on school
+            Center on School
           </button>
           <button
             onClick={() => {
@@ -783,7 +1022,7 @@ export default function MapPage() {
             }}
             className="bg-white/90 hover:bg-white text-gray-800 px-4 py-2 rounded-xl shadow"
           >
-            Fit route
+            Fit Route
           </button>
           <button
             onClick={() => {
@@ -793,23 +1032,37 @@ export default function MapPage() {
               }
               if (directionsRendererRef.current) {
                 directionsRendererRef.current.setDirections(null);
+                // Remove temporary renderer if exists
+                const renderer = directionsRendererRef.current as { tempRenderer?: google.maps.DirectionsRenderer };
+                if (renderer?.tempRenderer) {
+                  renderer.tempRenderer.setMap(null);
+                  renderer.tempRenderer = undefined;
+                }
               }
               setDistance('');
               setDuration('');
               setFare('');
+              setTempDistance('');
+              setTempDuration('');
+              setTempFare('');
+              setSelectedCoords(null);
+              setTempCoords(null);
+              setShowConfirmModal(false);
+              setShowSubmitForm(false);
               setError('');
             }}
             className="bg-white/90 hover:bg-white text-gray-800 px-4 py-2 rounded-xl shadow"
           >
-            Clear home
+            Clear Location
           </button>
-        </div>
+          </div>
+        )}
 
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FDC700] mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading map...</p>
+              <p className="text-gray-600">Loading Map...</p>
             </div>
           </div>
         )}
@@ -821,10 +1074,10 @@ export default function MapPage() {
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">⚠️</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Unable to load map</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Unable to Load Map</h3>
               <p className="text-gray-600 mb-4">{error}</p>
               <div className="bg-white rounded-2xl p-4 text-left">
-                <h4 className="font-semibold text-gray-800 mb-2">How to fix:</h4>
+                <h4 className="font-semibold text-gray-800 mb-2">How to Fix:</h4>
                 <ul className="text-sm text-gray-600 space-y-1">
                   <li>• Check API key in .env.local</li>
                   <li>• Enable billing in Google Cloud Console</li>
@@ -836,20 +1089,79 @@ export default function MapPage() {
           </div>
         )}
         
-        <div 
-          ref={mapRef} 
-          className="w-full h-full"
-          style={{ minHeight: '600px' }}
-        />
+        {!showSubmitForm ? (
+          <div 
+            ref={mapRef} 
+            className="w-full h-full"
+            style={{ minHeight: '600px' }}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100" style={{ minHeight: '600px' }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full mx-4"
+            >
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-3xl">✅</span>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">Location Confirmed!</h3>
+                <p className="text-gray-600">Your pickup point has been selected</p>
+              </div>
+              
+              <div className="space-y-4 mb-6">
+                <div className="bg-gray-50 rounded-2xl p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Distance:</span>
+                    <span className="font-semibold text-gray-800">{distance}</span>
+                  </div>
+                </div>
+                <div className="bg-gray-50 rounded-2xl p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Duration:</span>
+                    <span className="font-semibold text-gray-800">{duration}</span>
+                  </div>
+                </div>
+                <div className="bg-gray-50 rounded-2xl p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Estimated Fare:</span>
+                    <span className="font-semibold text-green-600">{fare}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    // Handle submit request logic here
+                    console.log('Submit request');
+                  }}
+                  className="w-full bg-[#FDC700] hover:bg-[#D08700] text-white font-semibold py-3 px-6 rounded-2xl transition-colors duration-200 shadow-lg"
+                >
+                  Submit Request
+                </button>
+                <button
+                  onClick={backToMapSelection}
+                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-2xl transition-colors duration-200"
+                >
+                  Back to Map
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </motion.div>
 
       {/* Instructions */}
-      <motion.div 
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.5 }}
-        className="bg-white px-6 py-8"
-      >
+      {!showSubmitForm && (
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+          className="bg-white px-6 py-8"
+        >
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">How to use</h2>
           <div className="grid md:grid-cols-3 gap-6">
@@ -857,26 +1169,27 @@ export default function MapPage() {
               <div className="w-12 h-12 bg-[#FDC700] rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">🔍</span>
               </div>
-              <h3 className="font-semibold text-gray-800 mb-2">Search address</h3>
+              <h3 className="font-semibold text-gray-800 mb-2">Search Address</h3>
               <p className="text-gray-600 text-sm">Enter your home address in the search box</p>
             </div>
             <div className="bg-[#FEFCE8] rounded-2xl p-6">
               <div className="w-12 h-12 bg-[#FDC700] rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">📍</span>
               </div>
-              <h3 className="font-semibold text-gray-800 mb-2">Click on the map</h3>
-              <p className="text-gray-600 text-sm">Click your home location on the map</p>
+              <h3 className="font-semibold text-gray-800 mb-2">Click on the Map</h3>
+              <p className="text-gray-600 text-sm">Click your home location on the map to preview</p>
             </div>
             <div className="bg-[#FEFCE8] rounded-2xl p-6">
               <div className="w-12 h-12 bg-[#FDC700] rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">📏</span>
+                <span className="text-2xl">✅</span>
               </div>
-              <h3 className="font-semibold text-gray-800 mb-2">See distance</h3>
-              <p className="text-gray-600 text-sm">Distance will be shown automatically</p>
+              <h3 className="font-semibold text-gray-800 mb-2">Confirm Location</h3>
+              <p className="text-gray-600 text-sm">Click the marker to confirm your choice</p>
             </div>
           </div>
         </div>
-      </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 }
