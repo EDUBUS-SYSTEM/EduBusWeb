@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Loader } from '@googlemaps/js-api-loader';
-import { apiService } from '@/lib/api';
+import { pickupPointService } from '@/services/pickupPointService';
 
 type Student = {
   id?: string | number;
@@ -41,11 +41,16 @@ export default function MapPage() {
   // Parent email and students
   const [parentEmail, setParentEmail] = useState<string>('');
   const [students, setStudents] = useState<Student[]>([]);
-  const [studentsLoading, setStudentsLoading] = useState(false);
+  // const [studentsLoading, setStudentsLoading] = useState(false); // Removed - not used anymore
   const [studentsError, setStudentsError] = useState('');
 
   // Selected coords from clicks/search
   const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
+  
+  // Submit request state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [submitSuccess, setSubmitSuccess] = useState('');
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
@@ -320,7 +325,7 @@ export default function MapPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [createHomeMarker, schoolLocation]);
 
   // Initialize Places Autocomplete on the input
   useEffect(() => {
@@ -345,7 +350,7 @@ export default function MapPage() {
           createHomeMarker(lat, lng, mapInstanceRef.current);
         }
       });
-    } catch (e) {
+    } catch {
       // Autocomplete optional; ignore failures
     }
 
@@ -353,7 +358,7 @@ export default function MapPage() {
       // No direct remove API for Autocomplete listeners; rely on GC
       autocompleteRef.current = null;
     };
-  }, [isMapLoaded]);
+  }, [isMapLoaded, createHomeMarker]);
 
   // Handle manual search (fallback if user presses button)
   const handleSearch = useCallback(async () => {
@@ -419,11 +424,55 @@ export default function MapPage() {
     if (position) {
       drawRoute(schoolLocation, { lat: position.lat(), lng: position.lng() });
     }
-  }, [travelMode, isMapLoaded, drawRoute]);
+  }, [travelMode, isMapLoaded, drawRoute, schoolLocation]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleSearch();
+    }
+  };
+
+  // Submit pickup point request
+  const handleSubmitRequest = async () => {
+    if (!selectedCoords || !parentEmail || students.length === 0) {
+      setSubmitError('Please select a location and ensure students are loaded.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError('');
+    setSubmitSuccess('');
+
+    try {
+      const distanceKm = parseFloat(distance.replace(' km', '')) || 0;
+      const estimatedPrice = parseFloat(fare.replace(/[^\d]/g, '')) || 0;
+
+      const payload = {
+        email: parentEmail,
+        studentIds: students.map(s => s.id?.toString() || ''),
+        addressText: searchQuery || 'Selected location',
+        latitude: selectedCoords.lat,
+        longitude: selectedCoords.lng,
+        distanceKm: distanceKm,
+        description: `Pickup point request for ${students.length} student(s)`,
+        reason: 'Parent requested pickup point service',
+        unitPriceVndPerKm: 7000,
+        estimatedPriceVnd: estimatedPrice
+      };
+
+      const result = await pickupPointService.submitRequest(payload);
+      setSubmitSuccess(result.message || 'Request submitted successfully!');
+      
+      // Clear form after successful submission
+      setTimeout(() => {
+        router.push('/');
+      }, 3000);
+      
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { title?: string; detail?: string; message?: string } } }).response?.data;
+      setSubmitError(message?.detail || message?.message || 'Failed to submit request. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -435,29 +484,36 @@ export default function MapPage() {
     } catch {}
   }, []);
 
-  // Fetch students by parent email (placeholder endpoint)
-  const fetchStudents = useCallback(async (email: string) => {
-    if (!email) return;
-    setStudentsLoading(true);
-    setStudentsError('');
+  // Load students from sessionStorage (set by verify-otp page)
+  const loadStudentsFromStorage = useCallback(() => {
     try {
-      // Adjust endpoint to your backend
-      const data = await apiService.get<Student[] | { students?: Student[] }>(`/students/by-parent-email`, { email });
-      const list = Array.isArray(data) ? data : (data?.students ?? []);
-      setStudents(list as Student[]);
-    } catch {
-      setStudents([]);
-      setStudentsError('Unable to load students for this email.');
-    } finally {
-      setStudentsLoading(false);
+      const storedStudents = sessionStorage.getItem('parentStudents');
+      const storedEmailExists = sessionStorage.getItem('parentEmailExists');
+      
+      if (storedStudents) {
+        const parsedStudents = JSON.parse(storedStudents);
+        setStudents(parsedStudents.map((s: { id: string; firstName: string; lastName: string }) => ({
+          id: s.id,
+          fullName: `${s.firstName} ${s.lastName}`,
+          name: `${s.firstName} ${s.lastName}`
+        })));
+      }
+      
+      if (storedEmailExists) {
+        // Email exists info is available but not used in current UI
+        console.log('Email exists in system:', storedEmailExists === 'true');
+      }
+    } catch (error) {
+      console.error('Error loading students from storage:', error);
+      setStudentsError('Unable to load students data.');
     }
   }, []);
 
   useEffect(() => {
     if (parentEmail) {
-      fetchStudents(parentEmail);
+      loadStudentsFromStorage();
     }
-  }, [parentEmail, fetchStudents]);
+  }, [parentEmail, loadStudentsFromStorage]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -617,6 +673,53 @@ export default function MapPage() {
               </div>
             </motion.div>
           )}
+
+          {/* Submit Request Section */}
+          {selectedCoords && students.length > 0 && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-6 text-center"
+            >
+              <div className="bg-white rounded-2xl p-6 shadow-soft-lg">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Submit Pickup Point Request</h3>
+                <p className="text-gray-600 mb-4">
+                  Location selected: <span className="font-semibold">{searchQuery || 'Map location'}</span>
+                </p>
+                <p className="text-gray-600 mb-4">
+                  Students: <span className="font-semibold">{students.length} student(s)</span>
+                </p>
+                {fare && (
+                  <p className="text-gray-600 mb-4">
+                    Estimated cost: <span className="font-semibold text-[#D08700]">{fare}</span>
+                  </p>
+                )}
+                
+                {submitError && (
+                  <div className="bg-red-100 border border-red-300 rounded-2xl p-3 mb-4">
+                    <p className="text-red-600 text-sm">{submitError}</p>
+                  </div>
+                )}
+                
+                {submitSuccess && (
+                  <div className="bg-green-100 border border-green-300 rounded-2xl p-3 mb-4">
+                    <p className="text-green-600 text-sm">{submitSuccess}</p>
+                    <p className="text-green-600 text-xs mt-1">Redirecting to home page...</p>
+                  </div>
+                )}
+                
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleSubmitRequest}
+                  disabled={isSubmitting}
+                  className="bg-[#FDC700] text-black px-8 py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
         </div>
       </motion.div>
 
@@ -633,7 +736,7 @@ export default function MapPage() {
             <div className="bg-white/95 backdrop-blur rounded-2xl shadow p-4">
               <p className="text-sm text-gray-500">Students linked to</p>
               <p className="text-sm font-semibold text-gray-800 break-all mb-2">{parentEmail}</p>
-              {studentsLoading ? (
+              {false ? (
                 <p className="text-gray-500 text-sm">Loading students...</p>
               ) : studentsError ? (
                 <p className="text-red-600 text-sm">{studentsError}</p>
