@@ -59,11 +59,68 @@ export interface SubmitPickupPointRequestResponseDto {
 	createdAt: string;
 }
 
+// Admin interfaces
+export interface ParentRegistrationInfoDto {
+	firstName: string;
+	lastName: string;
+	phoneNumber: string;
+	address: string;
+	dateOfBirth: string;
+	gender: number;
+	createdAt: string;
+}
+
+export interface PickupPointRequestDetailDto {
+	id: string;
+	parentEmail: string;
+	parentInfo?: ParentRegistrationInfoDto;
+	students: StudentBriefDto[];
+	addressText: string;
+	latitude: number;
+	longitude: number;
+	distanceKm: number;
+	description: string;
+	reason: string;
+	unitPriceVndPerKm: number;
+	estimatedPriceVnd: number;
+	status: "Pending" | "Approved" | "Rejected";
+	adminNotes: string;
+	reviewedAt?: string;
+	reviewedByAdminId?: string;
+	createdAt: string;
+	updatedAt?: string;
+}
+
+export interface PickupPointRequestListQuery {
+	status?: string;
+	parentEmail?: string;
+	skip?: number;
+	take?: number;
+	[key: string]: unknown;
+}
+
+export interface ApprovePickupPointRequestDto {
+	notes?: string;
+}
+
+export interface RejectPickupPointRequestDto {
+	reason: string;
+}
+
 export const pickupPointService = {
+	// Public endpoints
 	registerParent: (data: ParentRegistrationRequestDto) =>
 		apiService.post<ParentRegistrationResponseDto>('/PickupPoint/register', data),
 	verifyOtp: (data: VerifyOtpRequest) =>
 		apiService.post<VerifyOtpWithStudentsResponseDto>('/PickupPoint/verify-otp', data),
 	submitRequest: (data: SubmitPickupPointRequestDto) =>
 		apiService.post<SubmitPickupPointRequestResponseDto>('/PickupPoint/submit-request', data),
+	
+	// Admin endpoints
+	listRequests: (query?: PickupPointRequestListQuery) =>
+		apiService.get<PickupPointRequestDetailDto[]>('/PickupPoint/requests', query),
+	approveRequest: (requestId: string, data: ApprovePickupPointRequestDto) =>
+		apiService.post(`/PickupPoint/requests/${requestId}/approve`, data),
+	rejectRequest: (requestId: string, data: RejectPickupPointRequestDto) =>
+		apiService.post(`/PickupPoint/requests/${requestId}/reject`, data),
 };

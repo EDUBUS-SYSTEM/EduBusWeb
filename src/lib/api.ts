@@ -61,7 +61,7 @@ export const testApiConnection = async (): Promise<string> => {
       await testClient.get('/health/live');
       console.log(`✅ API connection successful: ${baseUrl}`);
       return baseUrl;
-    } catch (error) {
+    } catch {
       console.log(`❌ API connection failed: ${baseUrl}`);
       continue;
     }

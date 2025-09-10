@@ -1,42 +1,8 @@
 "use client";
 import { FaUser, FaChild, FaMapMarkerAlt, FaDollarSign, FaCalendarAlt, FaPhone, FaEnvelope, FaHome, FaTimes, FaRoute } from "react-icons/fa";
+import { PickupPointRequestDetailDto } from "@/services/pickupPointService";
 
-interface ParentRegistrationInfo {
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  address: string;
-  dateOfBirth: string;
-  gender: number;
-  createdAt: string;
-}
-
-interface StudentBrief {
-  id: string;
-  firstName: string;
-  lastName: string;
-}
-
-interface PickupPointRequest {
-  id: string;
-  parentEmail: string;
-  parentInfo?: ParentRegistrationInfo;
-  students: StudentBrief[];
-  addressText: string;
-  latitude: number;
-  longitude: number;
-  distanceKm: number;
-  description: string;
-  reason: string;
-  unitPriceVndPerKm: number;
-  estimatedPriceVnd: number;
-  status: "Pending" | "Approved" | "Rejected";
-  adminNotes: string;
-  reviewedAt?: string;
-  reviewedByAdminId?: string;
-  createdAt: string;
-  updatedAt?: string;
-}
+type PickupPointRequest = PickupPointRequestDetailDto;
 
 interface RequestDetailModalProps {
   request: PickupPointRequest;

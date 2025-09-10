@@ -1,54 +1,12 @@
 "use client";
-import { useState, useEffect } from "react";
-import { FaSearch, FaFilter, FaEye, FaCheck, FaTimes, FaMapMarkerAlt, FaUser, FaChild, FaDollarSign, FaCalendarAlt } from "react-icons/fa";
+import { useState, useEffect, useCallback } from "react";
+import { FaSearch, FaFilter, FaEye, FaCheck, FaTimes, FaMapMarkerAlt, FaUser, FaChild } from "react-icons/fa";
 import RequestDetailModal from "./RequestDetailModal";
-import { mockParentRequests } from "./demo-data";
+import { pickupPointService, PickupPointRequestDetailDto } from "@/services/pickupPointService";
 
-// Types based on API response
-interface ParentRegistrationInfo {
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  address: string;
-  dateOfBirth: string;
-  gender: number;
-  createdAt: string;
-}
+// Use the API types directly
+type PickupPointRequest = PickupPointRequestDetailDto;
 
-interface StudentBrief {
-  id: string;
-  firstName: string;
-  lastName: string;
-}
-
-interface PickupPointRequest {
-  id: string;
-  parentEmail: string;
-  parentInfo?: ParentRegistrationInfo;
-  students: StudentBrief[];
-  addressText: string;
-  latitude: number;
-  longitude: number;
-  distanceKm: number;
-  description: string;
-  reason: string;
-  unitPriceVndPerKm: number;
-  estimatedPriceVnd: number;
-  status: "Pending" | "Approved" | "Rejected";
-  adminNotes: string;
-  reviewedAt?: string;
-  reviewedByAdminId?: string;
-  createdAt: string;
-  updatedAt?: string;
-}
-
-interface RequestListQuery {
-  status?: string;
-  parentEmail?: string;
-  skip?: number;
-  take?: number;
-  [key: string]: unknown;
-}
 
 export default function ParentRequestList() {
   const [requests, setRequests] = useState<PickupPointRequest[]>([]);
@@ -73,53 +31,61 @@ export default function ParentRequestList() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const fetchRequests = () => {
+  const fetchRequests = useCallback(async () => {
     setLoading(true);
     setError(null);
     
-    // Simulate API delay
-    setTimeout(() => {
-      try {
-        let filteredData = [...mockParentRequests];
-        
-        // Apply filters
-        if (statusFilter) {
-          filteredData = filteredData.filter(req => req.status === statusFilter);
-        }
-        
-        if (searchEmail.trim()) {
-          filteredData = filteredData.filter(req => 
-            req.parentEmail.toLowerCase().includes(searchEmail.toLowerCase())
-          );
-        }
-        
-        if (searchName.trim()) {
-          filteredData = filteredData.filter(req => {
-            if (!req.parentInfo) return false;
-            const fullName = `${req.parentInfo.firstName} ${req.parentInfo.lastName}`.toLowerCase();
-            return fullName.includes(searchName.toLowerCase());
-          });
-        }
-        
-        // Apply pagination
-        const skip = (currentPage - 1) * itemsPerPage;
-        const take = itemsPerPage;
-        const paginatedData = filteredData.slice(skip, skip + take);
-        
-        setRequests(paginatedData);
-        setTotalItems(filteredData.length);
-      } catch (err) {
-        setError("Failed to load demo data");
-        console.error("Error loading demo data:", err);
-      } finally {
-        setLoading(false);
+    try {
+      // Calculate pagination
+      const skip = (currentPage - 1) * itemsPerPage;
+      
+      // Build query parameters
+      const query: Record<string, unknown> = {
+        skip,
+        take: itemsPerPage
+      };
+      
+      // Add filters
+      if (statusFilter) {
+        query.status = statusFilter;
       }
-    }, 500); // Simulate network delay
-  };
+      
+      if (searchEmail.trim()) {
+        query.parentEmail = searchEmail.trim();
+      }
+      
+      // Fetch data from API
+      const data = await pickupPointService.listRequests(query);
+      
+      // Apply client-side name filtering if needed (since API doesn't support name search)
+      let filteredData = data;
+      if (searchName.trim()) {
+        filteredData = data.filter(req => {
+          if (!req.parentInfo) return false;
+          const fullName = `${req.parentInfo.firstName} ${req.parentInfo.lastName}`.toLowerCase();
+          return fullName.includes(searchName.toLowerCase());
+        });
+      }
+      
+      setRequests(filteredData);
+      // Note: API doesn't return total count, so we'll estimate based on current page
+      setTotalItems(filteredData.length === itemsPerPage ? (currentPage * itemsPerPage) + 1 : currentPage * itemsPerPage);
+    } catch (err: unknown) {
+      const errorMessage = (err as { response?: { data?: { detail?: string } }; message?: string }).response?.data?.detail || 
+                          (err as { message?: string }).message || 
+                          "Failed to load requests. Please try again.";
+      setError(errorMessage);
+      console.error("Error loading requests:", err);
+      setRequests([]);
+      setTotalItems(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, statusFilter, searchEmail, searchName, itemsPerPage]);
 
   useEffect(() => {
     fetchRequests();
-  }, [currentPage, statusFilter]);
+  }, [fetchRequests]);
 
   // Debounce search inputs
   useEffect(() => {
@@ -128,48 +94,54 @@ export default function ParentRequestList() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchEmail, searchName]);
+  }, [searchEmail, searchName, fetchRequests]);
 
-  const handleApprove = (requestId: string, notes?: string) => {
+  const handleApprove = async (requestId: string, notes?: string) => {
     setActionLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      // Update the request status in demo data
-      const updatedRequests = requests.map(req => 
-        req.id === requestId 
-          ? { ...req, status: "Approved" as const, adminNotes: notes || "", reviewedAt: new Date().toISOString() }
-          : req
-      );
-      setRequests(updatedRequests);
+    try {
+      await pickupPointService.approveRequest(requestId, { notes });
+      
+      // Refresh the requests list
+      await fetchRequests();
       
       setShowApproveModal(false);
       setSelectedRequest(null);
-      setActionLoading(false);
       
       alert("Request approved successfully!");
-    }, 1000);
+    } catch (err: unknown) {
+      console.error("Error approving request:", err);
+      const errorMessage = (err as { response?: { data?: { detail?: string } }; message?: string }).response?.data?.detail || 
+                          (err as { message?: string }).message || 
+                          "Failed to approve request. Please try again.";
+      alert(errorMessage);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
-  const handleReject = (requestId: string, reason: string) => {
+  const handleReject = async (requestId: string, reason: string) => {
     setActionLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      // Update the request status in demo data
-      const updatedRequests = requests.map(req => 
-        req.id === requestId 
-          ? { ...req, status: "Rejected" as const, adminNotes: reason, reviewedAt: new Date().toISOString() }
-          : req
-      );
-      setRequests(updatedRequests);
+    try {
+      await pickupPointService.rejectRequest(requestId, { reason });
+      
+      // Refresh the requests list
+      await fetchRequests();
       
       setShowRejectModal(false);
       setSelectedRequest(null);
-      setActionLoading(false);
       
       alert("Request rejected successfully!");
-    }, 1000);
+    } catch (err: unknown) {
+      console.error("Error rejecting request:", err);
+      const errorMessage = (err as { response?: { data?: { detail?: string } }; message?: string }).response?.data?.detail || 
+                          (err as { message?: string }).message || 
+                          "Failed to reject request. Please try again.";
+      alert(errorMessage);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -193,15 +165,6 @@ export default function ParentRequestList() {
     }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
 
   if (loading) {
     return (

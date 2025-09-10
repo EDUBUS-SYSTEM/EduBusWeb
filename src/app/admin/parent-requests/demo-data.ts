@@ -201,7 +201,7 @@ export const simulateApiDelay = (ms: number = 1000) => {
 
 // Mock API functions for testing
 export const mockApiService = {
-  get: async (url: string, params?: any) => {
+  get: async (url: string, params?: Record<string, unknown>) => {
     await simulateApiDelay(500);
     
     if (url.includes('/pickup-point/requests')) {
@@ -214,13 +214,13 @@ export const mockApiService = {
       
       if (params?.parentEmail) {
         filteredData = filteredData.filter(req => 
-          req.parentEmail.toLowerCase().includes(params.parentEmail.toLowerCase())
+          req.parentEmail.toLowerCase().includes((params.parentEmail as string).toLowerCase())
         );
       }
       
       // Apply pagination
-      const skip = params?.skip || 0;
-      const take = params?.take || 10;
+      const skip = (params?.skip as number) || 0;
+      const take = (params?.take as number) || 10;
       const paginatedData = filteredData.slice(skip, skip + take);
       
       return paginatedData;
@@ -229,7 +229,7 @@ export const mockApiService = {
     return [];
   },
   
-  post: async (url: string, data?: any) => {
+  post: async (url: string, data?: Record<string, unknown>) => {
     await simulateApiDelay(800);
     
     if (url.includes('/approve')) {
