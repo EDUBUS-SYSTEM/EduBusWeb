@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { pickupPointService } from '@/services/pickupPointService';
 
 export default function VerifyOtpPage() {
   const router = useRouter();
@@ -37,23 +38,36 @@ export default function VerifyOtpPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const code = otp.join('');
     if (code.length !== 6) {
-      setError('Vui lòng nhập đủ 6 chữ số.');
+      setError('Please enter all 6 digits.');
       return;
     }
     setSubmitting(true);
-    // Front-end only: mock verify OTP === '123456'
-    setTimeout(() => {
-      if (code === '123456') {
+    setError('');
+    
+    try {
+      const result = await pickupPointService.verifyOtp({
+        email: email,
+        otp: code
+      });
+      
+      if (result.verified) {
+        // Store students and emailExists for map page
+        sessionStorage.setItem('parentStudents', JSON.stringify(result.students));
+        sessionStorage.setItem('parentEmailExists', String(result.emailExists));
         router.replace('/map');
       } else {
-        setError('Mã OTP không đúng. Vui lòng thử lại.');
-        setSubmitting(false);
+        setError(result.message || 'Invalid OTP code. Please try again.');
       }
-    }, 500);
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { title?: string; detail?: string; message?: string } } }).response?.data;
+      setError(message?.detail || message?.message || 'OTP verification failed. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
