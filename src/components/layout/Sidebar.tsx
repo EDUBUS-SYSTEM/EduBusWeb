@@ -15,6 +15,7 @@ import {
   FaMapMarkedAlt,
   FaList,
   FaBus,
+  FaClock,
 } from "react-icons/fa";
 
 export default function Sidebar() {
@@ -32,6 +33,7 @@ export default function Sidebar() {
     { href: "/admin/trips", label: "Trip Management", icon: <FaMapMarkedAlt /> },
     { href: "/admin/students", label: "Students List", icon: <FaList /> },
     { href: "/admin/vehicles", label: "Vehicles", icon: <FaBus /> },
+    { href: "/admin/schedules", label: "Schedule Management", icon: <FaClock /> },
   ];
 
   return (

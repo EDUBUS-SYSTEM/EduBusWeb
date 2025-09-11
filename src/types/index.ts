@@ -319,7 +319,7 @@ export interface CalendarEvent {
   tripId?: string;
   scheduleId?: string;
   status?: 'planned' | 'in-progress' | 'completed' | 'cancelled';
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface CalendarView {

@@ -134,25 +134,25 @@ export default function TripDetails({ trip, onClose, onEdit }: TripDetailsProps)
                     {trip.metadata.route && (
                       <div>
                         <label className="text-sm text-gray-500">Route</label>
-                        <p className="text-gray-800 font-medium">{trip.metadata.route}</p>
+                        <p className="text-gray-800 font-medium">{String(trip.metadata.route)}</p>
                       </div>
                     )}
                     {trip.metadata.driver && (
                       <div>
                         <label className="text-sm text-gray-500">Driver</label>
-                        <p className="text-gray-800 font-medium">{trip.metadata.driver}</p>
+                        <p className="text-gray-800 font-medium">{String(trip.metadata.driver)}</p>
                       </div>
                     )}
                     {trip.metadata.vehicle && (
                       <div>
                         <label className="text-sm text-gray-500">Vehicle</label>
-                        <p className="text-gray-800 font-medium">{trip.metadata.vehicle}</p>
+                        <p className="text-gray-800 font-medium">{String(trip.metadata.vehicle)}</p>
                       </div>
                     )}
                     {trip.metadata.students && (
                       <div>
                         <label className="text-sm text-gray-500">Students</label>
-                        <p className="text-gray-800 font-medium">{trip.metadata.students} students</p>
+                        <p className="text-gray-800 font-medium">{String(trip.metadata.students)} students</p>
                       </div>
                     )}
                   </>
