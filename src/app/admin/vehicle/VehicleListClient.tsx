@@ -290,7 +290,6 @@ export default function VehicleListClient() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-
                           <button
                             onClick={() => openAssignDriverModal(vehicle.id)}
                             className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center shadow-md hover:bg-green-600 transition-colors"

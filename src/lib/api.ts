@@ -39,7 +39,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     const url = error.config?.url || "";
-    if (error.response?.status === 401 && !url.includes("/auth/login")) {
+    if (error.response?.status === 401 && !url.includes("/auth/login") && !url.includes("localhost:5000")) {
       // Handle when token expires
       localStorage.removeItem("token");
       window.location.href = "/";
