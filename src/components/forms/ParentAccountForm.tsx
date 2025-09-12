@@ -49,7 +49,7 @@ const ParentAccountForm: React.FC<ParentAccountFormProps> = ({
       [field]: files,
     }));
   };
-
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
@@ -126,7 +126,7 @@ const ParentAccountForm: React.FC<ParentAccountFormProps> = ({
              onChange={(e) => handleInputChange("dateOfBirth", e.target.value)}
              error={errors.dateOfBirth}
              required
-           />
+           /> 
         </div>
              </div>
 
