@@ -23,12 +23,11 @@ export interface Student {
   };
 }
 
-// API Student types for backend integration
 export interface CreateStudentRequest {
   parentId?: string;
   firstName: string;
   lastName: string;
-  parentPhoneNumber: string;
+  parentEmail: string;
 }
 
 export interface UpdateStudentRequest {
@@ -39,6 +38,14 @@ export interface UpdateStudentRequest {
   parentPhoneNumber: string;
 }
 
+export enum StudentStatus {
+  Available = 0,
+  Pending = 1,
+  Active = 2,
+  Inactive = 3,
+  Deleted = 4
+}
+
 export interface StudentDto {
   id: string;
   parentId?: string;
@@ -46,9 +53,9 @@ export interface StudentDto {
   lastName: string;
   isActive: boolean;
   parentPhoneNumber: string;
+  status: StudentStatus;
 }
 
-// Add these types
 export interface ImportStudentSuccess {
   firstName: string;
   lastName: string;

@@ -3,7 +3,8 @@ import {
   CreateStudentRequest, 
   UpdateStudentRequest, 
   StudentDto, 
-  ImportStudentResult 
+  ImportStudentResult,
+  StudentStatus
 } from "./studentService.types";
 
 export const studentService = {
@@ -71,5 +72,26 @@ export const studentService = {
     }
     
     return await response.blob();
+  },
+
+  // Status management methods
+  activate: async (id: string): Promise<StudentDto> => {
+    return await apiService.post<StudentDto>(`/Student/${id}/activate`);
+  },
+
+  deactivate: async (id: string, reason: string): Promise<StudentDto> => {
+    return await apiService.post<StudentDto>(`/Student/${id}/deactivate`, { reason });
+  },
+
+  restore: async (id: string): Promise<StudentDto> => {
+    return await apiService.post<StudentDto>(`/Student/${id}/restore`);
+  },
+
+  delete: async (id: string): Promise<void> => {
+    return await apiService.delete<void>(`/Student/${id}`);
+  },
+
+  getByStatus: async (status: StudentStatus): Promise<StudentDto[]> => {
+    return await apiService.get<StudentDto[]>(`/Student/status/${status}`);
   },
 };
