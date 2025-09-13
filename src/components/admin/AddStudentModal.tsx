@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FaTimes, FaUser, FaCheck, FaSpinner } from 'react-icons/fa';
+import { FaTimes, FaCheck, FaSpinner } from 'react-icons/fa';
 import { CreateStudentRequest } from '@/services/studentService/studentService.types';
 
 interface AddStudentModalProps {
@@ -14,7 +14,7 @@ export default function AddStudentModal({ isOpen, onClose, onSubmit }: AddStuden
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
-    parentPhoneNumber: '',
+    parentEmail: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -39,8 +39,8 @@ export default function AddStudentModal({ isOpen, onClose, onSubmit }: AddStuden
     if (!formData.lastName.trim()) {
       newErrors.lastName = 'Last name is required';
     }
-    if (!formData.parentPhoneNumber.trim()) {
-      newErrors.parentPhoneNumber = 'Parent phone number is required';
+    if (!formData.parentEmail.trim()) {
+      newErrors.parentEmail = 'Parent email is required';
     }
 
     setErrors(newErrors);
@@ -60,7 +60,7 @@ export default function AddStudentModal({ isOpen, onClose, onSubmit }: AddStuden
       const newStudent: CreateStudentRequest = {
         firstName: formData.firstName,
         lastName: formData.lastName,
-        parentPhoneNumber: formData.parentPhoneNumber,
+        parentEmail: formData.parentEmail,
       };
 
       await onSubmit(newStudent);
@@ -69,7 +69,7 @@ export default function AddStudentModal({ isOpen, onClose, onSubmit }: AddStuden
       setFormData({
         firstName: '',
         lastName: '',
-        parentPhoneNumber: '',
+        parentEmail: '',
       });
       setErrors({});
       
@@ -140,24 +140,24 @@ export default function AddStudentModal({ isOpen, onClose, onSubmit }: AddStuden
             )}
           </div>
 
-          {/* Parent Phone Number */}
+          {/* Parent Email */}
           <div>
-            <label htmlFor="parentPhoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
-              Parent Phone Number *
+            <label htmlFor="parentEmail" className="block text-sm font-medium text-gray-700 mb-2">
+              Parent Email *
             </label>
             <input
-              type="tel"
-              id="parentPhoneNumber"
-              name="parentPhoneNumber"
-              value={formData.parentPhoneNumber}
+              type="email"
+              id="parentEmail"
+              name="parentEmail"
+              value={formData.parentEmail}
               onChange={handleChange}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                errors.parentPhoneNumber ? 'border-red-500' : 'border-gray-300'
+                errors.parentEmail ? 'border-red-500' : 'border-gray-300'
               }`}
-              placeholder="Enter parent phone number"
+              placeholder="Enter parent email"
             />
-            {errors.parentPhoneNumber && (
-              <p className="mt-1 text-sm text-red-600">{errors.parentPhoneNumber}</p>
+            {errors.parentEmail && (
+              <p className="mt-1 text-sm text-red-600">{errors.parentEmail}</p>
             )}
           </div>
 
