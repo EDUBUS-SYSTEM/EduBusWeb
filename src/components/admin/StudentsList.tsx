@@ -12,18 +12,19 @@ import {
   FaDownload,
 } from "react-icons/fa";
 import { AddStudentModal, EditStudentModal, ViewStudentModal } from "./index";
-import { Student } from "@/types";
 import { studentService } from "@/services/studentService/studentService.api";
 import {
   StudentDto,
   CreateStudentRequest,
   UpdateStudentRequest,
+  StudentStatus,
 } from "@/services/studentService/studentService.types";
 
 export default function StudentsList() {
   const [students, setStudents] = useState<StudentDto[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<StudentDto[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StudentStatus | "all">("all");
   const [sortBy, setSortBy] = useState<"firstName" | "createdAt">("firstName");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -37,15 +38,38 @@ export default function StudentsList() {
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  // Add ref for file input
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Mock data - replace with actual API call
-  const fetchStudents = async () => {
+  const getStatusInfo = (status: StudentStatus) => {
+    switch (status) {
+      case StudentStatus.Available:
+        return { text: "Available", className: "bg-blue-100 text-blue-800" };
+      case StudentStatus.Pending:
+        return { text: "Pending", className: "bg-yellow-100 text-yellow-800" };
+      case StudentStatus.Active:
+        return { text: "Active", className: "bg-green-100 text-green-800" };
+      case StudentStatus.Inactive:
+        return { text: "Inactive", className: "bg-gray-100 text-gray-800" };
+      case StudentStatus.Deleted:
+        return { text: "Deleted", className: "bg-red-100 text-red-800" };
+      default:
+        return { text: "Unknown", className: "bg-gray-100 text-gray-800" };
+    }
+  };
+
+  // Fetch students with optional status filter
+  const fetchStudents = async (status?: StudentStatus | "all") => {
     try {
       setLoading(true);
       setError(null);
-      const studentsData = await studentService.getAll();
+      let studentsData: StudentDto[];
+      
+      if (status && status !== "all") {
+        studentsData = await studentService.getByStatus(status);
+      } else {
+        studentsData = await studentService.getAll();
+      }
+      
       console.log(studentsData);
       setStudents(studentsData);
       setFilteredStudents(studentsData);
@@ -61,7 +85,12 @@ export default function StudentsList() {
     fetchStudents();
   }, []);
 
-  // Search functionality
+  // Status filter - fetch from API when status changes
+  useEffect(() => {
+    fetchStudents(statusFilter);
+  }, [statusFilter]);
+
+  // Search functionality - client-side for better UX
   useEffect(() => {
     const filtered = students.filter(
       (student) =>
@@ -69,6 +98,7 @@ export default function StudentsList() {
         student.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.parentPhoneNumber.includes(searchTerm)
     );
+
     setFilteredStudents(filtered);
   }, [searchTerm, students]);
 
@@ -142,7 +172,52 @@ export default function StudentsList() {
     setIsViewModalOpen(true);
   };
 
-  const handleDeleteStudent = (id: string) => {
+  // Status management handlers
+  const handleActivateStudent = async (id: string) => {
+    try {
+      await studentService.activate(id);
+      await fetchStudents(statusFilter);
+      setSuccessMessage("Student activated successfully!");
+    } catch (err) {
+      console.error("Error activating student:", err);
+      setError("Failed to activate student");
+    }
+  };
+
+  const handleDeactivateStudent = async (id: string) => {
+    const student = students.find((s) => s.id === id);
+    const studentName = student
+      ? `${student.firstName} ${student.lastName}`
+      : "this student";
+
+    const reason = prompt(`Please provide a reason for deactivating ${studentName}:`);
+    if (!reason) {
+      alert("Deactivation reason is required");
+      return;
+    }
+
+    try {
+      await studentService.deactivate(id, reason);
+      await fetchStudents(statusFilter);
+      setSuccessMessage("Student deactivated successfully!");
+    } catch (err) {
+      console.error("Error deactivating student:", err);
+      setError("Failed to deactivate student");
+    }
+  };
+
+  const handleRestoreStudent = async (id: string) => {
+    try {
+      await studentService.restore(id);
+      await fetchStudents(statusFilter);
+      setSuccessMessage("Student restored successfully!");
+    } catch (err) {
+      console.error("Error restoring student:", err);
+      setError("Failed to restore student");
+    }
+  };
+
+  const handleDeleteStudent = async (id: string) => {
     const student = students.find((s) => s.id === id);
     const studentName = student
       ? `${student.firstName} ${student.lastName}`
@@ -153,10 +228,14 @@ export default function StudentsList() {
         `Are you sure you want to delete ${studentName}? This action cannot be undone.`
       )
     ) {
-      // Note: The backend doesn't have a delete endpoint, so we'll just remove from state
-      // In a real implementation, you might want to add a delete endpoint or use soft delete
-      setStudents((prev) => prev.filter((student) => student.id !== id));
-      setSuccessMessage("Student deleted successfully!");
+      try {
+        await studentService.delete(id);
+        await fetchStudents(statusFilter);
+        setSuccessMessage("Student deleted successfully!");
+      } catch (err) {
+        console.error("Error deleting student:", err);
+        setError("Failed to delete student");
+      }
     }
   };
 
@@ -402,6 +481,20 @@ export default function StudentsList() {
         </div>
 
         <div className="flex gap-2">
+          {/* Status Filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as StudentStatus | "all")}
+            className="px-3 py-2 rounded-xl border border-gray-300 bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+          >
+            <option value="all">All Status</option>
+            <option value={StudentStatus.Available}>Available</option>
+            <option value={StudentStatus.Pending}>Pending</option>
+            <option value={StudentStatus.Active}>Active</option>
+            <option value={StudentStatus.Inactive}>Inactive</option>
+            <option value={StudentStatus.Deleted}>Deleted</option>
+          </select>
+
           <button
             onClick={() => handleSort("firstName")}
             className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-colors duration-200 ${
@@ -480,12 +573,10 @@ export default function StudentsList() {
                 <td className="py-3 px-3">
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      student.isActive
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
+                      getStatusInfo(student.status).className
                     }`}
                   >
-                    {student.isActive ? "Active" : "Inactive"}
+                    {getStatusInfo(student.status).text}
                   </span>
                 </td>
                 <td className="py-3 px-3 text-gray-600">
@@ -508,10 +599,57 @@ export default function StudentsList() {
                     >
                       <FaEdit className="w-4 h-4" />
                     </button>
+                    
+                    {/* Status-specific actions */}
+                    {student.status === StudentStatus.Available && (
+                      <button
+                        onClick={() => handleActivateStudent(student.id)}
+                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
+                        title="Activate Student"
+                      >
+                        ✓
+                      </button>
+                    )}
+                    
+                    {student.status === StudentStatus.Pending && (
+                      <button
+                        onClick={() => handleActivateStudent(student.id)}
+                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
+                        title="Activate Student"
+                      >
+                        ✓
+                      </button>
+                    )}
+                    
+                    {student.status === StudentStatus.Active && (
+                      <button
+                        onClick={() => handleDeactivateStudent(student.id)}
+                        className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors duration-200"
+                        title="Deactivate Student"
+                      >
+                        ⏸
+                      </button>
+                    )}
+                    
+                    {(student.status === StudentStatus.Inactive || student.status === StudentStatus.Deleted) && (
+                      <button
+                        onClick={() => handleRestoreStudent(student.id)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                        title="Restore Student"
+                      >
+                        ↻
+                      </button>
+                    )}
+                    
                     <button
-                      onClick={() => handleDeleteStudent(student.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                      title="Delete Student"
+                      onClick={() => student.status !== StudentStatus.Deleted && handleDeleteStudent(student.id)}
+                      disabled={student.status === StudentStatus.Deleted}
+                      className={`p-2 rounded-lg transition-colors duration-200 ${
+                        student.status === StudentStatus.Deleted
+                          ? "text-gray-300 cursor-not-allowed"
+                          : "text-red-600 hover:bg-red-50"
+                      }`}
+                      title={student.status === StudentStatus.Deleted ? "Already deleted" : "Delete Student"}
                     >
                       <FaTrash className="w-4 h-4" />
                     </button>
