@@ -1,22 +1,35 @@
 "use client";
 import { useState, useEffect } from "react";
-import { FaTimes, FaRoute, FaClock, FaCalendarAlt, FaSave } from "react-icons/fa";
-import { scheduleService, CreateRouteScheduleDto, Route, Schedule } from "@/services/api/scheduleService";
+import {
+  FaTimes,
+  FaRoute,
+  FaClock,
+  FaCalendarAlt,
+  FaSave,
+} from "react-icons/fa";
+import {
+  scheduleService,
+  CreateRouteScheduleDto,
+  Route,
+} from "@/services/api/scheduleService";
+import { Schedule } from "@/types";
 
 interface CreateRouteScheduleModalProps {
   onClose: () => void;
   onSuccess: () => void;
 }
 
-
-export default function CreateRouteScheduleModal({ onClose, onSuccess }: CreateRouteScheduleModalProps) {
+export default function CreateRouteScheduleModal({
+  onClose,
+  onSuccess,
+}: CreateRouteScheduleModalProps) {
   const [formData, setFormData] = useState({
     routeId: "",
     scheduleId: "",
     effectiveFrom: "",
     effectiveTo: "",
     notes: "",
-    isActive: true
+    isActive: true,
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -29,7 +42,7 @@ export default function CreateRouteScheduleModal({ onClose, onSuccess }: CreateR
       try {
         const [routesData, schedulesData] = await Promise.all([
           scheduleService.getRoutes(),
-          scheduleService.getSchedulesForDropdown()
+          scheduleService.getSchedulesForDropdown(),
         ]);
         setRoutes(routesData);
         setSchedules(schedulesData);
@@ -63,8 +76,13 @@ export default function CreateRouteScheduleModal({ onClose, onSuccess }: CreateR
       newErrors.effectiveTo = "Effective to date is required";
     }
 
-    if (formData.effectiveFrom && formData.effectiveTo && formData.effectiveFrom >= formData.effectiveTo) {
-      newErrors.effectiveTo = "Effective to date must be after effective from date";
+    if (
+      formData.effectiveFrom &&
+      formData.effectiveTo &&
+      formData.effectiveFrom >= formData.effectiveTo
+    ) {
+      newErrors.effectiveTo =
+        "Effective to date must be after effective from date";
     }
 
     setErrors(newErrors);
@@ -73,13 +91,13 @@ export default function CreateRouteScheduleModal({ onClose, onSuccess }: CreateR
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setLoading(true);
-    
+
     try {
       const createRouteScheduleDto: CreateRouteScheduleDto = {
         routeId: formData.routeId,
@@ -87,7 +105,7 @@ export default function CreateRouteScheduleModal({ onClose, onSuccess }: CreateR
         effectiveFrom: formData.effectiveFrom,
         effectiveTo: formData.effectiveTo || undefined,
         priority: 0,
-        isActive: formData.isActive
+        isActive: formData.isActive,
       };
 
       await scheduleService.createRouteSchedule(createRouteScheduleDto);
@@ -101,15 +119,17 @@ export default function CreateRouteScheduleModal({ onClose, onSuccess }: CreateR
   };
 
   const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }));
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
-  const selectedRoute = routes.find(route => route.id === formData.routeId);
-  const selectedSchedule = schedules.find(schedule => schedule.id === formData.scheduleId);
+  const selectedRoute = routes.find((route) => route.id === formData.routeId);
+  const selectedSchedule = schedules.find(
+    (schedule) => schedule.id === formData.scheduleId
+  );
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -117,7 +137,9 @@ export default function CreateRouteScheduleModal({ onClose, onSuccess }: CreateR
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-2xl font-bold text-gray-800">Create New Route Schedule</h3>
+            <h3 className="text-2xl font-bold text-gray-800">
+              Create New Route Schedule
+            </h3>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 text-2xl transition-colors duration-200"
@@ -138,7 +160,9 @@ export default function CreateRouteScheduleModal({ onClose, onSuccess }: CreateR
                 value={formData.routeId}
                 onChange={(e) => handleInputChange("routeId", e.target.value)}
                 className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
-                  errors.routeId ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                  errors.routeId
+                    ? "border-red-300 bg-red-50"
+                    : "border-gray-200"
                 }`}
               >
                 <option value="">Select a route</option>
@@ -161,9 +185,13 @@ export default function CreateRouteScheduleModal({ onClose, onSuccess }: CreateR
               </label>
               <select
                 value={formData.scheduleId}
-                onChange={(e) => handleInputChange("scheduleId", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("scheduleId", e.target.value)
+                }
                 className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
-                  errors.scheduleId ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                  errors.scheduleId
+                    ? "border-red-300 bg-red-50"
+                    : "border-gray-200"
                 }`}
               >
                 <option value="">Select a schedule</option>
@@ -181,7 +209,9 @@ export default function CreateRouteScheduleModal({ onClose, onSuccess }: CreateR
             {/* Preview */}
             {(selectedRoute || selectedSchedule) && (
               <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 border border-yellow-200 rounded-xl p-4">
-                <h4 className="font-semibold text-gray-800 mb-2">Assignment Preview</h4>
+                <h4 className="font-semibold text-gray-800 mb-2">
+                  Assignment Preview
+                </h4>
                 <div className="space-y-2 text-sm">
                   {selectedRoute && (
                     <div className="flex items-center gap-2">
@@ -195,7 +225,8 @@ export default function CreateRouteScheduleModal({ onClose, onSuccess }: CreateR
                     <div className="flex items-center gap-2">
                       <FaClock className="w-4 h-4 text-[#fad23c]" />
                       <span className="text-gray-700">
-                        <strong>Schedule:</strong> {selectedSchedule.name} ({selectedSchedule.scheduleType})
+                        <strong>Schedule:</strong> {selectedSchedule.name} (
+                        {selectedSchedule.scheduleType})
                       </span>
                     </div>
                   )}
@@ -213,13 +244,19 @@ export default function CreateRouteScheduleModal({ onClose, onSuccess }: CreateR
                 <input
                   type="date"
                   value={formData.effectiveFrom}
-                  onChange={(e) => handleInputChange("effectiveFrom", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("effectiveFrom", e.target.value)
+                  }
                   className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
-                    errors.effectiveFrom ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                    errors.effectiveFrom
+                      ? "border-red-300 bg-red-50"
+                      : "border-gray-200"
                   }`}
                 />
                 {errors.effectiveFrom && (
-                  <p className="mt-1 text-sm text-red-600">{errors.effectiveFrom}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.effectiveFrom}
+                  </p>
                 )}
               </div>
               <div>
@@ -230,13 +267,19 @@ export default function CreateRouteScheduleModal({ onClose, onSuccess }: CreateR
                 <input
                   type="date"
                   value={formData.effectiveTo}
-                  onChange={(e) => handleInputChange("effectiveTo", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("effectiveTo", e.target.value)
+                  }
                   className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
-                    errors.effectiveTo ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                    errors.effectiveTo
+                      ? "border-red-300 bg-red-50"
+                      : "border-gray-200"
                   }`}
                 />
                 {errors.effectiveTo && (
-                  <p className="mt-1 text-sm text-red-600">{errors.effectiveTo}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.effectiveTo}
+                  </p>
                 )}
               </div>
             </div>
@@ -261,10 +304,15 @@ export default function CreateRouteScheduleModal({ onClose, onSuccess }: CreateR
                 type="checkbox"
                 id="isActive"
                 checked={formData.isActive}
-                onChange={(e) => handleInputChange("isActive", e.target.checked)}
+                onChange={(e) =>
+                  handleInputChange("isActive", e.target.checked)
+                }
                 className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-[#fad23c] focus:ring-2"
               />
-              <label htmlFor="isActive" className="ml-2 text-sm font-medium text-gray-700">
+              <label
+                htmlFor="isActive"
+                className="ml-2 text-sm font-medium text-gray-700"
+              >
                 Active Route Schedule
               </label>
             </div>

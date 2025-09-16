@@ -1,7 +1,13 @@
 "use client";
 
-import { useState, useEffect, createContext, useContext } from "react";
-import { User, LoginCredentials, AuthResponse, ApiResponse } from "@/types";
+import {
+  useState,
+  useEffect,
+  createContext,
+  useContext,
+  useCallback,
+} from "react";
+import { User, LoginCredentials } from "@/types";
 import { apiService } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
@@ -20,6 +26,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  const logout = useCallback(() => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
+    setUser(null);
+    router.replace("/");
+  }, [router]);
+
   // Check token when component mounts
   useEffect(() => {
     const checkAuth = async () => {
@@ -37,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     checkAuth();
-  }, []);
+  }, [logout]);
 
   const login = async (credentials: LoginCredentials) => {
     try {
@@ -71,13 +84,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       throw error;
     }
-  };
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("refreshToken");
-    setUser(null);
-    router.replace("/");
   };
 
   const value = {

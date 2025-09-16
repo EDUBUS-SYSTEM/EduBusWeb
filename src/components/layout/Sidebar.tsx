@@ -16,6 +16,7 @@ import {
   FaList,
   FaBus,
   FaClock,
+  FaCalendarAlt,
 } from "react-icons/fa";
 
 export default function Sidebar() {
@@ -23,17 +24,50 @@ export default function Sidebar() {
 
   const links = [
     { href: "/admin", label: "Admin Dashboard", icon: <FaHome /> },
-    { href: "/admin/dashboard", label: "Personal Profile", icon: <FaUserCircle /> },
+    {
+      href: "/admin/dashboard",
+      label: "Personal Profile",
+      icon: <FaUserCircle />,
+    },
     { href: "/admin/users", label: "User Management", icon: <FaUsers /> },
-    { href: "/admin/shuttle", label: "Shuttle Register", icon: <FaClipboardList /> },
-    { href: "/admin/revenue", label: "Revenue Statistic", icon: <FaChartBar /> },
-    { href: "/admin/complaints", label: "Parent Complaint", icon: <FaCommentDots /> },
-    { href: "/admin/requests", label: "Driver's Requests", icon: <FaFileAlt /> },
+    {
+      href: "/admin/shuttle",
+      label: "Shuttle Register",
+      icon: <FaClipboardList />,
+    },
+    {
+      href: "/admin/revenue",
+      label: "Revenue Statistic",
+      icon: <FaChartBar />,
+    },
+    {
+      href: "/admin/complaints",
+      label: "Parent Complaint",
+      icon: <FaCommentDots />,
+    },
+    {
+      href: "/admin/requests",
+      label: "Driver's Requests",
+      icon: <FaFileAlt />,
+    },
     { href: "/admin/password", label: "Change Password", icon: <FaLock /> },
-    { href: "/admin/trips", label: "Trip Management", icon: <FaMapMarkedAlt /> },
+    {
+      href: "/admin/trips",
+      label: "Trip Management",
+      icon: <FaMapMarkedAlt />,
+    },
     { href: "/admin/students", label: "Students List", icon: <FaList /> },
     { href: "/admin/vehicles", label: "Vehicles", icon: <FaBus /> },
-    { href: "/admin/schedules", label: "Schedule Management", icon: <FaClock /> },
+    {
+      href: "/admin/schedules",
+      label: "Schedule Management",
+      icon: <FaClock />,
+    },
+    {
+      href: "/admin/academic-calendar",
+      label: "Academic Calendar",
+      icon: <FaCalendarAlt />,
+    },
   ];
 
   return (
@@ -59,8 +93,8 @@ export default function Sidebar() {
             className={`px-5 py-4 flex items-center gap-3 transition 
               ${
                 pathname === link.href
-                  ? "bg-[#fad23c] font-semibold" 
-                  : "hover:bg-[#FFF085]"        
+                  ? "bg-[#fad23c] font-semibold"
+                  : "hover:bg-[#FFF085]"
               }`}
           >
             {link.icon} {link.label}

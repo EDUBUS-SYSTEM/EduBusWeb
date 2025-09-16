@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import Image from "next/image";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -21,7 +21,7 @@ export default function AdminLoginPage() {
     if (token) {
       router.push("/admin/dashboard");
     }
-  }, []);
+  }, [router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

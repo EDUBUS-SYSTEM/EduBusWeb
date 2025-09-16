@@ -1,11 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  ImportDriversResponse,
-  ImportUserSuccess,
-  ImportUserError,
-} from "@/services/api/drivers";
+import { ImportDriversResponse } from "@/services/api/drivers";
 
 interface ExcelImportProps {
   onImport: (file: File) => Promise<ImportDriversResponse>;

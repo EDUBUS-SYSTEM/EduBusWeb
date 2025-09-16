@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FaTimes, FaUser, FaCheck, FaSpinner } from "react-icons/fa";
+import { FaTimes, FaCheck, FaSpinner } from "react-icons/fa";
 import {
   UpdateStudentRequest,
   StudentDto,

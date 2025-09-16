@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from 'react';
-import { CalendarProps, CalendarView, CalendarEvent } from '@/types';
-import CalendarHeader from './CalendarHeader';
-import CalendarGrid from './CalendarGrid';
+import React, { useState } from "react";
+import { CalendarProps, CalendarView } from "@/types";
+import CalendarHeader from "./CalendarHeader";
+import CalendarGrid from "./CalendarGrid";
 
 export default function Calendar({
   events,
@@ -12,7 +12,7 @@ export default function Calendar({
   onEventClick,
   onEventCreate,
   onDateChange,
-  className = ''
+  className = "",
 }: CalendarProps) {
   const [currentView, setCurrentView] = useState<CalendarView>(initialView);
 
@@ -44,7 +44,7 @@ export default function Calendar({
         onDateChange={handleDateChange}
         onTodayClick={handleTodayClick}
       />
-      
+
       <CalendarGrid
         view={currentView}
         events={events}

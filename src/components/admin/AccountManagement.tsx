@@ -1,9 +1,26 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useRef } from "react";
-import { FaLock, FaUnlock, FaSearch, FaSort, FaCalendarAlt, FaInfoCircle, FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import { userAccountService, GetUsersParams, UserListResponse } from "@/services/userAccountService/userAccountService.api";
-import { UserAccount, LockUserRequest, LockMultipleUsersRequest, UnlockMultipleUsersRequest } from "@/services/userAccountService/userAccountService.type";
+import React, { useEffect, useState, useCallback } from "react";
+import {
+  FaLock,
+  FaUnlock,
+  FaSearch,
+  FaSort,
+  FaCalendarAlt,
+  FaInfoCircle,
+  FaChevronLeft,
+  FaChevronRight,
+} from "react-icons/fa";
+import {
+  userAccountService,
+  GetUsersParams,
+} from "@/services/userAccountService/userAccountService.api";
+import {
+  UserAccount,
+  LockUserRequest,
+  LockMultipleUsersRequest,
+  UnlockMultipleUsersRequest,
+} from "@/services/userAccountService/userAccountService.type";
 
 export default function AccountManagement() {
   const [users, setUsers] = useState<UserAccount[]>([]);
@@ -15,8 +32,11 @@ export default function AccountManagement() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showLockModal, setShowLockModal] = useState(false);
-  const [lockFormData, setLockFormData] = useState({ lockedUntil: "", reason: "" });
-  
+  const [lockFormData, setLockFormData] = useState({
+    lockedUntil: "",
+    reason: "",
+  });
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
@@ -25,11 +45,14 @@ export default function AccountManagement() {
   const [statusFilter, setStatusFilter] = useState<string>("");
 
   // Validation state
-  const [lockValidationError, setLockValidationError] = useState<string | null>(null);
-  const [reasonValidationError, setReasonValidationError] = useState<string | null>(null);
+  const [lockValidationError, setLockValidationError] = useState<string | null>(
+    null
+  );
+  const [reasonValidationError, setReasonValidationError] = useState<
+    string | null
+  >(null);
 
-  // Use ref to store the search timeout
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Removed unused searchTimeoutRef
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -40,9 +63,9 @@ export default function AccountManagement() {
         sortBy: sortBy,
         sortOrder: sortOrder,
         status: statusFilter || undefined,
-        search: searchTerm || undefined
+        search: searchTerm || undefined,
       };
-      
+
       const response = await userAccountService.getUsers(params);
       setUsers(response.users);
       setTotalCount(response.totalCount);
@@ -55,39 +78,43 @@ export default function AccountManagement() {
   }, [currentPage, perPage, sortBy, sortOrder, statusFilter, searchTerm]);
 
   // Fetch users when dependencies change (except searchTerm)
-  useEffect(() => { 
-    fetchUsers(); 
-  }, [currentPage, perPage, sortBy, sortOrder, statusFilter]);
+  useEffect(() => {
+    fetchUsers();
+  }, [currentPage, perPage, sortBy, sortOrder, statusFilter, fetchUsers]);
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-        setCurrentPage(1); // reset to first page
-        fetchUsers();
+      setCurrentPage(1); // reset to first page
+      fetchUsers();
     }
   };
 
   const isUserLocked = (user: UserAccount): boolean => {
-    return Boolean(user.lockedUntil && new Date(user.lockedUntil+'Z') > new Date());
+    return Boolean(
+      user.lockedUntil && new Date(user.lockedUntil + "Z") > new Date()
+    );
   };
 
   const getLockStatus = (user: UserAccount) => {
-    if (user.isDeleted) return { status: "Deleted", color: "bg-gray-100 text-gray-800" };
-    if (isUserLocked(user)) return { status: "Locked", color: "bg-red-100 text-red-800" };
+    if (user.isDeleted)
+      return { status: "Deleted", color: "bg-gray-100 text-gray-800" };
+    if (isUserLocked(user))
+      return { status: "Locked", color: "bg-red-100 text-red-800" };
     return { status: "Active", color: "bg-green-100 text-green-800" };
   };
 
   // Validation functions
   const validateLockUntil = (dateTimeString: string): string | null => {
     if (!dateTimeString) return null; // Optional field
-    
+
     const selectedDate = new Date(dateTimeString);
     const now = new Date();
     const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000); // Add 1 hour
-    
+
     if (selectedDate <= oneHourFromNow) {
       return "Lock until date must be at least 1 hour from now";
     }
-    
+
     return null;
   };
 
@@ -100,13 +127,13 @@ export default function AccountManagement() {
 
   // Update the lock form data change handler
   const handleLockFormChange = (field: string, value: string) => {
-    setLockFormData(prev => ({ ...prev, [field]: value }));
-    
+    setLockFormData((prev) => ({ ...prev, [field]: value }));
+
     // Validate based on field
-    if (field === 'lockedUntil') {
+    if (field === "lockedUntil") {
       const error = validateLockUntil(value);
       setLockValidationError(error);
-    } else if (field === 'reason') {
+    } else if (field === "reason") {
       const error = validateReason(value);
       setReasonValidationError(error);
     }
@@ -130,7 +157,7 @@ export default function AccountManagement() {
 
       const req: LockUserRequest = {
         lockedUntil: lockedUntilUtc,
-        reason: lockFormData.reason || "Locked by admin"
+        reason: lockFormData.reason || "Locked by admin",
       };
       await userAccountService.lockUser(userId, req);
       setSuccessMessage("User locked successfully");
@@ -172,7 +199,7 @@ export default function AccountManagement() {
       const req: LockMultipleUsersRequest = {
         userIds: selectedUsers,
         lockedUntil: lockedUntilUtc,
-        reason: lockFormData.reason || "Bulk locked by admin"
+        reason: lockFormData.reason || "Bulk locked by admin",
       };
       await userAccountService.lockMultipleUsers(req);
       setSuccessMessage(`${selectedUsers.length} users locked successfully`);
@@ -200,12 +227,14 @@ export default function AccountManagement() {
   };
 
   const toggleUserSelection = (userId: string) => {
-    setSelectedUsers(prev =>
-      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+    setSelectedUsers((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId]
     );
   };
 
-  const selectAllUsers = () => setSelectedUsers(users.map(user => user.id));
+  const selectAllUsers = () => setSelectedUsers(users.map((user) => user.id));
   const clearSelection = () => setSelectedUsers([]);
 
   const handleSort = (field: string) => {
@@ -270,7 +299,12 @@ export default function AccountManagement() {
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded flex items-center gap-2">
           <FaInfoCircle />
           {error}
-          <button onClick={() => setError(null)} className="ml-auto text-red-500 hover:text-red-700">×</button>
+          <button
+            onClick={() => setError(null)}
+            className="ml-auto text-red-500 hover:text-red-700"
+          >
+            ×
+          </button>
         </div>
       )}
 
@@ -278,7 +312,12 @@ export default function AccountManagement() {
         <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded flex items-center gap-2">
           <FaInfoCircle />
           {successMessage}
-          <button onClick={() => setSuccessMessage(null)} className="ml-auto text-green-500 hover:text-green-700">×</button>
+          <button
+            onClick={() => setSuccessMessage(null)}
+            className="ml-auto text-green-500 hover:text-green-700"
+          >
+            ×
+          </button>
         </div>
       )}
 
@@ -292,7 +331,7 @@ export default function AccountManagement() {
                   type="text"
                   placeholder="Search by name or email..."
                   value={searchTerm}
-                  onKeyDown={handleSearchKeyDown}  
+                  onKeyDown={handleSearchKeyDown}
                   onChange={handleSearchChange}
                   className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                 />
@@ -323,8 +362,18 @@ export default function AccountManagement() {
                 </select>
               </div>
               <div className="flex items-center gap-2">
-                <button onClick={selectAllUsers} className="text-sm text-blue-600 hover:text-blue-800">Select All</button>
-                <button onClick={clearSelection} className="text-sm text-gray-600 hover:text-gray-800">Clear Selection</button>
+                <button
+                  onClick={selectAllUsers}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  Select All
+                </button>
+                <button
+                  onClick={clearSelection}
+                  className="text-sm text-gray-600 hover:text-gray-800"
+                >
+                  Clear Selection
+                </button>
               </div>
             </div>
           </div>
@@ -337,8 +386,14 @@ export default function AccountManagement() {
                 <th className="px-6 py-3 text-left">
                   <input
                     type="checkbox"
-                    checked={selectedUsers.length === users.length && users.length > 0}
-                    onChange={selectedUsers.length === users.length ? clearSelection : selectAllUsers}
+                    checked={
+                      selectedUsers.length === users.length && users.length > 0
+                    }
+                    onChange={
+                      selectedUsers.length === users.length
+                        ? clearSelection
+                        : selectAllUsers
+                    }
                     className="rounded border-gray-300"
                   />
                 </th>
@@ -350,9 +405,15 @@ export default function AccountManagement() {
                     Name <FaSort />
                   </button>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Phone
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <button
                     onClick={() => handleSort("createdAt")}
@@ -361,7 +422,9 @@ export default function AccountManagement() {
                     Created <FaSort />
                   </button>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -387,16 +450,21 @@ export default function AccountManagement() {
                       <div className="text-sm text-gray-900">{user.email}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{user.phoneNumber}</div>
+                      <div className="text-sm text-gray-900">
+                        {user.phoneNumber}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${lockStatus.color}`}>
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${lockStatus.color}`}
+                      >
                         {lockStatus.status}
                       </span>
                       {locked && user.lockedUntil && (
                         <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
                           <FaCalendarAlt />
-                          Until: {new Date(user.lockedUntil+'Z').toLocaleString()}
+                          Until:{" "}
+                          {new Date(user.lockedUntil + "Z").toLocaleString()}
                         </div>
                       )}
                       {user.lockReason && (
@@ -460,15 +528,22 @@ export default function AccountManagement() {
           <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
             <div>
               <p className="text-sm text-gray-700">
-                Showing <span className="font-medium">{(currentPage - 1) * perPage + 1}</span> to{' '}
+                Showing{" "}
+                <span className="font-medium">
+                  {(currentPage - 1) * perPage + 1}
+                </span>{" "}
+                to{" "}
                 <span className="font-medium">
                   {Math.min(currentPage * perPage, totalCount)}
-                </span>{' '}
+                </span>{" "}
                 of <span className="font-medium">{totalCount}</span> results
               </p>
             </div>
             <div>
-              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+              <nav
+                className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                aria-label="Pagination"
+              >
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
@@ -476,27 +551,28 @@ export default function AccountManagement() {
                 >
                   <FaChevronLeft className="h-5 w-5" />
                 </button>
-                
+
                 {/* Page numbers */}
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                  const pageNum =
+                    Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
                   if (pageNum > totalPages) return null;
-                  
+
                   return (
                     <button
                       key={pageNum}
                       onClick={() => handlePageChange(pageNum)}
                       className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
                         pageNum === currentPage
-                          ? 'z-10 bg-yellow-50 border-yellow-500 text-yellow-600'
-                          : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                          ? "z-10 bg-yellow-50 border-yellow-500 text-yellow-600"
+                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
                       }`}
                     >
                       {pageNum}
                     </button>
                   );
                 })}
-                
+
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
@@ -514,23 +590,35 @@ export default function AccountManagement() {
       {showLockModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">Lock User{selectedUsers.length > 1 ? 's' : ''}</h3>
+            <h3 className="text-lg font-semibold mb-4">
+              Lock User{selectedUsers.length > 1 ? "s" : ""}
+            </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Lock Until (Optional)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Lock Until (Optional)
+                </label>
                 <input
                   type="datetime-local"
                   value={lockFormData.lockedUntil}
-                  min={new Date(Date.now() + 60 * 60 * 1000).toISOString().slice(0, 16)} // 1 hour from now
-                  onChange={(e) => handleLockFormChange('lockedUntil', e.target.value)}
+                  min={new Date(Date.now() + 60 * 60 * 1000)
+                    .toISOString()
+                    .slice(0, 16)} // 1 hour from now
+                  onChange={(e) =>
+                    handleLockFormChange("lockedUntil", e.target.value)
+                  }
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
-                    lockValidationError ? 'border-red-300' : 'border-gray-300'
+                    lockValidationError ? "border-red-300" : "border-gray-300"
                   }`}
                 />
                 {lockValidationError && (
-                  <p className="text-xs text-red-500 mt-1">{lockValidationError}</p>
+                  <p className="text-xs text-red-500 mt-1">
+                    {lockValidationError}
+                  </p>
                 )}
-                <p className="text-xs text-gray-500 mt-1">Leave empty for permanent lock (minimum 1 hour from now)</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Leave empty for permanent lock (minimum 1 hour from now)
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -541,18 +629,24 @@ export default function AccountManagement() {
                 </label>
                 <textarea
                   value={lockFormData.reason}
-                  onChange={(e) => handleLockFormChange('reason', e.target.value)}
+                  onChange={(e) =>
+                    handleLockFormChange("reason", e.target.value)
+                  }
                   placeholder="Enter reason for locking..."
                   maxLength={300}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
-                    reasonValidationError ? 'border-red-300' : 'border-gray-300'
+                    reasonValidationError ? "border-red-300" : "border-gray-300"
                   }`}
                   rows={3}
                 />
                 {reasonValidationError && (
-                  <p className="text-xs text-red-500 mt-1">{reasonValidationError}</p>
+                  <p className="text-xs text-red-500 mt-1">
+                    {reasonValidationError}
+                  </p>
                 )}
-                <p className="text-xs text-gray-500 mt-1">Maximum 300 characters</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Maximum 300 characters
+                </p>
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
@@ -568,15 +662,21 @@ export default function AccountManagement() {
                 Cancel
               </button>
               <button
-                onClick={selectedUsers.length > 1 ? handleBulkLock : () => handleLockUser(selectedUsers[0])}
-                disabled={lockValidationError !== null || reasonValidationError !== null}
+                onClick={
+                  selectedUsers.length > 1
+                    ? handleBulkLock
+                    : () => handleLockUser(selectedUsers[0])
+                }
+                disabled={
+                  lockValidationError !== null || reasonValidationError !== null
+                }
                 className={`px-4 py-2 rounded-lg ${
                   lockValidationError || reasonValidationError
-                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                    : 'bg-[#D32F2F] text-white hover:bg-[#a82020]'
+                    ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                    : "bg-[#D32F2F] text-white hover:bg-[#a82020]"
                 }`}
               >
-                Lock User{selectedUsers.length > 1 ? 's' : ''}
+                Lock User{selectedUsers.length > 1 ? "s" : ""}
               </button>
             </div>
           </div>

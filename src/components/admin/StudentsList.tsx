@@ -12,7 +12,7 @@ import {
   FaDownload,
 } from "react-icons/fa";
 import { AddStudentModal, EditStudentModal, ViewStudentModal } from "./index";
-import { Student } from "@/types";
+// Removed unused import
 import { studentService } from "@/services/studentService/studentService.api";
 import {
   StudentDto,

@@ -178,11 +178,11 @@ export interface Student {
     phoneNumber: string;
     address: string;
     dateOfBirth: string;
-    gender: 'Male' | 'Female';
+    gender: "Male" | "Female";
     createdAt: string;
     updatedAt: string;
     isDeleted: boolean;
-    role: 'parent';
+    role: "parent";
   };
 }
 
@@ -221,15 +221,27 @@ export interface Schedule {
   name: string;
   startTime: string;
   endTime: string;
-  rrule: string;
+  rRule: string; // Changed from rrule to match backend
   timezone: string;
+  academicYear: string; // Added to match backend
   effectiveFrom: string;
   effectiveTo?: string;
-  exceptions: string[];
+  exceptions: Date[]; // Changed from string[] to Date[] to match backend
   scheduleType: string;
   isActive: boolean;
+  timeOverrides: ScheduleTimeOverride[]; // Added to match backend
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ScheduleTimeOverride {
+  date: Date;
+  startTime: string;
+  endTime: string;
+  reason: string;
+  createdBy: string;
+  createdAt: Date;
+  isCancelled: boolean;
 }
 
 export interface RouteSchedule {
@@ -242,6 +254,8 @@ export interface RouteSchedule {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  // Note: routeName and scheduleName are not in backend model
+  // They should be populated from related entities if needed
 }
 
 export interface Route {
@@ -286,7 +300,7 @@ export interface ScheduleSnapshot {
   name: string;
   startTime: string;
   endTime: string;
-  rrule: string;
+  rRule: string; // Changed from rrule to match backend
 }
 
 export interface TripStop {
@@ -313,17 +327,17 @@ export interface CalendarEvent {
   end: Date;
   allDay?: boolean;
   color?: string;
-  type: 'trip' | 'schedule' | 'maintenance' | 'other';
+  type: "trip" | "schedule" | "maintenance" | "other";
   description?: string;
   routeId?: string;
   tripId?: string;
   scheduleId?: string;
-  status?: 'planned' | 'in-progress' | 'completed' | 'cancelled';
+  status?: "planned" | "in-progress" | "completed" | "cancelled";
   metadata?: Record<string, unknown>;
 }
 
 export interface CalendarView {
-  type: 'day' | 'week' | 'month';
+  type: "day" | "week" | "month";
   date: Date;
 }
 
@@ -335,4 +349,73 @@ export interface CalendarProps {
   onEventCreate?: (date: Date) => void;
   onDateChange?: (date: Date) => void;
   className?: string;
+}
+
+// Academic Calendar types based on backend models
+export interface AcademicCalendar {
+  id: string;
+  academicYear: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  semesters: AcademicSemester[];
+  holidays: SchoolHoliday[];
+  schoolDays: SchoolDay[];
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AcademicSemester {
+  name: string;
+  code: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+}
+
+export interface SchoolHoliday {
+  name: string;
+  startDate: string;
+  endDate: string;
+  description: string;
+  isRecurring: boolean;
+}
+
+export interface SchoolDay {
+  date: string;
+  isSchoolDay: boolean;
+  description: string;
+}
+
+// DTOs for Academic Calendar operations
+export interface CreateAcademicCalendarDto {
+  academicYear: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  semesters: AcademicSemester[];
+  holidays: SchoolHoliday[];
+  schoolDays: SchoolDay[];
+  isActive: boolean;
+}
+
+export interface UpdateAcademicCalendarDto {
+  academicYear: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  semesters: AcademicSemester[];
+  holidays: SchoolHoliday[];
+  schoolDays: SchoolDay[];
+  isActive: boolean;
+}
+
+export interface AcademicCalendarQueryParams {
+  academicYear?: string;
+  activeOnly?: boolean;
+  page?: number;
+  perPage?: number;
+  sortBy?: string;
+  sortOrder?: string;
 }
