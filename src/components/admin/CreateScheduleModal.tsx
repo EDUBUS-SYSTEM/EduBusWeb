@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   FaTimes,
   FaClock,
@@ -53,6 +53,9 @@ export default function CreateScheduleModal({
     isValid: true,
     errors: [],
   });
+  const handleRruleValidationChange = useCallback((isValid: boolean, errors: string[]) => {
+    setRruleValidation({ isValid, errors });
+  }, []);
   const [previewDates, setPreviewDates] = useState<Date[]>([]);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -303,7 +306,7 @@ export default function CreateScheduleModal({
                 type="text"
                 value={formData.name}
                 onChange={(e) => handleInputChange("name", e.target.value)}
-                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
                   errors.name ? "border-red-300 bg-red-50" : "border-gray-200"
                 }`}
                 placeholder="Enter schedule name"
@@ -324,7 +327,7 @@ export default function CreateScheduleModal({
                 onChange={(e) =>
                   handleInputChange("scheduleType", e.target.value)
                 }
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
               >
                 {scheduleTypes.map((type) => (
                   <option key={type.value} value={type.value}>
@@ -352,7 +355,7 @@ export default function CreateScheduleModal({
                 onChange={(e) =>
                   handleInputChange("academicYear", e.target.value)
                 }
-                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
                   errors.academicYear
                     ? "border-red-300 bg-red-50"
                     : "border-gray-200"
@@ -390,7 +393,7 @@ export default function CreateScheduleModal({
                   onChange={(e) =>
                     handleInputChange("startTime", e.target.value)
                   }
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
                     errors.startTime
                       ? "border-red-300 bg-red-50"
                       : "border-gray-200"
@@ -411,7 +414,7 @@ export default function CreateScheduleModal({
                   type="time"
                   value={formData.endTime}
                   onChange={(e) => handleInputChange("endTime", e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
                     errors.endTime
                       ? "border-red-300 bg-red-50"
                       : "border-gray-200"
@@ -436,7 +439,7 @@ export default function CreateScheduleModal({
                   onChange={(e) =>
                     handleInputChange("effectiveFrom", e.target.value)
                   }
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
                     errors.effectiveFrom
                       ? "border-red-300 bg-red-50"
                       : "border-gray-200"
@@ -456,10 +459,11 @@ export default function CreateScheduleModal({
                 <input
                   type="date"
                   value={formData.effectiveTo}
+                  min={formData.effectiveFrom || undefined}
                   onChange={(e) =>
                     handleInputChange("effectiveTo", e.target.value)
                   }
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
                     errors.effectiveTo
                       ? "border-red-300 bg-red-50"
                       : "border-gray-200"
@@ -484,7 +488,7 @@ export default function CreateScheduleModal({
                   handleInputChange("description", e.target.value)
                 }
                 rows={3}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 resize-none"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 resize-none"
                 placeholder="Enter schedule description (optional)"
               />
             </div>
@@ -497,9 +501,9 @@ export default function CreateScheduleModal({
               <RRuleBuilder
                 value={formData.rRule}
                 onChange={(rrule) => handleInputChange("rRule", rrule)}
-                onValidationChange={(isValid, errors) =>
-                  setRruleValidation({ isValid, errors })
-                }
+                onValidationChange={handleRruleValidationChange}
+                previewStartDate={formData.effectiveFrom}
+                previewEndDate={formData.effectiveTo || undefined}
               />
               {errors.rRule && (
                 <p className="mt-2 text-sm text-red-600">{errors.rRule}</p>
@@ -516,7 +520,7 @@ export default function CreateScheduleModal({
                   onChange={(e) =>
                     handleInputChange("isActive", e.target.checked)
                   }
-                  className="w-4 h-4 text-[#fad23c] bg-gray-100 border-gray-300 rounded focus:ring-[#fad23c] focus:ring-2"
+                  className="w-4 h-4 text-blue-500 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                 />
                 <label
                   htmlFor="isActive"
@@ -525,15 +529,7 @@ export default function CreateScheduleModal({
                   Active Schedule
                 </label>
               </div>
-              <button
-                type="button"
-                onClick={generatePreviewDates}
-                disabled={!formData.rRule || !formData.effectiveFrom}
-                className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <FaEye className="w-4 h-4" />
-                Preview Dates
-              </button>
+              {/* Removed duplicate Preview Dates button; RRuleBuilder has its own Preview */}
             </div>
 
             {/* Preview Dates */}

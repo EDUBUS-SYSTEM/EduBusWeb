@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   FaCalendarAlt,
   FaClock,
@@ -24,6 +24,8 @@ interface RRuleBuilderProps {
   onChange: (rrule: string) => void;
   onValidationChange?: (isValid: boolean, errors: string[]) => void;
   className?: string;
+  previewStartDate?: string; // ISO YYYY-MM-DD or ISO string
+  previewEndDate?: string;   // optional upper bound
 }
 
 export default function RRuleBuilder({
@@ -31,6 +33,8 @@ export default function RRuleBuilder({
   onChange,
   onValidationChange,
   className = "",
+  previewStartDate,
+  previewEndDate,
 }: RRuleBuilderProps) {
   const [config, setConfig] = useState<RRuleConfig>({
     frequency: "DAILY",
@@ -66,18 +70,31 @@ export default function RRuleBuilder({
     }
   }, [value]);
 
-  // Update validation when config changes
+  // Keep latest onValidationChange in a ref to avoid effect dependency loops
+  const onValidationRef = useRef(onValidationChange);
+  useEffect(() => {
+    onValidationRef.current = onValidationChange;
+  }, [onValidationChange]);
+
+  // Update validation when config changes (stable deps)
   useEffect(() => {
     const rrule = RRuleUtils.buildRRule(config);
-    const validation = RRuleUtils.validateRRule(rrule);
-    setValidation(validation);
-    onValidationChange?.(validation.isValid, validation.errors);
-  }, [config, onValidationChange]);
+    const nextValidation = RRuleUtils.validateRRule(rrule);
+    setValidation(nextValidation);
+    onValidationRef.current?.(nextValidation.isValid, nextValidation.errors);
+  }, [config]);
 
-  // Generate preview dates
+  // Generate preview dates (respect Effective From/To if provided)
   const generatePreview = () => {
     const rrule = RRuleUtils.buildRRule(config);
-    const dates = RRuleUtils.generatePreviewDates(rrule, new Date(), 10);
+    const start = previewStartDate
+      ? new Date(previewStartDate.length > 10 ? previewStartDate : `${previewStartDate}T00:00:00`)
+      : new Date();
+    let dates = RRuleUtils.generatePreviewDates(rrule, start, 10);
+    if (previewEndDate) {
+      const end = new Date(previewEndDate.length > 10 ? previewEndDate : `${previewEndDate}T23:59:59`);
+      dates = dates.filter((d) => d <= end);
+    }
     setPreviewDates(dates);
     setShowPreview(true);
   };
@@ -151,7 +168,7 @@ export default function RRuleBuilder({
       {!isCustomMode && (
         <div>
           <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <FaGraduationCap className="w-5 h-5 mr-2 text-blue-600" />
+            <FaGraduationCap className="w-5 h-5 mr-2 text-[#FDC700]" />
             Select Schedule Pattern
           </h4>
 
@@ -162,8 +179,8 @@ export default function RRuleBuilder({
                 onClick={() => handlePatternSelect(pattern)}
                 className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
                   selectedPattern?.id === pattern.id
-                    ? "border-blue-500 bg-blue-50 shadow-lg"
-                    : "border-gray-200 hover:border-blue-300 hover:shadow-md"
+                    ? "border-[#FDC700] bg-yellow-50 shadow-lg"
+                    : "border-gray-200 hover:border-[#FDC700] hover:shadow-md"
                 }`}
               >
                 <div className="flex items-start justify-between">
@@ -177,12 +194,12 @@ export default function RRuleBuilder({
                     <p className="text-sm text-gray-600 mb-2">
                       {pattern.description}
                     </p>
-                    <div className="text-xs text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">
+                    <div className="text-xs text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded w-full max-w-full whitespace-pre-wrap break-words overflow-x-auto">
                       {pattern.rrule}
                     </div>
                   </div>
                   {selectedPattern?.id === pattern.id && (
-                    <FaCheck className="w-5 h-5 text-blue-600 ml-2" />
+                    <FaCheck className="w-5 h-5 text-[#FDC700] ml-2" />
                   )}
                 </div>
               </div>
@@ -191,8 +208,9 @@ export default function RRuleBuilder({
 
           <div className="mt-4 text-center">
             <button
+              type="button"
               onClick={handleCustomModeToggle}
-              className="text-blue-600 hover:text-blue-800 font-medium flex items-center mx-auto"
+              className="text-[#C69200] hover:text-[#8A6400] font-medium flex items-center mx-auto"
             >
               <FaCog className="w-4 h-4 mr-2" />
               Advanced Customization
@@ -206,10 +224,11 @@ export default function RRuleBuilder({
         <div>
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-semibold text-gray-800 flex items-center">
-              <FaCog className="w-5 h-5 mr-2 text-blue-600" />
+              <FaCog className="w-5 h-5 mr-2 text-[#FDC700]" />
               Custom Configuration
             </h4>
             <button
+              type="button"
               onClick={handleCustomModeToggle}
               className="text-gray-600 hover:text-gray-800"
             >
@@ -232,7 +251,7 @@ export default function RRuleBuilder({
                       frequency: e.target.value as RRuleConfig["frequency"],
                     })
                   }
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FDC700] focus:border-transparent"
                 >
                   <option value="DAILY">Daily</option>
                   <option value="WEEKLY">Weekly</option>
@@ -256,7 +275,7 @@ export default function RRuleBuilder({
                       interval: parseInt(e.target.value) || 1,
                     })
                   }
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FDC700] focus:border-transparent"
                 />
               </div>
             </div>
@@ -270,12 +289,13 @@ export default function RRuleBuilder({
                 <div className="grid grid-cols-7 gap-2">
                   {Object.entries(DAY_NAMES).map(([key, day]) => (
                     <button
+                      type="button"
                       key={key}
                       onClick={() => handleDayToggle(key)}
                       className={`p-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                         config.byDay?.includes(key)
-                          ? "bg-blue-500 text-white shadow-lg"
-                          : "bg-white text-gray-700 border border-gray-200 hover:border-blue-300"
+                          ? "bg-[#FDC700] text-[#463B3B] shadow-lg"
+                          : "bg-white text-gray-700 border border-gray-200 hover:border-[#FDC700]"
                       }`}
                     >
                       <div>{day.short}</div>
@@ -295,12 +315,13 @@ export default function RRuleBuilder({
                 <div className="grid grid-cols-7 gap-2">
                   {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
                     <button
+                      type="button"
                       key={day}
                       onClick={() => handleMonthDayToggle(day)}
                       className={`p-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                         config.byMonthDay?.includes(day)
-                          ? "bg-blue-500 text-white shadow-lg"
-                          : "bg-white text-gray-700 border border-gray-200 hover:border-blue-300"
+                          ? "bg-[#FDC700] text-[#463B3B] shadow-lg"
+                          : "bg-white text-gray-700 border border-gray-200 hover:border-[#FDC700]"
                       }`}
                     >
                       {day}
@@ -319,12 +340,13 @@ export default function RRuleBuilder({
                 <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
                   {Object.entries(MONTH_NAMES).map(([month, name]) => (
                     <button
+                      type="button"
                       key={month}
                       onClick={() => handleMonthToggle(parseInt(month))}
                       className={`p-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                         config.byMonth?.includes(parseInt(month))
-                          ? "bg-blue-500 text-white shadow-lg"
-                          : "bg-white text-gray-700 border border-gray-200 hover:border-blue-300"
+                          ? "bg-[#FDC700] text-[#463B3B] shadow-lg"
+                          : "bg-white text-gray-700 border border-gray-200 hover:border-[#FDC700]"
                       }`}
                     >
                       {name}
@@ -351,7 +373,7 @@ export default function RRuleBuilder({
                       : undefined,
                   })
                 }
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FDC700] focus:border-transparent"
               />
             </div>
           </div>
@@ -373,23 +395,24 @@ export default function RRuleBuilder({
       )}
 
       {/* Description and Preview */}
-      <div className="bg-blue-50 rounded-xl p-4">
+      <div className="bg-yellow-50 rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
-          <h5 className="font-semibold text-blue-800">Schedule Description:</h5>
+          <h5 className="font-semibold text-gray-800">Schedule Description:</h5>
           <button
+            type="button"
             onClick={generatePreview}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center"
+            className="bg-[#FDC700] hover:bg-[#E0B100] text-[#463B3B] px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center"
           >
             <FaEye className="w-4 h-4 mr-2" />
             Preview
           </button>
         </div>
 
-        <p className="text-blue-700 mb-3">
+        <p className="text-gray-700 mb-3">
           {RRuleUtils.getDescription(config)}
         </p>
 
-        <div className="text-sm text-blue-600 font-mono bg-blue-100 px-3 py-2 rounded">
+        <div className="text-sm text-gray-700 font-mono bg-yellow-100 px-3 py-2 rounded w-full max-w-full whitespace-pre-wrap break-words overflow-x-auto">
           {RRuleUtils.buildRRule(config)}
         </div>
       </div>

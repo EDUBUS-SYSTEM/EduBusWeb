@@ -11,6 +11,8 @@ interface TimeOverrideModalProps {
   scheduleName: string;
   onSuccess: () => void;
   override?: ScheduleTimeOverride | null;
+  effectiveFrom: string;
+  effectiveTo?: string;
 }
 
 export default function TimeOverrideModal({
@@ -20,6 +22,8 @@ export default function TimeOverrideModal({
   scheduleName,
   onSuccess,
   override = null,
+  effectiveFrom,
+  effectiveTo,
 }: TimeOverrideModalProps) {
   const [formData, setFormData] = useState({
     date: "",
@@ -56,6 +60,19 @@ export default function TimeOverrideModal({
 
     if (!formData.date) {
       newErrors.date = "Date is required";
+    }
+
+    // Check date within schedule effective range
+    if (formData.date) {
+      const date = new Date(formData.date);
+      const from = effectiveFrom ? new Date(effectiveFrom) : null;
+      const to = effectiveTo ? new Date(effectiveTo) : null;
+      if (from && date < new Date(from.toISOString().split("T")[0])) {
+        newErrors.date = "Date must be on or after Effective From";
+      }
+      if (to && date > new Date(to.toISOString().split("T")[0])) {
+        newErrors.date = "Date must be on or before Effective To";
+      }
     }
 
     if (!formData.startTime) {
@@ -103,10 +120,9 @@ export default function TimeOverrideModal({
       };
 
       if (override) {
-        // Update existing override
+        // Update existing override: upsert by date
         await scheduleService.updateTimeOverride(
           scheduleId,
-          override.date.toString(),
           timeOverrideData
         );
       } else {
@@ -168,6 +184,8 @@ export default function TimeOverrideModal({
               <input
                 type="date"
                 value={formData.date}
+                min={effectiveFrom ? new Date(effectiveFrom).toISOString().split("T")[0] : undefined}
+                max={effectiveTo ? new Date(effectiveTo).toISOString().split("T")[0] : undefined}
                 onChange={(e) => handleInputChange("date", e.target.value)}
                 className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
                   errors.date ? "border-red-300 bg-red-50" : "border-gray-200"

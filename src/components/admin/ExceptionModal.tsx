@@ -1,29 +1,21 @@
 "use client";
 import { useState } from "react";
-import {
-  FaTimes,
-  FaSave,
-  FaCalendarAlt,
-  FaExclamationTriangle,
-} from "react-icons/fa";
+import { FaTimes, FaSave, FaCalendarAlt, FaExclamationTriangle } from "react-icons/fa";
 import { scheduleService } from "@/services/api/scheduleService";
+import { Schedule } from "@/types";
 
 interface ExceptionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  scheduleId: string;
-  scheduleName: string;
+  schedule: Schedule;
   onSuccess: () => void;
-  exceptions: Date[];
 }
 
 export default function ExceptionModal({
   isOpen,
   onClose,
-  scheduleId,
-  scheduleName,
+  schedule,
   onSuccess,
-  exceptions,
 }: ExceptionModalProps) {
   const [newExceptionDate, setNewExceptionDate] = useState("");
   const [loading, setLoading] = useState(false);
@@ -43,9 +35,29 @@ export default function ExceptionModal({
         newErrors.date = "Exception date cannot be in the past";
       }
 
+      // Enforce within schedule effective range
+      const effFrom = schedule.effectiveFrom
+        ? new Date(schedule.effectiveFrom)
+        : null;
+      const effTo = schedule.effectiveTo
+        ? new Date(schedule.effectiveTo)
+        : null;
+      if (effFrom) {
+        const fromYMD = effFrom.toISOString().split("T")[0];
+        if (selectedDate < new Date(fromYMD)) {
+          newErrors.date = "Date must be on or after Effective From";
+        }
+      }
+      if (effTo) {
+        const toYMD = effTo.toISOString().split("T")[0];
+        if (selectedDate > new Date(toYMD)) {
+          newErrors.date = "Date must be on or before Effective To";
+        }
+      }
+
       // Check if date already exists
-      const dateExists = exceptions.some(
-        (exception) => exception.toDateString() === selectedDate.toDateString()
+      const dateExists = schedule.exceptions.some(
+        (exception) => new Date(exception as unknown as string | Date).toDateString() === selectedDate.toDateString()
       );
       if (dateExists) {
         newErrors.date = "This date is already an exception";
@@ -67,22 +79,24 @@ export default function ExceptionModal({
 
     try {
       const newException = new Date(newExceptionDate);
-      const updatedExceptions = [...exceptions, newException];
+      const updatedExceptions = [...schedule.exceptions, newException];
 
-      // Update schedule with new exceptions
-      await scheduleService.updateSchedule(scheduleId, {
-        id: scheduleId,
-        name: "",
-        scheduleType: "",
-        startTime: "",
-        endTime: "",
-        rRule: "",
-        timezone: "",
-        academicYear: "",
-        effectiveFrom: "",
-        effectiveTo: "",
+      // Build full UpdateScheduleDto using existing schedule fields
+      await scheduleService.updateSchedule(schedule.id, {
+        id: schedule.id,
+        name: schedule.name,
+        scheduleType: schedule.scheduleType,
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+        rRule: schedule.rRule,
+        timezone: schedule.timezone,
+        academicYear: schedule.academicYear,
+        effectiveFrom: new Date(schedule.effectiveFrom).toISOString(),
+        effectiveTo: schedule.effectiveTo
+          ? new Date(schedule.effectiveTo).toISOString()
+          : undefined,
         exceptions: updatedExceptions,
-        isActive: true,
+        isActive: schedule.isActive,
       });
 
       onSuccess();
@@ -95,7 +109,7 @@ export default function ExceptionModal({
     }
   };
 
-  const handleRemoveException = async (dateToRemove: Date) => {
+  const handleRemoveException = async (dateToRemove: Date | string) => {
     if (!confirm("Are you sure you want to remove this exception?")) {
       return;
     }
@@ -103,24 +117,27 @@ export default function ExceptionModal({
     setLoading(true);
 
     try {
-      const updatedExceptions = exceptions.filter(
-        (exception) => exception.toDateString() !== dateToRemove.toDateString()
+      const removeKey = new Date(dateToRemove as unknown as string | Date).toDateString();
+      const updatedExceptions = schedule.exceptions.filter(
+        (exception) => new Date(exception as unknown as string | Date).toDateString() !== removeKey
       );
 
       // Update schedule with updated exceptions
-      await scheduleService.updateSchedule(scheduleId, {
-        id: scheduleId,
-        name: "",
-        scheduleType: "",
-        startTime: "",
-        endTime: "",
-        rRule: "",
-        timezone: "",
-        academicYear: "",
-        effectiveFrom: "",
-        effectiveTo: "",
+      await scheduleService.updateSchedule(schedule.id, {
+        id: schedule.id,
+        name: schedule.name,
+        scheduleType: schedule.scheduleType,
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+        rRule: schedule.rRule,
+        timezone: schedule.timezone,
+        academicYear: schedule.academicYear,
+        effectiveFrom: new Date(schedule.effectiveFrom).toISOString(),
+        effectiveTo: schedule.effectiveTo
+          ? new Date(schedule.effectiveTo).toISOString()
+          : undefined,
         exceptions: updatedExceptions,
-        isActive: true,
+        isActive: schedule.isActive,
       });
 
       onSuccess();
@@ -162,7 +179,7 @@ export default function ExceptionModal({
 
           <div className="mb-4 p-3 bg-orange-50 rounded-lg">
             <p className="text-sm text-orange-800">
-              <strong>Schedule:</strong> {scheduleName}
+              <strong>Schedule:</strong> {schedule.name}
             </p>
             <p className="text-xs text-orange-600 mt-1">
               Exceptions are dates when this schedule will not run
@@ -179,6 +196,20 @@ export default function ExceptionModal({
                 <input
                   type="date"
                   value={newExceptionDate}
+                  min={
+                    schedule.effectiveFrom
+                      ? new Date(schedule.effectiveFrom)
+                          .toISOString()
+                          .split("T")[0]
+                      : undefined
+                  }
+                  max={
+                    schedule.effectiveTo
+                      ? new Date(schedule.effectiveTo)
+                          .toISOString()
+                          .split("T")[0]
+                      : undefined
+                  }
                   onChange={(e) => handleInputChange(e.target.value)}
                   className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
                     errors.date ? "border-red-300 bg-red-50" : "border-gray-200"
@@ -216,10 +247,10 @@ export default function ExceptionModal({
           {/* Current Exceptions List */}
           <div>
             <h4 className="text-lg font-semibold text-gray-800 mb-4">
-              Current Exceptions ({exceptions.length})
+              Current Exceptions ({schedule.exceptions.length})
             </h4>
 
-            {exceptions.length === 0 ? (
+            {schedule.exceptions.length === 0 ? (
               <div className="text-center py-8">
                 <FaCalendarAlt className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600">
@@ -228,8 +259,8 @@ export default function ExceptionModal({
               </div>
             ) : (
               <div className="space-y-3">
-                {exceptions
-                  .sort((a, b) => a.getTime() - b.getTime())
+                {schedule.exceptions
+                  .sort((a, b) => new Date(a as unknown as string | Date).getTime() - new Date(b as unknown as string | Date).getTime())
                   .map((exception, index) => (
                     <div
                       key={index}
@@ -240,7 +271,7 @@ export default function ExceptionModal({
                           <FaCalendarAlt className="w-5 h-5 text-orange-500 mr-3" />
                           <div>
                             <p className="text-sm font-medium text-gray-800">
-                              {exception.toLocaleDateString("en-US", {
+                              {new Date(exception as unknown as string | Date).toLocaleDateString("en-US", {
                                 weekday: "long",
                                 year: "numeric",
                                 month: "long",
@@ -248,7 +279,7 @@ export default function ExceptionModal({
                               })}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {exception.toLocaleDateString()}
+                              {new Date(exception as unknown as string | Date).toLocaleDateString()}
                             </p>
                           </div>
                         </div>

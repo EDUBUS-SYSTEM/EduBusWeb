@@ -35,6 +35,7 @@ export default function ScheduleList({
   );
   const [showDetails, setShowDetails] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [showTimeOverrides, setShowTimeOverrides] = useState(false);
   const [timeOverrides, setTimeOverrides] = useState<ScheduleTimeOverride[]>(
     []
@@ -133,10 +134,13 @@ export default function ScheduleList({
   }, [refreshTrigger]);
 
   const filteredSchedules = schedules.filter((schedule) => {
+    const q = (searchTerm || "").toString().toLowerCase();
+    const name = (schedule?.name || "").toString().toLowerCase();
+    const type = (schedule?.scheduleType || "").toString().toLowerCase();
+    const year = (schedule?.academicYear || "").toString().toLowerCase();
+
     const matchesSearch =
-      schedule.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      schedule.scheduleType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      schedule.academicYear.toLowerCase().includes(searchTerm.toLowerCase());
+      !q || name.includes(q) || type.includes(q) || year.includes(q);
 
     const matchesFilter =
       filterActive === null || schedule.isActive === filterActive;
@@ -258,6 +262,29 @@ export default function ScheduleList({
   const handleUpdateSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedSchedule) return;
+
+    // Frontend validations for dates and times
+    const errors: Record<string, string> = {};
+    const startTime = selectedSchedule.startTime;
+    const endTime = selectedSchedule.endTime;
+    if (startTime && endTime && startTime >= endTime) {
+      errors.endTime = "End time must be after start time";
+    }
+
+    const effFrom = selectedSchedule.effectiveFrom
+      ? new Date(selectedSchedule.effectiveFrom)
+      : null;
+    const effTo = selectedSchedule.effectiveTo
+      ? new Date(selectedSchedule.effectiveTo)
+      : null;
+    if (effFrom && effTo && effTo <= effFrom) {
+      errors.effectiveTo = "Effective to date must be after effective from date";
+    }
+
+    setEditErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
 
     try {
       const updateScheduleDto = {
@@ -384,7 +411,7 @@ export default function ScheduleList({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 ml-4">
+                <div className="flex items-center gap-2 ml-4 self-center">
                   <button
                     onClick={() => {
                       setSelectedSchedule(schedule);
@@ -448,80 +475,78 @@ export default function ScheduleList({
               </div>
 
               <div className="space-y-6">
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-800 mb-2">
-                    {selectedSchedule.name}
-                  </h4>
-                  <p className="text-gray-600">
-                    Academic Year: {selectedSchedule.academicYear}
-                  </p>
+                {/* Header card */}
+                <div className="rounded-2xl bg-gradient-to-r from-white to-yellow-50 border border-yellow-100 p-5 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xl font-semibold text-gray-900">
+                        {selectedSchedule.name}
+                      </h4>
+                      <p className="mt-1 text-sm text-gray-600">
+                        Academic Year: <span className="font-medium">{selectedSchedule.academicYear}</span>
+                      </p>
+                    </div>
+                    <span
+                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
+                        selectedSchedule.isActive
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${selectedSchedule.isActive ? "bg-green-500" : "bg-red-500"}`}></span>
+                      {selectedSchedule.isActive ? "Active" : "Inactive"}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Schedule Type
-                      </label>
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getScheduleTypeColor(selectedSchedule.scheduleType)}`}
-                      >
-                        {selectedSchedule.scheduleType}
-                      </span>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Time Range
-                      </label>
-                      <p className="text-gray-900">
-                        {formatTime(selectedSchedule.startTime)} -{" "}
-                        {formatTime(selectedSchedule.endTime)}
-                      </p>
-                    </div>
+                {/* Info grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+                    <p className="text-xs font-medium text-gray-500 mb-1">Schedule Type</p>
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getScheduleTypeColor(selectedSchedule.scheduleType)}`}>
+                      {selectedSchedule.scheduleType}
+                    </span>
                   </div>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Academic Year
-                      </label>
-                      <p className="text-gray-900">
-                        {selectedSchedule.academicYear}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        RRule Pattern
-                      </label>
-                      <p className="text-gray-900 font-mono text-sm bg-gray-100 px-2 py-1 rounded">
-                        {selectedSchedule.rRule}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Effective Period
-                      </label>
-                      <p className="text-gray-900">
-                        {formatDate(selectedSchedule.effectiveFrom)} -{" "}
-                        {selectedSchedule.effectiveTo
-                          ? formatDate(selectedSchedule.effectiveTo)
-                          : "No end date"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Status
-                      </label>
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                          selectedSchedule.isActive
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {selectedSchedule.isActive ? "Active" : "Inactive"}
-                      </span>
-                    </div>
+
+                  <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+                    <p className="text-xs font-medium text-gray-500 mb-1">Time Range</p>
+                    <p className="text-gray-900">
+                      {formatTime(selectedSchedule.startTime)}
+                      <span className="mx-1 text-gray-400">—</span>
+                      {formatTime(selectedSchedule.endTime)}
+                    </p>
                   </div>
+
+                  <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+                    <p className="text-xs font-medium text-gray-500 mb-1">Effective Period</p>
+                    <p className="text-gray-900">
+                      {formatDate(selectedSchedule.effectiveFrom)}
+                      <span className="mx-1 text-gray-400">→</span>
+                      {selectedSchedule.effectiveTo ? (
+                        <>{formatDate(selectedSchedule.effectiveTo)}</>
+                      ) : (
+                        <span className="italic text-gray-500">No end date</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                {/* RRule box */}
+                <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4">
+                  <p className="text-sm font-semibold text-gray-800 mb-2">Recurrence Rule (RRULE)</p>
+                  <div className="text-sm font-mono text-gray-800 bg-yellow-100 px-3 py-2 rounded w-full max-w-full whitespace-pre-wrap break-words overflow-x-auto">
+                    {selectedSchedule.rRule}
+                  </div>
+                </div>
+
+                {/* Quick stats */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                    <FaCalendarAlt className="w-3 h-3" /> Exceptions: {selectedSchedule.exceptions.length}
+                  </span>
+                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <FaClock className="w-3 h-3" /> Overrides: {selectedSchedule.timeOverrides?.length || 0}
+                  </span>
                 </div>
               </div>
 
@@ -690,6 +715,9 @@ export default function ScheduleList({
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
                       required
                     />
+                    {editErrors.endTime && (
+                      <p className="mt-1 text-sm text-red-600">{editErrors.endTime}</p>
+                    )}
                   </div>
                 </div>
 
@@ -730,6 +758,13 @@ export default function ScheduleList({
                               .split("T")[0]
                           : ""
                       }
+                      min={
+                        selectedSchedule.effectiveFrom
+                          ? new Date(selectedSchedule.effectiveFrom)
+                              .toISOString()
+                              .split("T")[0]
+                          : undefined
+                      }
                       onChange={(e) =>
                         setSelectedSchedule({
                           ...selectedSchedule,
@@ -738,6 +773,9 @@ export default function ScheduleList({
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
                     />
+                    {editErrors.effectiveTo && (
+                      <p className="mt-1 text-sm text-red-600">{editErrors.effectiveTo}</p>
+                    )}
                   </div>
                 </div>
 
@@ -879,11 +917,19 @@ export default function ScheduleList({
                             <FaEdit className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => {
-                              // TODO: Implement delete time override functionality
-                              alert(
-                                "Delete Time Override functionality will be implemented"
-                              );
+                            onClick={async () => {
+                              if (!selectedSchedule) return;
+                              if (!confirm("Delete this time override?")) return;
+                              try {
+                                await scheduleService.removeTimeOverride(
+                                  selectedSchedule.id,
+                                  new Date(override.date).toISOString()
+                                );
+                                handleTimeOverrideSuccess();
+                              } catch (err) {
+                                console.error("Error deleting override", err);
+                                alert("Failed to delete. Please try again.");
+                              }
                             }}
                             className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors duration-200"
                             title="Delete Override"
@@ -919,6 +965,16 @@ export default function ScheduleList({
           scheduleName={selectedSchedule.name}
           onSuccess={handleTimeOverrideSuccess}
           override={editingOverride}
+          effectiveFrom={
+            selectedSchedule.effectiveFrom
+              ? new Date(selectedSchedule.effectiveFrom).toISOString()
+              : ""
+          }
+          effectiveTo={
+            selectedSchedule.effectiveTo
+              ? new Date(selectedSchedule.effectiveTo).toISOString()
+              : undefined
+          }
         />
       )}
 
@@ -927,10 +983,8 @@ export default function ScheduleList({
         <ExceptionModal
           isOpen={showExceptionModal}
           onClose={() => setShowExceptionModal(false)}
-          scheduleId={selectedSchedule.id}
-          scheduleName={selectedSchedule.name}
+          schedule={selectedSchedule}
           onSuccess={handleExceptionSuccess}
-          exceptions={selectedSchedule.exceptions}
         />
       )}
     </div>

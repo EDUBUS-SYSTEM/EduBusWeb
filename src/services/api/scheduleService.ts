@@ -315,7 +315,7 @@ class ScheduleService {
     date: string
   ): Promise<Schedule> {
     const response = await apiClient.delete(
-      `/schedule/${scheduleId}/overrides/${date}`
+      `/schedule/${scheduleId}/overrides?date=${encodeURIComponent(date)}`
     );
     return response.data;
   }
@@ -348,11 +348,10 @@ class ScheduleService {
 
   async updateTimeOverride(
     scheduleId: string,
-    date: string,
     timeOverride: ScheduleTimeOverride
   ): Promise<Schedule> {
     const response = await apiClient.put(
-      `/schedule/${scheduleId}/overrides/${date}`,
+      `/schedule/${scheduleId}/overrides`,
       timeOverride
     );
     return response.data;
