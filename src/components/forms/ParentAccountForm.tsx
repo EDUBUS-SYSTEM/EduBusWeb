@@ -42,8 +42,13 @@ const ParentAccountForm: React.FC<ParentAccountFormProps> = ({
     }));
   };
 
-  // Removed unused handleFileChange function
-
+  const handleFileChange = (field: keyof ParentAccountData, files: File[]) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: files,
+    }));
+  };
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
@@ -84,44 +89,43 @@ const ParentAccountForm: React.FC<ParentAccountFormProps> = ({
             error={errors.lastName}
             required
           />
+                     <Input
+             label="PhoneNumber*"
+             placeholder="Enter PhoneNumber"
+             value={formData.phoneNumber}
+             onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
+             error={errors.phoneNumber}
+             required
+           />
 
-          <Input
-            label="PhoneNumber*"
-            placeholder="Enter PhoneNumber"
-            value={formData.phoneNumber}
-            onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
-            error={errors.phoneNumber}
-            required
-          />
+           <Input
+             label="Address*"
+             placeholder="Enter Address"
+             value={formData.address}
+             onChange={(e) => handleInputChange("address", e.target.value)}
+             error={errors.address}
+             required
+           />
 
-          <Input
-            label="Address*"
-            placeholder="Enter Address"
-            value={formData.address}
-            onChange={(e) => handleInputChange("address", e.target.value)}
-            error={errors.address}
-            required
-          />
+           <Select
+             label="Gender*"
+             options={genderOptions}
+             placeholder="Select Gender"
+             value={formData.gender}
+             onChange={(value) => handleInputChange("gender", value)}
+             error={errors.gender}
+             required
+           />
 
-          <Select
-            label="Gender*"
-            options={genderOptions}
-            placeholder="Select Gender"
-            value={formData.gender}
-            onChange={(value) => handleInputChange("gender", value)}
-            error={errors.gender}
-            required
-          />
-
-          <Input
-            label="Date of Birth*"
-            type="date"
-            placeholder="Select date of birth"
-            value={formData.dateOfBirth}
-            onChange={(e) => handleInputChange("dateOfBirth", e.target.value)}
-            error={errors.dateOfBirth}
-            required
-          />
+           <Input
+             label="Date of Birth*"
+             type="date"
+             placeholder="Select date of birth"
+             value={formData.dateOfBirth}
+             onChange={(e) => handleInputChange("dateOfBirth", e.target.value)}
+             error={errors.dateOfBirth}
+             required
+           /> 
         </div>
       </div>
 

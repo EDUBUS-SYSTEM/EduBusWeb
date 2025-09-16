@@ -1,7 +1,15 @@
 import axios from "axios";
 
 // Configure base URL for API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7061/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
+// Alternative API URLs to try if the default fails
+const FALLBACK_API_URLS = [
+  "http://localhost:5000/api",
+  "http://localhost:5223/api", 
+  "http://localhost:7061/api",
+  "https://localhost:7061/api"
+];
 
 // Create axios instance with default configuration
 export const apiClient = axios.create({
@@ -39,6 +47,29 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Function to test API connection and get working URL
+export const testApiConnection = async (): Promise<string> => {
+  for (const baseUrl of FALLBACK_API_URLS) {
+    try {
+      const testClient = axios.create({
+        baseURL: baseUrl,
+        timeout: 3000,
+      });
+      
+      // Try to hit a simple endpoint
+      await testClient.get('/health/live');
+      console.log(`✅ API connection successful: ${baseUrl}`);
+      return baseUrl;
+    } catch {
+      console.log(`❌ API connection failed: ${baseUrl}`);
+      continue;
+    }
+  }
+  
+  console.warn('⚠️ No working API URL found, using default');
+  return API_BASE_URL;
+};
 
 // Helper functions for API calls
 export const apiService = {

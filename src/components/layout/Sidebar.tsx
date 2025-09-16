@@ -17,6 +17,7 @@ import {
   FaBus,
   FaClock,
   FaCalendarAlt,
+  FaUserCheck,
 } from "react-icons/fa";
 
 export default function Sidebar() {
@@ -30,26 +31,11 @@ export default function Sidebar() {
       icon: <FaUserCircle />,
     },
     { href: "/admin/users", label: "User Management", icon: <FaUsers /> },
-    {
-      href: "/admin/shuttle",
-      label: "Shuttle Register",
-      icon: <FaClipboardList />,
-    },
-    {
-      href: "/admin/revenue",
-      label: "Revenue Statistic",
-      icon: <FaChartBar />,
-    },
-    {
-      href: "/admin/complaints",
-      label: "Parent Complaint",
-      icon: <FaCommentDots />,
-    },
-    {
-      href: "/admin/requests",
-      label: "Driver's Requests",
-      icon: <FaFileAlt />,
-    },
+    { href: "/admin/shuttle", label: "Shuttle Register", icon: <FaClipboardList /> },
+    { href: "/admin/revenue", label: "Revenue Statistic", icon: <FaChartBar /> },
+    { href: "/admin/complaints", label: "Parent Complaint", icon: <FaCommentDots /> },
+    { href: "/admin/requests", label: "Driver's Requests", icon: <FaFileAlt /> },
+    { href: "/admin/parent-requests", label: "Parent Requests", icon: <FaUserCheck /> },
     { href: "/admin/password", label: "Change Password", icon: <FaLock /> },
     {
       href: "/admin/trips",
@@ -68,6 +54,7 @@ export default function Sidebar() {
       label: "Academic Calendar",
       icon: <FaCalendarAlt />,
     },
+    {href: "/admin/vehicle", label: "Vehicles", icon: <FaBus/>},
   ];
 
   return (
