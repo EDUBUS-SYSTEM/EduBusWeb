@@ -43,7 +43,6 @@ export default function Sidebar() {
       icon: <FaMapMarkedAlt />,
     },
     { href: "/admin/students", label: "Students List", icon: <FaList /> },
-    { href: "/admin/vehicles", label: "Vehicles", icon: <FaBus /> },
     {
       href: "/admin/schedules",
       label: "Schedule Management",
@@ -72,7 +71,7 @@ export default function Sidebar() {
       </div>
 
       {/* Menu */}
-      <nav className="flex flex-col mt-2 text-[#463B3B] text-sm font-medium">
+      <nav className="flex-1 overflow-y-auto mt-2 text-[#463B3B] text-sm font-medium pr-1">
         {links.map((link) => (
           <Link
             key={link.href}

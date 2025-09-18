@@ -133,6 +133,26 @@ export default function ScheduleList({
     loadSchedules();
   }, [refreshTrigger]);
 
+  // When opening details, fetch time overrides to enrich selectedSchedule
+  useEffect(() => {
+    const loadOverridesForDetails = async () => {
+      if (!showDetails || !selectedSchedule) return;
+      try {
+        const overrides = await scheduleService.getTimeOverrides(
+          selectedSchedule.id
+        );
+        setSelectedSchedule((prev) =>
+          prev ? { ...prev, timeOverrides: overrides } : prev
+        );
+      } catch (err) {
+        // Silently ignore; details can still render without overrides
+        console.error("Error loading overrides for details:", err);
+      }
+    };
+    loadOverridesForDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showDetails, selectedSchedule?.id]);
+
   const filteredSchedules = schedules.filter((schedule) => {
     const q = (searchTerm || "").toString().toLowerCase();
     const name = (schedule?.name || "").toString().toLowerCase();
@@ -233,6 +253,10 @@ export default function ScheduleList({
           selectedSchedule.id
         );
         setTimeOverrides(overrides);
+        // Also update the details view if it's open
+        setSelectedSchedule((prev) =>
+          prev ? { ...prev, timeOverrides: overrides } : prev
+        );
       } catch (error) {
         console.error("Error refreshing time overrides:", error);
       }
