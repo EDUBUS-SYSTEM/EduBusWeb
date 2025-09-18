@@ -1,87 +1,144 @@
-'use client';
+"use client";
+import { useEffect, useMemo, useState } from "react";
 
-import React, { forwardRef } from 'react';
-
-interface DateInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'onChange'> {
-  label?: string;
-  error?: string;
-  helperText?: string;
-  onChange?: (value: string) => void;
+interface DateInputProps {
+  value?: string; // ISO: YYYY-MM-DD or full ISO
+  onChange: (isoDate: string) => void;
+  min?: string; // ISO constraint
+  max?: string; // ISO constraint
+  placeholder?: string;
+  required?: boolean;
+  disabled?: boolean;
+  className?: string;
+  inputClassName?: string;
+  name?: string;
+  id?: string;
 }
 
-const DateInput = forwardRef<HTMLInputElement, DateInputProps>(
-  ({ label, error, helperText, onChange, className = '', ...props }, ref) => {
-    const baseClasses = `
-      w-full px-4 py-3 rounded-2xl border-2
-      transition-all duration-300 ease-in-out
-      focus:outline-none focus:ring-4 focus:ring-opacity-50
-      placeholder:text-gray-400
-      bg-white backdrop-blur-sm
-    `;
-
-    const stateClasses = error
-      ? `
-          border-red-300 focus:border-red-500 focus:ring-red-200
-          text-red-900 placeholder:text-red-300
-        `
-      : `
-          border-gray-200 focus:border-blue-400 focus:ring-blue-200
-          text-gray-900 hover:border-gray-300
-        `;
-
-    const classes = `
-      ${baseClasses}
-      ${stateClasses}
-      pr-6
-      ${className}
-    `;
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (onChange) {
-        onChange(e.target.value);
-      }
-    };
-
-    return (
-      <div className="w-full">
-        {label && (
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {label}
-          </label>
-        )}
-        <div className="relative">
-          <input
-            ref={ref}
-            type="date"
-            className={classes}
-            onChange={handleChange}
-            {...props}
-          />
-        </div>
-        {error && (
-          <p className="mt-1 text-sm text-red-600 flex items-center">
-            <svg
-              className="w-4 h-4 mr-1"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                clipRule="evenodd"
-              />
-            </svg>
-            {error}
-          </p>
-        )}
-        {helperText && !error && (
-          <p className="mt-1 text-sm text-gray-500">{helperText}</p>
-        )}
-      </div>
-    );
+function isoToYMD(iso?: string): string | undefined {
+  if (!iso) return undefined;
+  try {
+    // Accept both YYYY-MM-DD and full ISO
+    const d = iso.length > 10 ? new Date(iso) : new Date(`${iso}T00:00:00`);
+    if (isNaN(d.getTime())) return undefined;
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  } catch {
+    return undefined;
   }
-);
+}
 
-DateInput.displayName = 'DateInput';
+function isoToDisplay(iso?: string): string {
+  const ymd = isoToYMD(iso);
+  if (!ymd) return "";
+  const [y, m, d] = ymd.split("-");
+  return `${d}/${m}/${y}`;
+}
 
-export default DateInput;
+function displayToISO(display: string): string | undefined {
+  // Expect dd/MM/yyyy
+  const m = display.match(/^\s*(\d{2})\/(\d{2})\/(\d{4})\s*$/);
+  if (!m) return undefined;
+  const d = Number(m[1]);
+  const mo = Number(m[2]);
+  const y = Number(m[3]);
+  const jsDate = new Date(Date.UTC(y, mo - 1, d));
+  if (jsDate.getUTCFullYear() !== y || jsDate.getUTCMonth() !== mo - 1 || jsDate.getUTCDate() !== d) {
+    return undefined; // invalid day (e.g., 31/02)
+  }
+  const mm = String(mo).padStart(2, "0");
+  const dd = String(d).padStart(2, "0");
+  return `${y}-${mm}-${dd}`;
+}
+
+export default function DateInput({
+  value,
+  onChange,
+  min,
+  max,
+  placeholder = "dd/mm/yyyy",
+  required,
+  disabled,
+  className,
+  inputClassName,
+  name,
+  id,
+}: DateInputProps) {
+  const [text, setText] = useState<string>(isoToDisplay(value));
+  const [touched, setTouched] = useState(false);
+  const [error, setError] = useState<string>("");
+
+  useEffect(() => {
+    setText(isoToDisplay(value));
+  }, [value]);
+
+  const minYMD = useMemo(() => isoToYMD(min), [min]);
+  const maxYMD = useMemo(() => isoToYMD(max), [max]);
+
+  const validateAndEmit = (nextText: string) => {
+    const iso = displayToISO(nextText);
+    if (!iso) {
+      setError(nextText.trim() ? "Ngày không hợp lệ (định dạng dd/mm/yyyy)" : "");
+      return false;
+    }
+    if (minYMD && iso < minYMD) {
+      setError("Không thể chọn trước Effective From");
+      return false;
+    }
+    if (maxYMD && iso > maxYMD) {
+      setError("Không thể chọn sau Effective To");
+      return false;
+    }
+    setError("");
+    onChange(iso);
+    return true;
+  };
+
+  return (
+    <div className={className}>
+      <input
+        type="text"
+        name={name}
+        id={id}
+        value={text}
+        disabled={disabled}
+        required={required}
+        inputMode="numeric"
+        placeholder={placeholder}
+        onChange={(e) => {
+          const v = e.target.value;
+          // accept partial dd/MM/yyyy
+          if (/^\d{0,2}(\/\d{0,2}(\/\d{0,4})?)?$/.test(v)) {
+            setText(v);
+            if (touched) validateAndEmit(v);
+          }
+        }}
+        onBlur={() => {
+          setTouched(true);
+          // auto format if user typed like d/m/yyyy
+          const parts = text.split("/");
+          if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+            const dd = parts[0].padStart(2, "0");
+            const mm = parts[1].padStart(2, "0");
+            const yyyy = parts[2];
+            const formatted = `${dd}/${mm}/${yyyy}`;
+            setText(formatted);
+            validateAndEmit(formatted);
+          } else {
+            validateAndEmit(text);
+          }
+        }}
+        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
+          error ? "border-red-300 bg-red-50" : "border-gray-200"
+        } ${inputClassName || ""}`}
+      />
+      {error && (
+        <p className="mt-1 text-sm text-red-600">{error}</p>
+      )}
+    </div>
+  );
+}
+
+// Removed duplicate component definition

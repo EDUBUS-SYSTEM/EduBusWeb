@@ -1,10 +1,11 @@
 "use client";
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import Image from "next/image";
+import axios from "axios";
 import { motion } from 'framer-motion';
-
 
 export default function HomePage() {
   const router = useRouter();

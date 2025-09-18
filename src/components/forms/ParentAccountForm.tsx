@@ -35,14 +35,13 @@ const ParentAccountForm: React.FC<ParentAccountFormProps> = ({
     { value: "other", label: "Other" },
   ];
 
-
-
   const handleInputChange = (field: keyof ParentAccountData, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
+
   const handleFileChange = (field: keyof ParentAccountData, files: File[]) => {
     setFormData((prev) => ({
       ...prev,
@@ -128,7 +127,7 @@ const ParentAccountForm: React.FC<ParentAccountFormProps> = ({
              required
            /> 
         </div>
-             </div>
+      </div>
 
       {/* Submit Button */}
       <div className="flex justify-center">

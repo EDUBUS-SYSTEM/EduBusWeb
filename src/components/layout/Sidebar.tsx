@@ -15,8 +15,9 @@ import {
   FaMapMarkedAlt,
   FaList,
   FaBus,
+  FaClock,
+  FaCalendarAlt,
   FaUserCheck,
-
 } from "react-icons/fa";
 
 export default function Sidebar() {
@@ -24,7 +25,11 @@ export default function Sidebar() {
 
   const links = [
     { href: "/admin", label: "Admin Dashboard", icon: <FaHome /> },
-    { href: "/admin/dashboard", label: "Personal Profile", icon: <FaUserCircle /> },
+    {
+      href: "/admin/dashboard",
+      label: "Personal Profile",
+      icon: <FaUserCircle />,
+    },
     { href: "/admin/users", label: "User Management", icon: <FaUsers /> },
     { href: "/admin/shuttle", label: "Shuttle Register", icon: <FaClipboardList /> },
     { href: "/admin/revenue", label: "Revenue Statistic", icon: <FaChartBar /> },
@@ -32,8 +37,22 @@ export default function Sidebar() {
     { href: "/admin/requests", label: "Driver's Requests", icon: <FaFileAlt /> },
     { href: "/admin/parent-requests", label: "Parent Requests", icon: <FaUserCheck /> },
     { href: "/admin/password", label: "Change Password", icon: <FaLock /> },
-    { href: "/admin/trips", label: "Trip Management", icon: <FaMapMarkedAlt /> },
+    {
+      href: "/admin/trips",
+      label: "Trip Management",
+      icon: <FaMapMarkedAlt />,
+    },
     { href: "/admin/students", label: "Students List", icon: <FaList /> },
+    {
+      href: "/admin/schedules",
+      label: "Schedule Management",
+      icon: <FaClock />,
+    },
+    {
+      href: "/admin/academic-calendar",
+      label: "Academic Calendar",
+      icon: <FaCalendarAlt />,
+    },
     {href: "/admin/vehicle", label: "Vehicles", icon: <FaBus/>},
   ];
 
@@ -52,7 +71,7 @@ export default function Sidebar() {
       </div>
 
       {/* Menu */}
-      <nav className="flex flex-col mt-2 text-[#463B3B] text-sm font-medium">
+      <nav className="flex-1 overflow-y-auto mt-2 text-[#463B3B] text-sm font-medium pr-1">
         {links.map((link) => (
           <Link
             key={link.href}
@@ -60,8 +79,8 @@ export default function Sidebar() {
             className={`px-5 py-4 flex items-center gap-3 transition 
               ${
                 pathname === link.href
-                  ? "bg-[#fad23c] font-semibold" 
-                  : "hover:bg-[#FFF085]"        
+                  ? "bg-[#fad23c] font-semibold"
+                  : "hover:bg-[#FFF085]"
               }`}
           >
             {link.icon} {link.label}
