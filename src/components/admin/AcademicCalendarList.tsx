@@ -173,50 +173,52 @@ export default function AcademicCalendarList({
 
   if (loading) {
     return (
-      <div className="p-8 text-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <p className="mt-4 text-gray-600">Loading academic calendars...</p>
+      <div className="p-6 md:p-8 text-center">
+        <div className="inline-block animate-spin rounded-full h-6 w-6 md:h-8 md:w-8 border-b-2 border-blue-600"></div>
+        <p className="mt-4 text-sm md:text-base text-gray-600">Loading academic calendars...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-6">
       {filteredCalendars.length === 0 ? (
-        <div className="text-center py-12">
-          <FaCalendarAlt className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+        <div className="text-center py-8 md:py-12">
+          <FaCalendarAlt className="w-12 h-12 md:w-16 md:h-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-base md:text-lg font-medium text-gray-900 mb-2">
             No Academic Calendars Found
           </h3>
-          <p className="text-gray-500">
+          <p className="text-sm md:text-base text-gray-500">
             {searchTerm || filterActive !== null
               ? "No academic calendars match your current filters."
               : "Get started by creating your first academic calendar."}
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3 md:space-y-4">
           {filteredCalendars.map((calendar) => (
             <div
               key={calendar.id}
-              className="bg-gradient-to-r from-white to-yellow-50 border border-gray-100 rounded-2xl p-6 hover:shadow-soft-lg transition-all duration-300 hover:border-yellow-200"
+              className="bg-gradient-to-r from-white to-yellow-50 border border-gray-100 rounded-2xl p-4 md:p-6 hover:shadow-soft-lg transition-all duration-300 hover:border-yellow-200"
             >
-              <div className="flex items-start justify-between">
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-blue-500 rounded-xl flex items-center justify-center">
-                      <FaGraduationCap className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-800">
-                        {calendar.name}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        Academic Year: {calendar.academicYear}
-                      </p>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 md:gap-3 mb-3">
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-blue-400 to-blue-500 rounded-xl flex items-center justify-center">
+                        <FaGraduationCap className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg md:text-xl font-semibold text-gray-800">
+                          {calendar.name}
+                        </h3>
+                        <p className="text-xs md:text-sm text-gray-600">
+                          Academic Year: {calendar.academicYear}
+                        </p>
+                      </div>
                     </div>
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium ${
                         calendar.isActive
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-800"
@@ -226,61 +228,61 @@ export default function AcademicCalendarList({
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div className="flex items-center text-gray-600 bg-gray-50 rounded-lg p-3">
-                      <FaCalendarAlt className="w-4 h-4 mr-2 text-blue-500" />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-3 md:mb-4">
+                    <div className="flex items-center text-gray-600 bg-gray-50 rounded-lg p-2 md:p-3">
+                      <FaCalendarAlt className="w-3 h-3 md:w-4 md:h-4 mr-2 text-blue-500" />
                       <div>
                         <p className="text-xs text-gray-500">Period</p>
-                        <p className="text-sm font-medium">
+                        <p className="text-xs md:text-sm font-medium">
                           {formatDate(calendar.startDate)} -{" "}
                           {formatDate(calendar.endDate)}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center text-gray-600 bg-gray-50 rounded-lg p-3">
-                      <FaExclamationTriangle className="w-4 h-4 mr-2 text-purple-500" />
+                    <div className="flex items-center text-gray-600 bg-gray-50 rounded-lg p-2 md:p-3">
+                      <FaExclamationTriangle className="w-3 h-3 md:w-4 md:h-4 mr-2 text-purple-500" />
                       <div>
                         <p className="text-xs text-gray-500">Semesters</p>
-                        <p className="text-sm font-medium">
+                        <p className="text-xs md:text-sm font-medium">
                           {calendar.semesters.length}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center text-gray-600 bg-gray-50 rounded-lg p-3">
-                      <FaClock className="w-4 h-4 mr-2 text-green-500" />
+                    <div className="flex items-center text-gray-600 bg-gray-50 rounded-lg p-2 md:p-3">
+                      <FaClock className="w-3 h-3 md:w-4 md:h-4 mr-2 text-green-500" />
                       <div>
                         <p className="text-xs text-gray-500">Holidays</p>
-                        <p className="text-sm font-medium">
+                        <p className="text-xs md:text-sm font-medium">
                           {calendar.holidays.length}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="text-sm text-gray-500">
+                  <div className="text-xs md:text-sm text-gray-500">
                     Created: {formatDate(calendar.createdAt)}
                     {calendar.updatedAt && (
-                      <span className="ml-4">
+                      <span className="ml-2 md:ml-4">
                         Updated: {formatDate(calendar.updatedAt)}
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 ml-4">
+                <div className="flex items-center gap-1 md:gap-2 lg:ml-4 lg:self-center">
                   <button
                     onClick={() => handleViewDetails(calendar)}
-                    className="p-3 text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200 hover:shadow-md"
+                    className="p-2 md:p-3 text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200 hover:shadow-md"
                     title="View Details"
                   >
-                    <FaEye className="w-4 h-4" />
+                    <FaEye className="w-3 h-3 md:w-4 md:h-4" />
                   </button>
                   <button
                     onClick={() => handleDeleteCalendar(calendar.id)}
-                    className="p-3 text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 hover:shadow-md"
+                    className="p-2 md:p-3 text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 hover:shadow-md"
                     title="Delete Calendar"
                   >
-                    <FaTrash className="w-4 h-4" />
+                    <FaTrash className="w-3 h-3 md:w-4 md:h-4" />
                   </button>
                 </div>
               </div>
@@ -293,27 +295,27 @@ export default function AcademicCalendarList({
       {showDetails && selectedCalendar && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold text-gray-800 flex items-center">
-                  <FaGraduationCap className="w-6 h-6 mr-3 text-blue-600" />
+            <div className="p-4 md:p-6">
+              <div className="flex items-center justify-between mb-4 md:mb-6">
+                <h3 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center">
+                  <FaGraduationCap className="w-5 h-5 md:w-6 md:h-6 mr-2 md:mr-3 text-blue-600" />
                   {selectedCalendar.name}
                 </h3>
                 <button
                   onClick={() => setShowDetails(false)}
-                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                  className="text-gray-400 hover:text-gray-600 text-xl md:text-2xl"
                 >
                   ×
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {/* Basic Information */}
-                <div className="bg-blue-50 rounded-xl p-4">
-                  <h4 className="font-semibold text-gray-800 mb-3">
+                <div className="bg-blue-50 rounded-xl p-3 md:p-4">
+                  <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">
                     Basic Information
                   </h4>
-                  <div className="space-y-2 text-sm">
+                  <div className="space-y-2 text-xs md:text-sm">
                     <div>
                       <span className="font-medium">Academic Year:</span>{" "}
                       {selectedCalendar.academicYear}
@@ -342,11 +344,11 @@ export default function AcademicCalendarList({
                 </div>
 
                 {/* Statistics */}
-                <div className="bg-cyan-50 rounded-xl p-4">
-                  <h4 className="font-semibold text-gray-800 mb-3">
+                <div className="bg-cyan-50 rounded-xl p-3 md:p-4">
+                  <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">
                     Statistics
                   </h4>
-                  <div className="space-y-2 text-sm">
+                  <div className="space-y-2 text-xs md:text-sm">
                     <div>
                       <span className="font-medium">Semesters:</span>{" "}
                       {selectedCalendar.semesters.length}
@@ -369,20 +371,20 @@ export default function AcademicCalendarList({
 
               {/* Semesters */}
               {selectedCalendar.semesters.length > 0 && (
-                <div className="mt-6">
-                  <h4 className="font-semibold text-gray-800 mb-3">
+                <div className="mt-4 md:mt-6">
+                  <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">
                     Semesters
                   </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                     {selectedCalendar.semesters.map((semester, index) => (
-                      <div key={index} className="bg-gray-50 rounded-lg p-4">
-                        <div className="font-medium text-gray-800">
+                      <div key={index} className="bg-gray-50 rounded-lg p-3 md:p-4">
+                        <div className="font-medium text-gray-800 text-sm md:text-base">
                           {semester.name}
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-xs md:text-sm text-gray-600">
                           {semester.code}
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-xs md:text-sm text-gray-600">
                           {formatDate(semester.startDate)} -{" "}
                           {formatDate(semester.endDate)}
                         </div>
@@ -403,20 +405,20 @@ export default function AcademicCalendarList({
 
               {/* Holidays */}
               {selectedCalendar.holidays.length > 0 && (
-                <div className="mt-6">
-                  <h4 className="font-semibold text-gray-800 mb-3">Holidays</h4>
+                <div className="mt-4 md:mt-6">
+                  <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">Holidays</h4>
                   <div className="space-y-2">
                     {selectedCalendar.holidays.map((holiday, index) => (
-                      <div key={index} className="bg-red-50 rounded-lg p-4">
-                        <div className="font-medium text-gray-800">
+                      <div key={index} className="bg-red-50 rounded-lg p-3 md:p-4">
+                        <div className="font-medium text-gray-800 text-sm md:text-base">
                           {holiday.name}
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-xs md:text-sm text-gray-600">
                           {formatDate(holiday.startDate)} -{" "}
                           {formatDate(holiday.endDate)}
                         </div>
                         {holiday.description && (
-                          <div className="text-sm text-gray-600 mt-1">
+                          <div className="text-xs md:text-sm text-gray-600 mt-1">
                             {holiday.description}
                           </div>
                         )}

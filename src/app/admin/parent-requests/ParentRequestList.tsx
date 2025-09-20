@@ -175,10 +175,10 @@ export default function ParentRequestList() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Search and Filter Section */}
-      <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-        <div className="flex flex-col lg:flex-row gap-4">
+      <div className="bg-white rounded-2xl shadow-lg p-4 md:p-6 border border-gray-100">
+        <div className="flex flex-col lg:flex-row gap-3 md:gap-4">
           {/* Search by Email */}
           <div className="flex-1 relative">
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -188,7 +188,7 @@ export default function ParentRequestList() {
               placeholder="Search by email..."
               value={searchEmail}
               onChange={(e) => setSearchEmail(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-200"
+              className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-200 text-sm md:text-base"
               autoComplete="off"
             />
           </div>
@@ -202,7 +202,7 @@ export default function ParentRequestList() {
               placeholder="Search by name..."
               value={searchName}
               onChange={(e) => setSearchName(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-200"
+              className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-200 text-sm md:text-base"
               autoComplete="off"
             />
           </div>
@@ -214,35 +214,35 @@ export default function ParentRequestList() {
                 setSearchEmail("");
                 setSearchName("");
               }}
-              className="flex items-center gap-2 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors duration-200 font-medium"
+              className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 md:py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors duration-200 font-medium text-sm md:text-base"
             >
               <FaTimes />
-              Clear
+              <span className="hidden sm:inline">Clear</span>
             </button>
           )}
           
           {/* Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 px-4 py-3 bg-[#fad23c] text-[#463B3B] rounded-xl hover:bg-[#FFF085] transition-colors duration-200 font-medium"
+            className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 md:py-3 bg-[#fad23c] text-[#463B3B] rounded-xl hover:bg-[#FFF085] transition-colors duration-200 font-medium text-sm md:text-base"
           >
             <FaFilter />
-            Filters
+            <span className="hidden sm:inline">Filters</span>
           </button>
         </div>
 
         {/* Filter Options */}
         {showFilters && (
           <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="flex flex-wrap gap-4">
-              <div>
+            <div className="flex flex-wrap gap-3 md:gap-4">
+              <div className="w-full sm:w-auto">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Status
                 </label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
+                  className="w-full sm:w-auto px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent text-sm md:text-base"
                 >
                   <option value="">All Status</option>
                   <option value="Pending">Pending</option>
@@ -265,70 +265,79 @@ export default function ParentRequestList() {
       {/* Requests List */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
         {requests.length === 0 ? (
-          <div className="text-center py-12">
-            <FaUser className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No requests found</h3>
-            <p className="text-gray-500">No parent requests match your current filters.</p>
+          <div className="text-center py-8 md:py-12">
+            <FaUser className="mx-auto h-10 w-10 md:h-12 md:w-12 text-gray-400 mb-4" />
+            <h3 className="text-base md:text-lg font-medium text-gray-900 mb-2">No requests found</h3>
+            <p className="text-sm md:text-base text-gray-500">No parent requests match your current filters.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-[#FEFCE8] border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Parent Info</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Students</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Pickup Location</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Actions</th>
+                  <th className="px-3 md:px-6 py-3 md:py-4 text-left text-xs md:text-sm font-semibold text-[#463B3B]">
+                    <span className="hidden sm:inline">Parent Info</span>
+                    <span className="sm:hidden">Parent</span>
+                  </th>
+                  <th className="px-3 md:px-6 py-3 md:py-4 text-left text-xs md:text-sm font-semibold text-[#463B3B]">
+                    <span className="hidden lg:inline">Students</span>
+                    <span className="lg:hidden">Kids</span>
+                  </th>
+                  <th className="px-3 md:px-6 py-3 md:py-4 text-left text-xs md:text-sm font-semibold text-[#463B3B]">
+                    <span className="hidden lg:inline">Pickup Location</span>
+                    <span className="lg:hidden">Location</span>
+                  </th>
+                  <th className="px-3 md:px-6 py-3 md:py-4 text-left text-xs md:text-sm font-semibold text-[#463B3B]">Status</th>
+                  <th className="px-3 md:px-6 py-3 md:py-4 text-left text-xs md:text-sm font-semibold text-[#463B3B]">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {requests.map((request) => (
                   <tr key={request.id} className="hover:bg-gray-50 transition-colors duration-150">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-3">
+                    <td className="px-3 md:px-6 py-3 md:py-4">
+                      <div className="flex items-center space-x-2 md:space-x-3">
                         <div className="flex-shrink-0">
-                          <div className="h-10 w-10 rounded-full bg-[#fad23c] flex items-center justify-center">
-                            <FaUser className="h-5 w-5 text-[#463B3B]" />
+                          <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-[#fad23c] flex items-center justify-center">
+                            <FaUser className="h-4 w-4 md:h-5 md:w-5 text-[#463B3B]" />
                           </div>
                         </div>
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs md:text-sm font-medium text-gray-900 truncate">
                             {request.parentInfo ? 
                               `${request.parentInfo.firstName} ${request.parentInfo.lastName}` : 
                               'N/A'
                             }
                           </div>
-                          <div className="text-sm text-gray-500">{request.parentEmail}</div>
+                          <div className="text-xs md:text-sm text-gray-500 truncate">{request.parentEmail}</div>
                           {request.parentInfo && (
-                            <div className="text-xs text-gray-400">{request.parentInfo.phoneNumber}</div>
+                            <div className="text-xs text-gray-400 truncate">{request.parentInfo.phoneNumber}</div>
                           )}
                         </div>
                       </div>
                     </td>
                     
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-2">
-                        <FaChild className="h-4 w-4 text-gray-400" />
-                        <div>
+                    <td className="px-3 md:px-6 py-3 md:py-4">
+                      <div className="flex items-center space-x-1 md:space-x-2">
+                        <FaChild className="h-3 w-3 md:h-4 md:w-4 text-gray-400 flex-shrink-0" />
+                        <div className="min-w-0">
                           {request.students.length > 0 ? (
-                            <div className="text-sm text-gray-900">
+                            <div className="text-xs md:text-sm text-gray-900 truncate">
                               {request.students.map(student => 
                                 `${student.firstName} ${student.lastName}`
                               ).join(', ')}
                             </div>
                           ) : (
-                            <div className="text-sm text-gray-500">No students</div>
+                            <div className="text-xs md:text-sm text-gray-500">No students</div>
                           )}
                         </div>
                       </div>
                     </td>
                     
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-2">
-                        <FaMapMarkerAlt className="h-4 w-4 text-gray-400" />
-                        <div>
-                          <div className="text-sm text-gray-900 max-w-xs truncate">
+                    <td className="px-3 md:px-6 py-3 md:py-4">
+                      <div className="flex items-center space-x-1 md:space-x-2">
+                        <FaMapMarkerAlt className="h-3 w-3 md:h-4 md:w-4 text-gray-400 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <div className="text-xs md:text-sm text-gray-900 truncate max-w-[120px] md:max-w-xs">
                             {request.addressText}
                           </div>
                           <div className="text-xs text-gray-500">
@@ -338,23 +347,23 @@ export default function ParentRequestList() {
                       </div>
                     </td>
                     
-                    <td className="px-6 py-4">
-                      <span className={getStatusBadge(request.status)}>
+                    <td className="px-3 md:px-6 py-3 md:py-4">
+                      <span className={`${getStatusBadge(request.status)} text-xs md:text-sm`}>
                         {request.status}
                       </span>
                     </td>
                     
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-2">
+                    <td className="px-3 md:px-6 py-3 md:py-4">
+                      <div className="flex items-center space-x-1 md:space-x-2">
                         <button
                           onClick={() => {
                             setSelectedRequest(request);
                             setShowDetailModal(true);
                           }}
-                          className="p-2 text-gray-400 hover:text-[#fad23c] transition-colors duration-200"
+                          className="p-1 md:p-2 text-gray-400 hover:text-[#fad23c] transition-colors duration-200"
                           title="View Details"
                         >
-                          <FaEye className="h-4 w-4" />
+                          <FaEye className="h-3 w-3 md:h-4 md:w-4" />
                         </button>
                         
                         {request.status === "Pending" && (
@@ -364,10 +373,10 @@ export default function ParentRequestList() {
                                 setSelectedRequest(request);
                                 setShowApproveModal(true);
                               }}
-                              className="p-2 text-gray-400 hover:text-green-600 transition-colors duration-200"
+                              className="p-1 md:p-2 text-gray-400 hover:text-green-600 transition-colors duration-200"
                               title="Approve"
                             >
-                              <FaCheck className="h-4 w-4" />
+                              <FaCheck className="h-3 w-3 md:h-4 md:w-4" />
                             </button>
                             
                             <button
@@ -375,10 +384,10 @@ export default function ParentRequestList() {
                                 setSelectedRequest(request);
                                 setShowRejectModal(true);
                               }}
-                              className="p-2 text-gray-400 hover:text-red-600 transition-colors duration-200"
+                              className="p-1 md:p-2 text-gray-400 hover:text-red-600 transition-colors duration-200"
                               title="Reject"
                             >
-                              <FaTimes className="h-4 w-4" />
+                              <FaTimes className="h-3 w-3 md:h-4 md:w-4" />
                             </button>
                           </>
                         )}
@@ -398,19 +407,19 @@ export default function ParentRequestList() {
           <button
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
-            className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors duration-200"
+            className="px-3 md:px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors duration-200 text-sm md:text-base"
           >
             Previous
           </button>
           
-          <span className="px-4 py-2 text-sm text-gray-700">
+          <span className="px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">
             Page {currentPage} of {Math.ceil(totalItems / itemsPerPage)}
           </span>
           
           <button
             onClick={() => setCurrentPage(prev => prev + 1)}
             disabled={currentPage >= Math.ceil(totalItems / itemsPerPage)}
-            className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors duration-200"
+            className="px-3 md:px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors duration-200 text-sm md:text-base"
           >
             Next
           </button>
@@ -472,18 +481,18 @@ function ApproveModal({
   const [notes, setNotes] = useState("");
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Approve Request</h3>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl p-4 md:p-6 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+        <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-4">Approve Request</h3>
         
         <div className="mb-4">
           <p className="text-sm text-gray-600 mb-2">
             Approve pickup point request for <strong>{request.parentInfo?.firstName} {request.parentInfo?.lastName}</strong>?
           </p>
-          <p className="text-sm text-gray-500">
+          <p className="text-xs md:text-sm text-gray-500">
             Location: {request.addressText}
           </p>
-          <p className="text-sm text-gray-500">
+          <p className="text-xs md:text-sm text-gray-500">
             Price: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(request.estimatedPriceVnd)}
           </p>
         </div>
@@ -496,23 +505,23 @@ function ApproveModal({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Add any notes for the parent..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent resize-none"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent resize-none text-sm"
             rows={3}
           />
         </div>
 
-        <div className="flex justify-end space-x-3">
+        <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
           <button
             onClick={onClose}
             disabled={loading}
-            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50"
+            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 text-sm md:text-base"
           >
             Cancel
           </button>
           <button
             onClick={() => onApprove(request.id, notes)}
             disabled={loading}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 flex items-center space-x-2"
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 flex items-center justify-center space-x-2 text-sm md:text-base"
           >
             {loading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
             <span>Approve</span>
@@ -538,15 +547,15 @@ function RejectModal({
   const [reason, setReason] = useState("");
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Reject Request</h3>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl p-4 md:p-6 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+        <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-4">Reject Request</h3>
         
         <div className="mb-4">
           <p className="text-sm text-gray-600 mb-2">
             Reject pickup point request for <strong>{request.parentInfo?.firstName} {request.parentInfo?.lastName}</strong>?
           </p>
-          <p className="text-sm text-gray-500">
+          <p className="text-xs md:text-sm text-gray-500">
             Location: {request.addressText}
           </p>
         </div>
@@ -559,24 +568,24 @@ function RejectModal({
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="Please provide a reason for rejection..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent resize-none"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent resize-none text-sm"
             rows={3}
             required
           />
         </div>
 
-        <div className="flex justify-end space-x-3">
+        <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
           <button
             onClick={onClose}
             disabled={loading}
-            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50"
+            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 text-sm md:text-base"
           >
             Cancel
           </button>
           <button
             onClick={() => onReject(request.id, reason)}
             disabled={loading || !reason.trim()}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 disabled:opacity-50 flex items-center space-x-2"
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 disabled:opacity-50 flex items-center justify-center space-x-2 text-sm md:text-base"
           >
             {loading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
             <span>Reject</span>

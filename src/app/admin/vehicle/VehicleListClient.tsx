@@ -197,10 +197,10 @@ export default function VehicleListClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-yellow-50 p-6">
-        <Card title="Vehicle List" className="bg-yellow-50 border-yellow-100 rounded-xl">
-          <div className="flex items-center justify-center py-8">
-            <div className="text-gray-500">Loading vehicles...</div>
+      <div className="min-h-screen bg-[#FEFCE8] p-4 md:p-6">
+        <Card title="Vehicle List" className="bg-[#FEFCE8] border-yellow-100 rounded-xl">
+          <div className="flex items-center justify-center py-6 md:py-8">
+            <div className="text-sm md:text-base text-gray-500">Loading vehicles...</div>
           </div>
         </Card>
       </div>
@@ -209,13 +209,13 @@ export default function VehicleListClient() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-yellow-50 p-6">
-        <Card title="Vehicle List" className="bg-yellow-50 border-yellow-100 rounded-xl">
-          <div className="flex flex-col items-center justify-center py-8 gap-4">
-            <div className="text-red-500">Error: {error}</div>
+      <div className="min-h-screen bg-[#FEFCE8] p-4 md:p-6">
+        <Card title="Vehicle List" className="bg-[#FEFCE8] border-yellow-100 rounded-xl">
+          <div className="flex flex-col items-center justify-center py-6 md:py-8 gap-4">
+            <div className="text-sm md:text-base text-red-500">Error: {error}</div>
             <button
               onClick={handleRefresh}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+              className="px-3 md:px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm md:text-base"
             >
               Retry
             </button>
@@ -226,18 +226,18 @@ export default function VehicleListClient() {
   }
 
   return (
-    <div className="min-h-screen bg-yellow-50 p-6">
-      <Card title="Vehicle List" className="bg-yellow-50 border-yellow-100 rounded-xl">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="flex-1">
+    <div className="min-h-screen bg-[#FEFCE8] p-4 md:p-6">
+      <Card title="Vehicle List" className="bg-[#FEFCE8] border-yellow-100 rounded-xl">
+        <div className="flex flex-col sm:flex-row items-center gap-3 md:gap-4 mb-4 md:mb-6">
+          <div className="flex-1 w-full">
             <Input
               placeholder="Find by license plate number"
               value={searchTerm}
-              leftIcon={<Search className="w-5 h-5" />}
+              leftIcon={<Search className="w-4 h-4 md:w-5 md:h-5" />}
               onChange={(e) => handleSearch(e.target.value)}
             />
           </div>
-          <div className="w-44">
+          <div className="w-full sm:w-44">
             <Select
               value={selectedStatus}
               options={[
@@ -251,69 +251,78 @@ export default function VehicleListClient() {
           </div>
           <Link
             href="/admin/vehicle/create"
-            className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg hover:bg-emerald-600 transition"
+            className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg hover:bg-emerald-600 transition"
             aria-label="Add vehicle"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4 md:w-5 md:h-5" />
           </Link>
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
-          <div className="overflow-auto">
-            <table className="min-w-full text-sm">
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-xs md:text-sm">
               <thead className="sticky top-0 z-10">
                 <tr className="bg-gray-50 text-gray-600">
-                  <th className="text-left font-semibold px-6 py-4 w-16">STT</th>
-                  <th className="text-left font-semibold px-6 py-4">License Plate Number</th>
-                  <th className="text-left font-semibold px-6 py-4">Capacity</th>
-                  <th className="text-left font-semibold px-6 py-4">Status</th>
-                  <th className="text-left font-semibold px-6 py-4 w-32">Actions</th>
+                  <th className="text-left font-semibold px-3 md:px-6 py-3 md:py-4 w-12 md:w-16">
+                    <span className="hidden sm:inline">STT</span>
+                    <span className="sm:hidden">#</span>
+                  </th>
+                  <th className="text-left font-semibold px-3 md:px-6 py-3 md:py-4">
+                    <span className="hidden sm:inline">License Plate Number</span>
+                    <span className="sm:hidden">License</span>
+                  </th>
+                  <th className="text-left font-semibold px-3 md:px-6 py-3 md:py-4">
+                    <span className="hidden sm:inline">Capacity</span>
+                    <span className="sm:hidden">Cap</span>
+                  </th>
+                  <th className="text-left font-semibold px-3 md:px-6 py-3 md:py-4">Status</th>
+                  <th className="text-left font-semibold px-3 md:px-6 py-3 md:py-4 w-24 md:w-32">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {vehicles.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan={5} className="px-3 md:px-6 py-6 md:py-8 text-center text-gray-500 text-sm md:text-base">
                       No vehicles found
                     </td>
                   </tr>
                 ) : (
                   vehicles.map((vehicle, i) => (
                     <tr key={vehicle.id} className="border-t border-gray-100">
-                      <td className="px-6 py-4 text-gray-600">
+                      <td className="px-3 md:px-6 py-3 md:py-4 text-gray-600 text-xs md:text-sm">
                         {(filters.page! - 1) * PER_PAGE + i + 1}
                       </td>
-                      <td className="px-6 py-4 text-gray-700">{vehicle.licensePlate}</td>
-                      <td className="px-6 py-4 text-gray-700">{vehicle.capacity}</td>
-                      <td className="px-6 py-4">
+                      <td className="px-3 md:px-6 py-3 md:py-4 text-gray-700 text-xs md:text-sm">{vehicle.licensePlate}</td>
+                      <td className="px-3 md:px-6 py-3 md:py-4 text-gray-700 text-xs md:text-sm">{vehicle.capacity}</td>
+                      <td className="px-3 md:px-6 py-3 md:py-4">
                         <StatusBadge status={vehicle.status} />
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
+                      <td className="px-3 md:px-6 py-3 md:py-4">
+                        <div className="flex items-center gap-1 md:gap-2">
                           <button
                             onClick={() => openAssignDriverModal(vehicle.id)}
-                            className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center shadow-md hover:bg-green-600 transition-colors"
+                            className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-green-500 text-white flex items-center justify-center shadow-md hover:bg-green-600 transition-colors"
                             aria-label="Assign driver"
                           >
-                            <User className="w-4 h-4" />
+                            <User className="w-3 h-3 md:w-4 md:h-4" />
                           </button>
                           <Link
                             href={`/admin/vehicle/update/${vehicle.id}`}
-                            className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-md hover:bg-blue-600 transition-colors"
+                            className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-md hover:bg-blue-600 transition-colors"
                             aria-label="Edit vehicle"
                           >
-                            <Edit className="w-4 h-4" />
+                            <Edit className="w-3 h-3 md:w-4 md:h-4" />
                           </Link>
                           <button
                             onClick={() => confirmDelete(vehicle.id)}
                             disabled={deleteLoading === vehicle.id}
-                            className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             aria-label="Delete vehicle"
                           >
                             {deleteLoading === vehicle.id ? (
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              <div className="w-3 h-3 md:w-4 md:h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                             ) : (
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
                             )}
                           </button>
                         </div>
@@ -328,7 +337,7 @@ export default function VehicleListClient() {
 
         {/* Pagination - Fixed at bottom */}
         {vehicles.length > 0 && (
-          <div className="mt-6 flex justify-center">
+          <div className="mt-4 md:mt-6 flex justify-center">
             <Pagination
               currentPage={filters.page || 1}
               totalPages={Math.ceil(vehicles.length / PER_PAGE)}
@@ -341,31 +350,31 @@ export default function VehicleListClient() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                <Trash2 className="w-5 h-5 text-red-600" />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-4 md:p-6 max-w-md w-full">
+            <div className="flex items-center gap-3 mb-3 md:mb-4">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <Trash2 className="w-4 h-4 md:w-5 md:h-5 text-red-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Delete Vehicle</h3>
-                <p className="text-sm text-gray-500">This action cannot be undone.</p>
+                <h3 className="text-base md:text-lg font-semibold text-gray-900">Delete Vehicle</h3>
+                <p className="text-xs md:text-sm text-gray-500">This action cannot be undone.</p>
               </div>
             </div>
-            <p className="text-gray-700 mb-6">
+            <p className="text-sm md:text-base text-gray-700 mb-4 md:mb-6">
               Are you sure you want to delete this vehicle? This will permanently remove it from the system.
             </p>
-            <div className="flex gap-3 justify-end">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-end">
               <button
                 onClick={cancelDelete}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="px-3 md:px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-sm md:text-base"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleDelete(showDeleteConfirm)}
                 disabled={deleteLoading === showDeleteConfirm}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                className="px-3 md:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 text-sm md:text-base"
               >
                 {deleteLoading === showDeleteConfirm ? 'Deleting...' : 'Delete'}
               </button>
@@ -376,28 +385,28 @@ export default function VehicleListClient() {
 
       {/* Assign Driver Modal */}
       {showAssignDriverModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                <User className="w-5 h-5 text-green-600" />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-4 md:p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center gap-3 mb-4 md:mb-6">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-green-100 flex items-center justify-center">
+                <User className="w-4 h-4 md:w-5 md:h-5 text-green-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Assign Driver to Vehicle</h3>
-                <p className="text-sm text-gray-500">Select a driver to assign to this vehicle</p>
+                <h3 className="text-base md:text-lg font-semibold text-gray-900">Assign Driver to Vehicle</h3>
+                <p className="text-xs md:text-sm text-gray-500">Select a driver to assign to this vehicle</p>
               </div>
             </div>
 
             {driversLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-gray-500">Loading drivers...</div>
+              <div className="flex items-center justify-center py-6 md:py-8">
+                <div className="text-sm md:text-base text-gray-500">Loading drivers...</div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                 {drivers.map((driver) => (
                   <div
                     key={driver.id}
-                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                    className={`p-3 md:p-4 border rounded-lg cursor-pointer transition-colors ${
                       selectedDriverId === driver.id
                         ? 'border-green-500 bg-green-50'
                         : 'border-gray-200 hover:border-gray-300'
@@ -405,23 +414,23 @@ export default function VehicleListClient() {
                     onClick={() => handleSelectDriver(driver.id)}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <User className="w-5 h-5 text-blue-600" />
+                      <div className="flex items-center gap-2 md:gap-3">
+                        <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <User className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{driver.firstName} {driver.lastName}</p>
-                          <p className="text-sm text-gray-500">{driver.email}</p>
-                          <p className="text-sm text-gray-500">Phone: {driver.phoneNumber}</p>
+                          <p className="font-medium text-gray-900 text-sm md:text-base">{driver.firstName} {driver.lastName}</p>
+                          <p className="text-xs md:text-sm text-gray-500">{driver.email}</p>
+                          <p className="text-xs md:text-sm text-gray-500">Phone: {driver.phoneNumber}</p>
                           {driver.licenseNumber && (
-                            <p className="text-sm text-gray-500">License: {driver.licenseNumber}</p>
+                            <p className="text-xs md:text-sm text-gray-500">License: {driver.licenseNumber}</p>
                           )}
-                          <p className="text-sm text-gray-500">Status: {driver.status}</p>
+                          <p className="text-xs md:text-sm text-gray-500">Status: {driver.status}</p>
                         </div>
                       </div>
                       {selectedDriverId === driver.id && (
-                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <div className="w-4 h-4 md:w-5 md:h-5 bg-green-500 rounded-full flex items-center justify-center">
+                          <svg className="w-2 h-2 md:w-3 md:h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
                         </div>
@@ -432,17 +441,17 @@ export default function VehicleListClient() {
               </div>
             )}
 
-            <div className="flex gap-3 justify-end mt-6 pt-6 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-end mt-4 md:mt-6 pt-4 md:pt-6 border-t border-gray-200">
               <button
                 onClick={closeAssignDriverModal}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="px-3 md:px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-sm md:text-base"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAssignDriver}
                 disabled={!selectedDriverId || assignLoading}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                className="px-3 md:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 text-sm md:text-base"
               >
                 {assignLoading ? 'Assigning...' : 'Assign Driver'}
               </button>

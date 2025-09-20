@@ -35,39 +35,39 @@ export default function ScheduleManagementPage() {
     <div>
       <Sidebar />
       <Header />
-      <main className="ml-64 pt-16 p-6 bg-[#FEFCE8] min-h-screen">
+      <main className="lg:ml-64 pt-16 p-4 md:p-6 lg:p-6 bg-[#FEFCE8] min-h-screen">
         <div className="w-full">
           {/* Page Header with Create Button */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-[#463B3B] mb-1">
+              <h1 className="text-2xl md:text-3xl font-bold text-[#463B3B] mb-1">
                 Schedule Management
               </h1>
-              <p className="text-gray-600 text-sm">
+              <p className="text-gray-600 text-sm md:text-base">
                 Manage bus schedules and route assignments
               </p>
             </div>
             {activeTab === 'schedules' ? (
               <button
                 onClick={() => setShowCreateSchedule(true)}
-                className="bg-gradient-to-r from-[#fad23c] to-[#FDC700] text-[#463B3B] p-3 rounded-xl hover:from-[#FDC700] hover:to-[#D08700] transition-all duration-300 shadow-soft hover:shadow-soft-lg transform hover:-translate-y-0.5"
+                className="bg-gradient-to-r from-[#fad23c] to-[#FDC700] text-[#463B3B] p-2 md:p-3 rounded-xl hover:from-[#FDC700] hover:to-[#D08700] transition-all duration-300 shadow-soft hover:shadow-soft-lg transform hover:-translate-y-0.5"
                 title="Create New Schedule"
               >
-                <FaPlus className="w-5 h-5" />
+                <FaPlus className="w-4 h-4 md:w-5 md:h-5" />
               </button>
             ) : (
               <button
                 onClick={() => setShowCreateRouteSchedule(true)}
-                className="bg-gradient-to-r from-[#fad23c] to-[#FDC700] text-[#463B3B] p-3 rounded-xl hover:from-[#FDC700] hover:to-[#D08700] transition-all duration-300 shadow-soft hover:shadow-soft-lg transform hover:-translate-y-0.5"
+                className="bg-gradient-to-r from-[#fad23c] to-[#FDC700] text-[#463B3B] p-2 md:p-3 rounded-xl hover:from-[#FDC700] hover:to-[#D08700] transition-all duration-300 shadow-soft hover:shadow-soft-lg transform hover:-translate-y-0.5"
                 title="Create New Route Schedule"
               >
-                <FaPlus className="w-5 h-5" />
+                <FaPlus className="w-4 h-4 md:w-5 md:h-5" />
               </button>
             )}
           </div>
 
           {/* Tabs and Search in one row */}
-          <div className="bg-white rounded-2xl shadow-soft-lg p-4 mb-4 border border-gray-100">
+          <div className="bg-white rounded-2xl shadow-soft-lg p-4 md:p-6 mb-4 md:mb-6 border border-gray-100">
             <div className="flex flex-col lg:flex-row gap-4">
               {/* Tabs */}
               <div className="flex space-x-1 bg-gray-100 p-1 rounded-xl">
@@ -75,14 +75,17 @@ export default function ScheduleManagementPage() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ${
+                    className={`flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 rounded-lg transition-all duration-300 text-xs md:text-sm ${
                       activeTab === tab.id
                         ? 'bg-white text-[#463B3B] shadow-soft'
                         : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
                     }`}
                   >
                     {tab.icon}
-                    <span className="font-medium text-sm">{tab.label}</span>
+                    <span className="font-medium">
+                      <span className="hidden sm:inline">{tab.label}</span>
+                      <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
+                    </span>
                   </button>
                 ))}
               </div>
@@ -96,7 +99,7 @@ export default function ScheduleManagementPage() {
                     placeholder={`Search ${activeTab === 'schedules' ? 'schedules' : 'route schedules'}...`}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 text-sm"
+                    className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 text-sm md:text-base"
                   />
                 </div>
                 <div className="flex gap-2">
@@ -106,15 +109,15 @@ export default function ScheduleManagementPage() {
                       const value = e.target.value;
                       setFilterActive(value === 'all' ? null : value === 'true');
                     }}
-                    className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 text-sm"
+                    className="px-3 py-2 md:py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 text-sm md:text-base"
                   >
                     <option value="all">All Status</option>
                     <option value="true">Active Only</option>
                     <option value="false">Inactive Only</option>
                   </select>
-                  <button className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-300 flex items-center gap-1 text-sm">
-                    <FaFilter className="w-3 h-3" />
-                    Filters
+                  <button className="px-3 py-2 md:py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-300 flex items-center gap-1 text-sm md:text-base">
+                    <FaFilter className="w-3 h-3 md:w-4 md:h-4" />
+                    <span className="hidden sm:inline">Filters</span>
                   </button>
                 </div>
               </div>

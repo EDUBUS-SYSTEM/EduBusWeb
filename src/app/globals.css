@@ -2,7 +2,6 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -211,3 +210,4 @@
     background: conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops));
   }
 }
+

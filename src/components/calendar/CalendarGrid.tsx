@@ -98,8 +98,9 @@ export default function CalendarGrid({
         {/* Header with day names */}
         <div className="grid grid-cols-7 border-b border-gray-100">
           {dayNames.map(day => (
-            <div key={day} className="p-4 text-center font-semibold text-gray-600 bg-gray-50">
-              {day}
+            <div key={day} className="p-2 md:p-4 text-center font-semibold text-gray-600 bg-gray-50 text-xs md:text-sm">
+              <span className="hidden sm:inline">{day}</span>
+              <span className="sm:hidden">{day.charAt(0)}</span>
             </div>
           ))}
         </div>
@@ -110,7 +111,7 @@ export default function CalendarGrid({
             <div
               key={index}
               className={`
-                min-h-[120px] border-r border-b border-gray-100 p-2 cursor-pointer
+                min-h-[80px] md:min-h-[120px] border-r border-b border-gray-100 p-1 md:p-2 cursor-pointer
                 hover:bg-gray-50 transition-colors duration-200
                 ${day ? 'bg-white' : 'bg-gray-50'}
                 ${day && isToday(day) ? 'bg-gradient-to-br from-yellow-50 to-orange-50' : ''}
@@ -120,15 +121,15 @@ export default function CalendarGrid({
               {day && (
                 <>
                   <div className={`
-                    text-sm font-medium mb-2
+                    text-xs md:text-sm font-medium mb-1 md:mb-2
                     ${isToday(day) ? 'text-[#463B3B]' : 'text-gray-800'}
                     ${!isCurrentMonth(day) ? 'text-gray-400' : ''}
                   `}>
                     {day.getDate()}
                   </div>
                   
-                  <div className="space-y-1">
-                    {getEventsForDate(day).slice(0, 3).map(event => (
+                  <div className="space-y-0.5 md:space-y-1">
+                    {getEventsForDate(day).slice(0, 2).map(event => (
                       <EventCard
                         key={event.id}
                         event={event}
@@ -136,9 +137,9 @@ export default function CalendarGrid({
                         className="text-xs"
                       />
                     ))}
-                    {getEventsForDate(day).length > 3 && (
+                    {getEventsForDate(day).length > 2 && (
                       <div className="text-xs text-gray-500 font-medium">
-                        +{getEventsForDate(day).length - 3} more
+                        +{getEventsForDate(day).length - 2} more
                       </div>
                     )}
                   </div>
@@ -160,13 +161,14 @@ export default function CalendarGrid({
         {/* Header with day names and dates */}
         <div className="grid grid-cols-7 border-b border-gray-100">
           {weekDays.map((day, index) => (
-            <div key={index} className="p-4 text-center border-r border-gray-100 last:border-r-0">
-              <div className="text-sm font-medium text-gray-600 mb-1">
-                {dayNames[index]}
+            <div key={index} className="p-2 md:p-4 text-center border-r border-gray-100 last:border-r-0">
+              <div className="text-xs md:text-sm font-medium text-gray-600 mb-1">
+                <span className="hidden sm:inline">{dayNames[index]}</span>
+                <span className="sm:hidden">{dayNames[index].charAt(0)}</span>
               </div>
               <div className={`
-                text-lg font-bold
-                ${isToday(day) ? 'text-[#463B3B] bg-[#fad23c] rounded-full w-8 h-8 flex items-center justify-center mx-auto' : 'text-gray-800'}
+                text-sm md:text-lg font-bold
+                ${isToday(day) ? 'text-[#463B3B] bg-[#fad23c] rounded-full w-6 h-6 md:w-8 md:h-8 flex items-center justify-center mx-auto' : 'text-gray-800'}
               `}>
                 {day.getDate()}
               </div>
@@ -175,13 +177,13 @@ export default function CalendarGrid({
         </div>
         
         {/* Time slots */}
-        <div className="grid grid-cols-7">
+        <div className="grid grid-cols-7 overflow-x-auto">
           {weekDays.map((day, index) => (
-            <div key={index} className="border-r border-gray-100 last:border-r-0">
+            <div key={index} className="border-r border-gray-100 last:border-r-0 min-w-[120px]">
               {Array.from({ length: 24 }, (_, hour) => (
                 <div
                   key={hour}
-                  className="h-12 border-b border-gray-50 p-1 cursor-pointer hover:bg-gray-50 transition-colors duration-200"
+                  className="h-8 md:h-12 border-b border-gray-50 p-0.5 md:p-1 cursor-pointer hover:bg-gray-50 transition-colors duration-200"
                   onClick={() => handleCellClick(day, hour)}
                 >
                   {getEventsForTimeSlot(day, hour).map(event => (
@@ -189,7 +191,7 @@ export default function CalendarGrid({
                       key={event.id}
                       event={event}
                       onClick={onEventClick}
-                      className="text-xs mb-1"
+                      className="text-xs mb-0.5 md:mb-1"
                     />
                   ))}
                 </div>
@@ -213,13 +215,13 @@ export default function CalendarGrid({
     return (
       <div className="bg-white rounded-2xl shadow-soft-lg overflow-hidden border border-gray-100">
         {/* Header */}
-        <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-yellow-50 to-orange-50">
-          <h2 className="text-2xl font-bold text-gray-800">{dayName}</h2>
-          <p className="text-gray-600">{dayDate}</p>
+        <div className="p-4 md:p-6 border-b border-gray-100 bg-gradient-to-r from-yellow-50 to-orange-50">
+          <h2 className="text-lg md:text-2xl font-bold text-gray-800">{dayName}</h2>
+          <p className="text-sm md:text-base text-gray-600">{dayDate}</p>
         </div>
         
         {/* Time slots */}
-        <div className="max-h-[600px] overflow-y-auto">
+        <div className="max-h-[400px] md:max-h-[600px] overflow-y-auto">
           {Array.from({ length: 24 }, (_, hour) => {
             const timeString = new Date(2024, 0, 1, hour).toLocaleTimeString('en-US', {
               hour: 'numeric',
@@ -229,11 +231,11 @@ export default function CalendarGrid({
             
             return (
               <div key={hour} className="flex border-b border-gray-100">
-                <div className="w-20 p-3 text-sm text-gray-500 bg-gray-50 border-r border-gray-100">
+                <div className="w-16 md:w-20 p-2 md:p-3 text-xs md:text-sm text-gray-500 bg-gray-50 border-r border-gray-100">
                   {timeString}
                 </div>
                 <div
-                  className="flex-1 p-3 min-h-[60px] cursor-pointer hover:bg-gray-50 transition-colors duration-200"
+                  className="flex-1 p-2 md:p-3 min-h-[50px] md:min-h-[60px] cursor-pointer hover:bg-gray-50 transition-colors duration-200"
                   onClick={() => handleCellClick(day, hour)}
                 >
                   {getEventsForTimeSlot(day, hour).map(event => (
@@ -241,7 +243,7 @@ export default function CalendarGrid({
                       key={event.id}
                       event={event}
                       onClick={onEventClick}
-                      className="mb-2"
+                      className="mb-1 md:mb-2"
                     />
                   ))}
                 </div>

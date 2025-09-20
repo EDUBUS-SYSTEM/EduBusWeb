@@ -272,23 +272,23 @@ export default function AccountManagement() {
   if (loading) return <div className="flex justify-center p-8">Loading...</div>;
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-[#463B3B]">User Management</h1>
-        <div className="flex gap-2">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+        <h1 className="text-xl md:text-2xl font-bold text-[#463B3B]">User Management</h1>
+        <div className="flex flex-col sm:flex-row gap-2">
           {selectedUsers.length > 0 && (
             <>
               <button
                 onClick={() => setShowLockModal(true)}
-                className="bg-[#D32F2F] text-white px-4 py-2 rounded-lg hover:bg-[#a82020] flex items-center gap-2"
+                className="bg-[#D32F2F] text-white px-3 md:px-4 py-2 rounded-lg hover:bg-[#a82020] flex items-center justify-center gap-2 text-sm md:text-base"
               >
-                <FaLock /> Lock Selected ({selectedUsers.length})
+                <FaLock /> <span className="hidden sm:inline">Lock Selected</span> ({selectedUsers.length})
               </button>
               <button
                 onClick={handleBulkUnlock}
-                className="bg-[#388E3C] text-white px-4 py-2 rounded-lg hover:bg-[#206924] flex items-center gap-2"
+                className="bg-[#388E3C] text-white px-3 md:px-4 py-2 rounded-lg hover:bg-[#206924] flex items-center justify-center gap-2 text-sm md:text-base"
               >
-                <FaUnlock /> Unlock Selected ({selectedUsers.length})
+                <FaUnlock /> <span className="hidden sm:inline">Unlock Selected</span> ({selectedUsers.length})
               </button>
             </>
           )}
@@ -322,10 +322,10 @@ export default function AccountManagement() {
       )}
 
       <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-4">
-              <div className="relative">
+        <div className="p-4 md:p-6 border-b border-gray-200">
+          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+              <div className="relative flex-1">
                 <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
@@ -333,26 +333,26 @@ export default function AccountManagement() {
                   value={searchTerm}
                   onKeyDown={handleSearchKeyDown}
                   onChange={handleSearchChange}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
                 />
               </div>
               <select
                 value={statusFilter}
                 onChange={(e) => handleStatusFilterChange(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
               >
                 <option value="">All Status</option>
                 <option value="isNotLocked">Active</option>
                 <option value="isLocked">Locked</option>
               </select>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
               <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600">Per page:</label>
+                <label className="text-xs md:text-sm text-gray-600">Per page:</label>
                 <select
                   value={perPage}
                   onChange={(e) => handlePerPageChange(Number(e.target.value))}
-                  className="px-2 py-1 border border-gray-300 rounded text-sm"
+                  className="px-2 py-1 border border-gray-300 rounded text-xs md:text-sm"
                 >
                   <option value={1}>1</option>
                   <option value={10}>10</option>
@@ -364,13 +364,13 @@ export default function AccountManagement() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={selectAllUsers}
-                  className="text-sm text-blue-600 hover:text-blue-800"
+                  className="text-xs md:text-sm text-blue-600 hover:text-blue-800"
                 >
                   Select All
                 </button>
                 <button
                   onClick={clearSelection}
-                  className="text-sm text-gray-600 hover:text-gray-800"
+                  className="text-xs md:text-sm text-gray-600 hover:text-gray-800"
                 >
                   Clear Selection
                 </button>
@@ -383,7 +383,7 @@ export default function AccountManagement() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left">
+                <th className="px-3 md:px-6 py-3 text-left">
                   <input
                     type="checkbox"
                     checked={
@@ -397,32 +397,36 @@ export default function AccountManagement() {
                     className="rounded border-gray-300"
                   />
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <button
                     onClick={() => handleSort("firstName")}
                     className="flex items-center gap-1 hover:text-gray-700"
                   >
-                    Name <FaSort />
+                    <span className="hidden sm:inline">Name</span>
+                    <span className="sm:hidden">N</span> <FaSort />
                   </button>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Email
+                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <span className="hidden md:inline">Email</span>
+                  <span className="md:hidden">E</span>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Phone
+                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <span className="hidden lg:inline">Phone</span>
+                  <span className="lg:hidden">P</span>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <button
                     onClick={() => handleSort("createdAt")}
                     className="flex items-center gap-1 hover:text-gray-700"
                   >
-                    Created <FaSort />
+                    <span className="hidden lg:inline">Created</span>
+                    <span className="lg:hidden">C</span> <FaSort />
                   </button>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -433,7 +437,7 @@ export default function AccountManagement() {
                 const lockStatus = getLockStatus(user);
                 return (
                   <tr key={user.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 md:px-6 py-4 whitespace-nowrap">
                       <input
                         type="checkbox"
                         checked={selectedUsers.includes(user.id)}
@@ -441,20 +445,22 @@ export default function AccountManagement() {
                         className="rounded border-gray-300"
                       />
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
+                    <td className="px-3 md:px-6 py-4 whitespace-nowrap">
+                      <div className="text-xs md:text-sm font-medium text-gray-900">
                         {user.firstName} {user.lastName}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{user.email}</div>
+                    <td className="px-3 md:px-6 py-4 whitespace-nowrap">
+                      <div className="text-xs md:text-sm text-gray-900 truncate max-w-[120px] md:max-w-none">
+                        {user.email}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
+                    <td className="px-3 md:px-6 py-4 whitespace-nowrap">
+                      <div className="text-xs md:text-sm text-gray-900">
                         {user.phoneNumber}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 md:px-6 py-4 whitespace-nowrap">
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${lockStatus.color}`}
                       >
@@ -463,21 +469,22 @@ export default function AccountManagement() {
                       {locked && user.lockedUntil && (
                         <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
                           <FaCalendarAlt />
-                          Until:{" "}
+                          <span className="hidden sm:inline">Until: </span>
                           {new Date(user.lockedUntil + "Z").toLocaleString()}
                         </div>
                       )}
                       {user.lockReason && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          Reason: {user.lockReason}
+                        <div className="text-xs text-gray-500 mt-1 truncate max-w-[150px] md:max-w-none">
+                          <span className="hidden sm:inline">Reason: </span>
+                          {user.lockReason}
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-3 md:px-6 py-4 whitespace-nowrap text-xs md:text-sm text-gray-900">
                       {new Date(user.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center gap-2">
+                    <td className="px-3 md:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center gap-1 md:gap-2">
                         <button
                           onClick={() => {
                             setLockFormData({ lockedUntil: "", reason: "" });
@@ -485,7 +492,7 @@ export default function AccountManagement() {
                             setShowLockModal(true);
                           }}
                           disabled={locked}
-                          className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed p-1"
                           title="Lock User"
                         >
                           <FaLock />
@@ -493,7 +500,7 @@ export default function AccountManagement() {
                         <button
                           onClick={() => handleUnlockUser(user.id)}
                           disabled={!locked}
-                          className="text-green-600 hover:text-green-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="text-green-600 hover:text-green-900 disabled:opacity-50 disabled:cursor-not-allowed p-1"
                           title="Unlock User"
                         >
                           <FaUnlock />
@@ -508,26 +515,26 @@ export default function AccountManagement() {
         </div>
 
         {/* Pagination */}
-        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+        <div className="bg-white px-3 md:px-4 lg:px-6 py-3 flex items-center justify-between border-t border-gray-200">
           <div className="flex-1 flex justify-between sm:hidden">
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="relative inline-flex items-center px-3 md:px-4 py-2 border border-gray-300 text-xs md:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="ml-3 relative inline-flex items-center px-3 md:px-4 py-2 border border-gray-300 text-xs md:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>
           </div>
           <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm text-gray-700">
+              <p className="text-xs md:text-sm text-gray-700">
                 Showing{" "}
                 <span className="font-medium">
                   {(currentPage - 1) * perPage + 1}
@@ -547,9 +554,9 @@ export default function AccountManagement() {
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-xs md:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <FaChevronLeft className="h-5 w-5" />
+                  <FaChevronLeft className="h-4 w-4 md:h-5 md:w-5" />
                 </button>
 
                 {/* Page numbers */}
@@ -562,7 +569,7 @@ export default function AccountManagement() {
                     <button
                       key={pageNum}
                       onClick={() => handlePageChange(pageNum)}
-                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                      className={`relative inline-flex items-center px-3 md:px-4 py-2 border text-xs md:text-sm font-medium ${
                         pageNum === currentPage
                           ? "z-10 bg-yellow-50 border-yellow-500 text-yellow-600"
                           : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
@@ -576,9 +583,9 @@ export default function AccountManagement() {
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-xs md:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <FaChevronRight className="h-5 w-5" />
+                  <FaChevronRight className="h-4 w-4 md:h-5 md:w-5" />
                 </button>
               </nav>
             </div>
@@ -588,8 +595,8 @@ export default function AccountManagement() {
 
       {/* Lock Modal */}
       {showLockModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 md:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold mb-4">
               Lock User{selectedUsers.length > 1 ? "s" : ""}
             </h3>
@@ -607,7 +614,7 @@ export default function AccountManagement() {
                   onChange={(e) =>
                     handleLockFormChange("lockedUntil", e.target.value)
                   }
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm ${
                     lockValidationError ? "border-red-300" : "border-gray-300"
                   }`}
                 />
@@ -634,7 +641,7 @@ export default function AccountManagement() {
                   }
                   placeholder="Enter reason for locking..."
                   maxLength={300}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm ${
                     reasonValidationError ? "border-red-300" : "border-gray-300"
                   }`}
                   rows={3}
@@ -649,7 +656,7 @@ export default function AccountManagement() {
                 </p>
               </div>
             </div>
-            <div className="flex justify-end gap-2 mt-6">
+            <div className="flex flex-col sm:flex-row justify-end gap-2 mt-6">
               <button
                 onClick={() => {
                   setShowLockModal(false);
@@ -657,7 +664,7 @@ export default function AccountManagement() {
                   setLockValidationError(null);
                   setReasonValidationError(null);
                 }}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 text-sm md:text-base"
               >
                 Cancel
               </button>
@@ -670,7 +677,7 @@ export default function AccountManagement() {
                 disabled={
                   lockValidationError !== null || reasonValidationError !== null
                 }
-                className={`px-4 py-2 rounded-lg ${
+                className={`px-4 py-2 rounded-lg text-sm md:text-base ${
                   lockValidationError || reasonValidationError
                     ? "bg-gray-400 text-gray-200 cursor-not-allowed"
                     : "bg-[#D32F2F] text-white hover:bg-[#a82020]"

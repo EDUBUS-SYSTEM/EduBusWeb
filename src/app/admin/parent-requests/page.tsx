@@ -8,13 +8,13 @@ export default function ParentRequestsPage() {
     <div>
       <Sidebar />
       <Header />
-      <main className="ml-64 px-6 py-8">
+      <main className="lg:ml-64 px-4 md:px-6 lg:px-6 py-6 md:py-8">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-[#463B3B] mb-2">
+          <div className="mb-6 md:mb-8">
+            <h1 className="text-2xl md:text-3xl font-bold text-[#463B3B] mb-2">
               Parent Requests
             </h1>
-            <p className="text-[#6B7280]">
+            <p className="text-sm md:text-base text-[#6B7280]">
               Manage pickup point service requests from parents
             </p>
           </div>

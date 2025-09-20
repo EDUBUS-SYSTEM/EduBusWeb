@@ -360,119 +360,119 @@ export default function ScheduleList({
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Schedules</h2>
-        <div className="text-sm text-gray-600">
+    <div className="p-4 md:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 md:mb-6">
+        <h2 className="text-xl md:text-2xl font-bold text-[#463B3B]">Schedules</h2>
+        <div className="text-xs md:text-sm text-gray-600">
           {filteredSchedules.length} of {schedules.length} schedules
         </div>
       </div>
 
       {filteredSchedules.length === 0 ? (
-        <div className="text-center py-12">
-          <FaClock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+        <div className="text-center py-8 md:py-12">
+          <FaClock className="mx-auto h-8 w-8 md:h-12 md:w-12 text-gray-400 mb-4" />
+          <h3 className="text-base md:text-lg font-medium text-gray-900 mb-2">
             No schedules found
           </h3>
-          <p className="text-gray-600">
+          <p className="text-sm md:text-base text-gray-600">
             {searchTerm || filterActive !== null
               ? "Try adjusting your search or filter criteria"
               : "Get started by creating your first schedule"}
           </p>
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3 md:gap-4">
           {filteredSchedules.map((schedule) => (
             <div
               key={schedule.id}
-              className="bg-gradient-to-r from-white to-yellow-50 border border-gray-100 rounded-2xl p-6 hover:shadow-soft-lg transition-all duration-300 hover:border-yellow-200"
+              className="bg-gradient-to-r from-white to-yellow-50 border border-gray-100 rounded-2xl p-4 md:p-6 hover:shadow-soft-lg transition-all duration-300 hover:border-yellow-200"
             >
-              <div className="flex items-start justify-between">
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-3">
-                    <h3 className="text-xl font-semibold text-gray-800">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 md:gap-3 mb-3">
+                    <h3 className="text-lg md:text-xl font-semibold text-gray-800">
                       {schedule.name}
                     </h3>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${getScheduleTypeColor(schedule.scheduleType)}`}
-                    >
-                      <FaTag className="inline w-3 h-3 mr-1" />
-                      {schedule.scheduleType}
-                    </span>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        schedule.isActive
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {schedule.isActive ? "Active" : "Inactive"}
-                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      <span
+                        className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium ${getScheduleTypeColor(schedule.scheduleType)}`}
+                      >
+                        <FaTag className="inline w-3 h-3 mr-1" />
+                        {schedule.scheduleType}
+                      </span>
+                      <span
+                        className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium ${
+                          schedule.isActive
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {schedule.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </div>
                   </div>
 
-                  {/* Description field removed as it's not in the Schedule type */}
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
                     <div className="flex items-center gap-2 text-gray-600">
                       <FaClock className="w-4 h-4 text-[#fad23c]" />
-                      <span className="text-sm">
+                      <span className="text-xs md:text-sm">
                         {formatTime(schedule.startTime)} -{" "}
                         {formatTime(schedule.endTime)}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
                       <FaCalendarAlt className="w-4 h-4 text-[#fad23c]" />
-                      <span className="text-sm">
+                      <span className="text-xs md:text-sm">
                         {formatDate(schedule.effectiveFrom)} -{" "}
                         {schedule.effectiveTo
                           ? formatDate(schedule.effectiveTo)
                           : "No end date"}
                       </span>
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-xs md:text-sm text-gray-500">
                       Updated: {formatDate(schedule.updatedAt)}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 ml-4 self-center">
+                <div className="flex items-center gap-1 md:gap-2 lg:ml-4 lg:self-center">
                   <button
                     onClick={() => {
                       setSelectedSchedule(schedule);
                       setShowDetails(true);
                     }}
-                    className="p-2 text-[#463B3B] hover:bg-yellow-100 rounded-lg transition-colors duration-200"
+                    className="p-1.5 md:p-2 text-[#463B3B] hover:bg-yellow-100 rounded-lg transition-colors duration-200"
                     title="View Details"
                   >
-                    <FaEye className="w-4 h-4" />
+                    <FaEye className="w-3 h-3 md:w-4 md:h-4" />
                   </button>
                   <button
                     onClick={() => handleViewTimeOverrides(schedule)}
-                    className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors duration-200"
+                    className="p-1.5 md:p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors duration-200"
                     title="Time Overrides"
                   >
-                    <FaCalendarPlus className="w-4 h-4" />
+                    <FaCalendarPlus className="w-3 h-3 md:w-4 md:h-4" />
                   </button>
                   <button
                     onClick={() => handleViewExceptions(schedule)}
-                    className="p-2 text-orange-600 hover:bg-orange-100 rounded-lg transition-colors duration-200"
+                    className="p-1.5 md:p-2 text-orange-600 hover:bg-orange-100 rounded-lg transition-colors duration-200"
                     title="Manage Exceptions"
                   >
-                    <FaExclamationTriangle className="w-4 h-4" />
+                    <FaExclamationTriangle className="w-3 h-3 md:w-4 md:h-4" />
                   </button>
                   <button
                     onClick={() => handleEditSchedule(schedule)}
-                    className="p-2 text-[#fad23c] hover:bg-yellow-100 rounded-lg transition-colors duration-200"
+                    className="p-1.5 md:p-2 text-[#fad23c] hover:bg-yellow-100 rounded-lg transition-colors duration-200"
                     title="Edit Schedule"
                   >
-                    <FaEdit className="w-4 h-4" />
+                    <FaEdit className="w-3 h-3 md:w-4 md:h-4" />
                   </button>
                   <button
                     onClick={() => handleDeleteSchedule(schedule.id)}
-                    className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors duration-200"
+                    className="p-1.5 md:p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors duration-200"
                     title="Delete Schedule"
                   >
-                    <FaTrash className="w-4 h-4" />
+                    <FaTrash className="w-3 h-3 md:w-4 md:h-4" />
                   </button>
                 </div>
               </div>
@@ -485,33 +485,33 @@ export default function ScheduleList({
       {showDetails && selectedSchedule && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold text-gray-800">
+            <div className="p-4 md:p-6">
+              <div className="flex items-center justify-between mb-4 md:mb-6">
+                <h3 className="text-xl md:text-2xl font-bold text-gray-800">
                   Schedule Details
                 </h3>
                 <button
                   onClick={() => setShowDetails(false)}
-                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                  className="text-gray-400 hover:text-gray-600 text-xl md:text-2xl"
                 >
                   ×
                 </button>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-4 md:space-y-6">
                 {/* Header card */}
-                <div className="rounded-2xl bg-gradient-to-r from-white to-yellow-50 border border-yellow-100 p-5 shadow-sm">
-                  <div className="flex items-center justify-between">
+                <div className="rounded-2xl bg-gradient-to-r from-white to-yellow-50 border border-yellow-100 p-4 md:p-5 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
-                      <h4 className="text-xl font-semibold text-gray-900">
+                      <h4 className="text-lg md:text-xl font-semibold text-gray-900">
                         {selectedSchedule.name}
                       </h4>
-                      <p className="mt-1 text-sm text-gray-600">
+                      <p className="mt-1 text-xs md:text-sm text-gray-600">
                         Academic Year: <span className="font-medium">{selectedSchedule.academicYear}</span>
                       </p>
                     </div>
                     <span
-                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
+                      className={`inline-flex items-center gap-2 px-2 md:px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
                         selectedSchedule.isActive
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-800"
@@ -524,26 +524,26 @@ export default function ScheduleList({
                 </div>
 
                 {/* Info grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+                  <div className="rounded-xl border border-gray-100 bg-white p-3 md:p-4 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
                     <p className="text-xs font-medium text-gray-500 mb-1">Schedule Type</p>
-                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getScheduleTypeColor(selectedSchedule.scheduleType)}`}>
+                    <span className={`inline-block px-2 md:px-3 py-1 rounded-full text-xs font-semibold ${getScheduleTypeColor(selectedSchedule.scheduleType)}`}>
                       {selectedSchedule.scheduleType}
                     </span>
                   </div>
 
-                  <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+                  <div className="rounded-xl border border-gray-100 bg-white p-3 md:p-4 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
                     <p className="text-xs font-medium text-gray-500 mb-1">Time Range</p>
-                    <p className="text-gray-900">
+                    <p className="text-sm md:text-base text-gray-900">
                       {formatTime(selectedSchedule.startTime)}
                       <span className="mx-1 text-gray-400">—</span>
                       {formatTime(selectedSchedule.endTime)}
                     </p>
                   </div>
 
-                  <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+                  <div className="rounded-xl border border-gray-100 bg-white p-3 md:p-4 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
                     <p className="text-xs font-medium text-gray-500 mb-1">Effective Period</p>
-                    <p className="text-gray-900">
+                    <p className="text-sm md:text-base text-gray-900">
                       {formatDate(selectedSchedule.effectiveFrom)}
                       <span className="mx-1 text-gray-400">→</span>
                       {selectedSchedule.effectiveTo ? (
@@ -556,47 +556,47 @@ export default function ScheduleList({
                 </div>
 
                 {/* RRule box */}
-                <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4">
-                  <p className="text-sm font-semibold text-gray-800 mb-2">Recurrence Rule (RRULE)</p>
-                  <div className="text-sm font-mono text-gray-800 bg-yellow-100 px-3 py-2 rounded w-full max-w-full whitespace-pre-wrap break-words overflow-x-auto">
+                <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-3 md:p-4">
+                  <p className="text-xs md:text-sm font-semibold text-gray-800 mb-2">Recurrence Rule (RRULE)</p>
+                  <div className="text-xs md:text-sm font-mono text-gray-800 bg-yellow-100 px-2 md:px-3 py-2 rounded w-full max-w-full whitespace-pre-wrap break-words overflow-x-auto">
                     {selectedSchedule.rRule}
                   </div>
                 </div>
 
                 {/* Quick stats */}
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                  <span className="inline-flex items-center gap-2 px-2 md:px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                     <FaCalendarAlt className="w-3 h-3" /> Exceptions: {selectedSchedule.exceptions.length}
                   </span>
-                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="inline-flex items-center gap-2 px-2 md:px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                     <FaClock className="w-3 h-3" /> Overrides: {selectedSchedule.timeOverrides?.length || 0}
                   </span>
                 </div>
               </div>
 
               {/* Additional Information */}
-              <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-                <h4 className="text-lg font-semibold text-gray-800 mb-4">
+              <div className="mt-4 md:mt-6 p-3 md:p-4 bg-gray-50 rounded-xl">
+                <h4 className="text-base md:text-lg font-semibold text-gray-800 mb-3 md:mb-4">
                   Additional Information
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
                       Exceptions ({selectedSchedule.exceptions.length})
                     </label>
                     {selectedSchedule.exceptions.length === 0 ? (
-                      <p className="text-gray-500 text-sm">No exceptions</p>
+                      <p className="text-gray-500 text-xs md:text-sm">No exceptions</p>
                     ) : (
                       <div className="space-y-1">
                         {selectedSchedule.exceptions
                           .slice(0, 3)
                           .map((exception: Date, index: number) => (
-                            <p key={index} className="text-sm text-gray-700">
+                            <p key={index} className="text-xs md:text-sm text-gray-700">
                               {new Date(exception).toLocaleDateString()}
                             </p>
                           ))}
                         {selectedSchedule.exceptions.length > 3 && (
-                          <p className="text-sm text-gray-500">
+                          <p className="text-xs md:text-sm text-gray-500">
                             +{selectedSchedule.exceptions.length - 3} more...
                           </p>
                         )}
@@ -604,27 +604,27 @@ export default function ScheduleList({
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
                       Time Overrides (
                       {selectedSchedule.timeOverrides?.length || 0})
                     </label>
                     {!selectedSchedule.timeOverrides ||
                     selectedSchedule.timeOverrides.length === 0 ? (
-                      <p className="text-gray-500 text-sm">No time overrides</p>
+                      <p className="text-gray-500 text-xs md:text-sm">No time overrides</p>
                     ) : (
                       <div className="space-y-1">
                         {selectedSchedule.timeOverrides
                           .slice(0, 3)
                           .map(
                             (override: ScheduleTimeOverride, index: number) => (
-                              <p key={index} className="text-sm text-gray-700">
+                              <p key={index} className="text-xs md:text-sm text-gray-700">
                                 {new Date(override.date).toLocaleDateString()}:{" "}
                                 {override.startTime} - {override.endTime}
                               </p>
                             )
                           )}
                         {selectedSchedule.timeOverrides.length > 3 && (
-                          <p className="text-sm text-gray-500">
+                          <p className="text-xs md:text-sm text-gray-500">
                             +{selectedSchedule.timeOverrides.length - 3} more...
                           </p>
                         )}
@@ -634,10 +634,10 @@ export default function ScheduleList({
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 mt-8">
+              <div className="flex justify-end gap-3 mt-6 md:mt-8">
                 <button
                   onClick={() => setShowDetails(false)}
-                  className="px-6 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+                  className="px-4 md:px-6 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200 text-sm md:text-base"
                 >
                   Close
                 </button>

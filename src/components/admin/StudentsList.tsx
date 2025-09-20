@@ -322,11 +322,11 @@ export default function StudentsList() {
   }
 
   return (
-    <div className="bg-[#FEFCE8] rounded-2xl shadow-lg p-4">
+    <div className="bg-white rounded-2xl shadow-lg p-4 md:p-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold text-gray-800">Student Management</h1>
-        <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 md:mb-6">
+        <h1 className="text-xl md:text-2xl font-bold text-[#463B3B]">Student Management</h1>
+        <div className="flex gap-2 md:gap-3">
           {/* Export Button */}
           <button
             onClick={handleExportStudents}
@@ -335,13 +335,13 @@ export default function StudentsList() {
               exporting
                 ? "bg-gray-400 cursor-not-allowed"
                 : "bg-green-500 hover:bg-green-600"
-            } text-white w-10 h-10 rounded-full transition-colors duration-200 shadow-md hover:shadow-lg`}
+            } text-white w-8 h-8 md:w-10 md:h-10 rounded-full transition-colors duration-200 shadow-md hover:shadow-lg`}
             title="Export to Excel"
           >
             {exporting ? (
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              <div className="animate-spin rounded-full h-4 w-4 md:h-5 md:w-5 border-b-2 border-white"></div>
             ) : (
-              <FaDownload className="w-5 h-5" />
+              <FaDownload className="w-4 h-4 md:w-5 md:h-5" />
             )}
           </button>
 
@@ -364,21 +364,21 @@ export default function StudentsList() {
                 uploading
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-[#FAD23C] hover:bg-[#fad23c]/80"
-              } text-white w-10 h-10 rounded-full transition-colors duration-200 shadow-md hover:shadow-lg`}
+              } text-white w-8 h-8 md:w-10 md:h-10 rounded-full transition-colors duration-200 shadow-md hover:shadow-lg`}
               title="Import from Excel"
             >
               {uploading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                <div className="animate-spin rounded-full h-4 w-4 md:h-5 md:w-5 border-b-2 border-white"></div>
               ) : (
-                <FaFileExcel className="w-5 h-5" />
+                <FaFileExcel className="w-4 h-4 md:w-5 md:h-5" />
               )}
             </button>
           </label>
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center justify-center bg-[#FAD23C] hover:bg-[#fad23c]/80 text-white w-10 h-10 rounded-full transition-colors duration-200 shadow-md hover:shadow-lg"
+            className="flex items-center justify-center bg-[#FAD23C] hover:bg-[#fad23c]/80 text-white w-8 h-8 md:w-10 md:h-10 rounded-full transition-colors duration-200 shadow-md hover:shadow-lg"
           >
-            <FaPlus className="w-5 h-5" />
+            <FaPlus className="w-4 h-4 md:w-5 md:h-5" />
           </button>
         </div>
       </div>
@@ -468,7 +468,7 @@ export default function StudentsList() {
       )}
 
       {/* Search and Sort */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-4">
+      <div className="flex flex-col lg:flex-row gap-3 md:gap-4 mb-4 md:mb-6">
         <div className="relative flex-1">
           <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
@@ -476,16 +476,16 @@ export default function StudentsList() {
             placeholder="Search by first name, email or phone number..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm md:text-base"
           />
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           {/* Status Filter */}
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as StudentStatus | "all")}
-            className="px-3 py-2 rounded-xl border border-gray-300 bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            className="px-3 py-2 md:py-3 rounded-xl border border-gray-300 bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm md:text-base"
           >
             <option value="all">All Status</option>
             <option value={StudentStatus.Available}>Available</option>
@@ -497,26 +497,28 @@ export default function StudentsList() {
 
           <button
             onClick={() => handleSort("firstName")}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-colors duration-200 ${
+            className={`flex items-center justify-center gap-2 px-3 py-2 md:py-3 rounded-xl border transition-colors duration-200 text-sm md:text-base ${
               sortBy === "firstName"
                 ? "bg-blue-50 border-blue-300 text-blue-700"
                 : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
             }`}
           >
             <FaSort className="w-4 h-4" />
-            Name {sortBy === "firstName" && (sortOrder === "asc" ? "↑" : "↓")}
+            Name
+            {sortBy === "firstName" && (sortOrder === "asc" ? "↑" : "↓")}
           </button>
 
           <button
             onClick={() => handleSort("createdAt")}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-colors duration-200 ${
+            className={`flex items-center justify-center gap-2 px-3 py-2 md:py-3 rounded-xl border transition-colors duration-200 text-sm md:text-base ${
               sortBy === "createdAt"
                 ? "bg-blue-50 border-blue-300 text-blue-700"
                 : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
             }`}
           >
             <FaSort className="w-4 h-4" />
-            Created Date{" "}
+            <span className="hidden sm:inline">Created Date</span>
+            <span className="sm:hidden">Date</span>
             {sortBy === "createdAt" && (sortOrder === "asc" ? "↑" : "↓")}
           </button>
         </div>
@@ -527,25 +529,30 @@ export default function StudentsList() {
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="text-left py-3 px-3 font-semibold text-gray-700">
-                Full Name
+              <th className="text-left py-3 px-3 md:px-6 font-semibold text-gray-700 text-xs md:text-sm">
+                <span className="hidden sm:inline">Full Name</span>
+                <span className="sm:hidden">Name</span>
               </th>
-              <th className="text-left py-3 px-3 font-semibold text-gray-700">
-                Parent Status
+              <th className="text-left py-3 px-3 md:px-6 font-semibold text-gray-700 text-xs md:text-sm">
+                <span className="hidden sm:inline">Parent Status</span>
+                <span className="sm:hidden">Parent</span>
               </th>
-              <th className="text-left py-3 px-3 font-semibold text-gray-700">
-                Phone Number
+              <th className="text-left py-3 px-3 md:px-6 font-semibold text-gray-700 text-xs md:text-sm">
+                <span className="hidden sm:inline">Phone Number</span>
+                <span className="sm:hidden">Phone</span>
               </th>
-              <th className="text-left py-3 px-3 font-semibold text-gray-700">
-                Address
+              <th className="text-left py-3 px-3 md:px-6 font-semibold text-gray-700 text-xs md:text-sm">
+                <span className="hidden sm:inline">Address</span>
+                <span className="sm:hidden">Addr</span>
               </th>
-              <th className="text-left py-3 px-3 font-semibold text-gray-700">
+              <th className="text-left py-3 px-3 md:px-6 font-semibold text-gray-700 text-xs md:text-sm">
                 Status
               </th>
-              <th className="text-left py-3 px-3 font-semibold text-gray-700">
-                Created Date
+              <th className="text-left py-3 px-3 md:px-6 font-semibold text-gray-700 text-xs md:text-sm">
+                <span className="hidden sm:inline">Created Date</span>
+                <span className="sm:hidden">Date</span>
               </th>
-              <th className="text-center py-3 px-3 font-semibold text-gray-700">
+              <th className="text-center py-3 px-3 md:px-6 font-semibold text-gray-700 text-xs md:text-sm">
                 Actions
               </th>
             </tr>
@@ -556,55 +563,55 @@ export default function StudentsList() {
                 key={student.id}
                 className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150"
               >
-                <td className="py-3 px-3">
-                  <div className="font-medium text-gray-900">
+                <td className="py-3 px-3 md:px-6">
+                  <div className="font-medium text-gray-900 text-sm md:text-base">
                     {student.lastName} {student.firstName}
                   </div>
                 </td>
-                <td className="py-3 px-3 text-gray-600">
+                <td className="py-3 px-3 md:px-6 text-gray-600 text-sm md:text-base">
                   {student.parentId ? "Linked" : "Not linked"}
                 </td>
-                <td className="py-3 px-3 text-gray-600">
+                <td className="py-3 px-3 md:px-6 text-gray-600 text-sm md:text-base">
                   {student.parentPhoneNumber}
                 </td>
-                <td className="py-3 px-3 text-gray-600">
+                <td className="py-3 px-3 md:px-6 text-gray-600 text-sm md:text-base">
                   {student.parentId ? "Available" : "Not available"}
                 </td>
-                <td className="py-3 px-3">
+                <td className="py-3 px-3 md:px-6">
                   <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    className={`inline-flex items-center px-2 md:px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       getStatusInfo(student.status).className
                     }`}
                   >
                     {getStatusInfo(student.status).text}
                   </span>
                 </td>
-                <td className="py-3 px-3 text-gray-600">
+                <td className="py-3 px-3 md:px-6 text-gray-600 text-sm md:text-base">
                   {/* {new Date(student.createdAt).toLocaleDateString('en-US')} */}
                   todo
                 </td>
-                <td className="py-3 px-3">
-                  <div className="flex justify-center gap-2">
+                <td className="py-3 px-3 md:px-6">
+                  <div className="flex justify-center gap-1 md:gap-2">
                     <button
                       onClick={() => handleViewStudent(student)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                      className="p-1.5 md:p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
                       title="View Details"
                     >
-                      <FaEye className="w-4 h-4" />
+                      <FaEye className="w-3 h-3 md:w-4 md:h-4" />
                     </button>
                     <button
                       onClick={() => handleEditStudent(student)}
-                      className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
+                      className="p-1.5 md:p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
                       title="Edit Student"
                     >
-                      <FaEdit className="w-4 h-4" />
+                      <FaEdit className="w-3 h-3 md:w-4 md:h-4" />
                     </button>
                     
                     {/* Status-specific actions */}
                     {student.status === StudentStatus.Available && (
                       <button
                         onClick={() => handleActivateStudent(student.id)}
-                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
+                        className="p-1.5 md:p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
                         title="Activate Student"
                       >
                         ✓
@@ -614,7 +621,7 @@ export default function StudentsList() {
                     {student.status === StudentStatus.Pending && (
                       <button
                         onClick={() => handleActivateStudent(student.id)}
-                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
+                        className="p-1.5 md:p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
                         title="Activate Student"
                       >
                         ✓
@@ -624,7 +631,7 @@ export default function StudentsList() {
                     {student.status === StudentStatus.Active && (
                       <button
                         onClick={() => handleDeactivateStudent(student.id)}
-                        className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors duration-200"
+                        className="p-1.5 md:p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors duration-200"
                         title="Deactivate Student"
                       >
                         ⏸
@@ -634,7 +641,7 @@ export default function StudentsList() {
                     {(student.status === StudentStatus.Inactive || student.status === StudentStatus.Deleted) && (
                       <button
                         onClick={() => handleRestoreStudent(student.id)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                        className="p-1.5 md:p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
                         title="Restore Student"
                       >
                         ↻
@@ -644,14 +651,14 @@ export default function StudentsList() {
                     <button
                       onClick={() => student.status !== StudentStatus.Deleted && handleDeleteStudent(student.id)}
                       disabled={student.status === StudentStatus.Deleted}
-                      className={`p-2 rounded-lg transition-colors duration-200 ${
+                      className={`p-1.5 md:p-2 rounded-lg transition-colors duration-200 ${
                         student.status === StudentStatus.Deleted
                           ? "text-gray-300 cursor-not-allowed"
                           : "text-red-600 hover:bg-red-50"
                       }`}
                       title={student.status === StudentStatus.Deleted ? "Already deleted" : "Delete Student"}
                     >
-                      <FaTrash className="w-4 h-4" />
+                      <FaTrash className="w-3 h-3 md:w-4 md:h-4" />
                     </button>
                   </div>
                 </td>
@@ -661,9 +668,9 @@ export default function StudentsList() {
         </table>
 
         {sortedStudents.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            <p className="text-lg">No students found</p>
-            <p className="text-sm mt-2">
+          <div className="text-center py-6 md:py-8 text-gray-500">
+            <p className="text-base md:text-lg">No students found</p>
+            <p className="text-xs md:text-sm mt-2">
               Try changing your search terms or add a new student
             </p>
           </div>

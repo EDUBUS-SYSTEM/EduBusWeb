@@ -8,7 +8,7 @@ export default function AdminPage() {
     <div>
       <Sidebar />
       <Header />
-      <main className="flex justify-center px-6">
+      <main className="flex justify-center px-4 md:px-6 lg:px-6 pt-16 lg:pt-0">
         <div className="w-full max-w-3xl">
           <Profile />
         </div>

@@ -58,13 +58,13 @@ export default function TripDetails({ trip, onClose, onEdit }: TripDetailsProps)
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex justify-between items-start p-6 border-b border-gray-100">
+        <div className="flex justify-between items-start p-4 md:p-6 border-b border-gray-100">
           <div>
-            <h3 className="text-2xl font-bold text-[#463B3B] mb-2">
+            <h3 className="text-xl md:text-2xl font-bold text-[#463B3B] mb-2">
               Trip Details
             </h3>
             <div className="flex items-center space-x-2">
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(trip.status)}`}>
+              <span className={`inline-flex items-center px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium ${getStatusColor(trip.status)}`}>
                 {getStatusIcon(trip.status)}
                 <span className="ml-1 capitalize">{trip.status || 'planned'}</span>
               </span>
@@ -72,28 +72,28 @@ export default function TripDetails({ trip, onClose, onEdit }: TripDetailsProps)
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg"
+            className="text-gray-400 hover:text-gray-600 transition-colors p-1 md:p-2 hover:bg-gray-100 rounded-lg"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="p-4 md:p-6 space-y-4 md:space-y-6">
           {/* Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div>
-              <h4 className="font-semibold text-gray-700 mb-3">Trip Information</h4>
+              <h4 className="font-semibold text-gray-700 mb-3 text-sm md:text-base">Trip Information</h4>
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm text-gray-500">Trip Name</label>
-                  <p className="text-gray-800 font-medium">{trip.title}</p>
+                  <label className="text-xs md:text-sm text-gray-500">Trip Name</label>
+                  <p className="text-sm md:text-base text-gray-800 font-medium">{trip.title}</p>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-500">Start Time</label>
-                  <p className="text-gray-800 font-medium">
+                  <label className="text-xs md:text-sm text-gray-500">Start Time</label>
+                  <p className="text-xs md:text-sm text-gray-800 font-medium">
                     {trip.start.toLocaleString('en-US', {
                       weekday: 'long',
                       year: 'numeric',
@@ -105,8 +105,8 @@ export default function TripDetails({ trip, onClose, onEdit }: TripDetailsProps)
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-500">End Time</label>
-                  <p className="text-gray-800 font-medium">
+                  <label className="text-xs md:text-sm text-gray-500">End Time</label>
+                  <p className="text-xs md:text-sm text-gray-800 font-medium">
                     {trip.end.toLocaleString('en-US', {
                       weekday: 'long',
                       year: 'numeric',
@@ -118,8 +118,8 @@ export default function TripDetails({ trip, onClose, onEdit }: TripDetailsProps)
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-500">Duration</label>
-                  <p className="text-gray-800 font-medium">
+                  <label className="text-xs md:text-sm text-gray-500">Duration</label>
+                  <p className="text-xs md:text-sm text-gray-800 font-medium">
                     {Math.round((trip.end.getTime() - trip.start.getTime()) / (1000 * 60))} minutes
                   </p>
                 </div>
@@ -127,32 +127,32 @@ export default function TripDetails({ trip, onClose, onEdit }: TripDetailsProps)
             </div>
 
             <div>
-              <h4 className="font-semibold text-gray-700 mb-3">Route Information</h4>
+              <h4 className="font-semibold text-gray-700 mb-3 text-sm md:text-base">Route Information</h4>
               <div className="space-y-3">
                 {trip.metadata && (
                   <>
                     {trip.metadata.route && (
                       <div>
-                        <label className="text-sm text-gray-500">Route</label>
-                        <p className="text-gray-800 font-medium">{String(trip.metadata.route)}</p>
+                        <label className="text-xs md:text-sm text-gray-500">Route</label>
+                        <p className="text-xs md:text-sm text-gray-800 font-medium">{String(trip.metadata.route)}</p>
                       </div>
                     )}
                     {trip.metadata.driver && (
                       <div>
-                        <label className="text-sm text-gray-500">Driver</label>
-                        <p className="text-gray-800 font-medium">{String(trip.metadata.driver)}</p>
+                        <label className="text-xs md:text-sm text-gray-500">Driver</label>
+                        <p className="text-xs md:text-sm text-gray-800 font-medium">{String(trip.metadata.driver)}</p>
                       </div>
                     )}
                     {trip.metadata.vehicle && (
                       <div>
-                        <label className="text-sm text-gray-500">Vehicle</label>
-                        <p className="text-gray-800 font-medium">{String(trip.metadata.vehicle)}</p>
+                        <label className="text-xs md:text-sm text-gray-500">Vehicle</label>
+                        <p className="text-xs md:text-sm text-gray-800 font-medium">{String(trip.metadata.vehicle)}</p>
                       </div>
                     )}
                     {trip.metadata.students && (
                       <div>
-                        <label className="text-sm text-gray-500">Students</label>
-                        <p className="text-gray-800 font-medium">{String(trip.metadata.students)} students</p>
+                        <label className="text-xs md:text-sm text-gray-500">Students</label>
+                        <p className="text-xs md:text-sm text-gray-800 font-medium">{String(trip.metadata.students)} students</p>
                       </div>
                     )}
                   </>
@@ -164,18 +164,18 @@ export default function TripDetails({ trip, onClose, onEdit }: TripDetailsProps)
           {/* Description */}
           {trip.description && (
             <div>
-              <h4 className="font-semibold text-gray-700 mb-3">Description</h4>
-              <p className="text-gray-800 bg-gray-50 rounded-lg p-4">{trip.description}</p>
+              <h4 className="font-semibold text-gray-700 mb-3 text-sm md:text-base">Description</h4>
+              <p className="text-xs md:text-sm text-gray-800 bg-gray-50 rounded-lg p-3 md:p-4">{trip.description}</p>
             </div>
           )}
 
           {/* Trip Progress */}
           <div>
-            <h4 className="font-semibold text-gray-700 mb-3">Trip Progress</h4>
-            <div className="bg-gray-50 rounded-lg p-4">
+            <h4 className="font-semibold text-gray-700 mb-3 text-sm md:text-base">Trip Progress</h4>
+            <div className="bg-gray-50 rounded-lg p-3 md:p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600">Progress</span>
-                <span className="text-sm font-medium text-gray-800">
+                <span className="text-xs md:text-sm text-gray-600">Progress</span>
+                <span className="text-xs md:text-sm font-medium text-gray-800">
                   {trip.status === 'completed' ? '100%' : 
                    trip.status === 'in-progress' ? '50%' : '0%'}
                 </span>
@@ -198,15 +198,15 @@ export default function TripDetails({ trip, onClose, onEdit }: TripDetailsProps)
           {/* Additional Metadata */}
           {trip.metadata && Object.keys(trip.metadata).length > 0 && (
             <div>
-              <h4 className="font-semibold text-gray-700 mb-3">Additional Information</h4>
-              <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="font-semibold text-gray-700 mb-3 text-sm md:text-base">Additional Information</h4>
+              <div className="bg-gray-50 rounded-lg p-3 md:p-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {Object.entries(trip.metadata).map(([key, value]) => (
                     <div key={key} className="flex justify-between">
-                      <span className="text-gray-600 capitalize">
+                      <span className="text-xs md:text-sm text-gray-600 capitalize">
                         {key.replace(/([A-Z])/g, ' $1').trim()}:
                       </span>
-                      <span className="text-gray-800 font-medium">{String(value)}</span>
+                      <span className="text-xs md:text-sm text-gray-800 font-medium">{String(value)}</span>
                     </div>
                   ))}
                 </div>
@@ -216,17 +216,17 @@ export default function TripDetails({ trip, onClose, onEdit }: TripDetailsProps)
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end space-x-3 p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
+        <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 p-4 md:p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+            className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors text-sm md:text-base"
           >
             Close
           </button>
           {onEdit && (
             <button
               onClick={onEdit}
-              className="px-4 py-2 bg-gradient-to-r from-[#fad23c] to-[#FDC700] text-[#463B3B] rounded-lg hover:from-[#FDC700] hover:to-[#D08700] transition-all duration-300 font-semibold"
+              className="px-4 py-2 bg-gradient-to-r from-[#fad23c] to-[#FDC700] text-[#463B3B] rounded-lg hover:from-[#FDC700] hover:to-[#D08700] transition-all duration-300 font-semibold text-sm md:text-base"
             >
               Edit Trip
             </button>
