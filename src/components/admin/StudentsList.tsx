@@ -122,7 +122,6 @@ export default function StudentsList() {
     }
   };
 
-  // sort an toàn
   const sortedStudents = [...filteredStudents].sort((a, b) => {
     let aValue: string;
     let bValue: string;
