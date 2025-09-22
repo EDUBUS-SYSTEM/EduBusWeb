@@ -7,7 +7,7 @@ import {
   FaTag,
   FaSave,
   FaGraduationCap,
-  FaEye,
+  // FaEye,
 } from "react-icons/fa";
 import {
   scheduleService,
@@ -15,7 +15,7 @@ import {
 } from "@/services/api/scheduleService";
 import { academicCalendarService } from "@/services/api/academicCalendarService";
 import RRuleBuilder from "@/components/admin/RRuleBuilder";
-import { RRuleUtils } from "@/utils/rruleUtils";
+// import { RRuleUtils } from "@/utils/rruleUtils";
 
 interface CreateScheduleModalProps {
   onClose: () => void;
@@ -56,7 +56,7 @@ export default function CreateScheduleModal({
   const handleRruleValidationChange = useCallback((isValid: boolean, errors: string[]) => {
     setRruleValidation({ isValid, errors });
   }, []);
-  const [previewDates, setPreviewDates] = useState<Date[]>([]);
+  const [previewDates] = useState<Date[]>([]);
   const [showPreview, setShowPreview] = useState(false);
 
   const scheduleTypes = [
@@ -253,30 +253,30 @@ export default function CreateScheduleModal({
     }
   };
 
-  const generatePreviewDates = () => {
-    if (!formData.rRule || !formData.effectiveFrom) {
-      setPreviewDates([]);
-      return;
-    }
+  // const generatePreviewDates = () => {
+  //   if (!formData.rRule || !formData.effectiveFrom) {
+  //     setPreviewDates([]);
+  //     return;
+  //   }
 
-    try {
-      const startDate = new Date(formData.effectiveFrom);
-      // const endDate = formData.effectiveTo
-      //   ? new Date(formData.effectiveTo)
-      //   : new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from start
+  //   try {
+  //     const startDate = new Date(formData.effectiveFrom);
+  //     // const endDate = formData.effectiveTo
+  //     //   ? new Date(formData.effectiveTo)
+  //     //   : new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from start
 
-      const dates = RRuleUtils.generatePreviewDates(
-        formData.rRule,
-        startDate,
-        10
-      );
-      setPreviewDates(dates);
-      setShowPreview(true);
-    } catch (error) {
-      console.error("Error generating preview dates:", error);
-      setPreviewDates([]);
-    }
-  };
+  //     const dates = RRuleUtils.generatePreviewDates(
+  //       formData.rRule,
+  //       startDate,
+  //       10
+  //     );
+  //     setPreviewDates(dates);
+  //     setShowPreview(true);
+  //   } catch (error) {
+  //     console.error("Error generating preview dates:", error);
+  //     setPreviewDates([]);
+  //   }
+  // };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

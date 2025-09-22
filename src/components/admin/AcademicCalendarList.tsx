@@ -7,6 +7,7 @@ import {
   FaGraduationCap,
   FaClock,
   FaExclamationTriangle,
+  FaTimes,
 } from "react-icons/fa";
 import { academicCalendarService } from "@/services/api/academicCalendarService";
 import { AcademicCalendar, AcademicCalendarQueryParams } from "@/types";
@@ -139,6 +140,30 @@ export default function AcademicCalendarList({
       month: "short",
       day: "numeric",
     });
+  };
+
+  // Function to get semester color based on index (currently unused but kept for future use)
+  // const getSemesterColor = (index: number) => {
+  //   const colors = [
+  //     'bg-yellow-500 hover:bg-yellow-600', // Semester 1 - Yellow
+  //     'bg-orange-500 hover:bg-orange-600', // Semester 2 - Orange
+  //     'bg-amber-500 hover:bg-amber-600',   // Semester 3 - Amber
+  //     'bg-yellow-600 hover:bg-yellow-700', // Semester 4 - Dark Yellow
+  //     'bg-orange-600 hover:bg-orange-700', // Semester 5 - Dark Orange
+  //   ];
+  //   return colors[index % colors.length];
+  // };
+
+  // Function to get semester legend color
+  const getSemesterLegendColor = (index: number) => {
+    const colors = [
+      'bg-yellow-500', // Semester 1
+      'bg-orange-500', // Semester 2
+      'bg-amber-500',  // Semester 3
+      'bg-yellow-600', // Semester 4
+      'bg-orange-600', // Semester 5
+    ];
+    return colors[index % colors.length];
   };
 
   const handleDeleteCalendar = async (calendarId: string) => {
@@ -292,102 +317,310 @@ export default function AcademicCalendarList({
       {/* Academic Calendar Details Modal */}
       {showDetails && selectedCalendar && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold text-gray-800 flex items-center">
-                  <FaGraduationCap className="w-6 h-6 mr-3 text-blue-600" />
-                  {selectedCalendar.name}
-                </h3>
+          <div className="bg-white rounded-3xl max-w-6xl w-full max-h-[95vh] overflow-hidden shadow-2xl">
+            {/* Header with Yellow Gradient Background */}
+            <div className="bg-gradient-to-r from-[#fad23c] via-[#FDC700] to-[#D08700] px-8 py-6 text-[#463B3B]">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-white bg-opacity-30 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                    <FaGraduationCap className="w-6 h-6 text-[#463B3B]" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-[#463B3B]">{selectedCalendar.name}</h3>
+                    <p className="text-[#463B3B] text-sm opacity-80">
+                      Academic Year: {selectedCalendar.academicYear}
+                    </p>
+                  </div>
+                </div>
                 <button
                   onClick={() => setShowDetails(false)}
-                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                  className="w-10 h-10 bg-white bg-opacity-30 hover:bg-opacity-40 rounded-xl flex items-center justify-center transition-all duration-200 backdrop-blur-sm"
                 >
-                  ×
+                  <FaTimes className="w-5 h-5 text-[#463B3B]" />
                 </button>
               </div>
+              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Basic Information */}
-                <div className="bg-blue-50 rounded-xl p-4">
-                  <h4 className="font-semibold text-gray-800 mb-3">
-                    Basic Information
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <span className="font-medium">Academic Year:</span>{" "}
-                      {selectedCalendar.academicYear}
+            {/* Content */}
+            <div className="p-8 overflow-y-auto max-h-[calc(95vh-120px)]">
+              {/* Status and Quick Info */}
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center space-x-4">
+                  <span
+                    className={`px-4 py-2 rounded-full text-sm font-medium ${
+                      selectedCalendar.isActive
+                        ? "bg-green-100 text-green-800 border border-green-200"
+                        : "bg-gray-100 text-gray-800 border border-gray-200"
+                    }`}
+                  >
+                    {selectedCalendar.isActive ? "🟢 Active" : "⚫ Inactive"}
+                  </span>
+                  <div className="text-sm text-gray-600">
+                    Created: {formatDate(selectedCalendar.createdAt)}
                     </div>
-                    <div>
-                      <span className="font-medium">Start Date:</span>{" "}
-                      {formatDate(selectedCalendar.startDate)}
                     </div>
-                    <div>
-                      <span className="font-medium">End Date:</span>{" "}
-                      {formatDate(selectedCalendar.endDate)}
                     </div>
-                    <div>
-                      <span className="font-medium">Status:</span>
-                      <span
-                        className={`ml-2 px-2 py-1 rounded-full text-xs ${
-                          selectedCalendar.isActive
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {selectedCalendar.isActive ? "Active" : "Inactive"}
-                      </span>
-                    </div>
+
+
+              {/* Academic Year Calendar Visualization */}
+              <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-6 mb-8 border border-gray-200">
+                <h4 className="text-lg font-semibold text-gray-800 mb-6 flex items-center">
+                  <FaCalendarAlt className="w-5 h-5 mr-2 text-yellow-600" />
+                  Academic Year Calendar Overview
+                </h4>
+                
+                {/* Calendar Grid */}
+                <div className="bg-white rounded-xl p-4 shadow-sm">
+                  <div className="grid grid-cols-7 gap-1 mb-4">
+                    {/* Calendar Headers */}
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                      <div key={day} className="text-center text-sm font-medium text-gray-600 py-2">
+                        {day}
+                      </div>
+                    ))}
+                    
+                    {/* Calendar Days */}
+                    {(() => {
+                      const startDate = new Date(selectedCalendar.startDate);
+                      const endDate = new Date(selectedCalendar.endDate);
+                      const startMonth = startDate.getMonth();
+                      const startYear = startDate.getFullYear();
+                      // const endMonth = endDate.getMonth();
+                      // const endYear = endDate.getFullYear();
+                      
+                      const months = [];
+                      let currentDate = new Date(startYear, startMonth, 1);
+                      
+                      // Generate months from start to end
+                      while (currentDate <= endDate) {
+                        months.push(new Date(currentDate));
+                        currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+                      }
+                      
+                      return months.map((month, monthIndex) => {
+                        const firstDay = new Date(month.getFullYear(), month.getMonth(), 1);
+                        const lastDay = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+                        const startDayOfWeek = firstDay.getDay();
+                        const daysInMonth = lastDay.getDate();
+                        
+                        // Check if this month overlaps with academic year
+                        // const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
+                        // const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+                        // const isInAcademicYear = monthStart <= endDate && monthEnd >= startDate;
+                        
+                        return (
+                          <div key={monthIndex} className="col-span-7 mb-6">
+                            {/* Month Header */}
+                            <div className="text-center mb-3">
+                              <h5 className="text-lg font-semibold text-gray-800">
+                                {month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                              </h5>
+                            </div>
+                            
+                            {/* Calendar Grid for this month */}
+                            <div className="grid grid-cols-7 gap-1">
+                              {/* Empty cells for days before month starts */}
+                              {Array.from({ length: startDayOfWeek }).map((_, index) => (
+                                <div key={`empty-${index}`} className="h-8"></div>
+                              ))}
+                              
+                              {/* Days of the month */}
+                              {Array.from({ length: daysInMonth }, (_, index) => {
+                                const day = index + 1;
+                                const currentDay = new Date(month.getFullYear(), month.getMonth(), day);
+                                const isInRange = currentDay >= startDate && currentDay <= endDate;
+                                
+                                // Check if this day is in any semester
+                                const semesterForDay = selectedCalendar.semesters.find(semester => 
+                                  currentDay >= new Date(semester.startDate) && currentDay <= new Date(semester.endDate)
+                                );
+                                
+                                // Get semester index for color coding
+                                const semesterIndex = selectedCalendar.semesters.findIndex(semester => 
+                                  currentDay >= new Date(semester.startDate) && currentDay <= new Date(semester.endDate)
+                                );
+                                
+                                // Check if this day is a holiday
+                                const holidayForDay = selectedCalendar.holidays.find(holiday => 
+                                  currentDay >= new Date(holiday.startDate) && currentDay <= new Date(holiday.endDate)
+                                );
+                                
+                                // Check if this day is a special school day
+                                const schoolDayForDay = selectedCalendar.schoolDays.find(schoolDay => 
+                                  new Date(schoolDay.date).toDateString() === currentDay.toDateString()
+                                );
+                                
+                                // Determine what types of days this day represents
+                                const dayTypes = [];
+                                if (semesterForDay) dayTypes.push({ type: 'semester', index: semesterIndex });
+                                if (holidayForDay) dayTypes.push({ type: 'holiday' });
+                                if (schoolDayForDay) dayTypes.push({ type: 'schoolDay', isSchoolDay: schoolDayForDay.isSchoolDay });
+                                
+                                let dayClass = "h-8 flex items-center justify-center text-sm rounded-md transition-all duration-200 relative overflow-hidden ";
+                                // let dayStyle = {};
+                                
+                                if (!isInRange) {
+                                  dayClass += "text-gray-300 bg-gray-50";
+                                } else {
+                                  dayClass += "text-gray-700 bg-white hover:bg-yellow-50 border border-gray-200 font-medium";
+                                }
+                                
+                                // Create tooltip text
+                                const tooltipParts = [];
+                                if (semesterForDay) {
+                                  tooltipParts.push(`Semester ${semesterIndex + 1}: ${semesterForDay.name} (${semesterForDay.code})`);
+                                }
+                                if (holidayForDay) {
+                                  tooltipParts.push(`Holiday: ${holidayForDay.name}`);
+                                }
+                                if (schoolDayForDay) {
+                                  tooltipParts.push(`Special: ${schoolDayForDay.isSchoolDay ? 'School Day' : 'No School'}`);
+                                }
+                                if (tooltipParts.length === 0) {
+                                  tooltipParts.push(isInRange ? 'Academic Year' : 'Outside Academic Year');
+                                }
+                                
+                                return (
+                                  <div
+                                    key={day}
+                                    className={dayClass}
+                                    title={tooltipParts.join(' | ')}
+                                  >
+                                    {/* Color lines for different day types */}
+                                    {dayTypes.length > 0 && (
+                                      <div className="absolute inset-0 flex flex-col">
+                                        {/* Top line for semester */}
+                                        {semesterForDay && (
+                                          <div 
+                                            className={`h-2 ${getSemesterLegendColor(semesterIndex).replace('bg-', 'bg-')}`}
+                                            title={`Semester ${semesterIndex + 1}: ${semesterForDay.name}`}
+                                          ></div>
+                                        )}
+                                        
+                                        {/* Middle line for holiday */}
+                                        {holidayForDay && (
+                                          <div 
+                                            className="h-2 bg-red-500"
+                                            title={`Holiday: ${holidayForDay.name}`}
+                                          ></div>
+                                        )}
+                                        
+                                        {/* Bottom line for special school day */}
+                                        {schoolDayForDay && (
+                                          <div 
+                                            className={`h-2 ${schoolDayForDay.isSchoolDay ? 'bg-green-500' : 'bg-gray-500'}`}
+                                            title={`Special: ${schoolDayForDay.isSchoolDay ? 'School Day' : 'No School'}`}
+                                          ></div>
+                                        )}
+                                        
+                                        {/* Fill remaining space */}
+                                        <div className="flex-1"></div>
+                                      </div>
+                                    )}
+                                    
+                                    {/* Day number */}
+                                    <span className="relative z-10">{day}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
-                </div>
-
-                {/* Statistics */}
-                <div className="bg-cyan-50 rounded-xl p-4">
-                  <h4 className="font-semibold text-gray-800 mb-3">
-                    Statistics
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <span className="font-medium">Semesters:</span>{" "}
-                      {selectedCalendar.semesters.length}
-                    </div>
-                    <div>
-                      <span className="font-medium">Holidays:</span>{" "}
-                      {selectedCalendar.holidays.length}
-                    </div>
-                    <div>
-                      <span className="font-medium">School Days:</span>{" "}
-                      {selectedCalendar.schoolDays.length}
-                    </div>
-                    <div>
-                      <span className="font-medium">Created:</span>{" "}
-                      {formatDate(selectedCalendar.createdAt)}
+                  
+                  {/* Legend */}
+                  <div className="mt-6 pt-4 border-t border-gray-200">
+                    <h6 className="text-sm font-medium text-gray-700 mb-3">Legend:</h6>
+                    <div className="space-y-4">
+                      {/* Color Lines Explanation */}
+                      <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                        <div className="text-xs font-medium text-blue-800 mb-2">📅 Color Lines System:</div>
+                        <div className="text-xs text-blue-700">
+                          Each day shows colored lines at the top of the cell. Multiple lines indicate overlapping events:
+                        </div>
+                        <div className="mt-2 space-y-1 text-xs">
+                          <div className="flex items-center">
+                            <div className="w-8 h-2 bg-yellow-500 rounded mr-2"></div>
+                            <span className="text-blue-700">Top line = Semester</span>
+                          </div>
+                          <div className="flex items-center">
+                            <div className="w-8 h-2 bg-red-500 rounded mr-2"></div>
+                            <span className="text-blue-700">Middle line = Holiday</span>
+                          </div>
+                          <div className="flex items-center">
+                            <div className="w-8 h-2 bg-green-500 rounded mr-2"></div>
+                            <span className="text-blue-700">Bottom line = Special School Day</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Semesters */}
+                      {selectedCalendar.semesters.length > 0 && (
+                        <div>
+                          <div className="text-xs font-medium text-gray-600 mb-2">Semester Colors:</div>
+                          <div className="flex flex-wrap gap-3 text-xs">
+                            {selectedCalendar.semesters.map((semester, index) => (
+                              <div key={index} className="flex items-center">
+                                <div className={`w-4 h-2 ${getSemesterLegendColor(index)} rounded mr-2`}></div>
+                                <span className="text-gray-600">
+                                  {semester.name} ({semester.code})
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Other Legend Items */}
+                      <div>
+                        <div className="text-xs font-medium text-gray-600 mb-2">Other Day Types:</div>
+                        <div className="flex flex-wrap gap-4 text-xs">
+                          <div className="flex items-center">
+                            <div className="w-4 h-2 bg-red-500 rounded mr-2"></div>
+                            <span className="text-gray-600">Holiday</span>
+                          </div>
+                          <div className="flex items-center">
+                            <div className="w-4 h-2 bg-green-500 rounded mr-2"></div>
+                            <span className="text-gray-600">Special School Day</span>
+                          </div>
+                          <div className="flex items-center">
+                            <div className="w-4 h-2 bg-gray-500 rounded mr-2"></div>
+                            <span className="text-gray-600">No School Day</span>
+                          </div>
+                          <div className="flex items-center">
+                            <div className="w-4 h-2 bg-white border border-gray-200 rounded mr-2"></div>
+                            <span className="text-gray-600">Regular School Day</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Semesters */}
+              {/* Semesters Section */}
               {selectedCalendar.semesters.length > 0 && (
-                <div className="mt-6">
-                  <h4 className="font-semibold text-gray-800 mb-3">
-                    Semesters
+                <div className="mb-8">
+                  <h4 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                    <FaExclamationTriangle className="w-6 h-6 mr-3 text-yellow-600" />
+                    Semesters ({selectedCalendar.semesters.length})
                   </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {selectedCalendar.semesters.map((semester, index) => (
-                      <div key={index} className="bg-gray-50 rounded-lg p-4">
-                        <div className="font-medium text-gray-800">
+                      <div key={index} className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl p-6 border border-yellow-200 hover:shadow-lg transition-all duration-300">
+                        <div className="flex items-start justify-between mb-4">
+                          <div>
+                            <h5 className="text-lg font-semibold text-[#463B3B] mb-1">
                           {semester.name}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {semester.code}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {formatDate(semester.startDate)} -{" "}
-                          {formatDate(semester.endDate)}
+                            </h5>
+                            <p className="text-yellow-700 text-sm font-medium">
+                              Code: {semester.code}
+                            </p>
                         </div>
                         <span
-                          className={`inline-block mt-2 px-2 py-1 rounded-full text-xs ${
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${
                             semester.isActive
                               ? "bg-green-100 text-green-800"
                               : "bg-gray-100 text-gray-800"
@@ -395,36 +628,104 @@ export default function AcademicCalendarList({
                         >
                           {semester.isActive ? "Active" : "Inactive"}
                         </span>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div className="flex items-center text-sm">
+                            <span className="w-2 h-2 bg-yellow-500 rounded-full mr-3"></span>
+                            <span className="text-gray-600">Start:</span>
+                            <span className="ml-2 font-medium text-gray-800">{formatDate(semester.startDate)}</span>
+                          </div>
+                          <div className="flex items-center text-sm">
+                            <span className="w-2 h-2 bg-yellow-500 rounded-full mr-3"></span>
+                            <span className="text-gray-600">End:</span>
+                            <span className="ml-2 font-medium text-gray-800">{formatDate(semester.endDate)}</span>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Holidays */}
+              {/* Holidays Section */}
               {selectedCalendar.holidays.length > 0 && (
-                <div className="mt-6">
-                  <h4 className="font-semibold text-gray-800 mb-3">Holidays</h4>
-                  <div className="space-y-2">
+                <div className="mb-8">
+                  <h4 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                    <FaClock className="w-6 h-6 mr-3 text-yellow-600" />
+                    Holidays ({selectedCalendar.holidays.length})
+                  </h4>
+                  <div className="space-y-4">
                     {selectedCalendar.holidays.map((holiday, index) => (
-                      <div key={index} className="bg-red-50 rounded-lg p-4">
-                        <div className="font-medium text-gray-800">
+                      <div key={index} className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl p-6 border border-yellow-200 hover:shadow-lg transition-all duration-300">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <h5 className="text-lg font-semibold text-[#463B3B] mb-2">
                           {holiday.name}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {formatDate(holiday.startDate)} -{" "}
-                          {formatDate(holiday.endDate)}
-                        </div>
-                        {holiday.description && (
-                          <div className="text-sm text-gray-600 mt-1">
-                            {holiday.description}
+                            </h5>
+                            {holiday.description && (
+                              <p className="text-yellow-700 text-sm mb-3">
+                                {holiday.description}
+                              </p>
+                            )}
+                            <div className="flex items-center space-x-4 text-sm">
+                              <div className="flex items-center">
+                                <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                                <span className="text-gray-600">From:</span>
+                                <span className="ml-1 font-medium text-gray-800">{formatDate(holiday.startDate)}</span>
+                              </div>
+                              <div className="flex items-center">
+                                <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                                <span className="text-gray-600">To:</span>
+                                <span className="ml-1 font-medium text-gray-800">{formatDate(holiday.endDate)}</span>
+                              </div>
+                            </div>
                           </div>
-                        )}
-                        {holiday.isRecurring && (
-                          <span className="inline-block mt-2 px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs">
-                            Recurring
+                          {holiday.isRecurring && (
+                            <span className="px-3 py-1 bg-yellow-200 text-yellow-800 rounded-full text-xs font-medium border border-yellow-300">
+                              🔄 Recurring
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* School Days Section */}
+              {selectedCalendar.schoolDays.length > 0 && (
+                <div className="mb-8">
+                  <h4 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                    <FaGraduationCap className="w-6 h-6 mr-3 text-yellow-600" />
+                    Special School Days ({selectedCalendar.schoolDays.length})
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {selectedCalendar.schoolDays.map((schoolDay, index) => (
+                      <div key={index} className={`rounded-xl p-4 border ${
+                        schoolDay.isSchoolDay 
+                          ? "bg-yellow-50 border-yellow-200" 
+                          : "bg-gray-50 border-gray-200"
+                      }`}>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-medium text-gray-800">
+                              {formatDate(schoolDay.date)}
+                        </div>
+                            {schoolDay.description && (
+                          <div className="text-sm text-gray-600 mt-1">
+                                {schoolDay.description}
+                              </div>
+                            )}
+                          </div>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            schoolDay.isSchoolDay
+                              ? "bg-green-100 text-green-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}>
+                            {schoolDay.isSchoolDay ? "School Day" : "No School"}
                           </span>
-                        )}
+                        </div>
                       </div>
                     ))}
                   </div>
