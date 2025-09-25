@@ -90,18 +90,48 @@ const EditRouteModal: React.FC<EditRouteModalProps> = ({
       toast.success('Route updated successfully!');
       onRouteUpdated(updatedRoute);
       handleClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to update route:', error);
 
-      // Handle validation errors from backend
-      if (error.response?.data?.errors) {
-        const backendErrors = error.response.data.errors;
-        setErrors({
-          routeName: backendErrors.RouteName?.[0] || backendErrors.routeName?.[0],
-          vehicleId: backendErrors.VehicleId?.[0] || backendErrors.vehicleId?.[0]
-        });
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as {
+          response?: {
+            data?: unknown;
+            status?: number;
+          }
+        };
+
+        if (axiosError.response?.status === 400) {
+          const errorData = axiosError.response.data;
+
+          if (errorData && typeof errorData === 'object') {
+            // Check if it's ModelState validation errors
+            if ('RouteName' in errorData || 'VehicleId' in errorData) {
+              const validationErrors = errorData as Record<string, string[]>;
+              setErrors({
+                routeName: Array.isArray(validationErrors.RouteName) ? validationErrors.RouteName[0] : validationErrors.RouteName,
+                vehicleId: Array.isArray(validationErrors.VehicleId) ? validationErrors.VehicleId[0] : validationErrors.VehicleId
+              });
+            } else if (typeof errorData === 'string') {
+              toast.error(errorData);
+            } else if (errorData && typeof errorData === 'object' && 'message' in errorData) {
+              const errorWithMessage = errorData as { message: string };
+              toast.error(errorWithMessage.message);
+            } else {
+              toast.error('Validation failed. Please check your input.');
+            }
+          } else {
+            toast.error('Validation failed. Please check your input.');
+          }
+        } else if (axiosError.response?.status === 404) {
+          toast.error('Route not found.');
+        } else if (axiosError.response?.status === 500) {
+          toast.error('Internal server error. Please try again later.');
+        } else {
+          toast.error('Failed to update route. Please try again.');
+        }
       } else {
-        toast.error(error.response?.data?.message || 'Failed to update route');
+        toast.error('Failed to update route. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -117,9 +147,31 @@ const EditRouteModal: React.FC<EditRouteModalProps> = ({
       toast.success('Route deleted successfully!');
       onRouteDeleted(route.id);
       handleClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to delete route:', error);
-      toast.error(error.response?.data?.message || 'Failed to delete route');
+
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as {
+          response?: {
+            data?: unknown;
+            status?: number;
+          }
+        };
+
+        if (axiosError.response?.status === 404) {
+          toast.error('Route not found.');
+        } else if (axiosError.response?.status === 500) {
+          toast.error('Internal server error. Please try again later.');
+        } else {
+          const errorData = axiosError.response?.data;
+          const errorMessage = (errorData && typeof errorData === 'object' && 'message' in errorData)
+            ? (errorData as { message: string }).message
+            : (typeof errorData === 'string' ? errorData : 'Failed to delete route.');
+          toast.error(errorMessage);
+        }
+      } else {
+        toast.error('Failed to delete route. Please try again.');
+      }
     } finally {
       setDeleteLoading(false);
       setShowDeleteConfirm(false);
@@ -254,7 +306,7 @@ const EditRouteModal: React.FC<EditRouteModalProps> = ({
                 <h3 className="text-lg font-bold text-gray-800">Confirm Delete</h3>
               </div>
               <p className="text-gray-600 mb-6">
-                Are you sure you want to delete the route "{route.routeName}"? This action cannot be undone.
+                Are you sure you want to delete the route &quot;{route.routeName}&quot;? This action cannot be undone.
               </p>
               <div className="flex justify-end space-x-3">
                 <button

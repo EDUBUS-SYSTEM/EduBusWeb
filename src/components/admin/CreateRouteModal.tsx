@@ -78,18 +78,46 @@ const CreateRouteModal: React.FC<CreateRouteModalProps> = ({ isOpen, onClose, on
       toast.success('Route created successfully!');
       onRouteCreated(newRoute); // Pass the created route to the parent
       handleClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to create route:', error);
 
-      // Handle validation errors from backend
-      if (error.response?.data?.errors) {
-        const backendErrors = error.response.data.errors;
-        setErrors({
-          routeName: backendErrors.RouteName?.[0] || backendErrors.routeName?.[0],
-          vehicleId: backendErrors.VehicleId?.[0] || backendErrors.vehicleId?.[0]
-        });
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as {
+          response?: {
+            data?: unknown;
+            status?: number;
+          }
+        };
+
+        if (axiosError.response?.status === 400) {
+          const errorData = axiosError.response.data;
+
+          if (errorData && typeof errorData === 'object') {
+            // Check if it's ModelState validation errors
+            if ('RouteName' in errorData || 'VehicleId' in errorData) {
+              const validationErrors = errorData as Record<string, string[]>;
+              setErrors({
+                routeName: Array.isArray(validationErrors.RouteName) ? validationErrors.RouteName[0] : validationErrors.RouteName,
+                vehicleId: Array.isArray(validationErrors.VehicleId) ? validationErrors.VehicleId[0] : validationErrors.VehicleId
+              });
+            } else if (typeof errorData === 'string') {
+              toast.error(errorData);
+            } else if (errorData && typeof errorData === 'object' && 'message' in errorData) {
+              const errorWithMessage = errorData as { message: string };
+              toast.error(errorWithMessage.message);
+            } else {
+              toast.error('Validation failed. Please check your input.');
+            }
+          } else {
+            toast.error('Validation failed. Please check your input.');
+          }
+        } else if (axiosError.response?.status === 500) {
+          toast.error('Internal server error. Please try again later.');
+        } else {
+          toast.error('Failed to create route. Please try again.');
+        }
       } else {
-        toast.error(error.response?.data?.message || 'Failed to create route');
+        toast.error('Failed to create route. Please try again.');
       }
     } finally {
       setLoading(false);

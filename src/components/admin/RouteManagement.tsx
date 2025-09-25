@@ -1,6 +1,6 @@
 // src/components/admin/RouteManagement.tsx
 import React, { useState, useEffect } from 'react';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { FaBus, FaUser, FaMapMarkerAlt, FaPlus } from 'react-icons/fa';
 import { routeService } from '@/services/routeService/routeService.api';
 import { RouteDto, PickupPointInfoDto } from '@/services/routeService/routeService.types';
@@ -91,7 +91,7 @@ const RouteManagement: React.FC = () => {
     setRoutes(prevRoutes => prevRoutes.filter(route => route.id !== routeId));
   };
 
-  const onDragEnd = (result: any) => {
+  const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
     const { source, destination } = result;
