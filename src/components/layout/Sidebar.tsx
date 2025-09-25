@@ -18,6 +18,7 @@ import {
   FaClock,
   FaCalendarAlt,
   FaUserCheck,
+  FaRoute
 } from "react-icons/fa";
 
 export default function Sidebar() {
@@ -53,7 +54,8 @@ export default function Sidebar() {
       label: "Academic Calendar",
       icon: <FaCalendarAlt />,
     },
-    {href: "/admin/vehicle", label: "Vehicles", icon: <FaBus/>},
+    { href: "/admin/vehicle", label: "Vehicles", icon: <FaBus /> },
+    { href: "/admin/routes", label: "Route Management", icon: <FaRoute /> },
   ];
 
   return (
@@ -77,10 +79,9 @@ export default function Sidebar() {
             key={link.href}
             href={link.href}
             className={`px-5 py-4 flex items-center gap-3 transition 
-              ${
-                pathname === link.href
-                  ? "bg-[#fad23c] font-semibold"
-                  : "hover:bg-[#FFF085]"
+              ${pathname === link.href
+                ? "bg-[#fad23c] font-semibold"
+                : "hover:bg-[#FFF085]"
               }`}
           >
             {link.icon} {link.label}
