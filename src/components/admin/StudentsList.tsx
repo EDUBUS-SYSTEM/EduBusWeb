@@ -24,7 +24,9 @@ export default function StudentsList() {
   const [students, setStudents] = useState<StudentDto[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<StudentDto[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StudentStatus | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<StudentStatus | "all">(
+    "all"
+  );
   const [sortBy, setSortBy] = useState<"firstName" | "createdAt">("firstName");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -63,13 +65,13 @@ export default function StudentsList() {
       setLoading(true);
       setError(null);
       let studentsData: StudentDto[];
-      
-      if (status && status !== "all") {
+
+      if (typeof status === "number") {
         studentsData = await studentService.getByStatus(status);
       } else {
         studentsData = await studentService.getAll();
       }
-      
+
       console.log(studentsData);
       setStudents(studentsData);
       setFilteredStudents(studentsData);
@@ -89,15 +91,23 @@ export default function StudentsList() {
   useEffect(() => {
     fetchStudents(statusFilter);
   }, [statusFilter]);
-
-  // Search functionality - client-side for better UX
+  
+  // Search (only one useEffect, null-safe)
   useEffect(() => {
-    const filtered = students.filter(
-      (student) =>
-        student.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.parentPhoneNumber.includes(searchTerm)
-    );
+    const term = (searchTerm || "").toLowerCase().trim();
+
+    const filtered = students.filter((s) => {
+      const fn = (s.firstName || "").toLowerCase();
+      const ln = (s.lastName || "").toLowerCase();
+      // phone có thể là number hoặc undefined -> ép thành string an toàn
+      const phone = String(s.parentPhoneNumber ?? "");
+
+      return (
+        fn.includes(term) ||
+        ln.includes(term) ||
+        phone.includes(searchTerm || "")
+      );
+    });
 
     setFilteredStudents(filtered);
   }, [searchTerm, students]);
@@ -113,23 +123,20 @@ export default function StudentsList() {
   };
 
   const sortedStudents = [...filteredStudents].sort((a, b) => {
-    let aValue: string | number;
-    let bValue: string | number;
+    let aValue: string;
+    let bValue: string;
 
     if (sortBy === "createdAt") {
-      // Note: createdAt might not be available in StudentDto, so we'll use firstName as fallback
-      aValue = a.firstName.toLowerCase();
-      bValue = b.firstName.toLowerCase();
+      aValue = (a.firstName ?? "").toLowerCase();
+      bValue = (b.firstName ?? "").toLowerCase();
     } else {
-      aValue = a[sortBy].toLowerCase();
-      bValue = b[sortBy].toLowerCase();
+      aValue = ((a[sortBy] as string) ?? "").toLowerCase();
+      bValue = ((b[sortBy] as string) ?? "").toLowerCase();
     }
 
-    if (sortOrder === "asc") {
+    if (sortOrder === "asc")
       return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-    } else {
-      return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-    }
+    return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
   });
 
   const handleAddStudent = async (newStudent: CreateStudentRequest) => {
@@ -190,7 +197,9 @@ export default function StudentsList() {
       ? `${student.firstName} ${student.lastName}`
       : "this student";
 
-    const reason = prompt(`Please provide a reason for deactivating ${studentName}:`);
+    const reason = prompt(
+      `Please provide a reason for deactivating ${studentName}:`
+    );
     if (!reason) {
       alert("Deactivation reason is required");
       return;
@@ -484,7 +493,13 @@ export default function StudentsList() {
           {/* Status Filter */}
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as StudentStatus | "all")}
+            onChange={(e) =>
+              setStatusFilter(
+                e.target.value === "all"
+                  ? "all"
+                  : (Number(e.target.value) as StudentStatus)
+              )
+            }
             className="px-3 py-2 rounded-xl border border-gray-300 bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
           >
             <option value="all">All Status</option>
@@ -599,7 +614,7 @@ export default function StudentsList() {
                     >
                       <FaEdit className="w-4 h-4" />
                     </button>
-                    
+
                     {/* Status-specific actions */}
                     {student.status === StudentStatus.Available && (
                       <button
@@ -610,7 +625,7 @@ export default function StudentsList() {
                         ✓
                       </button>
                     )}
-                    
+
                     {student.status === StudentStatus.Pending && (
                       <button
                         onClick={() => handleActivateStudent(student.id)}
@@ -620,7 +635,7 @@ export default function StudentsList() {
                         ✓
                       </button>
                     )}
-                    
+
                     {student.status === StudentStatus.Active && (
                       <button
                         onClick={() => handleDeactivateStudent(student.id)}
@@ -630,8 +645,9 @@ export default function StudentsList() {
                         ⏸
                       </button>
                     )}
-                    
-                    {(student.status === StudentStatus.Inactive || student.status === StudentStatus.Deleted) && (
+
+                    {(student.status === StudentStatus.Inactive ||
+                      student.status === StudentStatus.Deleted) && (
                       <button
                         onClick={() => handleRestoreStudent(student.id)}
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
@@ -640,16 +656,23 @@ export default function StudentsList() {
                         ↻
                       </button>
                     )}
-                    
+
                     <button
-                      onClick={() => student.status !== StudentStatus.Deleted && handleDeleteStudent(student.id)}
+                      onClick={() =>
+                        student.status !== StudentStatus.Deleted &&
+                        handleDeleteStudent(student.id)
+                      }
                       disabled={student.status === StudentStatus.Deleted}
                       className={`p-2 rounded-lg transition-colors duration-200 ${
                         student.status === StudentStatus.Deleted
                           ? "text-gray-300 cursor-not-allowed"
                           : "text-red-600 hover:bg-red-50"
                       }`}
-                      title={student.status === StudentStatus.Deleted ? "Already deleted" : "Delete Student"}
+                      title={
+                        student.status === StudentStatus.Deleted
+                          ? "Already deleted"
+                          : "Delete Student"
+                      }
                     >
                       <FaTrash className="w-4 h-4" />
                     </button>
