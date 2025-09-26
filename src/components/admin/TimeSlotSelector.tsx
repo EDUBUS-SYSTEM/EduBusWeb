@@ -92,7 +92,7 @@ export default function TimeSlotSelector({
           <FaClock className="inline w-4 h-4 mr-2" />
           Select Time Slot
         </label>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {TIME_SLOTS.map((slot) => (
             <div
               key={slot.id}
@@ -123,7 +123,7 @@ export default function TimeSlotSelector({
 
       {/* Custom Time Inputs */}
       {showCustomInputs && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Custom Start Time *

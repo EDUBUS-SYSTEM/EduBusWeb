@@ -172,7 +172,7 @@ export default function RRuleBuilder({
             Select Schedule Pattern
           </h4>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {ACADEMIC_RRULE_PATTERNS.map((pattern) => (
               <div
                 key={pattern.id}
@@ -238,7 +238,7 @@ export default function RRuleBuilder({
 
           <div className="bg-gray-50 rounded-xl p-6 space-y-6">
             {/* Frequency and Interval */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <FaCalendarAlt className="inline w-4 h-4 mr-2" />
@@ -337,7 +337,7 @@ export default function RRuleBuilder({
                 <label className="block text-sm font-medium text-gray-700 mb-3">
                   Select Months of Year
                 </label>
-                <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                   {Object.entries(MONTH_NAMES).map(([month, name]) => (
                     <button
                       type="button"
@@ -438,7 +438,7 @@ export default function RRuleBuilder({
             <FaPlay className="w-4 h-4 mr-2" />
             Preview Next 10 Days:
           </h5>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
             {previewDates.map((date, index) => (
               <div
                 key={index}

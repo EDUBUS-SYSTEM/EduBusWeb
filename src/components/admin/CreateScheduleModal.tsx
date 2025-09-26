@@ -312,8 +312,8 @@ export default function CreateScheduleModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
+      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden flex flex-col">
+        <div className="p-6 overflow-y-auto flex-1">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-2xl font-bold text-gray-800">
@@ -328,7 +328,7 @@ export default function CreateScheduleModal({
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form id="schedule-form" onSubmit={handleSubmit} className="space-y-6">
             {/* Schedule Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -629,6 +629,38 @@ export default function CreateScheduleModal({
               </button>
             </div>
           </form>
+        </div>
+        
+        {/* Fixed Actions Bar */}
+        <div className="border-t border-gray-200 bg-gray-50 p-4 rounded-b-2xl">
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-3 text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors duration-200"
+              disabled={loading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form="schedule-form"
+              disabled={loading}
+              className="px-6 py-3 bg-gradient-to-r from-[#fad23c] to-[#FDC700] text-[#463B3B] rounded-xl hover:from-[#FDC700] hover:to-[#D08700] transition-all duration-300 flex items-center gap-2 shadow-soft hover:shadow-soft-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-semibold"
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-[#463B3B] border-t-transparent rounded-full animate-spin"></div>
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <FaSave className="w-4 h-4" />
+                  Create Schedule
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>
