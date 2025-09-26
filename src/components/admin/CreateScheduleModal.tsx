@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   FaTimes,
-  FaClock,
   FaCalendarAlt,
   FaTag,
   FaSave,

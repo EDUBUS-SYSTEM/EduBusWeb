@@ -20,7 +20,6 @@ export default function ExceptionModal({
   const [newExceptionDate, setNewExceptionDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [editingException, setEditingException] = useState<string | null>(null);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};

@@ -74,11 +74,7 @@ export default function VehicleListClient() {
       setLoading(true);
       setError(null);
       const response = await vehicleService.getVehicles(searchFilters);
-      if (response.success) {
-        setVehicles(response.data);
-      } else {
-        setError(response.message || 'Failed to fetch vehicles');
-      }
+      setVehicles(response.vehicles);
     } catch (err) {
       console.error('Error fetching vehicles:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch vehicles');
