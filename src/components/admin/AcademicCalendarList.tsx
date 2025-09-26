@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   FaTrash,
   FaEye,
+  FaEdit,
   FaCalendarAlt,
   FaGraduationCap,
   FaClock,
@@ -11,6 +12,23 @@ import {
 } from "react-icons/fa";
 import { academicCalendarService } from "@/services/api/academicCalendarService";
 import { AcademicCalendar, AcademicCalendarQueryParams } from "@/types";
+import Pagination from "../ui/Pagination";
+
+interface AcademicSemester {
+  name: string;
+  code: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+}
+
+interface SchoolHoliday {
+  name: string;
+  startDate: string;
+  endDate: string;
+  description: string;
+  isRecurring: boolean;
+}
 
 interface AcademicCalendarListProps {
   searchTerm: string;
@@ -30,6 +48,16 @@ export default function AcademicCalendarList({
   const [selectedCalendar, setSelectedCalendar] =
     useState<AcademicCalendar | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
+  const [showSemesterForm, setShowSemesterForm] = useState(false);
+  const [showHolidayForm, setShowHolidayForm] = useState(false);
+  const [editingSemester, setEditingSemester] = useState<AcademicSemester | null>(null);
+  const [editingHoliday, setEditingHoliday] = useState<SchoolHoliday | null>(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5); // Reduced to 5 for pagination testing
 
   // Helper function to handle error responses
   const getErrorMessage = (error: unknown, defaultMessage: string): string => {
@@ -123,6 +151,11 @@ export default function AcademicCalendarList({
     loadAcademicCalendars();
   }, [refreshTrigger, filterActive, loadAcademicCalendars]);
 
+  // Reset to first page when search term or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterActive]);
+
   const filteredCalendars = academicCalendars.filter((calendar) => {
     const matchesSearch =
       calendar.academicYear.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -133,6 +166,16 @@ export default function AcademicCalendarList({
 
     return matchesSearch && matchesFilter;
   });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredCalendars.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedCalendars = filteredCalendars.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString("en-US", {
@@ -196,6 +239,148 @@ export default function AcademicCalendarList({
     setShowDetails(true);
   };
 
+  const handleEditCalendar = (calendar: AcademicCalendar) => {
+    setSelectedCalendar(calendar);
+    setShowEditForm(true);
+  };
+
+  const handleUpdateCalendar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCalendar) return;
+
+    // Frontend validations
+    const errors: Record<string, string> = {};
+    const startDate = new Date(selectedCalendar.startDate);
+    const endDate = new Date(selectedCalendar.endDate);
+    if (endDate <= startDate) {
+      errors.endDate = "End date must be after start date";
+    }
+
+    setEditErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
+
+    try {
+      const updateCalendarDto = {
+        id: selectedCalendar.id,
+        academicYear: selectedCalendar.academicYear,
+        name: selectedCalendar.name,
+        startDate: new Date(selectedCalendar.startDate).toISOString(),
+        endDate: new Date(selectedCalendar.endDate).toISOString(),
+        semesters: selectedCalendar.semesters,
+        holidays: selectedCalendar.holidays,
+        schoolDays: selectedCalendar.schoolDays,
+        isActive: selectedCalendar.isActive,
+      };
+
+      await academicCalendarService.updateAcademicCalendar(
+        selectedCalendar.id,
+        updateCalendarDto
+      );
+      setShowEditForm(false);
+      // Refresh the list after update
+      loadAcademicCalendars();
+    } catch (error: unknown) {
+      console.error("Error updating academic calendar:", error);
+
+      const errorMessage = getErrorMessage(
+        error,
+        "Failed to update academic calendar. Please try again."
+      );
+
+      alert(errorMessage);
+    }
+  };
+
+  // Semester management handlers
+  const handleAddSemester = () => {
+    setEditingSemester(null);
+    setShowSemesterForm(true);
+  };
+
+  const handleEditSemester = (semester: AcademicSemester) => {
+    setEditingSemester(semester);
+    setShowSemesterForm(true);
+  };
+
+  const handleDeleteSemester = (semesterIndex: number) => {
+    if (!selectedCalendar) return;
+    if (!confirm("Are you sure you want to delete this semester?")) return;
+    
+    const updatedSemesters = selectedCalendar.semesters.filter((_, index) => index !== semesterIndex);
+    setSelectedCalendar({
+      ...selectedCalendar,
+      semesters: updatedSemesters
+    });
+  };
+
+  const handleSaveSemester = (semesterData: AcademicSemester) => {
+    if (!selectedCalendar) return;
+    
+    let updatedSemesters;
+    if (editingSemester) {
+      // Edit existing semester
+      updatedSemesters = selectedCalendar.semesters.map(semester => 
+        semester === editingSemester ? semesterData : semester
+      );
+    } else {
+      // Add new semester
+      updatedSemesters = [...selectedCalendar.semesters, semesterData];
+    }
+    
+    setSelectedCalendar({
+      ...selectedCalendar,
+      semesters: updatedSemesters
+    });
+    setShowSemesterForm(false);
+    setEditingSemester(null);
+  };
+
+  // Holiday management handlers
+  const handleAddHoliday = () => {
+    setEditingHoliday(null);
+    setShowHolidayForm(true);
+  };
+
+  const handleEditHoliday = (holiday: SchoolHoliday) => {
+    setEditingHoliday(holiday);
+    setShowHolidayForm(true);
+  };
+
+  const handleDeleteHoliday = (holidayIndex: number) => {
+    if (!selectedCalendar) return;
+    if (!confirm("Are you sure you want to delete this holiday?")) return;
+    
+    const updatedHolidays = selectedCalendar.holidays.filter((_, index) => index !== holidayIndex);
+    setSelectedCalendar({
+      ...selectedCalendar,
+      holidays: updatedHolidays
+    });
+  };
+
+  const handleSaveHoliday = (holidayData: SchoolHoliday) => {
+    if (!selectedCalendar) return;
+    
+    let updatedHolidays;
+    if (editingHoliday) {
+      // Edit existing holiday
+      updatedHolidays = selectedCalendar.holidays.map(holiday => 
+        holiday === editingHoliday ? holidayData : holiday
+      );
+    } else {
+      // Add new holiday
+      updatedHolidays = [...selectedCalendar.holidays, holidayData];
+    }
+    
+    setSelectedCalendar({
+      ...selectedCalendar,
+      holidays: updatedHolidays
+    });
+    setShowHolidayForm(false);
+    setEditingHoliday(null);
+  };
+
   if (loading) {
     return (
       <div className="p-8 text-center">
@@ -221,7 +406,7 @@ export default function AcademicCalendarList({
         </div>
       ) : (
         <div className="space-y-4">
-          {filteredCalendars.map((calendar) => (
+          {paginatedCalendars.map((calendar) => (
             <div
               key={calendar.id}
               className="bg-gradient-to-r from-white to-yellow-50 border border-gray-100 rounded-2xl p-6 hover:shadow-soft-lg transition-all duration-300 hover:border-yellow-200"
@@ -301,6 +486,13 @@ export default function AcademicCalendarList({
                     <FaEye className="w-4 h-4" />
                   </button>
                   <button
+                    onClick={() => handleEditCalendar(calendar)}
+                    className="p-3 text-yellow-600 hover:bg-yellow-50 rounded-xl transition-all duration-200 hover:shadow-md"
+                    title="Edit Calendar"
+                  >
+                    <FaEdit className="w-4 h-4" />
+                  </button>
+                  <button
                     onClick={() => handleDeleteCalendar(calendar.id)}
                     className="p-3 text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 hover:shadow-md"
                     title="Delete Calendar"
@@ -313,6 +505,18 @@ export default function AcademicCalendarList({
           ))}
         </div>
       )}
+
+      {/* Pagination - Always show */}
+      <div className="mt-6">
+        <div className="text-sm text-gray-500 mb-2 text-center">
+          Showing {startIndex + 1}-{Math.min(endIndex, filteredCalendars.length)} of {filteredCalendars.length} calendars
+        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
+      </div>
 
       {/* Academic Calendar Details Modal */}
       {showDetails && selectedCalendar && (
@@ -735,6 +939,580 @@ export default function AcademicCalendarList({
           </div>
         </div>
       )}
+
+      {/* Edit Academic Calendar Form Modal */}
+      {showEditForm && selectedCalendar && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-bold text-gray-800">
+                  Edit Academic Calendar
+                </h3>
+                <button
+                  onClick={() => setShowEditForm(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+
+              <form onSubmit={handleUpdateCalendar} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Academic Year
+                  </label>
+                  <input
+                    type="text"
+                    value={selectedCalendar.academicYear}
+                    onChange={(e) =>
+                      setSelectedCalendar({
+                        ...selectedCalendar,
+                        academicYear: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Calendar Name
+                  </label>
+                  <input
+                    type="text"
+                    value={selectedCalendar.name}
+                    onChange={(e) =>
+                      setSelectedCalendar({
+                        ...selectedCalendar,
+                        name: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      value={
+                        selectedCalendar.startDate
+                          ? (() => {
+                              const d = new Date(selectedCalendar.startDate);
+                              const year = d.getFullYear();
+                              const month = String(d.getMonth() + 1).padStart(2, '0');
+                              const day = String(d.getDate()).padStart(2, '0');
+                              return `${year}-${month}-${day}`;
+                            })()
+                          : ""
+                      }
+                      onChange={(e) =>
+                        setSelectedCalendar({
+                          ...selectedCalendar,
+                          startDate: e.target.value,
+                        })
+                      }
+                      max={
+                        selectedCalendar.endDate
+                          ? (() => {
+                              const d = new Date(selectedCalendar.endDate);
+                              const year = d.getFullYear();
+                              const month = String(d.getMonth() + 1).padStart(2, '0');
+                              const day = String(d.getDate()).padStart(2, '0');
+                              return `${year}-${month}-${day}`;
+                            })()
+                          : undefined
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      value={
+                        selectedCalendar.endDate
+                          ? (() => {
+                              const d = new Date(selectedCalendar.endDate);
+                              const year = d.getFullYear();
+                              const month = String(d.getMonth() + 1).padStart(2, '0');
+                              const day = String(d.getDate()).padStart(2, '0');
+                              return `${year}-${month}-${day}`;
+                            })()
+                          : ""
+                      }
+                      min={
+                        selectedCalendar.startDate
+                          ? (() => {
+                              const d = new Date(selectedCalendar.startDate);
+                              const year = d.getFullYear();
+                              const month = String(d.getMonth() + 1).padStart(2, '0');
+                              const day = String(d.getDate()).padStart(2, '0');
+                              return `${year}-${month}-${day}`;
+                            })()
+                          : undefined
+                      }
+                      onChange={(e) =>
+                        setSelectedCalendar({
+                          ...selectedCalendar,
+                          endDate: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
+                      required
+                    />
+                    {editErrors.endDate && (
+                      <p className="mt-1 text-sm text-red-600">{editErrors.endDate}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="isActive"
+                    checked={selectedCalendar.isActive}
+                    onChange={(e) =>
+                      setSelectedCalendar({
+                        ...selectedCalendar,
+                        isActive: e.target.checked,
+                      })
+                    }
+                    className="h-4 w-4 text-[#fad23c] focus:ring-[#fad23c] border-gray-300 rounded"
+                  />
+                  <label
+                    htmlFor="isActive"
+                    className="ml-2 block text-sm text-gray-700"
+                  >
+                    Active
+                  </label>
+                </div>
+
+                {/* Semesters Section */}
+                <div className="border-t pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-semibold text-gray-800 flex items-center">
+                      <FaGraduationCap className="w-5 h-5 mr-2 text-[#FDC700]" />
+                      Semesters
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={handleAddSemester}
+                      className="px-3 py-1 bg-[#FDC700] text-white rounded-lg hover:bg-[#D08700] transition-colors text-sm"
+                    >
+                      Add Semester
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {selectedCalendar.semesters?.map((semester, index) => (
+                      <div key={index} className="bg-gray-50 rounded-lg p-3 flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-800">{semester.name}</div>
+                          <div className="text-sm text-gray-600">
+                            {semester.code} • {new Date(semester.startDate).toLocaleDateString()} - {new Date(semester.endDate).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleEditSemester(semester)}
+                            className="p-1 text-blue-600 hover:text-blue-800"
+                          >
+                            <FaEdit className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteSemester(index)}
+                            className="p-1 text-red-600 hover:text-red-800"
+                          >
+                            <FaTrash className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {(!selectedCalendar.semesters || selectedCalendar.semesters.length === 0) && (
+                      <div className="text-center py-4 text-gray-500">
+                        No semesters added yet. Click &quot;Add Semester&quot; to get started.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Holidays Section */}
+                <div className="border-t pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-semibold text-gray-800 flex items-center">
+                      <FaCalendarAlt className="w-5 h-5 mr-2 text-[#FDC700]" />
+                      Holidays
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={handleAddHoliday}
+                      className="px-3 py-1 bg-[#FDC700] text-white rounded-lg hover:bg-[#D08700] transition-colors text-sm"
+                    >
+                      Add Holiday
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {selectedCalendar.holidays?.map((holiday, index) => (
+                      <div key={index} className="bg-gray-50 rounded-lg p-3 flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-800">{holiday.name}</div>
+                          <div className="text-sm text-gray-600">
+                            {new Date(holiday.startDate).toLocaleDateString()} - {new Date(holiday.endDate).toLocaleDateString()}
+                            {holiday.description && ` • ${holiday.description}`}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleEditHoliday(holiday)}
+                            className="p-1 text-blue-600 hover:text-blue-800"
+                          >
+                            <FaEdit className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteHoliday(index)}
+                            className="p-1 text-red-600 hover:text-red-800"
+                          >
+                            <FaTrash className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {(!selectedCalendar.holidays || selectedCalendar.holidays.length === 0) && (
+                      <div className="text-center py-4 text-gray-500">
+                        No holidays added yet. Click &quot;Add Holiday&quot; to get started.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditForm(false)}
+                    className="px-6 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2 bg-gradient-to-r from-[#fad23c] to-[#FDC700] text-[#463B3B] rounded-lg hover:from-[#FDC700] hover:to-[#D08700] transition-all duration-300 shadow-soft hover:shadow-soft-lg"
+                  >
+                    Update Calendar
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Semester Form Modal */}
+      {showSemesterForm && (
+        <SemesterFormModal
+          semester={editingSemester}
+          academicCalendar={selectedCalendar}
+          onSave={handleSaveSemester}
+          onCancel={() => {
+            setShowSemesterForm(false);
+            setEditingSemester(null);
+          }}
+        />
+      )}
+
+      {/* Holiday Form Modal */}
+      {showHolidayForm && (
+        <HolidayFormModal
+          holiday={editingHoliday}
+          academicCalendar={selectedCalendar}
+          onSave={handleSaveHoliday}
+          onCancel={() => {
+            setShowHolidayForm(false);
+            setEditingHoliday(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// Semester Form Modal Component
+function SemesterFormModal({ 
+  semester, 
+  academicCalendar, 
+  onSave, 
+  onCancel 
+}: { 
+  semester: AcademicSemester | null; 
+  academicCalendar: AcademicCalendar | null; 
+  onSave: (data: AcademicSemester) => void; 
+  onCancel: () => void; 
+}) {
+  const [formData, setFormData] = useState({
+    name: semester?.name || '',
+    code: semester?.code || '',
+    startDate: semester?.startDate ? new Date(semester.startDate).toISOString().split('T')[0] : '',
+    endDate: semester?.endDate ? new Date(semester.endDate).toISOString().split('T')[0] : '',
+    isActive: semester?.isActive ?? true
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl max-w-md w-full">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-gray-800">
+              {semester ? 'Edit Semester' : 'Add Semester'}
+            </h3>
+            <button
+              onClick={onCancel}
+              className="text-gray-400 hover:text-gray-600 text-2xl"
+            >
+              ×
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Semester Name
+              </label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Semester Code
+              </label>
+              <input
+                type="text"
+                value={formData.code}
+                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={formData.startDate}
+                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  min={academicCalendar?.startDate ? new Date(academicCalendar.startDate).toISOString().split('T')[0] : undefined}
+                  max={academicCalendar?.endDate ? new Date(academicCalendar.endDate).toISOString().split('T')[0] : undefined}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  value={formData.endDate}
+                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                  min={formData.startDate}
+                  max={academicCalendar?.endDate ? new Date(academicCalendar.endDate).toISOString().split('T')[0] : undefined}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="semesterActive"
+                checked={formData.isActive}
+                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                className="h-4 w-4 text-[#fad23c] focus:ring-[#fad23c] border-gray-300 rounded"
+              />
+              <label htmlFor="semesterActive" className="ml-2 block text-sm text-gray-700">
+                Active
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+              <button
+                type="button"
+                onClick={onCancel}
+                className="px-6 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2 bg-gradient-to-r from-[#fad23c] to-[#FDC700] text-[#463B3B] rounded-lg hover:from-[#FDC700] hover:to-[#D08700] transition-all duration-300 shadow-soft hover:shadow-soft-lg"
+              >
+                {semester ? 'Update Semester' : 'Add Semester'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Holiday Form Modal Component
+function HolidayFormModal({ 
+  holiday, 
+  academicCalendar, 
+  onSave, 
+  onCancel 
+}: { 
+  holiday: SchoolHoliday | null; 
+  academicCalendar: AcademicCalendar | null; 
+  onSave: (data: SchoolHoliday) => void; 
+  onCancel: () => void; 
+}) {
+  const [formData, setFormData] = useState({
+    name: holiday?.name || '',
+    startDate: holiday?.startDate ? new Date(holiday.startDate).toISOString().split('T')[0] : '',
+    endDate: holiday?.endDate ? new Date(holiday.endDate).toISOString().split('T')[0] : '',
+    description: holiday?.description || '',
+    isRecurring: holiday?.isRecurring ?? false
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl max-w-md w-full">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-gray-800">
+              {holiday ? 'Edit Holiday' : 'Add Holiday'}
+            </h3>
+            <button
+              onClick={onCancel}
+              className="text-gray-400 hover:text-gray-600 text-2xl"
+            >
+              ×
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Holiday Name
+              </label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={formData.startDate}
+                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  min={academicCalendar?.startDate ? new Date(academicCalendar.startDate).toISOString().split('T')[0] : undefined}
+                  max={academicCalendar?.endDate ? new Date(academicCalendar.endDate).toISOString().split('T')[0] : undefined}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  value={formData.endDate}
+                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                  min={formData.startDate}
+                  max={academicCalendar?.endDate ? new Date(academicCalendar.endDate).toISOString().split('T')[0] : undefined}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description (Optional)
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
+                rows={3}
+              />
+            </div>
+
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="holidayRecurring"
+                checked={formData.isRecurring}
+                onChange={(e) => setFormData({ ...formData, isRecurring: e.target.checked })}
+                className="h-4 w-4 text-[#fad23c] focus:ring-[#fad23c] border-gray-300 rounded"
+              />
+              <label htmlFor="holidayRecurring" className="ml-2 block text-sm text-gray-700">
+                Recurring Holiday
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+              <button
+                type="button"
+                onClick={onCancel}
+                className="px-6 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2 bg-gradient-to-r from-[#fad23c] to-[#FDC700] text-[#463B3B] rounded-lg hover:from-[#FDC700] hover:to-[#D08700] transition-all duration-300 shadow-soft hover:shadow-soft-lg"
+              >
+                {holiday ? 'Update Holiday' : 'Add Holiday'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }

@@ -16,6 +16,7 @@ import { scheduleService } from "@/services/api/scheduleService";
 import { Schedule, ScheduleTimeOverride } from "@/types";
 import TimeOverrideModal from "./TimeOverrideModal";
 import ExceptionModal from "./ExceptionModal";
+import Pagination from "../ui/Pagination";
 
 interface ScheduleListProps {
   searchTerm: string;
@@ -44,6 +45,10 @@ export default function ScheduleList({
   const [editingOverride, setEditingOverride] =
     useState<ScheduleTimeOverride | null>(null);
   const [showExceptionModal, setShowExceptionModal] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5); // Reduced to 5 for pagination testing
 
   // Helper function to handle error responses
   const getErrorMessage = (error: unknown, defaultMessage: string): string => {
@@ -129,9 +134,15 @@ export default function ScheduleList({
     }
   };
 
+
   useEffect(() => {
     loadSchedules();
   }, [refreshTrigger]);
+
+  // Reset to first page when search term or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterActive]);
 
   // When opening details, fetch time overrides to enrich selectedSchedule
   useEffect(() => {
@@ -168,6 +179,16 @@ export default function ScheduleList({
     return matchesSearch && matchesFilter;
   });
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredSchedules.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedSchedules = filteredSchedules.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   const getScheduleTypeColor = (type: string) => {
     switch (type.toLowerCase()) {
       case "daily":
@@ -195,6 +216,15 @@ export default function ScheduleList({
       month: "short",
       day: "numeric",
     });
+  };
+
+  // Helper function to format date for input fields (avoiding timezone issues)
+  const formatDateForInput = (date: string) => {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const handleDeleteSchedule = async (scheduleId: string) => {
@@ -268,6 +298,7 @@ export default function ScheduleList({
     setShowExceptionModal(true);
   };
 
+
   const handleExceptionSuccess = async () => {
     if (selectedSchedule) {
       try {
@@ -282,6 +313,7 @@ export default function ScheduleList({
       }
     }
   };
+
 
   const handleUpdateSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -312,20 +344,21 @@ export default function ScheduleList({
 
     try {
       const updateScheduleDto = {
-        id: selectedSchedule.id, // Backend will convert string to Guid
-        name: selectedSchedule.name,
-        scheduleType: selectedSchedule.scheduleType,
-        startTime: selectedSchedule.startTime,
-        endTime: selectedSchedule.endTime,
-        rRule: selectedSchedule.rRule, // Use actual RRule from schedule
+        id: selectedSchedule.id || "", // Backend will convert string to Guid
+        name: selectedSchedule.name || "",
+        scheduleType: selectedSchedule.scheduleType || "",
+        startTime: selectedSchedule.startTime || "",
+        endTime: selectedSchedule.endTime || "",
+        rRule: selectedSchedule.rRule || "", // Use actual RRule from schedule
         timezone: selectedSchedule.timezone || "UTC",
-        academicYear: selectedSchedule.academicYear, // Include academic year
-        effectiveFrom: new Date(selectedSchedule.effectiveFrom).toISOString(),
+        academicYear: selectedSchedule.academicYear || "", // Include academic year
+        effectiveFrom: selectedSchedule.effectiveFrom ? new Date(selectedSchedule.effectiveFrom).toISOString() : new Date().toISOString(),
         effectiveTo: selectedSchedule.effectiveTo
           ? new Date(selectedSchedule.effectiveTo).toISOString()
           : undefined,
-        exceptions: selectedSchedule.exceptions, // Keep as Date[]
-        isActive: selectedSchedule.isActive,
+        exceptions: selectedSchedule.exceptions ? selectedSchedule.exceptions : [], // Keep as Date[]
+        isActive: selectedSchedule.isActive !== undefined ? selectedSchedule.isActive : true,
+        timeOverrides: selectedSchedule.timeOverrides ? selectedSchedule.timeOverrides : [], // Preserve overrides
       };
 
       console.log("Sending update request:", updateScheduleDto); // Debug log
@@ -382,7 +415,7 @@ export default function ScheduleList({
         </div>
       ) : (
         <div className="grid gap-4">
-          {filteredSchedules.map((schedule) => (
+          {paginatedSchedules.map((schedule) => (
             <div
               key={schedule.id}
               className="bg-gradient-to-r from-white to-yellow-50 border border-gray-100 rounded-2xl p-6 hover:shadow-soft-lg transition-all duration-300 hover:border-yellow-200"
@@ -480,6 +513,18 @@ export default function ScheduleList({
           ))}
         </div>
       )}
+
+      {/* Pagination - Always show */}
+      <div className="mt-6">
+        <div className="text-sm text-gray-500 mb-2 text-center">
+          Showing {startIndex + 1}-{Math.min(endIndex, filteredSchedules.length)} of {filteredSchedules.length} schedules
+        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
+      </div>
 
       {/* Schedule Details Modal */}
       {showDetails && selectedSchedule && (
@@ -588,25 +633,17 @@ export default function ScheduleList({
                       <p className="text-gray-500 text-sm">No exceptions</p>
                     ) : (
                       <div className="space-y-1">
-                        {selectedSchedule.exceptions
-                          .slice(0, 3)
-                          .map((exception: Date, index: number) => (
-                            <p key={index} className="text-sm text-gray-700">
-                              {new Date(exception).toLocaleDateString()}
-                            </p>
-                          ))}
-                        {selectedSchedule.exceptions.length > 3 && (
-                          <p className="text-sm text-gray-500">
-                            +{selectedSchedule.exceptions.length - 3} more...
+                        {selectedSchedule.exceptions.map((exception: Date, index: number) => (
+                          <p key={index} className="text-sm text-gray-700">
+                            {new Date(exception).toLocaleDateString()}
                           </p>
-                        )}
+                        ))}
                       </div>
                     )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Time Overrides (
-                      {selectedSchedule.timeOverrides?.length || 0})
+                      Time Overrides ({selectedSchedule.timeOverrides?.length || 0})
                     </label>
                     {!selectedSchedule.timeOverrides ||
                     selectedSchedule.timeOverrides.length === 0 ? (
@@ -705,6 +742,8 @@ export default function ScheduleList({
                   </select>
                 </div>
 
+
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -754,9 +793,7 @@ export default function ScheduleList({
                       type="date"
                       value={
                         selectedSchedule.effectiveFrom
-                          ? new Date(selectedSchedule.effectiveFrom)
-                              .toISOString()
-                              .split("T")[0]
+                          ? formatDateForInput(selectedSchedule.effectiveFrom)
                           : ""
                       }
                       onChange={(e) =>
@@ -777,16 +814,12 @@ export default function ScheduleList({
                       type="date"
                       value={
                         selectedSchedule.effectiveTo
-                          ? new Date(selectedSchedule.effectiveTo)
-                              .toISOString()
-                              .split("T")[0]
+                          ? formatDateForInput(selectedSchedule.effectiveTo)
                           : ""
                       }
                       min={
                         selectedSchedule.effectiveFrom
-                          ? new Date(selectedSchedule.effectiveFrom)
-                              .toISOString()
-                              .split("T")[0]
+                          ? formatDateForInput(selectedSchedule.effectiveFrom)
                           : undefined
                       }
                       onChange={(e) =>
@@ -999,6 +1032,7 @@ export default function ScheduleList({
               ? new Date(selectedSchedule.effectiveTo).toISOString()
               : undefined
           }
+          existingExceptions={selectedSchedule.exceptions}
         />
       )}
 
@@ -1011,6 +1045,7 @@ export default function ScheduleList({
           onSuccess={handleExceptionSuccess}
         />
       )}
+
     </div>
   );
 }

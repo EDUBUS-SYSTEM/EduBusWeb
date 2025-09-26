@@ -87,10 +87,10 @@ export default function RouteScheduleList({
   const filteredRouteSchedules = routeSchedules.filter((routeSchedule) => {
     const matchesSearch =
       routeSchedule.routeName
-        .toLowerCase()
+        ?.toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
       routeSchedule.scheduleName
-        .toLowerCase()
+        ?.toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
       routeSchedule.notes?.toLowerCase().includes(searchTerm.toLowerCase());
 
