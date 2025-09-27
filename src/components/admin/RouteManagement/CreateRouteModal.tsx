@@ -28,7 +28,7 @@ const CreateRouteModal: React.FC<CreateRouteModalProps> = ({ isOpen, onClose, on
 
   const fetchVehicles = async () => {
     try {
-      const response = await vehicleService.getVehicles({});
+      const response = await vehicleService.getUnassignedVehicles();
       setVehicles(response.data || []);
     } catch (error) {
       console.error('Failed to fetch vehicles:', error);

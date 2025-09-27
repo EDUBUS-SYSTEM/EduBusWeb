@@ -40,7 +40,7 @@ const EditRouteModal: React.FC<EditRouteModalProps> = ({
 
   const fetchVehicles = async () => {
     try {
-      const response = await vehicleService.getVehicles({});
+      const response = await vehicleService.getUnassignedVehicles(route?.id);
       setVehicles(response.data || []);
     } catch (error) {
       console.error('Failed to fetch vehicles:', error);

@@ -4,7 +4,7 @@
 import React from 'react';
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
-import RouteManagement from "@/components/admin/RouteManagement";
+import RouteManagement from "@/components/admin/RouteManagement/RouteManagement";
 
 const RoutesPage: React.FC = () => {
   return (
