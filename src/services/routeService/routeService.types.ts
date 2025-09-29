@@ -36,3 +36,26 @@ export interface UpdateRouteRequest {
   vehicleId?: string;
   pickupPoints?: PickupPointInfoDto[];
 }
+
+export interface UpdateBulkRouteItem {
+  routeId: string;
+  routeName?: string;
+  vehicleId?: string;
+  pickupPoints?: RoutePickupPointRequest[];
+}
+
+export interface RoutePickupPointRequest {
+  pickupPointId: string; 
+  sequenceOrder: number;
+}
+
+export interface UpdateBulkRouteRequest {
+  routes: UpdateBulkRouteItem[];
+}
+
+export interface UpdateBulkRouteResponse {
+  success: boolean;
+  totalRoutes: number;
+  updatedRoutes: RouteDto[];
+  errorMessage?: string;
+}

@@ -1,9 +1,9 @@
-// src/components/admin/RouteManagement.tsx
-import React, { useState, useEffect } from 'react';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { FaBus, FaUser, FaMapMarkerAlt, FaPlus } from 'react-icons/fa';
+// EduBusWeb/src/components/admin/RouteManagement/RouteManagement.tsx
+import React, { useState, useEffect, useRef } from 'react';
+import { DragDropContext, DropResult } from '@hello-pangea/dnd';
+import { FaPlus, FaSave } from 'react-icons/fa';
 import { routeService } from '@/services/routeService/routeService.api';
-import { RouteDto, PickupPointInfoDto } from '@/services/routeService/routeService.types';
+import { RouteDto, PickupPointInfoDto, UpdateBulkRouteRequest, RoutePickupPointRequest, UpdateBulkRouteItem } from '@/services/routeService/routeService.types';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import CreateRouteModal from './CreateRouteModal';
@@ -16,53 +16,33 @@ const allPickupPoints: PickupPointInfoDto[] = Array.from({ length: 100 }, (_, i)
   pickupPointId: `pp-${i + 1}`,
   sequenceOrder: i + 1,
   location: {
-    latitude: 10.75 + i * 0.001, // shifts slightly per point
+    latitude: 10.75 + i * 0.001,
     longitude: 106.66 + i * 0.001,
     address: `Street ${i + 1}, District ${((i % 5) + 1)}, City`
   },
-  studentCount: 1 // Each pickup point has 1 student
+  studentCount: 1
 }));
 
-// Start with empty routes (no pickup points)
-const initialRoutes: RouteDto[] = [
-  // {
-  //   id: 'route-1',
-  //   routeName: 'Route 1',
-  //   vehicleId: 'vehicle1',
-  //   isActive: true,
-  //   vehicleCapacity: 16,
-  //   pickupPoints: [], // Empty initially
-  // },
-  // {
-  //   id: 'route-2',
-  //   routeName: 'Route 2',
-  //   vehicleId: 'vehicle2',
-  //   isActive: true,
-  //   vehicleCapacity: 16,
-  //   pickupPoints: [], // Empty initially
-  // },
-  // {
-  //   id: 'route-3',
-  //   routeName: 'Route 3',
-  //   vehicleId: 'vehicle3',
-  //   isActive: true,
-  //   vehicleCapacity: 16,
-  //   pickupPoints: [], // Empty initially
-  // },
-];
-
 const RouteManagement: React.FC = () => {
-  const [routes, setRoutes] = useState<RouteDto[]>(initialRoutes);
-  const [lobby, setLobby] = useState<PickupPointInfoDto[]>(allPickupPoints); // All pickup points start in lobby
+  const [routes, setRoutes] = useState<RouteDto[]>([]);
+  const [lobby, setLobby] = useState<PickupPointInfoDto[]>(allPickupPoints);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState<RouteDto | null>(null);
+  const [modifiedRoutes, setModifiedRoutes] = useState<Set<string>>(new Set());
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Store original routes for comparison
+  const originalRoutesRef = useRef<RouteDto[]>([]);
 
   useEffect(() => {
     const fetchRoutes = async () => {
       try {
         const data = await routeService.getAll();
         setRoutes(data);
+        originalRoutesRef.current = JSON.parse(JSON.stringify(data)); // Deep copy
+        // Clear any existing modifications when fetching fresh data
+        setModifiedRoutes(new Set());
       } catch (error) {
         console.error('Failed to fetch routes:', error);
       }
@@ -71,9 +51,56 @@ const RouteManagement: React.FC = () => {
     fetchRoutes();
   }, []);
 
+  // Helper function to compare pickup points arrays
+  const arePickupPointsEqual = (a: PickupPointInfoDto[], b: PickupPointInfoDto[]): boolean => {
+    if (a.length !== b.length) return false;
+
+    // Create maps for easier comparison
+    const mapA = new Map(a.map(point => [point.pickupPointId, point.sequenceOrder]));
+    const mapB = new Map(b.map(point => [point.pickupPointId, point.sequenceOrder]));
+
+    // Check if all pickup points have the same sequence order
+    for (const [pickupPointId, sequenceOrder] of mapA) {
+      if (mapB.get(pickupPointId) !== sequenceOrder) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  // Check if a route has been modified by comparing with original
+  const isRouteModified = (routeId: string): boolean => {
+    const currentRoute = routes.find(r => r.id === routeId);
+    const originalRoute = originalRoutesRef.current.find(r => r.id === routeId);
+
+    if (!currentRoute || !originalRoute) return false;
+
+    return !arePickupPointsEqual(currentRoute.pickupPoints, originalRoute.pickupPoints);
+  };
+
+  // Update modified routes based on current state
+  const updateModifiedRoutes = () => {
+    const newModifiedRoutes = new Set<string>();
+
+    routes.forEach(route => {
+      if (isRouteModified(route.id)) {
+        newModifiedRoutes.add(route.id);
+      }
+    });
+
+    setModifiedRoutes(newModifiedRoutes);
+  };
+
+  // Call this whenever routes change to update modification status
+  useEffect(() => {
+    updateModifiedRoutes();
+  }, [routes]);
+
   const handleRouteCreated = (newRoute: RouteDto) => {
-    // Add the new route to the existing routes instead of refetching
     setRoutes(prevRoutes => [...prevRoutes, newRoute]);
+    // Add to original routes as well
+    originalRoutesRef.current = [...originalRoutesRef.current, newRoute];
   };
 
   const handleRouteClick = (route: RouteDto) => {
@@ -87,10 +114,16 @@ const RouteManagement: React.FC = () => {
         route.id === updatedRoute.id ? updatedRoute : route
       )
     );
+
+    // Update original routes as well
+    originalRoutesRef.current = originalRoutesRef.current.map(route =>
+      route.id === updatedRoute.id ? updatedRoute : route
+    );
   };
 
   const handleRouteDeleted = (routeId: string) => {
     setRoutes(prevRoutes => prevRoutes.filter(route => route.id !== routeId));
+    originalRoutesRef.current = originalRoutesRef.current.filter(route => route.id !== routeId);
   };
 
   const onDragEnd = (result: DropResult) => {
@@ -109,7 +142,6 @@ const RouteManagement: React.FC = () => {
 
       if (totalStudents > destinationRoute.vehicleCapacity) {
         toast.error('Cannot move pickup point: vehicle capacity exceeded.');
-        // Revert the move
         sourceList.splice(source.index, 0, moved);
         return;
       }
@@ -117,6 +149,7 @@ const RouteManagement: React.FC = () => {
 
     destinationList.splice(destination.index, 0, moved);
 
+    // Update source list
     if (source.droppableId === 'lobby') {
       setLobby([...sourceList]);
     } else {
@@ -126,6 +159,7 @@ const RouteManagement: React.FC = () => {
       setRoutes(updatedRoutes);
     }
 
+    // Update destination list
     if (destination.droppableId === 'lobby') {
       setLobby([...destinationList]);
     } else {
@@ -136,31 +170,145 @@ const RouteManagement: React.FC = () => {
     }
   };
 
+  const handleSaveChanges = async () => {
+    if (modifiedRoutes.size === 0) return;
+
+    setIsSaving(true);
+    try {
+      // Prepare bulk update data
+      const bulkUpdateData: UpdateBulkRouteRequest = {
+        routes: Array.from(modifiedRoutes).map(routeId => {
+          const route = routes.find(r => r.id === routeId);
+          if (!route) return null;
+
+          // Convert PickupPointInfoDto to RoutePickupPointRequest
+          const pickupPointsRequest: RoutePickupPointRequest[] = route.pickupPoints.map((point, index) => ({
+            pickupPointId: point.pickupPointId,
+            sequenceOrder: index + 1 // Update sequence order based on new position
+          }));
+
+          return {
+            routeId: routeId,
+            pickupPoints: pickupPointsRequest
+          };
+        }).filter(Boolean) as UpdateBulkRouteItem[] // Remove null entries
+      };
+
+      console.log(`Bulk updating ${bulkUpdateData.routes.length} routes:`, bulkUpdateData);
+
+      // Use bulk update method (all or nothing)
+      const response = await routeService.bulkUpdate(bulkUpdateData);
+
+      if (response.success) {
+        // Update original routes with the saved data
+        const freshRoutes = await routeService.getAll();
+        setRoutes(freshRoutes);
+        originalRoutesRef.current = JSON.parse(JSON.stringify(freshRoutes));
+
+        // Clear modified routes
+        setModifiedRoutes(new Set());
+
+        toast.success(`Successfully saved ${modifiedRoutes.size} route(s)`);
+      } else {
+        // Handle bulk update failure
+        toast.error(response.errorMessage || 'Failed to save changes. All changes were reverted.');
+
+        // Refresh routes to revert any changes
+        const freshRoutes = await routeService.getAll();
+        setRoutes(freshRoutes);
+        originalRoutesRef.current = JSON.parse(JSON.stringify(freshRoutes));
+        setModifiedRoutes(new Set());
+      }
+    } catch (error) {
+      console.error('Failed to save changes:', error);
+      toast.error('Failed to save changes. Please try again.');
+
+      // Refresh routes to revert any changes
+      try {
+        const freshRoutes = await routeService.getAll();
+        setRoutes(freshRoutes);
+        originalRoutesRef.current = JSON.parse(JSON.stringify(freshRoutes));
+        setModifiedRoutes(new Set());
+      } catch (refreshError) {
+        console.error('Failed to refresh routes after error:', refreshError);
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Debug function to help troubleshoot (remove in production)
+  const debugModifications = () => {
+    console.log('Current routes:', routes);
+    console.log('Original routes:', originalRoutesRef.current);
+    console.log('Modified routes:', Array.from(modifiedRoutes));
+
+    routes.forEach(route => {
+      const originalRoute = originalRoutesRef.current.find(r => r.id === route.id);
+      if (originalRoute) {
+        const isModified = !arePickupPointsEqual(route.pickupPoints, originalRoute.pickupPoints);
+        console.log(`Route ${route.routeName}:`, {
+          current: route.pickupPoints.map(p => ({ id: p.pickupPointId, order: p.sequenceOrder })),
+          original: originalRoute.pickupPoints.map(p => ({ id: p.pickupPointId, order: p.sequenceOrder })),
+          isModified
+        });
+      }
+    });
+  };
+
   return (
     <>
       <ToastContainer />
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="p-4 bg-gray-100 min-h-screen">
-          {/* Header with Create Button */}
+          {/* Header with Save and Create Buttons */}
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold text-gray-800">Route Management</h1>
-            <button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
-            >
-              <FaPlus className="mr-2" />
-              Create Route
-            </button>
+
+            <div className="flex items-center space-x-3">
+              {/* Debug button - remove in production */}
+              <button
+                onClick={debugModifications}
+                className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm"
+              >
+                Debug
+              </button>
+
+              {/* Save Changes Button */}
+              {modifiedRoutes.size > 0 && (
+                <button
+                  onClick={handleSaveChanges}
+                  disabled={isSaving}
+                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center transition-colors disabled:opacity-50"
+                >
+                  <FaSave className="mr-2" />
+                  {isSaving ? 'Saving...' : `Save Changes (${modifiedRoutes.size})`}
+                </button>
+              )}
+
+              {/* Create Route Button */}
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
+              >
+                <FaPlus className="mr-2" />
+                Create Route
+              </button>
+            </div>
           </div>
 
           <div className="space-y-4">
+            {/* Render Route Rows */}
             {routes.map(route => (
               <RouteRow
                 key={route.id}
                 route={route}
                 onRouteClick={handleRouteClick}
+                isModified={isRouteModified(route.id)}
               />
             ))}
+
+            {/* Render Lobby Area */}
             <LobbyArea lobby={lobby} />
           </div>
         </div>

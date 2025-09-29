@@ -1,6 +1,6 @@
 // src/services/routeService.ts
 import { apiService } from "@/lib/api";
-import { RouteDto, CreateRouteRequest, UpdateRouteRequest } from "./routeService.types";
+import { RouteDto, CreateRouteRequest, UpdateRouteRequest, UpdateBulkRouteRequest, UpdateBulkRouteResponse } from "./routeService.types";
 
 export const routeService = {
   // Get all routes
@@ -26,5 +26,9 @@ export const routeService = {
   // Delete a route
   delete: async (id: string): Promise<void> => {
     return await apiService.delete<void>(`/routes/${id}`);
+  },
+
+  bulkUpdate: async (data: UpdateBulkRouteRequest): Promise<UpdateBulkRouteResponse> => {
+    return await apiService.put<UpdateBulkRouteResponse>("/routes/bulk", data);
   },
 };
