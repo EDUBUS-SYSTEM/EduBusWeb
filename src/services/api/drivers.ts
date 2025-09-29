@@ -49,6 +49,23 @@ export interface ImportDriversResponse {
   failedUsers: ImportUserError[];
 }
 
+export interface GetAvailableDriverDto {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  status: number; // DriverStatus enum
+  licenseNumber?: string;
+  licenseExpiryDate?: string; // ISO string
+  hasValidLicense: boolean;
+  hasHealthCertificate: boolean;
+  yearsOfExperience: number;
+  lastActiveDate?: string; // ISO string
+  isAvailable: boolean;
+  availabilityReason?: string;
+  checkedAt: string; // ISO string
+}
+
 export const createDriver = async (
   payload: CreateDriverPayload
 ): Promise<CreateUserResponse> => {
@@ -91,4 +108,20 @@ export const uploadHealthCertificate = async (driverId: string, file: File) => {
     { headers: { "Content-Type": "multipart/form-data" } }
   );
   return res.data as { FileId: string; Message: string };
+};
+
+export const getAvailableDrivers = async (
+  startDate: Date,
+  endDate: Date
+): Promise<GetAvailableDriverDto[]> => {
+  const params = new URLSearchParams({
+    startDate: startDate.toISOString(),
+    endDate: endDate.toISOString(),
+  });
+
+  const result = await apiService.get<GetAvailableDriverDto[]>(
+    `/DriverVehicle/drivers/available?${params.toString()}`
+  );
+  
+  return result as unknown as GetAvailableDriverDto[];
 };
