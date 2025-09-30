@@ -7,6 +7,7 @@ import {
   FaTag,
   FaSave,
   FaGraduationCap,
+  FaEye,
 } from "react-icons/fa";
 import {
   scheduleService,
@@ -14,6 +15,7 @@ import {
 } from "@/services/api/scheduleService";
 import { academicCalendarService } from "@/services/api/academicCalendarService";
 import RRuleBuilder from "@/components/admin/RRuleBuilder";
+import { RRuleUtils } from "@/utils/rruleUtils";
 
 interface CreateScheduleModalProps {
   onClose: () => void;
@@ -54,8 +56,8 @@ export default function CreateScheduleModal({
   const handleRruleValidationChange = useCallback((isValid: boolean, errors: string[]) => {
     setRruleValidation({ isValid, errors });
   }, []);
+  const [previewDates, setPreviewDates] = useState<Date[]>([]);
   const [showPreview, setShowPreview] = useState(false);
-
   const scheduleTypes = [
     {
       value: "school_day",
@@ -250,6 +252,30 @@ export default function CreateScheduleModal({
     }
   };
 
+  const generatePreviewDates = () => {
+    if (!formData.rRule || !formData.effectiveFrom) {
+      setPreviewDates([]);
+      return;
+    }
+
+    try {
+      const startDate = new Date(formData.effectiveFrom);
+      // const endDate = formData.effectiveTo
+      //   ? new Date(formData.effectiveTo)
+      //   : new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from start
+
+      const dates = RRuleUtils.generatePreviewDates(
+        formData.rRule,
+        startDate,
+        10
+      );
+      setPreviewDates(dates);
+      setShowPreview(true);
+    } catch (error) {
+      console.error("Error generating preview dates:", error);
+      setPreviewDates([]);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -279,9 +305,8 @@ export default function CreateScheduleModal({
                 type="text"
                 value={formData.name}
                 onChange={(e) => handleInputChange("name", e.target.value)}
-                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
-                  errors.name ? "border-red-300 bg-red-50" : "border-gray-200"
-                }`}
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${errors.name ? "border-red-300 bg-red-50" : "border-gray-200"
+                  }`}
                 placeholder="Enter schedule name"
               />
               {errors.name && (
@@ -328,11 +353,10 @@ export default function CreateScheduleModal({
                 onChange={(e) =>
                   handleInputChange("academicYear", e.target.value)
                 }
-                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
-                  errors.academicYear
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${errors.academicYear
                     ? "border-red-300 bg-red-50"
                     : "border-gray-200"
-                }`}
+                  }`}
                 disabled={loadingAcademicYears}
               >
                 <option value="">
@@ -366,11 +390,10 @@ export default function CreateScheduleModal({
                   onChange={(e) =>
                     handleInputChange("startTime", e.target.value)
                   }
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
-                    errors.startTime
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${errors.startTime
                       ? "border-red-300 bg-red-50"
                       : "border-gray-200"
-                  }`}
+                    }`}
                 />
                 {errors.startTime && (
                   <p className="mt-1 text-sm text-red-600">
@@ -387,11 +410,10 @@ export default function CreateScheduleModal({
                   type="time"
                   value={formData.endTime}
                   onChange={(e) => handleInputChange("endTime", e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
-                    errors.endTime
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${errors.endTime
                       ? "border-red-300 bg-red-50"
                       : "border-gray-200"
-                  }`}
+                    }`}
                 />
                 {errors.endTime && (
                   <p className="mt-1 text-sm text-red-600">{errors.endTime}</p>
@@ -412,11 +434,10 @@ export default function CreateScheduleModal({
                   onChange={(e) =>
                     handleInputChange("effectiveFrom", e.target.value)
                   }
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
-                    errors.effectiveFrom
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${errors.effectiveFrom
                       ? "border-red-300 bg-red-50"
                       : "border-gray-200"
-                  }`}
+                    }`}
                 />
                 {errors.effectiveFrom && (
                   <p className="mt-1 text-sm text-red-600">
@@ -436,11 +457,10 @@ export default function CreateScheduleModal({
                   onChange={(e) =>
                     handleInputChange("effectiveTo", e.target.value)
                   }
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
-                    errors.effectiveTo
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${errors.effectiveTo
                       ? "border-red-300 bg-red-50"
                       : "border-gray-200"
-                  }`}
+                    }`}
                 />
                 {errors.effectiveTo && (
                   <p className="mt-1 text-sm text-red-600">
@@ -534,6 +554,7 @@ export default function CreateScheduleModal({
                 </button>
               </div>
             )}
+            {/* Preview Dates - Removed since previewDates was deleted */}
 
             {/* Submit Error */}
             {submitError && (

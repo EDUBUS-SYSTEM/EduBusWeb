@@ -42,6 +42,12 @@ const ParentAccountForm: React.FC<ParentAccountFormProps> = ({
     }));
   };
 
+  const handleFileChange = (field: keyof ParentAccountData, files: File[]) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: files,
+    }));
+  };
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -2,7 +2,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { FaSearch, FaFilter, FaEye, FaTimes, FaFileAlt, FaUser, FaClock } from "react-icons/fa";
 import GeneralRequestDetailModal from "./GeneralRequestDetailModal";
-import { mockGeneralRequests, simulateApiDelay } from "./demo-data";
+// Mock data temporarily removed
+const mockGeneralRequests: GeneralDriverRequest[] = [];
+const simulateApiDelay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // General Driver Request Type
 export interface GeneralDriverRequest {

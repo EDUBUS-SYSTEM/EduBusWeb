@@ -3,7 +3,10 @@ import { useState, useEffect, useCallback } from "react";
 import { FaSearch, FaFilter, FaEye, FaCalendarAlt, FaFileAlt, FaUser, FaClock, FaTimes } from "react-icons/fa";
 import LeaveRequestDetailModal from "./LeaveRequestDetailModal";
 import GeneralRequestDetailModal from "./GeneralRequestDetailModal";
-import { mockDriverLeaves, mockGeneralRequests, simulateApiDelay } from "./demo-data";
+// Mock data temporarily removed
+const mockDriverLeaves: DriverLeaveRequest[] = [];
+const mockGeneralRequests: GeneralDriverRequest[] = [];
+const simulateApiDelay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 import { DriverLeaveRequest } from "@/services/api/driverLeaveRequests";
 import { GeneralDriverRequest } from "./GeneralRequestsTab";
 
@@ -55,8 +58,8 @@ export default function AllRequestsTab() {
       
       // Sort by submission date (newest first)
       combinedData.sort((a, b) => {
-        const dateA = new Date(a.data.submittedAt).getTime();
-        const dateB = new Date(b.data.submittedAt).getTime();
+        const dateA = new Date(a.type === 'leave' ? a.data.requestedAt : a.data.submittedAt).getTime();
+        const dateB = new Date(b.type === 'leave' ? b.data.requestedAt : b.data.submittedAt).getTime();
         return dateB - dateA;
       });
       
@@ -71,15 +74,23 @@ export default function AllRequestsTab() {
       
       if (searchDriverName.trim()) {
         combinedData = combinedData.filter(item => {
-          const fullName = `${item.data.driverInfo.firstName} ${item.data.driverInfo.lastName}`.toLowerCase();
-          return fullName.includes(searchDriverName.toLowerCase());
+          if (item.type === 'leave') {
+            return item.data.driverName.toLowerCase().includes(searchDriverName.toLowerCase());
+          } else {
+            const fullName = `${item.data.driverInfo.firstName} ${item.data.driverInfo.lastName}`.toLowerCase();
+            return fullName.includes(searchDriverName.toLowerCase());
+          }
         });
       }
       
       if (searchDriverEmail.trim()) {
-        combinedData = combinedData.filter(item => 
-          item.data.driverInfo.email.toLowerCase().includes(searchDriverEmail.toLowerCase())
-        );
+        combinedData = combinedData.filter(item => {
+          if (item.type === 'leave') {
+            return item.data.driverEmail.toLowerCase().includes(searchDriverEmail.toLowerCase());
+          } else {
+            return item.data.driverInfo.email.toLowerCase().includes(searchDriverEmail.toLowerCase());
+          }
+        });
       }
       
       // Apply pagination
@@ -113,8 +124,28 @@ export default function AllRequestsTab() {
     return () => clearTimeout(timeoutId);
   }, [searchDriverName, searchDriverEmail, fetchRequests]);
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string | number) => {
     const baseClasses = "px-3 py-1 rounded-full text-sm font-medium";
+    
+    // Handle number status (DriverLeaveRequest)
+    if (typeof status === 'number') {
+      switch (status) {
+        case 1: // Pending
+          return `${baseClasses} bg-yellow-100 text-yellow-800`;
+        case 2: // Approved
+          return `${baseClasses} bg-green-100 text-green-800`;
+        case 3: // Rejected
+          return `${baseClasses} bg-red-100 text-red-800`;
+        case 4: // Cancelled
+          return `${baseClasses} bg-gray-100 text-gray-800`;
+        case 5: // Completed
+          return `${baseClasses} bg-blue-100 text-blue-800`;
+        default:
+          return `${baseClasses} bg-gray-100 text-gray-800`;
+      }
+    }
+    
+    // Handle string status (GeneralDriverRequest)
     switch (status) {
       case "Pending":
         return `${baseClasses} bg-yellow-100 text-yellow-800`;
@@ -304,11 +335,13 @@ export default function AllRequestsTab() {
                         </div>
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {item.data.driverInfo.firstName} {item.data.driverInfo.lastName}
+                            {item.type === 'leave' ? item.data.driverName : `${item.data.driverInfo.firstName} ${item.data.driverInfo.lastName}`}
                           </div>
-                          <div className="text-sm text-gray-500">{item.data.driverInfo.email}</div>
+                          <div className="text-sm text-gray-500">
+                            {item.type === 'leave' ? item.data.driverEmail : item.data.driverInfo.email}
+                          </div>
                           <div className="text-xs text-gray-400">
-                            {item.data.driverInfo.phoneNumber}
+                            {item.type === 'leave' ? item.data.driverPhoneNumber : item.data.driverInfo.phoneNumber}
                           </div>
                         </div>
                       </div>
@@ -319,10 +352,10 @@ export default function AllRequestsTab() {
                         {item.type === 'leave' ? (
                           <>
                             <div className="text-sm font-medium text-gray-900">
-                              {item.data.leaveType === "Sick" && "Nghỉ ốm"}
-                              {item.data.leaveType === "Personal" && "Nghỉ cá nhân"}
-                              {item.data.leaveType === "Emergency" && "Nghỉ khẩn cấp"}
-                              {item.data.leaveType === "Vacation" && "Nghỉ phép"}
+                              {item.data.leaveType === 2 && "Nghỉ ốm"}
+                              {item.data.leaveType === 3 && "Nghỉ cá nhân"}
+                              {item.data.leaveType === 4 && "Nghỉ khẩn cấp"}
+                              {item.data.leaveType === 1 && "Nghỉ phép"}
                             </div>
                             <div className="text-xs text-gray-500 truncate">
                               {item.data.reason}
@@ -343,11 +376,22 @@ export default function AllRequestsTab() {
                     
                     <td className="px-6 py-4">
                       <span className={getStatusBadge(item.data.status)}>
-                        {item.data.status === "Pending" && "Chờ xử lý"}
-                        {item.data.status === "Approved" && "Đã duyệt"}
-                        {item.data.status === "Rejected" && "Đã từ chối"}
-                        {item.data.status === "In Progress" && "Đang xử lý"}
-                        {item.data.status === "Resolved" && "Đã giải quyết"}
+                        {item.type === 'leave' ? (
+                          <>
+                            {item.data.status === 1 && "Chờ xử lý"}
+                            {item.data.status === 2 && "Đã duyệt"}
+                            {item.data.status === 3 && "Đã từ chối"}
+                            {item.data.status === 4 && "Đã hủy"}
+                            {item.data.status === 5 && "Hoàn thành"}
+                          </>
+                        ) : (
+                          <>
+                            {item.data.status === "Pending" && "Chờ xử lý"}
+                            {item.data.status === "Resolved" && "Đã duyệt"}
+                            {item.data.status === "Rejected" && "Đã từ chối"}
+                            {item.data.status === "In Progress" && "Đang xử lý"}
+                          </>
+                        )}
                       </span>
                     </td>
                     
@@ -355,7 +399,7 @@ export default function AllRequestsTab() {
                       <div className="flex items-center space-x-2">
                         <FaClock className="h-4 w-4 text-gray-400" />
                         <div className="text-sm text-gray-900">
-                          {formatDateTime(item.data.submittedAt)}
+                          {formatDateTime(item.type === 'leave' ? item.data.requestedAt : item.data.submittedAt)}
                         </div>
                       </div>
                     </td>
