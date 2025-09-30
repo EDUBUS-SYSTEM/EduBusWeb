@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { FaSearch, FaFilter, FaEye, FaCheck, FaTimes, FaFileAlt, FaUser, FaClock, FaExclamationTriangle } from "react-icons/fa";
+import { FaSearch, FaFilter, FaEye, FaTimes, FaFileAlt, FaUser, FaClock } from "react-icons/fa";
 import GeneralRequestDetailModal from "./GeneralRequestDetailModal";
 import { mockGeneralRequests, simulateApiDelay } from "./demo-data";
 
@@ -58,7 +58,6 @@ export default function GeneralRequestsTab() {
   // Action states
   const [selectedRequest, setSelectedRequest] = useState<GeneralDriverRequest | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
 
   const fetchRequests = useCallback(async () => {
     setLoading(true);

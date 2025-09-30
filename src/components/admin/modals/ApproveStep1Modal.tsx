@@ -149,7 +149,7 @@ export default function ApproveStep1Modal({
                       ℹ️ Đơn sẽ được phê duyệt ngay
                     </h3>
                     <div className="mt-2 text-sm text-blue-700">
-                      <p>Đơn nghỉ sẽ được phê duyệt và chuyển sang trạng thái "Chờ phân công". Bạn có thể phân công tài xế thay thế sau.</p>
+                      <p>Đơn nghỉ sẽ được phê duyệt và chuyển sang trạng thái &quot;Chờ phân công&quot;. Bạn có thể phân công tài xế thay thế sau.</p>
                     </div>
                   </div>
                 </div>

@@ -29,24 +29,24 @@ export default function ApproveStep2Modal({
 
   // Fetch available drivers when modal opens
   useEffect(() => {
+    const fetchAvailableDrivers = async () => {
+      setLoadingDrivers(true);
+      try {
+        // Use the leave request dates to get available drivers for that period
+        const startDate = new Date(leave.startDate);
+        const endDate = new Date(leave.endDate);
+        
+        const drivers = await getAvailableDrivers(startDate, endDate);
+        setAvailableDrivers(drivers);
+      } catch (error) {
+        console.error('Error fetching drivers:', error);
+      } finally {
+        setLoadingDrivers(false);
+      }
+    };
+    
     fetchAvailableDrivers();
-  }, []);
-
-  const fetchAvailableDrivers = async () => {
-    setLoadingDrivers(true);
-    try {
-      // Use the leave request dates to get available drivers for that period
-      const startDate = new Date(leave.startDate);
-      const endDate = new Date(leave.endDate);
-      
-      const drivers = await getAvailableDrivers(startDate, endDate);
-      setAvailableDrivers(drivers);
-    } catch (error) {
-      console.error('Error fetching drivers:', error);
-    } finally {
-      setLoadingDrivers(false);
-    }
-  };
+  }, [leave.startDate, leave.endDate]);
 
   const filteredDrivers = availableDrivers.filter(driver => {
     const matchesSearch = driver.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -158,6 +158,23 @@ export default function ApproveStep2Modal({
             </div>
           </div>
 
+          {/* Selected Driver Preview */}
+          {selectedDriver && (
+            <div className="mb-6 bg-green-50 rounded-lg p-4 border border-green-200">
+              <h4 className="font-medium text-green-800 mb-2 flex items-center space-x-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Đã chọn tài xế thay thế</span>
+              </h4>
+              <div className="text-sm text-green-700">
+                <p><strong>Tên:</strong> {selectedDriver.fullName}</p>
+                <p><strong>Số điện thoại:</strong> {selectedDriver.phoneNumber}</p>
+                <p><strong>Bằng lái:</strong> {selectedDriver.licenseNumber || 'Chưa xác định'}</p>
+              </div>
+            </div>
+          )}
+
           {/* Available Drivers */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
@@ -224,23 +241,6 @@ export default function ApproveStep2Modal({
               </div>
             )}
           </div>
-
-          {/* Selected Driver Preview */}
-          {selectedDriver && (
-            <div className="mb-6 bg-green-50 rounded-lg p-4 border border-green-200">
-              <h4 className="font-medium text-green-800 mb-2 flex items-center space-x-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Đã chọn tài xế thay thế</span>
-              </h4>
-              <div className="text-sm text-green-700">
-                <p><strong>Tên:</strong> {selectedDriver.fullName}</p>
-                <p><strong>Số điện thoại:</strong> {selectedDriver.phoneNumber}</p>
-                <p><strong>Bằng lái:</strong> {selectedDriver.licenseNumber || 'Chưa xác định'}</p>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Footer */}

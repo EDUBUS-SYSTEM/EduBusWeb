@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { FaSearch, FaFilter, FaEye, FaCheck, FaTimes, FaCalendarAlt, FaUser, FaClock, FaFileAlt } from "react-icons/fa";
+import { FaSearch, FaFilter, FaEye, FaCheck, FaTimes, FaUser, FaClock, FaFileAlt } from "react-icons/fa";
 import LeaveRequestDetailModal from "./LeaveRequestDetailModal";
 import ApproveStep1Modal from "@/components/admin/modals/ApproveStep1Modal";
 import ApproveStep2Modal from "@/components/admin/modals/ApproveStep2Modal";
@@ -9,8 +9,7 @@ import Pagination from "@/components/ui/Pagination";
 import { 
   driverLeaveRequestService, 
   DriverLeaveRequest, 
-  DriverLeaveRequestFilters,
-  DriverLeaveRequestResponse 
+  DriverLeaveRequestFilters
 } from "@/services/api/driverLeaveRequests";
 
 export default function LeaveRequestsTab() {

@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { FaCalendarAlt, FaFileAlt, FaList, FaClock } from "react-icons/fa";
+import { FaCalendarAlt, FaFileAlt, FaList } from "react-icons/fa";
 import LeaveRequestsTab from "./LeaveRequestsTab";
 import GeneralRequestsTab from "./GeneralRequestsTab";
 import AllRequestsTab from "./AllRequestsTab";
