@@ -59,3 +59,8 @@ export interface UpdateBulkRouteResponse {
   updatedRoutes: RouteDto[];
   errorMessage?: string;
 }
+
+export interface UpdateRouteBasicRequest {
+  routeName?: string;
+  vehicleId?: string;
+}

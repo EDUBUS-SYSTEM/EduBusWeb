@@ -1,6 +1,6 @@
 // src/services/routeService.ts
 import { apiService } from "@/lib/api";
-import { RouteDto, CreateRouteRequest, UpdateRouteRequest, UpdateBulkRouteRequest, UpdateBulkRouteResponse } from "./routeService.types";
+import { RouteDto, CreateRouteRequest, UpdateRouteRequest, UpdateBulkRouteRequest, UpdateBulkRouteResponse, UpdateRouteBasicRequest } from "./routeService.types";
 
 export const routeService = {
   // Get all routes
@@ -30,5 +30,9 @@ export const routeService = {
 
   bulkUpdate: async (data: UpdateBulkRouteRequest): Promise<UpdateBulkRouteResponse> => {
     return await apiService.put<UpdateBulkRouteResponse>("/routes/bulk", data);
+  },
+
+  updateBasic: async (id: string, data: UpdateRouteBasicRequest): Promise<RouteDto> => {
+    return await apiService.put<RouteDto>(`/routes/${id}/basic`, data);
   },
 };

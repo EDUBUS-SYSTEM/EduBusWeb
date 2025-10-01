@@ -4,7 +4,7 @@ import { FaTimes, FaBus, FaTrash } from 'react-icons/fa';
 import { vehicleService } from '@/services/vehicleService';
 import { routeService } from '@/services/routeService/routeService.api';
 import { VehicleDto } from '@/types/vehicle';
-import { UpdateRouteRequest, RouteDto } from '@/services/routeService/routeService.types';
+import { UpdateRouteBasicRequest, RouteDto } from '@/services/routeService/routeService.types';
 import { toast } from 'react-toastify';
 
 interface EditRouteModalProps {
@@ -74,13 +74,17 @@ const EditRouteModal: React.FC<EditRouteModalProps> = ({
 
     setLoading(true);
     try {
-      const updateRequest: UpdateRouteRequest = {
+      const updateData: UpdateRouteBasicRequest = {
         routeName: routeName.trim(),
-        vehicleId: selectedVehicleId,
-        pickupPoints: route.pickupPoints // Keep existing pickup points
+        vehicleId: selectedVehicleId
       };
 
-      const updatedRoute = await routeService.update(route.id, updateRequest);
+      await routeService.updateBasic(route.id, updateData);
+      let updatedRoute = {
+        ...route,
+        routeName: routeName.trim()
+      }
+      
       // Fetch vehicle capacity and update the route
       const vehicle = vehicles.find(v => v.id === selectedVehicleId);
       if (vehicle) {
@@ -105,28 +109,16 @@ const EditRouteModal: React.FC<EditRouteModalProps> = ({
           const errorData = axiosError.response.data;
 
           if (errorData && typeof errorData === 'object') {
-            // Check if it's ModelState validation errors
-            if ('RouteName' in errorData || 'VehicleId' in errorData) {
-              const validationErrors = errorData as Record<string, string[]>;
+            if ('errors' in errorData) {
+              const backendErrors = errorData.errors as Record<string, string[]>;
               setErrors({
-                routeName: Array.isArray(validationErrors.RouteName) ? validationErrors.RouteName[0] : validationErrors.RouteName,
-                vehicleId: Array.isArray(validationErrors.VehicleId) ? validationErrors.VehicleId[0] : validationErrors.VehicleId
+                routeName: backendErrors.RouteName?.[0] || '',
+                vehicleId: backendErrors.VehicleId?.[0] || ''
               });
-            } else if (typeof errorData === 'string') {
-              toast.error(errorData);
-            } else if (errorData && typeof errorData === 'object' && 'message' in errorData) {
-              const errorWithMessage = errorData as { message: string };
-              toast.error(errorWithMessage.message);
-            } else {
-              toast.error('Validation failed. Please check your input.');
+            } else if ('message' in errorData) {
+              toast.error((errorData as { message: string }).message);
             }
-          } else {
-            toast.error('Validation failed. Please check your input.');
           }
-        } else if (axiosError.response?.status === 404) {
-          toast.error('Route not found.');
-        } else if (axiosError.response?.status === 500) {
-          toast.error('Internal server error. Please try again later.');
         } else {
           toast.error('Failed to update route. Please try again.');
         }

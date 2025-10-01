@@ -1,8 +1,9 @@
 // EduBusWeb/src/components/admin/RouteManagement/RouteRow.tsx
 import React, { useState } from 'react';
-import { Droppable, Draggable } from '@hello-pangea/dnd';
-import { FaBus, FaUser } from 'react-icons/fa';
+import { Droppable } from '@hello-pangea/dnd';
+import { FaBus } from 'react-icons/fa';
 import { RouteDto, PickupPointInfoDto } from '@/services/routeService/routeService.types';
+import PickupPoint from './PickupPoint';
 
 interface RouteRowProps {
   route: RouteDto;
@@ -86,26 +87,15 @@ const RouteRow: React.FC<RouteRowProps> = ({ route, onRouteClick, isModified }) 
           <div
             {...provided.droppableProps}
             ref={provided.innerRef}
-            className="flex space-x-2 overflow-x-auto flex-1 min-w-[150px] min-h-[80px] border-2 border-dashed border-gray-300 rounded"
+            className="flex space-x-2 overflow-x-auto flex-1 min-w-[150px] min-h-[80px] border-2 border-dashed border-gray-300 rounded p-2"
           >
             {route.pickupPoints.map((point, index) => (
-              <Draggable
+              <PickupPoint
                 key={point.pickupPointId}
-                draggableId={point.pickupPointId}
+                point={point}
                 index={index}
-              >
-                {(provided) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    className="bg-blue-100 p-2 rounded flex items-center min-w-[120px]"
-                  >
-                    <FaUser className="mr-2" />
-                    {point.pickupPointId} ({point.studentCount})
-                  </div>
-                )}
-              </Draggable>
+                className="m-1"
+              />
             ))}
             {provided.placeholder}
           </div>

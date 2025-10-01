@@ -10,6 +10,7 @@ import CreateRouteModal from './CreateRouteModal';
 import EditRouteModal from './EditRouteModal';
 import RouteRow from './RouteRow';
 import LobbyArea from './LobbyArea';
+import { pickupPointService, PickupPointDto } from '@/services/pickupPointService';
 
 // Create 100 pickup points with a capacity of 1 each
 const allPickupPoints: PickupPointInfoDto[] = Array.from({ length: 100 }, (_, i) => ({
@@ -31,24 +32,51 @@ const RouteManagement: React.FC = () => {
   const [selectedRoute, setSelectedRoute] = useState<RouteDto | null>(null);
   const [modifiedRoutes, setModifiedRoutes] = useState<Set<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Store original routes for comparison
   const originalRoutesRef = useRef<RouteDto[]>([]);
 
+  const convertToPickupPointInfo = (unassignedPoint: PickupPointDto): PickupPointInfoDto => ({
+    pickupPointId: unassignedPoint.id,
+    sequenceOrder: 0, // Will be set when added to a route
+    location: {
+      latitude: unassignedPoint.latitude,
+      longitude: unassignedPoint.longitude,
+      address: unassignedPoint.location
+    },
+    studentCount: unassignedPoint.studentCount
+  });
+
   useEffect(() => {
-    const fetchRoutes = async () => {
+    const fetchData = async () => {
       try {
-        const data = await routeService.getAll();
-        setRoutes(data);
-        originalRoutesRef.current = JSON.parse(JSON.stringify(data)); // Deep copy
+        setIsLoading(true);
+
+        // Fetch routes and unassigned pickup points in parallel
+        const [routesData, unassignedData] = await Promise.all([
+          routeService.getAll(),
+          pickupPointService.getUnassignedPickupPoints()
+        ]);
+
+        setRoutes(routesData);
+        originalRoutesRef.current = JSON.parse(JSON.stringify(routesData)); // Deep copy
+
+        // Convert unassigned pickup points to PickupPointInfoDto format
+        const lobbyPickupPoints = unassignedData.pickupPoints.map(convertToPickupPointInfo);
+        setLobby(lobbyPickupPoints);
+
         // Clear any existing modifications when fetching fresh data
         setModifiedRoutes(new Set());
       } catch (error) {
-        console.error('Failed to fetch routes:', error);
+        console.error('Failed to fetch data:', error);
+        toast.error('Failed to load route and pickup point data');
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchRoutes();
+    fetchData();
   }, []);
 
   // Helper function to compare pickup points arrays
@@ -114,11 +142,19 @@ const RouteManagement: React.FC = () => {
         route.id === updatedRoute.id ? updatedRoute : route
       )
     );
-
-    // Update original routes as well
-    originalRoutesRef.current = originalRoutesRef.current.map(route =>
-      route.id === updatedRoute.id ? updatedRoute : route
-    );
+    originalRoutesRef.current = originalRoutesRef.current.map(route => {
+      if (route.id === updatedRoute.id) {
+        return {
+          ...route,
+          routeName: updatedRoute.routeName,        // Update name
+          vehicleId: updatedRoute.vehicleId,       // Update vehicle
+          vehicleCapacity: updatedRoute.vehicleCapacity,
+          vehicleNumberPlate: updatedRoute.vehicleNumberPlate
+          // ✅ IMPORTANT: Do NOT update pickupPoints - keep original!
+        };
+      }
+      return route;
+    });
   };
 
   const handleRouteDeleted = (routeId: string) => {
@@ -131,43 +167,57 @@ const RouteManagement: React.FC = () => {
 
     const { source, destination } = result;
 
-    const sourceList = source.droppableId === 'lobby' ? lobby : routes.find(route => route.id === source.droppableId)!.pickupPoints;
-    const destinationList = destination.droppableId === 'lobby' ? lobby : routes.find(route => route.id === destination.droppableId)!.pickupPoints;
+    // Create deep copies to avoid mutations
+    const updatedRoutes = routes.map(route => ({
+      ...route,
+      pickupPoints: [...route.pickupPoints]
+    }));
 
+    const updatedLobby = [...lobby];
+
+    // Get the lists to work with
+    const sourceList = source.droppableId === 'lobby'
+      ? updatedLobby
+      : updatedRoutes.find(route => route.id === source.droppableId)!.pickupPoints;
+
+    const destinationList = destination.droppableId === 'lobby'
+      ? updatedLobby
+      : updatedRoutes.find(route => route.id === destination.droppableId)!.pickupPoints;
+
+    // Perform the move
     const [moved] = sourceList.splice(source.index, 1);
 
+    // Validate capacity if moving to a route
     if (destination.droppableId !== 'lobby') {
-      const destinationRoute = routes.find(route => route.id === destination.droppableId)!;
+      const destinationRoute = updatedRoutes.find(route => route.id === destination.droppableId)!;
       const totalStudents = destinationList.reduce((sum, point) => sum + point.studentCount, 0) + moved.studentCount;
 
       if (totalStudents > destinationRoute.vehicleCapacity) {
         toast.error('Cannot move pickup point: vehicle capacity exceeded.');
-        sourceList.splice(source.index, 0, moved);
         return;
       }
     }
 
     destinationList.splice(destination.index, 0, moved);
 
-    // Update source list
-    if (source.droppableId === 'lobby') {
-      setLobby([...sourceList]);
-    } else {
-      const updatedRoutes = Array.from(routes);
-      const sourceRouteIndex = routes.findIndex(route => route.id === source.droppableId);
-      updatedRoutes[sourceRouteIndex].pickupPoints = sourceList;
-      setRoutes(updatedRoutes);
+    // Update sequence orders for affected routes
+    if (source.droppableId !== 'lobby') {
+      const sourceRoute = updatedRoutes.find(route => route.id === source.droppableId)!;
+      sourceRoute.pickupPoints.forEach((point, index) => {
+        point.sequenceOrder = index + 1;
+      });
     }
 
-    // Update destination list
-    if (destination.droppableId === 'lobby') {
-      setLobby([...destinationList]);
-    } else {
-      const updatedRoutes = Array.from(routes);
-      const destinationRouteIndex = routes.findIndex(route => route.id === destination.droppableId);
-      updatedRoutes[destinationRouteIndex].pickupPoints = destinationList;
-      setRoutes(updatedRoutes);
+    if (destination.droppableId !== 'lobby') {
+      const destinationRoute = updatedRoutes.find(route => route.id === destination.droppableId)!;
+      destinationRoute.pickupPoints.forEach((point, index) => {
+        point.sequenceOrder = index + 1;
+      });
     }
+
+    // Single state updates
+    setRoutes(updatedRoutes);
+    setLobby(updatedLobby);
   };
 
   const handleSaveChanges = async () => {
@@ -255,6 +305,17 @@ const RouteManagement: React.FC = () => {
       }
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-4 bg-gray-100 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading routes and pickup points...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

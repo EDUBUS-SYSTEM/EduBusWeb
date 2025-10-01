@@ -107,6 +107,22 @@ export interface RejectPickupPointRequestDto {
 	reason: string;
 }
 
+export interface PickupPointDto {
+	id: string;
+	description: string;
+	location: string;
+	latitude: number;
+	longitude: number;
+	studentCount: number;
+	createdAt: string;
+	updatedAt?: string;
+}
+
+export interface PickupPointsResponse {
+	pickupPoints: PickupPointDto[];
+	totalCount: number;
+}
+
 export const pickupPointService = {
 	// Public endpoints
 	registerParent: (data: ParentRegistrationRequestDto) =>
@@ -123,4 +139,6 @@ export const pickupPointService = {
 		apiService.post(`/PickupPoint/requests/${requestId}/approve`, data),
 	rejectRequest: (requestId: string, data: RejectPickupPointRequestDto) =>
 		apiService.post(`/PickupPoint/requests/${requestId}/reject`, data),
+	getUnassignedPickupPoints: () =>
+		apiService.get<PickupPointsResponse>('/PickupPoint/unassigned'),
 };
