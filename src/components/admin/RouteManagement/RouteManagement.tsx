@@ -1,13 +1,14 @@
 // EduBusWeb/src/components/admin/RouteManagement/RouteManagement.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
-import { FaPlus, FaSave } from 'react-icons/fa';
+import { FaPlus, FaSave, FaMagic, FaTimes, FaCheck } from 'react-icons/fa';
 import { routeService } from '@/services/routeService/routeService.api';
-import { RouteDto, PickupPointInfoDto, UpdateBulkRouteRequest, RoutePickupPointRequest, UpdateBulkRouteItem } from '@/services/routeService/routeService.types';
+import { RouteDto, PickupPointInfoDto, UpdateBulkRouteRequest, ReplaceAllRoutesRequest, RoutePickupPointRequest, UpdateBulkRouteItem, RouteSuggestionDto } from '@/services/routeService/routeService.types';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import CreateRouteModal from './CreateRouteModal';
 import EditRouteModal from './EditRouteModal';
+import ApplySuggestionsModal from './ApplySuggestionsModal'
 import RouteRow from './RouteRow';
 import LobbyArea from './LobbyArea';
 import { pickupPointService, PickupPointDto } from '@/services/pickupPointService';
@@ -33,6 +34,10 @@ const RouteManagement: React.FC = () => {
   const [modifiedRoutes, setModifiedRoutes] = useState<Set<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [hasSuggestions, setHasSuggestions] = useState(false); // Track if current routes are suggestions
+  const [isApplySuggestionsModalOpen, setIsApplySuggestionsModalOpen] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
 
   // Store original routes for comparison
   const originalRoutesRef = useRef<RouteDto[]>([]);
@@ -47,6 +52,30 @@ const RouteManagement: React.FC = () => {
     },
     studentCount: unassignedPoint.studentCount
   });
+
+  const convertSuggestionToRoute = (suggestion: RouteSuggestionDto, index: number): RouteDto => {
+    return {
+      id: `generated-route-${index + 1}-${Date.now()}`, // Temporary ID for UI
+      routeName: `Generated Route ${index + 1}`,
+      isActive: true,
+      vehicleId: suggestion.vehicle?.vehicleId || '',
+      vehicleCapacity: suggestion.vehicle?.capacity || 0,
+      vehicleNumberPlate: suggestion.vehicle?.licensePlate || '',
+      pickupPoints: suggestion.pickupPoints.map(pp => ({
+        pickupPointId: pp.pickupPointId,
+        sequenceOrder: pp.sequenceOrder,
+        location: {
+          latitude: pp.latitude,
+          longitude: pp.longitude,
+          address: pp.address
+        },
+        studentCount: pp.studentCount
+      })),
+      createdAt: suggestion.generatedAt,
+      updatedAt: suggestion.generatedAt,
+      isDeleted: false
+    };
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -160,6 +189,160 @@ const RouteManagement: React.FC = () => {
   const handleRouteDeleted = (routeId: string) => {
     setRoutes(prevRoutes => prevRoutes.filter(route => route.id !== routeId));
     originalRoutesRef.current = originalRoutesRef.current.filter(route => route.id !== routeId);
+  };
+
+  const handleGenerateRoutes = async () => {
+    setIsGenerating(true);
+    try {
+      const response = await routeService.generateSuggestions();
+
+      if (response.success && response.routes.length > 0) {
+        const generatedRoutes = response.routes.map((suggestion, index) =>
+          convertSuggestionToRoute(suggestion, index)
+        );
+        setRoutes(generatedRoutes);
+        originalRoutesRef.current = generatedRoutes.map(route => ({ ...route }));
+        setModifiedRoutes(new Set());
+        setLobby([]);
+        setHasSuggestions(true);
+        toast.success(`Successfully generated ${response.totalRoutes} optimized routes!`);
+      } else {
+        toast.error(response.message || 'Failed to generate routes');
+      }
+    } catch (error: unknown) {
+      console.error('Failed to generate routes:', error);
+
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as {
+          response?: {
+            data?: { message?: string };
+            status?: number;
+          }
+        };
+
+        if (axiosError.response?.data?.message) {
+          toast.error(axiosError.response.data.message);
+        } else {
+          toast.error('Failed to generate routes. Please try again.');
+        }
+      } else {
+        toast.error('Failed to generate routes. Please try again.');
+      }
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleApplySuggestions = () => {
+    setIsApplySuggestionsModalOpen(true);
+  };
+
+  // ✅ NEW: Handle applying the suggestions (calls replace-all API and refetches)
+  const handleConfirmApplySuggestions = async () => {
+    setIsApplying(true);
+    try {
+      // Convert current UI routes to CreateRouteRequest format
+      const routesToCreate = routes.map((route) => ({
+        routeName: route.routeName,
+        vehicleId: route.vehicleId,
+        pickupPoints: route.pickupPoints.map(pp => ({
+          pickupPointId: pp.pickupPointId,
+          sequenceOrder: pp.sequenceOrder
+        }))
+      }));
+
+      const replaceRequest: ReplaceAllRoutesRequest = {
+        routes: routesToCreate,
+        forceDelete: false
+      };
+
+      const response = await routeService.replaceAll(replaceRequest);
+
+      if (response.success) {
+        // ✅ Close modal and clear suggestions flag
+        setIsApplySuggestionsModalOpen(false);
+        setHasSuggestions(false);
+
+        // ✅ Refetch routes to get the latest data from database
+        const [routesData, unassignedData] = await Promise.all([
+          routeService.getAll(),
+          pickupPointService.getUnassignedPickupPoints()
+        ]);
+
+        setRoutes(routesData);
+        originalRoutesRef.current = JSON.parse(JSON.stringify(routesData));
+
+        // Convert unassigned pickup points to PickupPointInfoDto format
+        const lobbyPickupPoints = unassignedData.pickupPoints.map(convertToPickupPointInfo);
+        setLobby(lobbyPickupPoints);
+
+        // Clear any existing modifications
+        setModifiedRoutes(new Set());
+
+        toast.success(`Successfully applied suggestions! Deleted ${response.deletedRoutes} old routes and created ${response.successfulRoutes} new routes.`);
+      } else {
+        toast.error(response.errorMessage || 'Failed to apply suggestions');
+      }
+    } catch (error: unknown) {
+      console.error('Failed to apply suggestions:', error);
+
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as {
+          response?: {
+            data?: { message?: string };
+            status?: number;
+          }
+        };
+
+        if (axiosError.response?.data?.message) {
+          toast.error(axiosError.response.data.message);
+        } else {
+          toast.error('Failed to apply suggestions. Please try again.');
+        }
+      } else {
+        toast.error('Failed to apply suggestions. Please try again.');
+      }
+    } finally {
+      setIsApplying(false);
+    }
+  };
+
+  // ✅ NEW: Handle closing the apply suggestions modal
+  const handleCloseApplySuggestionsModal = () => {
+    if (!isApplying) {
+      setIsApplySuggestionsModalOpen(false);
+    }
+  };
+
+  // ✅ NEW: Handle discarding suggestions (refetch original routes)
+  const handleDiscardSuggestions = async () => {
+    try {
+      setIsLoading(true);
+
+      // Refetch original routes from database
+      const [routesData, unassignedData] = await Promise.all([
+        routeService.getAll(),
+        pickupPointService.getUnassignedPickupPoints()
+      ]);
+
+      setRoutes(routesData);
+      originalRoutesRef.current = JSON.parse(JSON.stringify(routesData));
+
+      // Convert unassigned pickup points to PickupPointInfoDto format
+      const lobbyPickupPoints = unassignedData.pickupPoints.map(convertToPickupPointInfo);
+      setLobby(lobbyPickupPoints);
+
+      // Clear modifications and suggestions flag
+      setModifiedRoutes(new Set());
+      setHasSuggestions(false);
+
+      toast.info('Route suggestions discarded');
+    } catch (error) {
+      console.error('Failed to refetch routes:', error);
+      toast.error('Failed to discard suggestions');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const onDragEnd = (result: DropResult) => {
@@ -287,31 +470,14 @@ const RouteManagement: React.FC = () => {
     }
   };
 
-  // Debug function to help troubleshoot (remove in production)
-  const debugModifications = () => {
-    console.log('Current routes:', routes);
-    console.log('Original routes:', originalRoutesRef.current);
-    console.log('Modified routes:', Array.from(modifiedRoutes));
-
-    routes.forEach(route => {
-      const originalRoute = originalRoutesRef.current.find(r => r.id === route.id);
-      if (originalRoute) {
-        const isModified = !arePickupPointsEqual(route.pickupPoints, originalRoute.pickupPoints);
-        console.log(`Route ${route.routeName}:`, {
-          current: route.pickupPoints.map(p => ({ id: p.pickupPointId, order: p.sequenceOrder })),
-          original: originalRoute.pickupPoints.map(p => ({ id: p.pickupPointId, order: p.sequenceOrder })),
-          isModified
-        });
-      }
-    });
-  };
-
-  if (isLoading) {
+  if (isLoading || isGenerating) {
     return (
       <div className="p-4 bg-gray-100 min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading routes and pickup points...</p>
+          <p className="text-gray-600">
+            {isGenerating ? 'Generating optimized routes...' : 'Loading routes and pickup points...'}
+          </p>
         </div>
       </div>
     );
@@ -327,14 +493,6 @@ const RouteManagement: React.FC = () => {
             <h1 className="text-2xl font-bold text-gray-800">Route Management</h1>
 
             <div className="flex items-center space-x-3">
-              {/* Debug button - remove in production */}
-              <button
-                onClick={debugModifications}
-                className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm"
-              >
-                Debug
-              </button>
-
               {/* Save Changes Button */}
               {modifiedRoutes.size > 0 && (
                 <button
@@ -344,6 +502,37 @@ const RouteManagement: React.FC = () => {
                 >
                   <FaSave className="mr-2" />
                   {isSaving ? 'Saving...' : `Save Changes (${modifiedRoutes.size})`}
+                </button>
+              )}
+
+              {hasSuggestions ? (
+                // Show Apply/Discard buttons when current routes are suggestions
+                <>
+                  <button
+                    onClick={handleDiscardSuggestions}
+                    disabled={isLoading}
+                    className="bg-gray-500 hover:bg-gray-600 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
+                  >
+                    <FaTimes className="mr-2" />
+                    {isLoading ? 'Loading...' : 'Discard Suggestions'}
+                  </button>
+                  <button
+                    onClick={handleApplySuggestions}
+                    className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
+                  >
+                    <FaCheck className="mr-2" />
+                    Apply Suggestions ({routes.length})
+                  </button>
+                </>
+              ) : (
+                // Show Generate Routes button when current routes are not suggestions
+                <button
+                  onClick={handleGenerateRoutes}
+                  disabled={isGenerating || isLoading}
+                  className="bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
+                >
+                  <FaMagic className="mr-2" />
+                  {isGenerating ? 'Generating...' : 'Generate Routes'}
                 </button>
               )}
 
@@ -389,6 +578,15 @@ const RouteManagement: React.FC = () => {
         route={selectedRoute}
         onRouteUpdated={handleRouteUpdated}
         onRouteDeleted={handleRouteDeleted}
+      />
+
+      {/* Apply Suggestions Modal */}
+      <ApplySuggestionsModal
+        isOpen={isApplySuggestionsModalOpen}
+        onClose={handleCloseApplySuggestionsModal}
+        onApply={handleConfirmApplySuggestions}
+        isApplying={isApplying}
+        suggestedRoutesCount={routes.length}
       />
     </>
   );

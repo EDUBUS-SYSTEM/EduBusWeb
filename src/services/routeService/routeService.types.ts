@@ -19,6 +19,11 @@ export interface PickupPointInfoDto {
   studentCount: number;
 }
 
+export interface PickupPointInRequest {
+  pickupPointId: string;
+  sequenceOrder: number;
+}
+
 export interface LocationInfoDto {
   latitude: number;
   longitude: number;
@@ -28,7 +33,7 @@ export interface LocationInfoDto {
 export interface CreateRouteRequest {
   routeName: string;
   vehicleId: string;
-  pickupPoints: PickupPointInfoDto[];
+  pickupPoints: PickupPointInRequest[];
 }
 
 export interface UpdateRouteRequest {
@@ -63,4 +68,54 @@ export interface UpdateBulkRouteResponse {
 export interface UpdateRouteBasicRequest {
   routeName?: string;
   vehicleId?: string;
+}
+
+export interface RouteSuggestionResponse {
+  success: boolean;
+  message: string;
+  routes: RouteSuggestionDto[];
+  totalRoutes: number;
+  generatedAt: string;
+}
+
+export interface RouteSuggestionDto {
+  pickupPoints: RoutePickupPointInfoDto[];
+  vehicle: RouteVehicleInfo | null;
+  totalStudents: number;
+  totalDistance: number;
+  estimatedCost: number;
+  generatedAt: string;
+}
+
+export interface RoutePickupPointInfoDto {
+  pickupPointId: string;
+  description: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  sequenceOrder: number;
+  studentCount: number;
+  arrivalTime: string;
+}
+
+export interface RouteVehicleInfo {
+  vehicleId: string;
+  licensePlate: string;
+  capacity: number;
+  assignedStudents: number;
+  utilizationPercentage: number;
+}
+
+export interface ReplaceAllRoutesRequest {
+  routes: CreateRouteRequest[];
+  forceDelete?: boolean;
+}
+
+export interface ReplaceAllRoutesResponse {
+  success: boolean;
+  deletedRoutes: number;
+  totalNewRoutes: number;
+  successfulRoutes: number;
+  createdRoutes: RouteDto[];
+  errorMessage?: string;
 }
