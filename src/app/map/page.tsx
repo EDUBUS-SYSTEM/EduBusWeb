@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Loader } from '@googlemaps/js-api-loader';
 import { pickupPointService } from '@/services/pickupPointService';
+import { transactionService, CalculateFeeResponse } from '@/services/transactionService';
+import { unitPriceService } from '@/services/unitPriceService';
 
 type Student = {
   id?: string | number;
@@ -18,8 +20,8 @@ const SCHOOL_LOCATION = {
   lng: 108.2605
 };
 
-// Constants
-const DEFAULT_PRICE_PER_KM = 7000; // VND per kilometer
+// Constants - will be replaced by API call
+const DEFAULT_PRICE_PER_KM = 7000; // VND per kilometer (fallback)
 const MAP_ZOOM_LEVEL = 14;
 const MAP_ZOOM_LEVEL_DETAILED = 15;
 
@@ -39,6 +41,13 @@ export default function MapPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  
+  // Fee calculation states
+  const [feeCalculation, setFeeCalculation] = useState<CalculateFeeResponse | null>(null);
+  const [isCalculatingFee, setIsCalculatingFee] = useState(false);
+  const [feeError, setFeeError] = useState<string>('');
+  const [currentUnitPrice, setCurrentUnitPrice] = useState<number>(DEFAULT_PRICE_PER_KM);
+  const [isLoadingUnitPrice, setIsLoadingUnitPrice] = useState(true);
   type TravelModeString = 'DRIVING' | 'WALKING' | 'BICYCLING' | 'TRANSIT';
   const [travelMode, setTravelMode] = useState<TravelModeString>('DRIVING');
   const [isRouting, setIsRouting] = useState(false);
@@ -71,7 +80,93 @@ export default function MapPage() {
   // FPT School Đà Nẵng - Khu A3-1, Khu đô thị Công nghệ FPT, phường Hòa Hải, quận Ngũ Hành Sơn
   const schoolLocation = SCHOOL_LOCATION;
 
+  // Load current unit price from API
+  useEffect(() => {
+    const loadCurrentUnitPrice = async () => {
+      try {
+        setIsLoadingUnitPrice(true);
+        const unitPrice = await unitPriceService.getCurrentEffectiveUnitPrice();
+        setCurrentUnitPrice(unitPrice.pricePerKm);
+        console.log('Current unit price loaded:', unitPrice.pricePerKm);
+      } catch (error) {
+        console.warn('Failed to load current unit price, using default:', error);
+        setCurrentUnitPrice(DEFAULT_PRICE_PER_KM);
+      } finally {
+        setIsLoadingUnitPrice(false);
+      }
+    };
+
+    loadCurrentUnitPrice();
+  }, []);
+
   // Distance will be calculated from Directions result (driving distance)
+
+  // Calculate transport fee using API
+  const calculateTransportFee = useCallback(async (distanceKm: number) => {
+    if (distanceKm <= 0) return;
+    
+    setIsCalculatingFee(true);
+    setFeeError('');
+    
+    try {
+      const response = await transactionService.calculateTransportFee({
+        distanceKm: distanceKm
+      });
+      console.log('API Response:', response);
+      console.log('Total Fee:', response.totalFee);
+      console.log('Unit Price:', response.unitPricePerKm);
+      console.log('Total School Days:', response.totalSchoolDays);
+      console.log('Total Distance:', response.totalDistanceKm);
+      setFeeCalculation(response);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to calculate transport fee';
+      
+      // Check if it's the unit price error
+      if (errorMessage.includes('No active unit price found')) {
+        setFeeError('Chưa có đơn giá vận chuyển được thiết lập. Vui lòng liên hệ quản trị viên để thiết lập đơn giá.');
+        
+        // Use fallback calculation with current unit price (from API or default)
+        const fallbackFee = currentUnitPrice * distanceKm * 90; // Assume 90 school days per semester
+        const fallbackResponse = {
+          totalFee: fallbackFee,
+          unitPricePerKm: currentUnitPrice,
+          distanceKm: distanceKm,
+          totalSchoolDays: 90,
+          totalTrips: 180,
+          totalDistanceKm: distanceKm * 90,
+          semesterName: 'Fallback Semester',
+          academicYear: '2024-2025',
+          semesterStartDate: new Date().toISOString(),
+          semesterEndDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+          holidays: [],
+          calculationDetails: `Fallback calculation using current price of ${currentUnitPrice.toLocaleString('vi-VN')} VND/km`
+        };
+        setFeeCalculation(fallbackResponse);
+      } else {
+        setFeeError(errorMessage);
+      }
+      
+      console.error('Fee calculation error:', err);
+      console.error('Error details:', {
+        message: err instanceof Error ? err.message : 'Unknown error',
+        stack: err instanceof Error ? err.stack : undefined
+      });
+    } finally {
+      setIsCalculatingFee(false);
+    }
+  }, [currentUnitPrice]);
+
+  // Update fare display when API response is received
+  useEffect(() => {
+    if (feeCalculation && feeCalculation.totalFee > 0) {
+      const formattedFare = new Intl.NumberFormat('vi-VN', { 
+        style: 'currency', 
+        currency: 'VND' 
+      }).format(feeCalculation.totalFee);
+      setFare(formattedFare);
+      setTempFare(formattedFare);
+    }
+  }, [feeCalculation?.totalFee]);
 
   // Memoized route drawing
   const drawRoute = useCallback((origin: { lat: number; lng: number }, destination: { lat: number; lng: number }, options?: { fitBounds?: boolean }) => {
@@ -102,10 +197,11 @@ export default function MapPage() {
             setDistance(`${distanceKm} km`);
             setDuration(hours > 0 ? `${hours} hours ${mins} minutes` : `${mins} minutes`);
 
-            // Calculate fare using configurable price per km
-            const fareNumber = (totalMeters / 1000) * DEFAULT_PRICE_PER_KM;
-            const formattedFare = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Math.round(fareNumber));
-            setFare(formattedFare);
+            // Calculate fare using API
+            const distanceKmNum = totalMeters / 1000;
+            calculateTransportFee(distanceKmNum);
+            
+            // Don't set temporary fare - wait for API response
 
             // Optionally fit bounds to route only when requested
             if (mapInstanceRef.current && options?.fitBounds) {
@@ -192,7 +288,7 @@ export default function MapPage() {
         }
       }
     );
-  }, [travelMode]);
+  }, [travelMode, calculateTransportFee]);
 
   // Calculate temporary route for preview
   const calculateTempRoute = useCallback((lat: number, lng: number) => {
@@ -218,15 +314,16 @@ export default function MapPage() {
             setTempDistance(`${distanceKm} km`);
             setTempDuration(hours > 0 ? `${hours} hours ${mins} minutes` : `${mins} minutes`);
 
-            // Calculate fare
-            const fareNumber = (totalMeters / 1000) * DEFAULT_PRICE_PER_KM;
-            const formattedFare = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Math.round(fareNumber));
+            // Calculate temporary fare for preview (will be updated by API response)
+            const distanceKmNum = totalMeters / 1000;
+            const tempFareNumber = distanceKmNum * DEFAULT_PRICE_PER_KM;
+            const formattedFare = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Math.round(tempFareNumber));
             setTempFare(formattedFare);
           }
         }
       }
     );
-  }, [travelMode, schoolLocation]);
+  }, [travelMode, schoolLocation, calculateTransportFee]);
 
   // Confirm location selection
   const confirmLocationSelection = useCallback((lat: number, lng: number) => {
@@ -645,18 +742,24 @@ export default function MapPage() {
         longitude: selectedCoords.lng,
         distanceKm: distanceKm,
         description: `Pickup point request for ${students.length} student(s)`,
-        reason: 'Parent requested pickup point service',
-        unitPriceVndPerKm: DEFAULT_PRICE_PER_KM,
-        estimatedPriceVnd: estimatedPrice
+        reason: 'Parent requested pickup point service'
       };
 
       const result = await pickupPointService.submitRequest(payload);
-      setSubmitSuccess(result.message || 'Request submitted successfully!');
+      
+      // Create detailed success message with semester info
+      const successMessage = `${result.message}\n\n` +
+        `Semester: ${result.semesterName} ${result.academicYear}\n` +
+        `Total Fee: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(result.totalFee)}\n` +
+        `School Days: ${result.totalSchoolDays} days\n` +
+        `Request ID: ${result.requestId}`;
+      
+      setSubmitSuccess(successMessage);
       
       // Clear form after successful submission
       setTimeout(() => {
         router.push('/');
-      }, 3000);
+      }, 5000); // Increased timeout to allow reading the detailed message
       
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { title?: string; detail?: string; message?: string } } }).response?.data;
@@ -830,7 +933,9 @@ export default function MapPage() {
                   {tempFare && (
                     <p className="text-lg font-semibold text-gray-800">
                       Estimated Fare: <span className="text-blue-600 text-2xl font-bold">{tempFare}</span>
-                      <span className="text-sm text-gray-500 ml-2">({DEFAULT_PRICE_PER_KM.toLocaleString('vi-VN')}₫/km)</span>
+                      <span className="text-sm text-gray-500 ml-2">
+                        ({isLoadingUnitPrice ? 'Loading...' : `${currentUnitPrice.toLocaleString('vi-VN')}₫/km`})
+                      </span>
                     </p>
                   )}
                 </div>
@@ -868,14 +973,23 @@ export default function MapPage() {
                   {fare && (
                     <p className="text-lg font-semibold text-gray-800">
                       Estimated Fare: <span className="text-[#D08700] text-2xl font-bold">{fare}</span>
-                      <span className="text-sm text-gray-500 ml-2">({DEFAULT_PRICE_PER_KM.toLocaleString('vi-VN')}₫/km)</span>
+                      {feeCalculation && (
+                        <span className="text-sm text-gray-500 ml-2">
+                          ({feeCalculation.unitPricePerKm.toLocaleString('vi-VN')}₫/km)
+                        </span>
+                      )}
                     </p>
                   )}
                 </div>
                 {fare && (
                   <div className="mt-2 text-sm text-gray-600 flex items-center justify-center gap-2">
                     <span className="text-[#D08700]">★</span>
-                    <span>Số tiền trên là cho một chuyến đi duy nhất.</span>
+                    <span>
+                      {feeCalculation 
+                        ? `Số tiền trên là cho cả học kỳ ${feeCalculation.semesterName} ${feeCalculation.academicYear}.`
+                        : 'Số tiền trên là cho một chuyến đi duy nhất.'
+                      }
+                    </span>
                   </div>
                 )}
               </div>
@@ -929,7 +1043,11 @@ export default function MapPage() {
                 </p>
                 {fare && (
                   <p className="text-gray-600 mb-4">
-                    Estimated cost: <span className="font-semibold text-[#D08700]">{fare}</span>
+                    {feeCalculation 
+                      ? `Total semester cost: ${feeCalculation.semesterName} ${feeCalculation.academicYear} - `
+                      : 'Estimated cost: '
+                    }
+                    <span className="font-semibold text-[#D08700]">{fare}</span>
                   </p>
                 )}
                 
@@ -1127,20 +1245,78 @@ export default function MapPage() {
                 <div className="bg-gray-50 rounded-2xl p-4">
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">Estimated Fare:</span>
-                    <span className="font-semibold text-green-600">{fare}</span>
+                    <span className="font-semibold text-green-600">
+                      {isCalculatingFee ? (
+                        <div className="flex items-center gap-2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                          <span>Calculating...</span>
+                        </div>
+                      ) : feeCalculation ? (
+                        new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(feeCalculation.totalFee)
+                      ) : (
+                        fare
+                      )}
+                    </span>
                   </div>
                 </div>
+                
+                {/* Detailed fee information */}
+                {feeCalculation && (
+                  <div className="bg-blue-50 rounded-2xl p-4 space-y-3">
+                    <h4 className="font-semibold text-blue-800 text-center">Semester Fee Details</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-blue-700">Semester:</span>
+                        <span className="font-medium text-blue-800">{feeCalculation.semesterName} {feeCalculation.academicYear}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-blue-700">Unit Price:</span>
+                        <span className="font-medium text-blue-800">
+                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(feeCalculation.unitPricePerKm)}/km
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-blue-700">School Days:</span>
+                        <span className="font-medium text-blue-800">{feeCalculation.totalSchoolDays} days</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-blue-700">Total Trips:</span>
+                        <span className="font-medium text-blue-800">{feeCalculation.totalTrips} trips</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-blue-700">Total Distance:</span>
+                        <span className="font-medium text-blue-800">{feeCalculation.totalDistanceKm.toFixed(1)} km</span>
+                      </div>
+                      <div className="border-t border-blue-200 pt-2">
+                        <div className="flex justify-between">
+                          <span className="text-blue-700 font-semibold">Total Fee:</span>
+                          <span className="font-bold text-green-600 text-lg">
+                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(feeCalculation.totalFee)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Fee calculation error */}
+                {feeError && (
+                  <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+                    <div className="flex items-center gap-2 text-red-700">
+                      <span>⚠️</span>
+                      <span className="text-sm">{feeError}</span>
+                    </div>
+                  </div>
+                )}
               </div>
               
               <div className="space-y-3">
                 <button
-                  onClick={() => {
-                    // Handle submit request logic here
-                    console.log('Submit request');
-                  }}
-                  className="w-full bg-[#FDC700] hover:bg-[#D08700] text-white font-semibold py-3 px-6 rounded-2xl transition-colors duration-200 shadow-lg"
+                  onClick={handleSubmitRequest}
+                  disabled={isSubmitting}
+                  className="w-full bg-[#FDC700] hover:bg-[#D08700] text-white font-semibold py-3 px-6 rounded-2xl transition-colors duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Submit Request
+                  {isSubmitting ? 'Submitting...' : 'Submit Request'}
                 </button>
                 <button
                   onClick={backToMapSelection}

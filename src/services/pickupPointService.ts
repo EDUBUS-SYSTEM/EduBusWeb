@@ -47,16 +47,18 @@ export interface SubmitPickupPointRequestDto {
 	distanceKm: number;
 	description?: string;
 	reason?: string;
-	unitPriceVndPerKm?: number;
-	estimatedPriceVnd: number;
 }
 
 export interface SubmitPickupPointRequestResponseDto {
 	requestId: string;
 	status: string;
 	message: string;
-	estimatedPriceVnd: number;
+	totalFee: number;
 	createdAt: string;
+	semesterName: string;
+	academicYear: string;
+	totalSchoolDays: number;
+	calculationDetails: string;
 }
 
 // Admin interfaces
@@ -81,14 +83,18 @@ export interface PickupPointRequestDetailDto {
 	distanceKm: number;
 	description: string;
 	reason: string;
-	unitPriceVndPerKm: number;
-	estimatedPriceVnd: number;
+	unitPricePerKm: number; // Changed from unitPriceVndPerKm to match backend
+	totalFee: number;
 	status: "Pending" | "Approved" | "Rejected";
 	adminNotes: string;
 	reviewedAt?: string;
 	reviewedByAdminId?: string;
 	createdAt: string;
 	updatedAt?: string;
+	// Semester information
+	semesterName?: string;
+	academicYear?: string;
+	totalSchoolDays?: number;
 }
 
 export interface PickupPointRequestListQuery {

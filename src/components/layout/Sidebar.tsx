@@ -18,6 +18,8 @@ import {
   FaClock,
   FaCalendarAlt,
   FaUserCheck,
+  FaDollarSign,
+  FaReceipt,
 } from "react-icons/fa";
 
 export default function Sidebar() {
@@ -54,6 +56,8 @@ export default function Sidebar() {
       icon: <FaCalendarAlt />,
     },
     {href: "/admin/vehicle", label: "Vehicles", icon: <FaBus/>},
+    {href: "/admin/unit-price", label: "Unit Price", icon: <FaDollarSign/>},
+    {href: "/admin/transport-fee-items", label: "Transport Fee Items", icon: <FaReceipt/>},
   ];
 
   return (
