@@ -95,19 +95,19 @@ export default function LeaveRequestsTab() {
     }
   };
 
-  // Cập nhật handleApproveStep1 để nhận thêm parameter
+  // Update handleApproveStep1 to receive additional parameter
   const handleApproveStep1 = (notes: string, needsReplacement: boolean) => {
     setApproveNotes(notes);
     if (needsReplacement) {
       setShowApproveStep1Modal(false);
       setShowApproveStep2Modal(true);
     } else {
-      // Phê duyệt trực tiếp không cần phân công
+      // Direct approval without replacement driver
       handleApproveDirect(notes);
     }
   };
 
-  // Thêm function phê duyệt trực tiếp
+  // Add direct approval function
   const handleApproveDirect = async (notes: string) => {
     if (!selectedLeave) return;
     
@@ -116,7 +116,7 @@ export default function LeaveRequestsTab() {
     try {
       const updatedLeave = await driverLeaveRequestService.approveLeaveRequest(selectedLeave.id, { 
         notes: notes
-        // Không có replacementDriverId - optional
+        // No replacementDriverId - optional
       });
       
       // Update local state instead of refetching
@@ -129,7 +129,7 @@ export default function LeaveRequestsTab() {
         setSelectedLeave(null);
       }
       
-      alert("Đơn nghỉ đã được phê duyệt thành công!");
+      alert("Leave request approved successfully!");
     } catch (err: unknown) {
       console.error("Error approving leave request:", err);
       const errorMessage = (err as { message?: string }).message || 
@@ -148,7 +148,7 @@ export default function LeaveRequestsTab() {
     try {
       const updatedLeave = await driverLeaveRequestService.approveLeaveRequest(selectedLeave.id, { 
         notes: approveNotes,
-        replacementDriverId: replacementDriverId // Có thể là undefined nếu không cần phân công
+        replacementDriverId: replacementDriverId // Can be undefined if no replacement needed
       });
       
       // Update local state instead of refetching
@@ -161,7 +161,7 @@ export default function LeaveRequestsTab() {
         setSelectedLeave(null);
       }
       
-      alert("Đơn nghỉ đã được phê duyệt và phân công tài xế thay thế thành công!");
+      alert("Leave request approved and replacement driver assigned successfully!");
     } catch (err: unknown) {
       console.error("Error approving leave request:", err);
       const errorMessage = (err as { message?: string }).message || 
@@ -190,7 +190,7 @@ export default function LeaveRequestsTab() {
         setSelectedLeave(null);
       }
       
-      alert("Đơn nghỉ đã bị từ chối!");
+      alert("Leave request rejected!");
     } catch (err: unknown) {
       console.error("Error rejecting leave request:", err);
       const errorMessage = (err as { message?: string }).message || 
@@ -241,24 +241,24 @@ export default function LeaveRequestsTab() {
 
   const getStatusText = (status: number) => {
     switch (status) {
-      case 1: return "Chờ duyệt";
-      case 2: return "Đã duyệt";
-      case 3: return "Từ chối";
-      case 4: return "Hủy";
-      case 5: return "Hoàn thành";
-      default: return "Không xác định";
+      case 1: return "Pending";
+      case 2: return "Approved";
+      case 3: return "Rejected";
+      case 4: return "Cancelled";
+      case 5: return "Completed";
+      default: return "Unknown";
     }
   };
 
   const getLeaveTypeText = (leaveType: number) => {
     switch (leaveType) {
-      case 1: return "Nghỉ phép năm";
-      case 2: return "Nghỉ ốm";
-      case 3: return "Nghỉ cá nhân";
-      case 4: return "Nghỉ khẩn cấp";
-      case 5: return "Nghỉ học tập";
-      case 6: return "Khác";
-      default: return "Không xác định";
+      case 1: return "Annual Leave";
+      case 2: return "Sick Leave";
+      case 3: return "Personal Leave";
+      case 4: return "Emergency Leave";
+      case 5: return "Training Leave";
+      case 6: return "Other";
+      default: return "Unknown";
     }
   };
 
@@ -295,7 +295,7 @@ export default function LeaveRequestsTab() {
     return (
       <div className="flex items-center justify-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-3 text-gray-600">Đang tải...</span>
+        <span className="ml-3 text-gray-600">Loading...</span>
       </div>
     );
   }
@@ -308,7 +308,7 @@ export default function LeaveRequestsTab() {
           onClick={() => fetchLeaves()}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
-          Thử lại
+          Try Again
         </button>
       </div>
     );
@@ -324,7 +324,7 @@ export default function LeaveRequestsTab() {
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Tìm kiếm theo tên tài xế hoặc email..."
+              placeholder="Search by driver name or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-200"
@@ -339,7 +339,7 @@ export default function LeaveRequestsTab() {
               className="flex items-center gap-2 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors duration-200 font-medium"
             >
               <FaTimes />
-              Xóa
+              Clear
             </button>
           )}
           
@@ -350,7 +350,7 @@ export default function LeaveRequestsTab() {
               className="flex items-center gap-2 px-4 py-3 bg-[#fad23c] text-[#463B3B] rounded-xl hover:bg-[#FFF085] transition-colors duration-200 font-medium"
             >
               <FaFilter />
-              Bộ lọc
+              Filters
             </button>
           </div>
         </div>
@@ -361,52 +361,52 @@ export default function LeaveRequestsTab() {
             <div className="flex flex-wrap gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Trạng thái
+                  Status
                 </label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
                 >
-                  <option value="">Tất cả trạng thái</option>
-                  <option value="1">Chờ phê duyệt</option>
-                  <option value="2">Đã phê duyệt</option>
-                  <option value="3">Đã từ chối</option>
-                  <option value="4">Đã hủy</option>
-                  <option value="5">Hoàn thành</option>
+                  <option value="">All Status</option>
+                  <option value="1">Pending Approval</option>
+                  <option value="2">Approved</option>
+                  <option value="3">Rejected</option>
+                  <option value="4">Cancelled</option>
+                  <option value="5">Completed</option>
                 </select>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Loại nghỉ
+                  Leave Type
                 </label>
                 <select
                   value={leaveTypeFilter}
                   onChange={(e) => setLeaveTypeFilter(e.target.value)}
                   className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
                 >
-                  <option value="">Tất cả loại nghỉ</option>
-                  <option value="1">Nghỉ phép năm</option>
-                  <option value="2">Nghỉ ốm</option>
-                  <option value="3">Nghỉ cá nhân</option>
-                  <option value="4">Nghỉ khẩn cấp</option>
-                  <option value="5">Nghỉ học tập</option>
-                  <option value="6">Khác</option>
+                  <option value="">All Leave Types</option>
+                  <option value="1">Annual Leave</option>
+                  <option value="2">Sick Leave</option>
+                  <option value="3">Personal Leave</option>
+                  <option value="4">Emergency Leave</option>
+                  <option value="5">Training Leave</option>
+                  <option value="6">Other</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Sắp xếp
+                  Sort By
                 </label>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                   className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
                 >
-                  <option value="desc">Mới nhất</option>
-                  <option value="asc">Cũ nhất</option>
+                  <option value="desc">Newest</option>
+                  <option value="asc">Oldest</option>
                 </select>
               </div>
             </div>
@@ -419,21 +419,21 @@ export default function LeaveRequestsTab() {
         {leaves.length === 0 ? (
           <div className="text-center py-12">
             <FaFileAlt className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Không có đơn nghỉ phép nào</h3>
-            <p className="text-gray-500">Không tìm thấy đơn nghỉ phép nào phù hợp với bộ lọc hiện tại.</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Leave Requests</h3>
+            <p className="text-gray-500">No leave requests found matching the current filters.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-[#FEFCE8] border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Tài xế</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Loại nghỉ</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Thời gian</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Số ngày</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Trạng thái</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Ngày gửi</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Thao tác</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Driver</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Leave Type</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Duration</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Days</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Status</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Request Date</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -466,17 +466,18 @@ export default function LeaveRequestsTab() {
                     <td className="px-6 py-4">
                       <div className="max-w-xs">
                         <div className="text-sm font-medium text-gray-900">
-                          {new Date(leave.startDate).toLocaleDateString('vi-VN')}
+                          {new Date(leave.startDate).toLocaleDateString('en-US')}
                         </div>
-                        <div className="text-xs text-gray-500">
-                          đến {new Date(leave.endDate).toLocaleDateString('vi-VN')}
+                        <div className="text-sm text-gray-900">
+                          <span className="font-normal">to </span>
+                          <span className="font-medium">{new Date(leave.endDate).toLocaleDateString('en-US')}</span>
                         </div>
                       </div>
                     </td>
                     
                     <td className="px-6 py-4">
                       <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {calculateLeaveDays(leave.startDate, leave.endDate)} ngày
+                        {calculateLeaveDays(leave.startDate, leave.endDate)} days
                       </span>
                     </td>
                     
@@ -502,7 +503,7 @@ export default function LeaveRequestsTab() {
                             setShowDetailModal(true);
                           }}
                           className="p-2 text-gray-400 hover:text-[#fad23c] transition-colors duration-200"
-                          title="Xem chi tiết"
+                          title="View Details"
                         >
                           <FaEye className="h-4 w-4" />
                         </button>
@@ -515,7 +516,7 @@ export default function LeaveRequestsTab() {
                                 setShowApproveStep1Modal(true);
                               }}
                               className="p-2 text-gray-400 hover:text-green-600 transition-colors duration-200"
-                              title="Phê duyệt"
+                              title="Approve"
                             >
                               <FaCheck className="h-4 w-4" />
                             </button>
@@ -525,7 +526,7 @@ export default function LeaveRequestsTab() {
                                 setShowRejectModal(true);
                               }}
                               className="p-2 text-gray-400 hover:text-red-600 transition-colors duration-200"
-                              title="Từ chối"
+                              title="Reject"
                             >
                               <FaTimes className="h-4 w-4" />
                             </button>
@@ -563,10 +564,35 @@ export default function LeaveRequestsTab() {
             setSelectedLeave(null);
           }}
           onApprove={async (leaveId: string, replacementDriverId?: string, notes?: string) => {
-            setSelectedLeave(selectedLeave);
-            setApproveNotes(notes || "");
-            setShowApproveStep1Modal(false);
-            setShowApproveStep2Modal(true);
+            setActionLoading(true);
+            
+            try {
+              const updatedLeave = await driverLeaveRequestService.approveLeaveRequest(leaveId, { 
+                notes: notes || "",
+                replacementDriverId: replacementDriverId
+              });
+              
+              // Update local state
+              updateLeaveInList(updatedLeave);
+              
+              // Close modals
+              setShowApproveStep1Modal(false);
+              setShowApproveStep2Modal(false);
+              
+              // Only clear selectedLeave if not in detail modal
+              if (!showDetailModal) {
+                setSelectedLeave(null);
+              }
+              
+              alert("Leave request approved successfully!");
+            } catch (err: unknown) {
+              console.error("Error approving leave request:", err);
+              const errorMessage = (err as { message?: string }).message || 
+                                  "Failed to approve leave request. Please try again.";
+              alert(errorMessage);
+            } finally {
+              setActionLoading(false);
+            }
           }}
           onReject={handleReject}
         />

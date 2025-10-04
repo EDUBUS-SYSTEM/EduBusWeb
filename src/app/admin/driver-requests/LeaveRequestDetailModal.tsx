@@ -70,24 +70,24 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
 
   const getStatusText = (status: number) => {
     switch (status) {
-      case 1: return "Chờ duyệt";
-      case 2: return "Đã duyệt";
-      case 3: return "Từ chối";
-      case 4: return "Hủy";
-      case 5: return "Hoàn thành";
-      default: return "Không xác định";
+      case 1: return "Pending";
+      case 2: return "Approved";
+      case 3: return "Rejected";
+      case 4: return "Cancelled";
+      case 5: return "Completed";
+      default: return "Unknown";
     }
   };
 
   const getLeaveTypeText = (leaveType: number) => {
     switch (leaveType) {
-      case 1: return "Nghỉ phép năm";
-      case 2: return "Nghỉ ốm";
-      case 3: return "Nghỉ cá nhân";
-      case 4: return "Nghỉ khẩn cấp";
-      case 5: return "Nghỉ học tập";
-      case 6: return "Khác";
-      default: return "Không xác định";
+      case 1: return "Annual Leave";
+      case 2: return "Sick Leave";
+      case 3: return "Personal Leave";
+      case 4: return "Emergency Leave";
+      case 5: return "Training Leave";
+      case 6: return "Other";
+      default: return "Unknown";
     }
   };
 
@@ -111,7 +111,7 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
       setShowApproveStep1Modal(false);
       setShowApproveStep2Modal(true);
     } else {
-      // Phê duyệt trực tiếp
+      // Direct approval
       handleApproveDirect(notes);
     }
   };
@@ -136,7 +136,7 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
     
     setActionLoading(true);
     try {
-      await onApprove(leave.id, replacementDriverId, approveNotes); // replacementDriverId có thể là undefined
+      await onApprove(leave.id, replacementDriverId, approveNotes); // replacementDriverId can be undefined
       setShowApproveStep2Modal(false);
       // Don't close the detail modal - keep it open to show updated status
     } catch (error) {
@@ -168,7 +168,7 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900">
-              Chi tiết đơn nghỉ phép
+              Leave Request Details
             </h2>
             <button
               onClick={onClose}
@@ -195,12 +195,12 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
           <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
             <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
               <FaUser className="mr-2 h-5 w-5" />
-              Thông tin tài xế
+              Driver Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Họ và tên</label>
+                  <label className="text-sm font-medium text-gray-700">Full Name</label>
                   <p className="text-gray-900 flex items-center">
                     <FaUser className="mr-2 h-4 w-4" />
                     {leave.driverName}
@@ -208,7 +208,7 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
                 </div>
                 
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Số điện thoại</label>
+                  <label className="text-sm font-medium text-gray-700">Phone Number</label>
                   <p className="text-gray-900 flex items-center">
                     <FaPhone className="mr-2 h-4 w-4" />
                     {leave.driverPhoneNumber}
@@ -226,7 +226,7 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
               
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Số bằng lái</label>
+                  <label className="text-sm font-medium text-gray-700">License Number</label>
                   <p className="text-gray-900 flex items-center">
                     <FaIdCard className="mr-2 h-4 w-4" />
                     {leave.driverLicenseNumber}
@@ -235,7 +235,7 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
                 
                 {leave.primaryVehicleLicensePlate && (
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Phương tiện</label>
+                    <label className="text-sm font-medium text-gray-700">Vehicle</label>
                     <p className="text-gray-900 flex items-center">
                       <FaCar className="mr-2 h-4 w-4" />
                       {leave.primaryVehicleLicensePlate}
@@ -250,29 +250,29 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
           <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
             <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
               <FaCalendarAlt className="mr-2 h-5 w-5" />
-              Thông tin nghỉ phép
+              Leave Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Từ ngày</label>
+                  <label className="text-sm font-medium text-gray-700">From Date</label>
                   <p className="text-gray-900">{formatDate(leave.startDate)}</p>
                 </div>
                 
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Đến ngày</label>
+                  <label className="text-sm font-medium text-gray-700">To Date</label>
                   <p className="text-gray-900">{formatDate(leave.endDate)}</p>
                 </div>
                 
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Số ngày nghỉ</label>
-                  <p className="text-gray-900">{calculateLeaveDays()} ngày</p>
+                  <label className="text-sm font-medium text-gray-700">Leave Days</label>
+                  <p className="text-gray-900">{calculateLeaveDays()} days</p>
                 </div>
               </div>
               
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Ngày gửi đơn</label>
+                  <label className="text-sm font-medium text-gray-700">Request Date</label>
                   <p className="text-gray-900 flex items-center">
                     <FaClock className="mr-2 h-4 w-4" />
                     {formatDate(leave.requestedAt)}
@@ -280,7 +280,7 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
                 </div>
                 
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Lý do nghỉ</label>
+                  <label className="text-sm font-medium text-gray-700">Leave Reason</label>
                   <p className="text-gray-900 mt-1 bg-white p-3 rounded-lg border">
                     {leave.reason}
                   </p>
@@ -294,26 +294,26 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <FaCheck className="mr-2 h-5 w-5" />
-                Thông tin xử lý
+                Processing Information
               </h3>
               
               {leave.status === 2 && leave.approvedAt && (
                 <div className="space-y-3">
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Ngày phê duyệt</label>
+                    <label className="text-sm font-medium text-gray-700">Approval Date</label>
                     <p className="text-gray-900">{formatDate(leave.approvedAt)}</p>
                   </div>
                   
                   {leave.approvedByAdminName && (
                     <div>
-                      <label className="text-sm font-medium text-gray-700">Người phê duyệt</label>
+                      <label className="text-sm font-medium text-gray-700">Approved By</label>
                       <p className="text-gray-900">{leave.approvedByAdminName}</p>
                     </div>
                   )}
                   
                   {leave.approvalNote && (
                     <div>
-                      <label className="text-sm font-medium text-gray-700">Ghi chú của admin</label>
+                      <label className="text-sm font-medium text-gray-700">Admin Notes</label>
                       <p className="text-gray-900 mt-1 bg-white p-3 rounded-lg border">
                         {leave.approvalNote}
                       </p>
@@ -325,20 +325,20 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
               {leave.status === 3 && leave.approvedAt && (
                 <div className="space-y-3">
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Ngày từ chối</label>
+                    <label className="text-sm font-medium text-gray-700">Rejection Date</label>
                     <p className="text-gray-900">{formatDate(leave.approvedAt)}</p>
                   </div>
                   
                   {leave.approvedByAdminName && (
                     <div>
-                      <label className="text-sm font-medium text-gray-700">Người từ chối</label>
+                      <label className="text-sm font-medium text-gray-700">Rejected By</label>
                       <p className="text-gray-900">{leave.approvedByAdminName}</p>
                     </div>
                   )}
                   
                   {leave.approvalNote && (
                     <div>
-                      <label className="text-sm font-medium text-gray-700">Lý do từ chối</label>
+                      <label className="text-sm font-medium text-gray-700">Rejection Reason</label>
                       <p className="text-gray-900 mt-1 bg-white p-3 rounded-lg border text-red-800">
                         {leave.approvalNote}
                       </p>
@@ -354,7 +354,7 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <FaFileAlt className="mr-2 h-5 w-5" />
-                Tài liệu đính kèm
+                Attachments
               </h3>
               <div className="space-y-2">
                 {leave.attachments.map((attachment) => (
@@ -365,7 +365,7 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
                     </div>
                     <button className="text-blue-600 hover:text-blue-800 flex items-center">
                       <FaDownload className="mr-1 h-3 w-3" />
-                      Tải xuống
+                      Download
                     </button>
                   </div>
                 ))}
@@ -386,7 +386,7 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
                     className="px-6 py-2 bg-[#fad23c] text-[#463B3B] rounded-lg hover:bg-[#FFF085] transition-colors duration-200 disabled:opacity-50 flex items-center space-x-2 font-medium"
                   >
                     <FaCheck className="h-4 w-4" />
-                    <span>Phê duyệt</span>
+                    <span>Approve</span>
                   </button>
                   <button
                     onClick={() => setShowRejectModal(true)}
@@ -394,7 +394,7 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
                     className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 disabled:opacity-50 flex items-center space-x-2 font-medium"
                   >
                     <FaTimes className="h-4 w-4" />
-                    <span>Từ chối</span>
+                    <span>Reject</span>
                   </button>
                 </>
               )}

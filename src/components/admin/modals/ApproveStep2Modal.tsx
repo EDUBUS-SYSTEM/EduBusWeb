@@ -56,10 +56,10 @@ export default function ApproveStep2Modal({
 
   const handleApprove = () => {
     if (!replacementDriverId) {
-      alert("Vui lòng chọn tài xế thay thế");
+      alert("Please select a replacement driver");
       return;
     }
-    onApprove(replacementDriverId); // Có thể là undefined nếu không cần phân công
+    onApprove(replacementDriverId); // Can be undefined if no replacement needed
   };
 
   const selectedDriver = availableDrivers.find(d => d.id === replacementDriverId);
@@ -74,7 +74,7 @@ export default function ApproveStep2Modal({
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              <span>Bước 2/2: Chọn tài xế thay thế</span>
+              <span>Step 2/2: Select Replacement Driver</span>
             </h2>
             <button
               onClick={onClose}
@@ -96,7 +96,7 @@ export default function ApproveStep2Modal({
                 <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <h3 className="text-sm font-medium text-red-800">Lỗi khi phê duyệt</h3>
+                <h3 className="text-sm font-medium text-red-800">Approval Error</h3>
               </div>
               <p className="mt-2 text-sm text-red-700">{error}</p>
             </div>
@@ -111,27 +111,27 @@ export default function ApproveStep2Modal({
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <span>Thông tin cần thay thế</span>
+              <span>Replacement Information</span>
             </h3>
             <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="font-medium text-gray-700">Tài xế nghỉ:</span>
+                  <span className="font-medium text-gray-700">Driver on Leave:</span>
                   <p className="text-gray-900">{leave.driverName}</p>
                 </div>
                 <div>
-                  <span className="font-medium text-gray-700">Thời gian:</span>
+                  <span className="font-medium text-gray-700">Duration:</span>
                   <p className="text-gray-900">
-                    {new Date(leave.startDate).toLocaleDateString('vi-VN')} - {new Date(leave.endDate).toLocaleDateString('vi-VN')}
+                    {new Date(leave.startDate).toLocaleDateString('en-US')} - {new Date(leave.endDate).toLocaleDateString('en-US')}
                   </p>
                 </div>
                 <div>
-                  <span className="font-medium text-gray-700">Phương tiện:</span>
-                  <p className="text-gray-900">{leave.primaryVehicleLicensePlate || 'Chưa xác định'}</p>
+                  <span className="font-medium text-gray-700">Vehicle:</span>
+                  <p className="text-gray-900">{leave.primaryVehicleLicensePlate || 'Not specified'}</p>
                 </div>
                 <div>
-                  <span className="font-medium text-gray-700">Ghi chú:</span>
-                  <p className="text-gray-900">{notes || 'Không có'}</p>
+                  <span className="font-medium text-gray-700">Notes:</span>
+                  <p className="text-gray-900">{notes || 'None'}</p>
                 </div>
               </div>
             </div>
@@ -145,13 +145,13 @@ export default function ApproveStep2Modal({
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  <span>Tìm kiếm tài xế</span>
+                  <span>Search Drivers</span>
                 </label>
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Tìm theo tên hoặc số điện thoại..."
+                  placeholder="Search by name or phone number..."
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -165,12 +165,12 @@ export default function ApproveStep2Modal({
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span>Đã chọn tài xế thay thế</span>
+                <span>Selected Replacement Driver</span>
               </h4>
               <div className="text-sm text-green-700">
-                <p><strong>Tên:</strong> {selectedDriver.fullName}</p>
-                <p><strong>Số điện thoại:</strong> {selectedDriver.phoneNumber}</p>
-                <p><strong>Bằng lái:</strong> {selectedDriver.licenseNumber || 'Chưa xác định'}</p>
+                <p><strong>Name:</strong> {selectedDriver.fullName}</p>
+                <p><strong>Phone:</strong> {selectedDriver.phoneNumber}</p>
+                <p><strong>License:</strong> {selectedDriver.licenseNumber || 'Not specified'}</p>
               </div>
             </div>
           )}
@@ -181,19 +181,19 @@ export default function ApproveStep2Modal({
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              <span>Tài xế khả dụng</span>
+              <span>Available Drivers</span>
             </h3>
             
             {loadingDrivers ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-3 text-gray-600">Đang tải danh sách tài xế...</span>
+                <span className="ml-3 text-gray-600">Loading drivers list...</span>
               </div>
             ) : (
               <div className="space-y-3">
                 {filteredDrivers.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
-                    Không tìm thấy tài xế phù hợp
+                    No matching drivers found
                   </div>
                 ) : (
                   filteredDrivers.map((driver) => (
@@ -231,7 +231,7 @@ export default function ApproveStep2Modal({
                             <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
                             </svg>
-                            <span>{driver.licenseNumber || 'Chưa xác định'}</span>
+                            <span>{driver.licenseNumber || 'Not specified'}</span>
                           </div>
                         </div>
                       </div>
@@ -254,7 +254,7 @@ export default function ApproveStep2Modal({
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              <span>Quay lại</span>
+              <span>Back</span>
             </button>
             
             <div className="flex space-x-3">
@@ -263,7 +263,7 @@ export default function ApproveStep2Modal({
                 disabled={loading}
                 className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50"
               >
-                Hủy
+                Cancel
               </button>
               <button
                 onClick={handleApprove}
@@ -277,7 +277,7 @@ export default function ApproveStep2Modal({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 )}
-                <span>Hoàn thành</span>
+                <span>Complete</span>
               </button>
             </div>
           </div>

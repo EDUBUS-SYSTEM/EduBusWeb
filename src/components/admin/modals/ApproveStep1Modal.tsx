@@ -18,13 +18,13 @@ export default function ApproveStep1Modal({
 
   const getLeaveTypeText = (leaveType: number) => {
     switch (leaveType) {
-      case 1: return "Nghỉ phép năm";
-      case 2: return "Nghỉ ốm";
-      case 3: return "Nghỉ cá nhân";
-      case 4: return "Nghỉ khẩn cấp";
-      case 5: return "Nghỉ học tập";
-      case 6: return "Khác";
-      default: return "Không xác định";
+      case 1: return "Annual Leave";
+      case 2: return "Sick Leave";
+      case 3: return "Personal Leave";
+      case 4: return "Emergency Leave";
+      case 5: return "Training Leave";
+      case 6: return "Other";
+      default: return "Unknown";
     }
   };
 
@@ -39,7 +39,7 @@ export default function ApproveStep1Modal({
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900">
-              ✅ Bước 1/2: Xác nhận phê duyệt
+              ✅ Step 1/2: Confirm Approval
             </h2>
             <button
               onClick={onClose}
@@ -57,28 +57,28 @@ export default function ApproveStep1Modal({
           {/* Leave Request Info */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              📋 Thông tin đơn nghỉ
+              📋 Leave Request Information
             </h3>
             <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
               <div className="grid grid-cols-1 gap-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="font-medium text-gray-700">Tài xế:</span>
+                  <span className="font-medium text-gray-700">Driver:</span>
                   <span className="text-gray-900">{leave.driverName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium text-gray-700">Loại nghỉ:</span>
+                  <span className="font-medium text-gray-700">Leave Type:</span>
                   <span className="text-gray-900">{getLeaveTypeText(leave.leaveType)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium text-gray-700">Từ ngày:</span>
-                  <span className="text-gray-900">{new Date(leave.startDate).toLocaleDateString('vi-VN')}</span>
+                  <span className="font-medium text-gray-700">From Date:</span>
+                  <span className="text-gray-900">{new Date(leave.startDate).toLocaleDateString('en-US')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium text-gray-700">Đến ngày:</span>
-                  <span className="text-gray-900">{new Date(leave.endDate).toLocaleDateString('vi-VN')}</span>
+                  <span className="font-medium text-gray-700">To Date:</span>
+                  <span className="text-gray-900">{new Date(leave.endDate).toLocaleDateString('en-US')}</span>
                 </div>
                 <div className="mt-3">
-                  <span className="font-medium text-gray-700">Lý do:</span>
+                  <span className="font-medium text-gray-700">Reason:</span>
                   <p className="text-gray-900 mt-1 bg-white p-3 rounded-lg border">
                     {leave.reason}
                   </p>
@@ -90,12 +90,12 @@ export default function ApproveStep1Modal({
           {/* Notes */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              📝 Ghi chú phê duyệt
+              📝 Approval Notes
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Nhập ghi chú phê duyệt..."
+              placeholder="Enter approval notes..."
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               rows={3}
             />
@@ -112,7 +112,7 @@ export default function ApproveStep1Modal({
                 className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
               <label htmlFor="needsReplacement" className="text-sm font-medium text-gray-700">
-                Cần phân công tài xế thay thế
+                Need to assign replacement driver
               </label>
             </div>
 
@@ -126,10 +126,10 @@ export default function ApproveStep1Modal({
                   </div>
                   <div className="ml-3">
                     <h3 className="text-sm font-medium text-yellow-800">
-                      ⚠️ Bạn sẽ được chuyển đến bước chọn tài xế thay thế
+                      ⚠️ You will be redirected to select replacement driver
                     </h3>
                     <div className="mt-2 text-sm text-yellow-700">
-                      <p>Hệ thống sẽ yêu cầu bạn chọn tài xế thay thế trước khi hoàn thành phê duyệt.</p>
+                      <p>The system will require you to select a replacement driver before completing the approval.</p>
                     </div>
                   </div>
                 </div>
@@ -146,10 +146,10 @@ export default function ApproveStep1Modal({
                   </div>
                   <div className="ml-3">
                     <h3 className="text-sm font-medium text-blue-800">
-                      ℹ️ Đơn sẽ được phê duyệt ngay
+                      ℹ️ Request will be approved immediately
                     </h3>
                     <div className="mt-2 text-sm text-blue-700">
-                      <p>Đơn nghỉ sẽ được phê duyệt và chuyển sang trạng thái &quot;Chờ phân công&quot;. Bạn có thể phân công tài xế thay thế sau.</p>
+                      <p>The leave request will be approved and moved to &quot;Pending Assignment&quot; status. You can assign a replacement driver later.</p>
                     </div>
                   </div>
                 </div>
@@ -165,14 +165,14 @@ export default function ApproveStep1Modal({
               onClick={onClose}
               className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
             >
-              Hủy
+              Cancel
             </button>
             <button
               onClick={handleNext}
               className="px-4 py-2 bg-[#fad23c] text-[#463B3B] rounded-lg hover:bg-[#FFF085] transition-colors duration-200 flex items-center space-x-2 font-medium"
             >
               <span>
-                {needsReplacement ? "Tiếp tục" : "Phê duyệt"}
+                {needsReplacement ? "Continue" : "Approve"}
               </span>
               {needsReplacement ? (
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
