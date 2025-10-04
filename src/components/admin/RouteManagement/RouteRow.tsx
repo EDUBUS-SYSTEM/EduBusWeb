@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Droppable } from '@hello-pangea/dnd';
 import { FaBus } from 'react-icons/fa';
-import { RouteDto, PickupPointInfoDto } from '@/services/routeService/routeService.types';
+import { RouteDto } from '@/services/routeService/routeService.types';
 import PickupPoint from './PickupPoint';
 
 interface RouteRowProps {

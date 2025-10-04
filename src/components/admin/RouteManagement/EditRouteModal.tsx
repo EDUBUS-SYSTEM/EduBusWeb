@@ -80,7 +80,7 @@ const EditRouteModal: React.FC<EditRouteModalProps> = ({
       };
 
       await routeService.updateBasic(route.id, updateData);
-      let updatedRoute = {
+      const updatedRoute = {
         ...route,
         routeName: routeName.trim()
       }

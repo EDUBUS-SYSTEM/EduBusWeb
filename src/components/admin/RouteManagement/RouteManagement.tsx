@@ -13,21 +13,9 @@ import RouteRow from './RouteRow';
 import LobbyArea from './LobbyArea';
 import { pickupPointService, PickupPointDto } from '@/services/pickupPointService';
 
-// Create 100 pickup points with a capacity of 1 each
-const allPickupPoints: PickupPointInfoDto[] = Array.from({ length: 100 }, (_, i) => ({
-  pickupPointId: `pp-${i + 1}`,
-  sequenceOrder: i + 1,
-  location: {
-    latitude: 10.75 + i * 0.001,
-    longitude: 106.66 + i * 0.001,
-    address: `Street ${i + 1}, District ${((i % 5) + 1)}, City`
-  },
-  studentCount: 1
-}));
-
 const RouteManagement: React.FC = () => {
   const [routes, setRoutes] = useState<RouteDto[]>([]);
-  const [lobby, setLobby] = useState<PickupPointInfoDto[]>(allPickupPoints);
+  const [lobby, setLobby] = useState<PickupPointInfoDto[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState<RouteDto | null>(null);
@@ -315,7 +303,7 @@ const RouteManagement: React.FC = () => {
   };
 
   // ✅ NEW: Handle discarding suggestions (refetch original routes)
-  const handleDiscardSuggestions = async () => {
+  const handleDiscardChanges = async () => {
     try {
       setIsLoading(true);
 
@@ -494,7 +482,7 @@ const RouteManagement: React.FC = () => {
 
             <div className="flex items-center space-x-3">
               {/* Save Changes Button */}
-              {modifiedRoutes.size > 0 && (
+              {modifiedRoutes.size > 0 && !hasSuggestions &&(
                 <button
                   onClick={handleSaveChanges}
                   disabled={isSaving}
@@ -505,27 +493,28 @@ const RouteManagement: React.FC = () => {
                 </button>
               )}
 
-              {hasSuggestions ? (
-                // Show Apply/Discard buttons when current routes are suggestions
-                <>
-                  <button
-                    onClick={handleDiscardSuggestions}
-                    disabled={isLoading}
-                    className="bg-gray-500 hover:bg-gray-600 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
-                  >
-                    <FaTimes className="mr-2" />
-                    {isLoading ? 'Loading...' : 'Discard Suggestions'}
-                  </button>
-                  <button
-                    onClick={handleApplySuggestions}
-                    className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
-                  >
-                    <FaCheck className="mr-2" />
-                    Apply Suggestions ({routes.length})
-                  </button>
-                </>
-              ) : (
-                // Show Generate Routes button when current routes are not suggestions
+              {(hasSuggestions || modifiedRoutes.size > 0) && (
+                <button
+                  onClick={handleDiscardChanges}
+                  disabled={isLoading}
+                  className="bg-gray-500 hover:bg-gray-600 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
+                >
+                  <FaTimes className="mr-2" />
+                  {isLoading ? 'Loading...' : 'Discard'}
+                </button>
+              )}
+
+              {hasSuggestions && (
+                <button
+                  onClick={handleApplySuggestions}
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
+                >
+                  <FaCheck className="mr-2" />
+                  Apply Suggestions ({routes.length})
+                </button>
+              )}
+              
+              {!hasSuggestions && modifiedRoutes.size === 0 && (
                 <button
                   onClick={handleGenerateRoutes}
                   disabled={isGenerating || isLoading}

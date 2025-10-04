@@ -19,11 +19,6 @@ export interface PickupPointInfoDto {
   studentCount: number;
 }
 
-export interface PickupPointInRequest {
-  pickupPointId: string;
-  sequenceOrder: number;
-}
-
 export interface LocationInfoDto {
   latitude: number;
   longitude: number;
@@ -33,13 +28,17 @@ export interface LocationInfoDto {
 export interface CreateRouteRequest {
   routeName: string;
   vehicleId: string;
-  pickupPoints: PickupPointInRequest[];
+  pickupPoints: RoutePickupPointRequest[];
 }
 
 export interface UpdateRouteRequest {
   routeName?: string;
   vehicleId?: string;
-  pickupPoints?: PickupPointInfoDto[];
+  pickupPoints?: RoutePickupPointRequest[];
+}
+
+export interface UpdateBulkRouteRequest {
+  routes: UpdateBulkRouteItem[];
 }
 
 export interface UpdateBulkRouteItem {
@@ -49,20 +48,16 @@ export interface UpdateBulkRouteItem {
   pickupPoints?: RoutePickupPointRequest[];
 }
 
-export interface RoutePickupPointRequest {
-  pickupPointId: string; 
-  sequenceOrder: number;
-}
-
-export interface UpdateBulkRouteRequest {
-  routes: UpdateBulkRouteItem[];
-}
-
 export interface UpdateBulkRouteResponse {
   success: boolean;
   totalRoutes: number;
   updatedRoutes: RouteDto[];
   errorMessage?: string;
+}
+
+export interface RoutePickupPointRequest {
+  pickupPointId: string; 
+  sequenceOrder: number;
 }
 
 export interface UpdateRouteBasicRequest {
