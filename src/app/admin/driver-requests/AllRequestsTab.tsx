@@ -200,7 +200,7 @@ export default function AllRequestsTab() {
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Tìm kiếm theo tên tài xế..."
+              placeholder="Search by driver name..."
               value={searchDriverName}
               onChange={(e) => setSearchDriverName(e.target.value)}
               className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-200"
@@ -213,7 +213,7 @@ export default function AllRequestsTab() {
             <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Tìm kiếm theo email..."
+              placeholder="Search by email..."
               value={searchDriverEmail}
               onChange={(e) => setSearchDriverEmail(e.target.value)}
               className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-200"
@@ -231,7 +231,7 @@ export default function AllRequestsTab() {
               className="flex items-center gap-2 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors duration-200 font-medium"
             >
               <FaTimes />
-              Xóa
+              Clear
             </button>
           )}
           
@@ -241,7 +241,7 @@ export default function AllRequestsTab() {
             className="flex items-center gap-2 px-4 py-3 bg-[#fad23c] text-[#463B3B] rounded-xl hover:bg-[#FFF085] transition-colors duration-200 font-medium"
           >
             <FaFilter />
-            Bộ lọc
+            Filters
           </button>
         </div>
 
@@ -251,34 +251,34 @@ export default function AllRequestsTab() {
             <div className="flex flex-wrap gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Trạng thái
+                  Status
                 </label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
                 >
-                  <option value="">Tất cả trạng thái</option>
-                  <option value="Pending">Chờ xử lý</option>
-                  <option value="In Progress">Đang xử lý</option>
-                  <option value="Approved">Đã duyệt</option>
-                  <option value="Resolved">Đã giải quyết</option>
-                  <option value="Rejected">Đã từ chối</option>
+                  <option value="">All Status</option>
+                  <option value="Pending">Pending</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Approved">Approved</option>
+                  <option value="Resolved">Resolved</option>
+                  <option value="Rejected">Rejected</option>
                 </select>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Loại yêu cầu
+                  Request Type
                 </label>
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
                   className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
                 >
-                  <option value="">Tất cả loại</option>
-                  <option value="leave">Đơn nghỉ</option>
-                  <option value="general">Yêu cầu chung</option>
+                  <option value="">All Types</option>
+                  <option value="leave">Leave Requests</option>
+                  <option value="general">General Requests</option>
                 </select>
               </div>
             </div>
@@ -298,20 +298,20 @@ export default function AllRequestsTab() {
         {requests.length === 0 ? (
           <div className="text-center py-12">
             <FaFileAlt className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Không có yêu cầu nào</h3>
-            <p className="text-gray-500">Không tìm thấy yêu cầu nào phù hợp với bộ lọc hiện tại.</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Requests Found</h3>
+            <p className="text-gray-500">No requests found matching the current filters.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-[#FEFCE8] border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Loại</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Tài xế</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Nội dung</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Trạng thái</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Ngày gửi</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Thao tác</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Type</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Driver</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Content</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Status</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Submit Date</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -321,7 +321,7 @@ export default function AllRequestsTab() {
                       <div className="flex items-center space-x-2">
                         {getTypeIcon(item.type)}
                         <span className={getTypeBadge(item.type)}>
-                          {item.type === 'leave' ? 'Đơn nghỉ' : 'Yêu cầu chung'}
+                          {item.type === 'leave' ? 'Leave Request' : 'General Request'}
                         </span>
                       </div>
                     </td>
@@ -352,10 +352,10 @@ export default function AllRequestsTab() {
                         {item.type === 'leave' ? (
                           <>
                             <div className="text-sm font-medium text-gray-900">
-                              {item.data.leaveType === 2 && "Nghỉ ốm"}
-                              {item.data.leaveType === 3 && "Nghỉ cá nhân"}
-                              {item.data.leaveType === 4 && "Nghỉ khẩn cấp"}
-                              {item.data.leaveType === 1 && "Nghỉ phép"}
+                              {item.data.leaveType === 2 && "Sick Leave"}
+                              {item.data.leaveType === 3 && "Personal Leave"}
+                              {item.data.leaveType === 4 && "Emergency Leave"}
+                              {item.data.leaveType === 1 && "Annual Leave"}
                             </div>
                             <div className="text-xs text-gray-500 truncate">
                               {item.data.reason}
@@ -378,18 +378,18 @@ export default function AllRequestsTab() {
                       <span className={getStatusBadge(item.data.status)}>
                         {item.type === 'leave' ? (
                           <>
-                            {item.data.status === 1 && "Chờ xử lý"}
-                            {item.data.status === 2 && "Đã duyệt"}
-                            {item.data.status === 3 && "Đã từ chối"}
-                            {item.data.status === 4 && "Đã hủy"}
-                            {item.data.status === 5 && "Hoàn thành"}
+                            {item.data.status === 1 && "Pending"}
+                            {item.data.status === 2 && "Approved"}
+                            {item.data.status === 3 && "Rejected"}
+                            {item.data.status === 4 && "Cancelled"}
+                            {item.data.status === 5 && "Completed"}
                           </>
                         ) : (
                           <>
-                            {item.data.status === "Pending" && "Chờ xử lý"}
-                            {item.data.status === "Resolved" && "Đã duyệt"}
-                            {item.data.status === "Rejected" && "Đã từ chối"}
-                            {item.data.status === "In Progress" && "Đang xử lý"}
+                            {item.data.status === "Pending" && "Pending"}
+                            {item.data.status === "Resolved" && "Resolved"}
+                            {item.data.status === "Rejected" && "Rejected"}
+                            {item.data.status === "In Progress" && "In Progress"}
                           </>
                         )}
                       </span>
@@ -412,7 +412,7 @@ export default function AllRequestsTab() {
                             setShowDetailModal(true);
                           }}
                           className="p-2 text-gray-400 hover:text-[#fad23c] transition-colors duration-200"
-                          title="Xem chi tiết"
+                          title="View Details"
                         >
                           <FaEye className="h-4 w-4" />
                         </button>
@@ -434,11 +434,11 @@ export default function AllRequestsTab() {
             disabled={currentPage === 1}
             className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors duration-200"
           >
-            Trước
+            Previous
           </button>
           
           <span className="px-4 py-2 text-sm text-gray-700">
-            Trang {currentPage} / {Math.ceil(totalItems / itemsPerPage)}
+            Page {currentPage} / {Math.ceil(totalItems / itemsPerPage)}
           </span>
           
           <button
@@ -446,7 +446,7 @@ export default function AllRequestsTab() {
             disabled={currentPage >= Math.ceil(totalItems / itemsPerPage)}
             className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors duration-200"
           >
-            Sau
+            Next
           </button>
         </div>
       )}

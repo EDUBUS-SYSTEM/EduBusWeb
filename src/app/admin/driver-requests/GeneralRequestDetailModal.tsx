@@ -70,31 +70,31 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
 
   const getRequestTypeText = (requestType: string) => {
     switch (requestType) {
-      case "Route Change": return "Thay đổi tuyến đường";
-      case "Vehicle Issue": return "Vấn đề phương tiện";
-      case "Schedule Adjustment": return "Điều chỉnh lịch trình";
-      case "Training Request": return "Yêu cầu đào tạo";
-      case "Other": return "Khác";
+      case "Route Change": return "Route Change";
+      case "Vehicle Issue": return "Vehicle Issue";
+      case "Schedule Adjustment": return "Schedule Adjustment";
+      case "Training Request": return "Training Request";
+      case "Other": return "Other";
       default: return requestType;
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case "Pending": return "Chờ xử lý";
-      case "In Progress": return "Đang xử lý";
-      case "Resolved": return "Đã giải quyết";
-      case "Rejected": return "Đã từ chối";
+      case "Pending": return "Pending";
+      case "In Progress": return "In Progress";
+      case "Resolved": return "Resolved";
+      case "Rejected": return "Rejected";
       default: return status;
     }
   };
 
   const getPriorityText = (priority: string) => {
     switch (priority) {
-      case "Urgent": return "Khẩn cấp";
-      case "High": return "Cao";
-      case "Medium": return "Trung bình";
-      case "Low": return "Thấp";
+      case "Urgent": return "Urgent";
+      case "High": return "High";
+      case "Medium": return "Medium";
+      case "Low": return "Low";
       default: return priority;
     }
   };
@@ -120,7 +120,7 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">Chi tiết yêu cầu</h2>
+            <h2 className="text-xl font-semibold text-gray-900">Request Details</h2>
             <button
               onClick={onClose}
               className="p-2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
@@ -152,7 +152,7 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
               </div>
             </div>
             <div className="text-sm text-gray-500">
-              Ngày gửi: {formatDateTime(request.submittedAt)}
+              Submit Date: {formatDateTime(request.submittedAt)}
             </div>
           </div>
 
@@ -160,13 +160,13 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
           <div className="bg-[#FEFCE8] rounded-xl p-6 border border-[#fad23c]/20">
             <h3 className="text-lg font-semibold text-[#463B3B] mb-4 flex items-center">
               <FaUser className="mr-2" />
-              Thông tin tài xế
+              Driver Information
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Họ và tên</label>
+                  <label className="text-sm font-medium text-gray-700">Full Name</label>
                   <p className="text-gray-900">
                     {request.driverInfo.firstName} {request.driverInfo.lastName}
                   </p>
@@ -179,7 +179,7 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Số điện thoại</label>
+                  <label className="text-sm font-medium text-gray-700">Phone Number</label>
                   <p className="text-gray-900 flex items-center">
                     <FaPhone className="mr-2 h-4 w-4" />
                     {request.driverInfo.phoneNumber}
@@ -189,7 +189,7 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
               
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Số bằng lái</label>
+                  <label className="text-sm font-medium text-gray-700">License Number</label>
                   <p className="text-gray-900 flex items-center">
                     <FaIdCard className="mr-2 h-4 w-4" />
                     {request.driverInfo.licenseNumber}
@@ -198,7 +198,7 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
                 
                 {request.driverInfo.vehicleInfo && (
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Phương tiện</label>
+                    <label className="text-sm font-medium text-gray-700">Vehicle</label>
                     <p className="text-gray-900 flex items-center">
                       <FaCar className="mr-2 h-4 w-4" />
                       {request.driverInfo.vehicleInfo.plateNumber} - {request.driverInfo.vehicleInfo.model}
@@ -213,19 +213,19 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
           <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
             <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
               <FaFileAlt className="mr-2" />
-              Thông tin yêu cầu
+              Request Information
             </h3>
             
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-gray-700">Tiêu đề</label>
+                <label className="text-sm font-medium text-gray-700">Title</label>
                 <p className="text-lg font-semibold text-gray-900 mt-1">
                   {request.title}
                 </p>
               </div>
               
               <div>
-                <label className="text-sm font-medium text-gray-700">Mô tả chi tiết</label>
+                <label className="text-sm font-medium text-gray-700">Description</label>
                 <p className="text-gray-900 mt-1 bg-white p-4 rounded-lg border">
                   {request.description}
                 </p>
@@ -238,7 +238,7 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
             <div className="bg-green-50 rounded-xl p-6 border border-green-200">
               <h3 className="text-lg font-semibold text-green-900 mb-4 flex items-center">
                 <FaFileAlt className="mr-2" />
-                Tài liệu đính kèm ({request.attachments.length})
+                Attachments ({request.attachments.length})
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -261,7 +261,7 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
                       <button
                         onClick={() => window.open(attachment.fileUrl, '_blank')}
                         className="p-2 text-green-600 hover:text-green-800 transition-colors duration-200"
-                        title="Tải xuống"
+                        title="Download"
                       >
                         <FaDownload className="h-4 w-4" />
                       </button>
@@ -275,11 +275,11 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
           {/* Admin Review Information */}
           {(request.status === "Resolved" || request.status === "Rejected") && (
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Thông tin xử lý</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Processing Information</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Ngày xử lý</label>
+                  <label className="text-sm font-medium text-gray-700">Processing Date</label>
                   <p className="text-gray-900 mt-1 flex items-center">
                     <FaClock className="mr-2 h-4 w-4" />
                     {request.resolvedAt ? formatDateTime(request.resolvedAt) : 'N/A'}
@@ -287,7 +287,7 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
                 </div>
                 
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Admin xử lý</label>
+                  <label className="text-sm font-medium text-gray-700">Processing Admin</label>
                   <p className="text-gray-900 mt-1">
                     {request.resolvedByAdminId || 'N/A'}
                   </p>
@@ -296,7 +296,7 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
               
               {request.adminNotes && (
                 <div className="mt-4">
-                  <label className="text-sm font-medium text-gray-700">Ghi chú của admin</label>
+                  <label className="text-sm font-medium text-gray-700">Admin Notes</label>
                   <p className="text-gray-900 mt-1 bg-white p-3 rounded-lg border">
                     {request.adminNotes}
                   </p>
@@ -313,7 +313,7 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
               onClick={onClose}
               className="px-6 py-2 bg-[#fad23c] text-[#463B3B] rounded-lg hover:bg-[#FFF085] transition-colors duration-200 font-medium"
             >
-              Đóng
+              Close
             </button>
           </div>
         </div>

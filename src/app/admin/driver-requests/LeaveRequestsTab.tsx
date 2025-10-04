@@ -6,9 +6,9 @@ import ApproveStep1Modal from "@/components/admin/modals/ApproveStep1Modal";
 import ApproveStep2Modal from "@/components/admin/modals/ApproveStep2Modal";
 import { RejectLeaveModal } from "@/components/admin";
 import Pagination from "@/components/ui/Pagination";
-import { 
-  driverLeaveRequestService, 
-  DriverLeaveRequest, 
+import {
+  driverLeaveRequestService,
+  DriverLeaveRequest,
   DriverLeaveRequestFilters
 } from "@/services/api/driverLeaveRequests";
 
@@ -16,20 +16,20 @@ export default function LeaveRequestsTab() {
   const [leaves, setLeaves] = useState<DriverLeaveRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const itemsPerPage = 5;
-  
+
   // Filter state
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [leaveTypeFilter, setLeaveTypeFilter] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<string>("desc");
   const [showFilters, setShowFilters] = useState(false);
-  
+
   // Modal state
   const [selectedLeave, setSelectedLeave] = useState<DriverLeaveRequest | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -37,14 +37,16 @@ export default function LeaveRequestsTab() {
   const [showApproveStep2Modal, setShowApproveStep2Modal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
-  
+
   // Step 2 modal state
   const [approveNotes, setApproveNotes] = useState("");
 
-  const fetchLeaves = useCallback(async (filters: DriverLeaveRequestFilters = {}) => {
+  // Single fetch function that handles all cases
+  const fetchLeaves = useCallback(async () => {
+    console.log("Fetching leaves with current state");
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await driverLeaveRequestService.getLeaveRequests({
         status: statusFilter || undefined,
@@ -52,10 +54,9 @@ export default function LeaveRequestsTab() {
         searchTerm: searchTerm || undefined,
         sortBy: sortBy || "desc",
         page: currentPage,
-        perPage: itemsPerPage,
-        ...filters
+        perPage: itemsPerPage
       });
-      
+
       setLeaves(response.data);
       setTotalItems(response.pagination.totalItems);
       setTotalPages(response.pagination.totalPages);
@@ -67,28 +68,23 @@ export default function LeaveRequestsTab() {
     }
   }, [statusFilter, leaveTypeFilter, searchTerm, sortBy, currentPage, itemsPerPage]);
 
-  // Initial load
-  useEffect(() => {
-    fetchLeaves();
-  }, [fetchLeaves]);
-
-  // Debounced search
+  // Combined effect for all changes
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       fetchLeaves();
-    }, 500);
+    }, searchTerm ? 500 : 0); // Debounce only for search, immediate for other changes
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, fetchLeaves]);
+  }, [statusFilter, leaveTypeFilter, sortBy, currentPage, searchTerm]);
 
   // Update a specific leave in the local state
   const updateLeaveInList = (updatedLeave: DriverLeaveRequest) => {
-    setLeaves(prevLeaves => 
-      prevLeaves.map(leave => 
+    setLeaves(prevLeaves =>
+      prevLeaves.map(leave =>
         leave.id === updatedLeave.id ? updatedLeave : leave
       )
     );
-    
+
     // Update selectedLeave if it's the one being updated
     if (selectedLeave && selectedLeave.id === updatedLeave.id) {
       setSelectedLeave(updatedLeave);
@@ -110,30 +106,30 @@ export default function LeaveRequestsTab() {
   // Add direct approval function
   const handleApproveDirect = async (notes: string) => {
     if (!selectedLeave) return;
-    
+
     setActionLoading(true);
-    
+
     try {
-      const updatedLeave = await driverLeaveRequestService.approveLeaveRequest(selectedLeave.id, { 
+      const updatedLeave = await driverLeaveRequestService.approveLeaveRequest(selectedLeave.id, {
         notes: notes
         // No replacementDriverId - optional
       });
-      
+
       // Update local state instead of refetching
       updateLeaveInList(updatedLeave);
-      
+
       setShowApproveStep1Modal(false);
-      
+
       // Only clear selectedLeave if not in detail modal
       if (!showDetailModal) {
         setSelectedLeave(null);
       }
-      
+
       alert("Leave request approved successfully!");
     } catch (err: unknown) {
       console.error("Error approving leave request:", err);
-      const errorMessage = (err as { message?: string }).message || 
-                          "Failed to approve leave request. Please try again.";
+      const errorMessage = (err as { message?: string }).message ||
+        "Failed to approve leave request. Please try again.";
       alert(errorMessage);
     } finally {
       setActionLoading(false);
@@ -142,30 +138,30 @@ export default function LeaveRequestsTab() {
 
   const handleApproveStep2 = async (replacementDriverId?: string) => {
     if (!selectedLeave) return;
-    
+
     setActionLoading(true);
-    
+
     try {
-      const updatedLeave = await driverLeaveRequestService.approveLeaveRequest(selectedLeave.id, { 
+      const updatedLeave = await driverLeaveRequestService.approveLeaveRequest(selectedLeave.id, {
         notes: approveNotes,
         replacementDriverId: replacementDriverId // Can be undefined if no replacement needed
       });
-      
+
       // Update local state instead of refetching
       updateLeaveInList(updatedLeave);
-      
+
       setShowApproveStep2Modal(false);
-      
+
       // Only clear selectedLeave if not in detail modal
       if (!showDetailModal) {
         setSelectedLeave(null);
       }
-      
+
       alert("Leave request approved and replacement driver assigned successfully!");
     } catch (err: unknown) {
       console.error("Error approving leave request:", err);
-      const errorMessage = (err as { message?: string }).message || 
-                          "Failed to approve leave request. Please try again.";
+      const errorMessage = (err as { message?: string }).message ||
+        "Failed to approve leave request. Please try again.";
       alert(errorMessage);
     } finally {
       setActionLoading(false);
@@ -174,27 +170,27 @@ export default function LeaveRequestsTab() {
 
   const handleReject = async (leaveId: string, reason: string) => {
     setActionLoading(true);
-    
+
     try {
       console.log("Rejecting leave request:", { leaveId, reason });
       const updatedLeave = await driverLeaveRequestService.rejectLeaveRequest(leaveId, { reason: reason });
       console.log("Updated leave after reject:", updatedLeave);
-      
+
       // Update local state instead of refetching
       updateLeaveInList(updatedLeave);
-      
+
       setShowRejectModal(false);
-      
+
       // Only clear selectedLeave if not in detail modal
       if (!showDetailModal) {
         setSelectedLeave(null);
       }
-      
+
       alert("Leave request rejected!");
     } catch (err: unknown) {
       console.error("Error rejecting leave request:", err);
-      const errorMessage = (err as { message?: string }).message || 
-                          "Failed to reject leave request. Please try again.";
+      const errorMessage = (err as { message?: string }).message ||
+        "Failed to reject leave request. Please try again.";
       alert(errorMessage);
     } finally {
       setActionLoading(false);
@@ -275,14 +271,14 @@ export default function LeaveRequestsTab() {
   const calculateLeaveDays = (startDate: string, endDate: string) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    
+
     // Set time to start of day to avoid timezone issues
     start.setHours(0, 0, 0, 0);
     end.setHours(0, 0, 0, 0);
-    
+
     const diffTime = end.getTime() - start.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    
+
     return diffDays;
   };
 
@@ -331,7 +327,7 @@ export default function LeaveRequestsTab() {
               autoComplete="off"
             />
           </div>
-          
+
           {/* Clear Search */}
           {searchTerm && (
             <button
@@ -342,7 +338,7 @@ export default function LeaveRequestsTab() {
               Clear
             </button>
           )}
-          
+
           {/* Filter Toggle - Right aligned */}
           <div className="ml-auto">
             <button
@@ -376,7 +372,7 @@ export default function LeaveRequestsTab() {
                   <option value="5">Completed</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Leave Type
@@ -462,7 +458,7 @@ export default function LeaveRequestsTab() {
                         {getLeaveTypeText(leave.leaveType)}
                       </span>
                     </td>
-                    
+
                     <td className="px-6 py-4">
                       <div className="max-w-xs">
                         <div className="text-sm font-medium text-gray-900">
@@ -474,19 +470,19 @@ export default function LeaveRequestsTab() {
                         </div>
                       </div>
                     </td>
-                    
+
                     <td className="px-6 py-4">
                       <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         {calculateLeaveDays(leave.startDate, leave.endDate)} days
                       </span>
                     </td>
-                    
+
                     <td className="px-6 py-4">
                       <span className={getStatusBadge(leave.status)}>
                         {getStatusText(leave.status)}
                       </span>
                     </td>
-                    
+
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
                         <FaClock className="h-4 w-4 text-gray-400" />
@@ -507,7 +503,7 @@ export default function LeaveRequestsTab() {
                         >
                           <FaEye className="h-4 w-4" />
                         </button>
-                        
+
                         {leave.status === 1 && (
                           <>
                             <button
@@ -565,30 +561,30 @@ export default function LeaveRequestsTab() {
           }}
           onApprove={async (leaveId: string, replacementDriverId?: string, notes?: string) => {
             setActionLoading(true);
-            
+
             try {
-              const updatedLeave = await driverLeaveRequestService.approveLeaveRequest(leaveId, { 
+              const updatedLeave = await driverLeaveRequestService.approveLeaveRequest(leaveId, {
                 notes: notes || "",
                 replacementDriverId: replacementDriverId
               });
-              
+
               // Update local state
               updateLeaveInList(updatedLeave);
-              
+
               // Close modals
               setShowApproveStep1Modal(false);
               setShowApproveStep2Modal(false);
-              
+
               // Only clear selectedLeave if not in detail modal
               if (!showDetailModal) {
                 setSelectedLeave(null);
               }
-              
+
               alert("Leave request approved successfully!");
             } catch (err: unknown) {
               console.error("Error approving leave request:", err);
-              const errorMessage = (err as { message?: string }).message || 
-                                  "Failed to approve leave request. Please try again.";
+              const errorMessage = (err as { message?: string }).message ||
+                "Failed to approve leave request. Please try again.";
               alert(errorMessage);
             } finally {
               setActionLoading(false);

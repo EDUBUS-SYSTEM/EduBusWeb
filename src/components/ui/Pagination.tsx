@@ -66,7 +66,7 @@ const Pagination: React.FC<PaginationProps> = ({
     <div className={`w-full flex flex-col items-center justify-center space-y-3 ${className}`}>
       {showInfo && totalItems !== undefined && itemsPerPage !== undefined && (
         <div className="text-sm text-gray-600 text-center">
-          Hiển thị <span className="font-semibold">{startIndex}-{endIndex}</span> trong tổng số <span className="font-semibold">{totalItems}</span> kết quả
+          Showing <span className="font-semibold">{startIndex}-{endIndex}</span> of <span className="font-semibold">{totalItems}</span> results
         </div>
       )}
 

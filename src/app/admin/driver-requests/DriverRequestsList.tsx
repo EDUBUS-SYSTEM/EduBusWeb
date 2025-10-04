@@ -11,21 +11,21 @@ export default function DriverRequestsList() {
   const tabs = [
     {
       id: "leave",
-      label: "Đơn nghỉ",
+      label: "Leave Requests",
       icon: <FaCalendarAlt />,
-      count: 5, // Sẽ được tính từ data thực tế
+      count: 5, // Will be calculated from actual data
       component: <LeaveRequestsTab />
     },
     {
       id: "general",
-      label: "Yêu cầu chung",
+      label: "General Requests",
       icon: <FaFileAlt />,
       count: 3,
       component: <GeneralRequestsTab />
     },
     {
       id: "all",
-      label: "Tất cả",
+      label: "All Requests",
       icon: <FaList />,
       count: 8,
       component: <AllRequestsTab />

@@ -15,7 +15,7 @@ export default function DriverRequestsPage() {
               Driver Requests
             </h1>
             <p className="text-[#6B7280]">
-              Quản lý tất cả yêu cầu và đơn nghỉ của tài xế
+              Manage all driver requests and leave applications
             </p>
           </div>
           <DriverRequestsList />
