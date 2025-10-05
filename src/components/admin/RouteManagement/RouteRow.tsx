@@ -1,14 +1,16 @@
 // EduBusWeb/src/components/admin/RouteManagement/RouteRow.tsx
 import React, { useState } from 'react';
 import { Droppable } from '@hello-pangea/dnd';
-import { FaBus } from 'react-icons/fa';
+import { FaBus, FaMapMarkerAlt, FaEdit } from 'react-icons/fa';
 import { RouteDto } from '@/services/routeService/routeService.types';
 import PickupPoint from './PickupPoint';
 
 interface RouteRowProps {
   route: RouteDto;
   onRouteClick: (route: RouteDto) => void;
+  onRouteMapToggle: (routeId: string) => void; // ✅ ADDED: Separate handler for map toggle
   isModified: boolean;
+  isSelectedInMap?: boolean;
 }
 
 // Simple Tooltip Component
@@ -37,7 +39,13 @@ const Tooltip: React.FC<{
   );
 };
 
-const RouteRow: React.FC<RouteRowProps> = ({ route, onRouteClick, isModified }) => {
+const RouteRow: React.FC<RouteRowProps> = ({ 
+  route, 
+  onRouteClick, 
+  onRouteMapToggle, 
+  isModified, 
+  isSelectedInMap = false 
+}) => {
   // Helper function to truncate text
   const truncateText = (text: string, maxLength: number = 11): string => {
     if (text.length <= maxLength) return text;
@@ -48,24 +56,35 @@ const RouteRow: React.FC<RouteRowProps> = ({ route, onRouteClick, isModified }) 
     <div>
       <div className="font-semibold">{route.routeName}</div>
       <div className="text-xs text-gray-300">Plate: {route.vehicleNumberPlate}</div>
+      {isSelectedInMap && (
+        <div className="text-xs text-green-300 mt-1">📍 Visible on map</div>
+      )}
     </div>
   );
 
   return (
     <Droppable droppableId={route.id} direction="horizontal">
       {(provided) => (
-        <div className={`bg-yellow-200 p-4 rounded shadow-md flex items-center relative ${isModified ? 'ring-2 ring-red-400' : ''}`}>
+        <div className={`bg-yellow-200 p-4 rounded shadow-md flex items-center relative ${isModified ? 'ring-2 ring-red-400' : ''} ${isSelectedInMap ? 'ring-2 ring-blue-400' : ''}`}>
           {/* Modification Indicator */}
           {isModified && (
             <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
               <div className="w-2 h-2 bg-white rounded-full"></div>
             </div>
           )}
+
+          {/* ✅ Map Selection Indicator */}
+          {isSelectedInMap && (
+            <div className="absolute -top-1 -left-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+              <FaMapMarkerAlt className="text-white" size={8} />
+            </div>
+          )}
           
+          {/* ✅ Route Info Section - Click to toggle map visibility */}
           <Tooltip content={tooltipContent}>
             <div
               className="w-40 flex-shrink-0 cursor-pointer hover:opacity-80"
-              onClick={() => onRouteClick(route)}
+              onClick={() => onRouteMapToggle(route.id)} // ✅ Changed: Now toggles map visibility
             >
               {/* Line 1: Route name and capacity */}
               <h3 className="text-base font-bold leading-tight">
@@ -84,6 +103,18 @@ const RouteRow: React.FC<RouteRowProps> = ({ route, onRouteClick, isModified }) 
             </div>
           </Tooltip>
 
+          {/* ✅ Edit Button - Separate click handler */}
+          <div className="flex-shrink-0 ml-3">
+            <button
+              onClick={() => onRouteClick(route)}
+              className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              title="Edit route"
+            >
+              <FaEdit size={16} />
+            </button>
+          </div>
+
+          {/* Pickup Points Area */}
           <div
             {...provided.droppableProps}
             ref={provided.innerRef}

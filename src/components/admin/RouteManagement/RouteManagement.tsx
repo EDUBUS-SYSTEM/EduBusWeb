@@ -12,6 +12,7 @@ import ApplySuggestionsModal from './ApplySuggestionsModal'
 import RouteRow from './RouteRow';
 import LobbyArea from './LobbyArea';
 import { pickupPointService, PickupPointDto } from '@/services/pickupPointService';
+import MiniRouteMap from './MiniRouteMap';
 
 const RouteManagement: React.FC = () => {
   const [routes, setRoutes] = useState<RouteDto[]>([]);
@@ -26,6 +27,7 @@ const RouteManagement: React.FC = () => {
   const [hasSuggestions, setHasSuggestions] = useState(false); // Track if current routes are suggestions
   const [isApplySuggestionsModalOpen, setIsApplySuggestionsModalOpen] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
+  const [selectedRouteIds, setSelectedRouteIds] = useState<string[]>([]);
 
   // Store original routes for comparison
   const originalRoutesRef = useRef<RouteDto[]>([]);
@@ -95,6 +97,14 @@ const RouteManagement: React.FC = () => {
 
     fetchData();
   }, []);
+  
+  const handleRouteMapToggle = (routeId: string) => {
+    setSelectedRouteIds(prev => 
+      prev.includes(routeId) 
+        ? prev.filter(id => id !== routeId)
+        : [...prev, routeId]
+    );
+  };
 
   // Helper function to compare pickup points arrays
   const arePickupPointsEqual = (a: PickupPointInfoDto[], b: PickupPointInfoDto[]): boolean => {
@@ -542,7 +552,8 @@ const RouteManagement: React.FC = () => {
               <RouteRow
                 key={route.id}
                 route={route}
-                onRouteClick={handleRouteClick}
+                onRouteClick={handleRouteClick} 
+                onRouteMapToggle={handleRouteMapToggle} // ✅ Map toggle handler
                 isModified={isRouteModified(route.id)}
               />
             ))}
@@ -552,6 +563,15 @@ const RouteManagement: React.FC = () => {
           </div>
         </div>
       </DragDropContext>
+      
+      {/* Mini Route Map */}
+      <MiniRouteMap
+        routes={routes}
+        selectedRouteIds={selectedRouteIds}
+        onRouteToggle={handleRouteMapToggle}
+        onSelectAllRoutes={() => setSelectedRouteIds(routes.map(r => r.id))}
+        onDeselectAllRoutes={() => setSelectedRouteIds([])}
+      />
 
       {/* Create Route Modal */}
       <CreateRouteModal
