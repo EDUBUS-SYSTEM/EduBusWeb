@@ -8,9 +8,11 @@ export interface VehicleDto extends BaseEntity {
 }
 
 export interface VehicleListResponse {
-  success: boolean;
-  data: VehicleDto[];
-  error?: string | object;
+  vehicles: VehicleDto[];
+  totalCount: number;
+  page: number;
+  perPage: number;
+  totalPages: number;
 }
 //export type VehicleListResponse = ApiResponse<VehicleDto[]>;
 export type VehicleGetResponse = ApiResponse<VehicleDto>;
@@ -108,9 +110,19 @@ export interface DriverInfoDto {
   hasHealthCertificate?: boolean;
 }
 
-export interface VehicleDriversResponse {
+export interface DriverInfoDto {
+  id: string;
+  fullName: string;
+  phoneNumber: string;
+  email?: string;
+  status?: number | string;         
+  licenseNumber?: string | null;
+  hasValidLicense?: boolean;
+  hasHealthCertificate?: boolean;
+}
+export interface ApiListResponse<T> {
   success: boolean;
-  data: DriverAssignmentDto[];
+  data: T;
   error?: string;
 }
 export interface ApiListResponse<T> {
