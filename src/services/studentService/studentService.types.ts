@@ -3,7 +3,6 @@ export interface Student {
   parentId: string;
   firstName: string;
   lastName: string;
-  isActive: boolean;
   createdAt: string;
   updatedAt: string;
   isDeleted: boolean;

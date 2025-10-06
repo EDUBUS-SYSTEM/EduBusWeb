@@ -19,7 +19,7 @@ const SCHOOL_LOCATION = {
 };
 
 // Constants
-const DEFAULT_PRICE_PER_KM = 7000; // VND per kilometer
+const DEFAULT_PRICE_PER_KM = 7000; // Price per kilometer
 const MAP_ZOOM_LEVEL = 14;
 const MAP_ZOOM_LEVEL_DETAILED = 15;
 

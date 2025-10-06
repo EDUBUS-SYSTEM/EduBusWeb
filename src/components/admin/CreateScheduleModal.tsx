@@ -2,12 +2,11 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   FaTimes,
-  FaClock,
   FaCalendarAlt,
   FaTag,
   FaSave,
   FaGraduationCap,
-  FaEye,
+  // FaEye,
 } from "react-icons/fa";
 import {
   scheduleService,
@@ -15,7 +14,8 @@ import {
 } from "@/services/api/scheduleService";
 import { academicCalendarService } from "@/services/api/academicCalendarService";
 import RRuleBuilder from "@/components/admin/RRuleBuilder";
-import { RRuleUtils } from "@/utils/rruleUtils";
+import TimeSlotSelector from "@/components/admin/TimeSlotSelector";
+// import { RRuleUtils } from "@/utils/rruleUtils";
 
 interface CreateScheduleModalProps {
   onClose: () => void;
@@ -56,7 +56,7 @@ export default function CreateScheduleModal({
   const handleRruleValidationChange = useCallback((isValid: boolean, errors: string[]) => {
     setRruleValidation({ isValid, errors });
   }, []);
-  const [previewDates, setPreviewDates] = useState<Date[]>([]);
+  const [previewDates] = useState<Date[]>([]);
   const [showPreview, setShowPreview] = useState(false);
 
   const scheduleTypes = [
@@ -114,6 +114,35 @@ export default function CreateScheduleModal({
     loadAcademicYears();
   }, []);
 
+  // Helper function to format date for input fields (avoiding timezone issues)
+  const formatDateForInput = (date: string) => {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Auto-fill effective dates when academic year is selected
+  useEffect(() => {
+    const loadAcademicYearDetails = async () => {
+      if (formData.academicYear) {
+        try {
+          const academicCalendar = await academicCalendarService.getAcademicCalendarByYear(formData.academicYear);
+          setFormData(prev => ({
+            ...prev,
+            effectiveFrom: academicCalendar.startDate ? formatDateForInput(academicCalendar.startDate) : '',
+            effectiveTo: academicCalendar.endDate ? formatDateForInput(academicCalendar.endDate) : ''
+          }));
+        } catch (error) {
+          console.error('Error loading academic year details:', error);
+        }
+      }
+    };
+
+    loadAcademicYearDetails();
+  }, [formData.academicYear]);
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -141,12 +170,15 @@ export default function CreateScheduleModal({
       newErrors.endTime = "End time must be after start time";
     }
 
-    if (!formData.effectiveFrom) {
-      newErrors.effectiveFrom = "Effective from date is required";
-    }
+    // Only require effective dates if no academic year is selected
+    if (!formData.academicYear) {
+      if (!formData.effectiveFrom) {
+        newErrors.effectiveFrom = "Effective from date is required when no academic year is selected";
+      }
 
-    if (!formData.effectiveTo) {
-      newErrors.effectiveTo = "Effective to date is required";
+      if (!formData.effectiveTo) {
+        newErrors.effectiveTo = "Effective to date is required when no academic year is selected";
+      }
     }
 
     if (
@@ -253,35 +285,35 @@ export default function CreateScheduleModal({
     }
   };
 
-  const generatePreviewDates = () => {
-    if (!formData.rRule || !formData.effectiveFrom) {
-      setPreviewDates([]);
-      return;
-    }
+  // const generatePreviewDates = () => {
+  //   if (!formData.rRule || !formData.effectiveFrom) {
+  //     setPreviewDates([]);
+  //     return;
+  //   }
 
-    try {
-      const startDate = new Date(formData.effectiveFrom);
-      // const endDate = formData.effectiveTo
-      //   ? new Date(formData.effectiveTo)
-      //   : new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from start
+  //   try {
+  //     const startDate = new Date(formData.effectiveFrom);
+  //     // const endDate = formData.effectiveTo
+  //     //   ? new Date(formData.effectiveTo)
+  //     //   : new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from start
 
-      const dates = RRuleUtils.generatePreviewDates(
-        formData.rRule,
-        startDate,
-        10
-      );
-      setPreviewDates(dates);
-      setShowPreview(true);
-    } catch (error) {
-      console.error("Error generating preview dates:", error);
-      setPreviewDates([]);
-    }
-  };
+  //     const dates = RRuleUtils.generatePreviewDates(
+  //       formData.rRule,
+  //       startDate,
+  //       10
+  //     );
+  //     setPreviewDates(dates);
+  //     setShowPreview(true);
+  //   } catch (error) {
+  //     console.error("Error generating preview dates:", error);
+  //     setPreviewDates([]);
+  //   }
+  // };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
+      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden flex flex-col">
+        <div className="p-6 overflow-y-auto flex-1">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-2xl font-bold text-gray-800">
@@ -296,7 +328,7 @@ export default function CreateScheduleModal({
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form id="schedule-form" onSubmit={handleSubmit} className="space-y-6">
             {/* Schedule Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -381,57 +413,23 @@ export default function CreateScheduleModal({
             </div>
 
             {/* Time Range */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <FaClock className="inline w-4 h-4 mr-2" />
-                  Start Time *
-                </label>
-                <input
-                  type="time"
-                  value={formData.startTime}
-                  onChange={(e) =>
-                    handleInputChange("startTime", e.target.value)
-                  }
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
-                    errors.startTime
-                      ? "border-red-300 bg-red-50"
-                      : "border-gray-200"
-                  }`}
-                />
-                {errors.startTime && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.startTime}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <FaClock className="inline w-4 h-4 mr-2" />
-                  End Time *
-                </label>
-                <input
-                  type="time"
-                  value={formData.endTime}
-                  onChange={(e) => handleInputChange("endTime", e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
-                    errors.endTime
-                      ? "border-red-300 bg-red-50"
-                      : "border-gray-200"
-                  }`}
-                />
-                {errors.endTime && (
-                  <p className="mt-1 text-sm text-red-600">{errors.endTime}</p>
-                )}
-              </div>
-            </div>
+            <TimeSlotSelector
+              selectedStartTime={formData.startTime}
+              selectedEndTime={formData.endTime}
+              onStartTimeChange={(time) => handleInputChange("startTime", time)}
+              onEndTimeChange={(time) => handleInputChange("endTime", time)}
+              errors={{
+                startTime: errors.startTime,
+                endTime: errors.endTime
+              }}
+            />
 
             {/* Effective Period */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <FaCalendarAlt className="inline w-4 h-4 mr-2" />
-                  Effective From *
+                  Effective From {formData.academicYear ? '(Auto-filled from Academic Year)' : '*'}
                 </label>
                 <input
                   type="date"
@@ -439,10 +437,13 @@ export default function CreateScheduleModal({
                   onChange={(e) =>
                     handleInputChange("effectiveFrom", e.target.value)
                   }
+                  disabled={!!formData.academicYear}
                   className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
                     errors.effectiveFrom
                       ? "border-red-300 bg-red-50"
-                      : "border-gray-200"
+                      : formData.academicYear 
+                        ? "border-gray-200 bg-gray-50"
+                        : "border-gray-200"
                   }`}
                 />
                 {errors.effectiveFrom && (
@@ -450,11 +451,16 @@ export default function CreateScheduleModal({
                     {errors.effectiveFrom}
                   </p>
                 )}
+                {formData.academicYear && (
+                  <p className="mt-1 text-xs text-blue-600">
+                    Automatically set from Academic Year
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <FaCalendarAlt className="inline w-4 h-4 mr-2" />
-                  Effective To *
+                  Effective To {formData.academicYear ? '(Auto-filled from Academic Year)' : '*'}
                 </label>
                 <input
                   type="date"
@@ -463,15 +469,23 @@ export default function CreateScheduleModal({
                   onChange={(e) =>
                     handleInputChange("effectiveTo", e.target.value)
                   }
+                  disabled={!!formData.academicYear}
                   className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
                     errors.effectiveTo
                       ? "border-red-300 bg-red-50"
-                      : "border-gray-200"
+                      : formData.academicYear 
+                        ? "border-gray-200 bg-gray-50"
+                        : "border-gray-200"
                   }`}
                 />
                 {errors.effectiveTo && (
                   <p className="mt-1 text-sm text-red-600">
                     {errors.effectiveTo}
+                  </p>
+                )}
+                {formData.academicYear && (
+                  <p className="mt-1 text-xs text-blue-600">
+                    Automatically set from Academic Year
                   </p>
                 )}
               </div>
@@ -615,6 +629,38 @@ export default function CreateScheduleModal({
               </button>
             </div>
           </form>
+        </div>
+        
+        {/* Fixed Actions Bar */}
+        <div className="border-t border-gray-200 bg-gray-50 p-4 rounded-b-2xl">
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-3 text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors duration-200"
+              disabled={loading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form="schedule-form"
+              disabled={loading}
+              className="px-6 py-3 bg-gradient-to-r from-[#fad23c] to-[#FDC700] text-[#463B3B] rounded-xl hover:from-[#FDC700] hover:to-[#D08700] transition-all duration-300 flex items-center gap-2 shadow-soft hover:shadow-soft-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-semibold"
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-[#463B3B] border-t-transparent rounded-full animate-spin"></div>
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <FaSave className="w-4 h-4" />
+                  Create Schedule
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

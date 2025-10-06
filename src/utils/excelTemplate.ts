@@ -8,21 +8,21 @@ export const generateParentTemplate = () => {
   const templateData = [
     {
       Email: 'parent1@example.com',
-      'First Name': 'Nguyễn Văn',
-      'Last Name': 'An',
+      'First Name': 'John',
+      'Last Name': 'Doe',
       'Phone Number': '0901234567',
       'Gender (1=Male, 2=Female, 3=Other)': 1,
       'Date of Birth (YYYY-MM-DD)': '1980-01-01',
-      'Address': 'Hà Nội, Việt Nam'
+      'Address': 'New York, USA'
     },
     {
       Email: 'parent2@example.com',
-      'First Name': 'Trần Thị',
-      'Last Name': 'Bình',
+      'First Name': 'Jane',
+      'Last Name': 'Smith',
       'Phone Number': '0987654321',
       'Gender (1=Male, 2=Female, 3=Other)': 2,
       'Date of Birth (YYYY-MM-DD)': '1985-05-15',
-      'Address': 'TP.HCM, Việt Nam'
+      'Address': 'Los Angeles, USA'
     }
   ];
 

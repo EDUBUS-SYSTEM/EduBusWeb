@@ -103,6 +103,11 @@ export interface DriverInfoDto {
   id: string;
   fullName: string;
   phoneNumber: string;
+  email?: string;
+  status?: number | string;          
+  licenseNumber?: string | null;
+  hasValidLicense?: boolean;
+  hasHealthCertificate?: boolean;
 }
 
 export interface DriverInfoDto {
@@ -114,6 +119,11 @@ export interface DriverInfoDto {
   licenseNumber?: string | null;
   hasValidLicense?: boolean;
   hasHealthCertificate?: boolean;
+}
+export interface ApiListResponse<T> {
+  success: boolean;
+  data: T;
+  error?: string;
 }
 export interface ApiListResponse<T> {
   success: boolean;

@@ -127,6 +127,86 @@ export default function CreateAcademicCalendarModal({
     }
   };
 
+  // Helper function to get minimum date for End Date (must be after Start Date)
+  const getMinEndDate = () => {
+    if (formData.startDate) {
+      const startDate = new Date(formData.startDate);
+      startDate.setDate(startDate.getDate() + 1); // Add 1 day to start date
+      return startDate.toISOString().split('T')[0];
+    }
+    return '';
+  };
+
+  // Helper function to get date constraints for semesters and holidays
+  const getAcademicYearDateConstraints = () => {
+    return {
+      minDate: formData.startDate || '',
+      maxDate: formData.endDate || ''
+    };
+  };
+
+  // Helper function to get minimum start date for semester based on previous semesters
+  const getMinSemesterStartDate = (semesterIndex: number) => {
+    const constraints = getAcademicYearDateConstraints();
+    
+    // If this is the first semester, use academic year start date
+    if (semesterIndex === 0) {
+      return constraints.minDate;
+    }
+    
+    // Find the latest end date from previous semesters
+    let latestEndDate = constraints.minDate;
+    for (let i = 0; i < semesterIndex; i++) {
+      if (semesters[i]?.endDate) {
+        const endDate = new Date(semesters[i].endDate);
+        const latestDate = new Date(latestEndDate);
+        if (endDate > latestDate) {
+          latestEndDate = semesters[i].endDate;
+        }
+      }
+    }
+    
+    // Return the day after the latest end date
+    if (latestEndDate) {
+      const nextDay = new Date(latestEndDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      return nextDay.toISOString().split('T')[0];
+    }
+    
+    return constraints.minDate;
+  };
+
+  // Helper function to get maximum end date for semester
+  const getMaxSemesterEndDate = (semesterIndex: number) => {
+    const constraints = getAcademicYearDateConstraints();
+    
+    // If this is the last semester, use academic year end date
+    if (semesterIndex === semesters.length - 1) {
+      return constraints.maxDate;
+    }
+    
+    // Find the earliest start date from next semesters
+    let earliestStartDate = constraints.maxDate;
+    for (let i = semesterIndex + 1; i < semesters.length; i++) {
+      if (semesters[i]?.startDate) {
+        const startDate = new Date(semesters[i].startDate);
+        const earliestDate = new Date(earliestStartDate);
+        if (startDate < earliestDate) {
+          earliestStartDate = semesters[i].startDate;
+        }
+      }
+    }
+    
+    // Return the day before the earliest start date
+    if (earliestStartDate) {
+      const prevDay = new Date(earliestStartDate);
+      prevDay.setDate(prevDay.getDate() - 1);
+      return prevDay.toISOString().split('T')[0];
+    }
+    
+    return constraints.maxDate;
+  };
+
   // Semester management
   const addSemester = () => {
     const newSemester: AcademicSemester = {
@@ -144,11 +224,22 @@ export default function CreateAcademicCalendarModal({
     field: keyof AcademicSemester,
     value: string | boolean
   ) => {
-    setSemesters((prev) =>
-      prev.map((semester, i) =>
+    setSemesters((prev) => {
+      const updatedSemesters = prev.map((semester, i) =>
         i === index ? { ...semester, [field]: value } : semester
-      )
-    );
+      );
+
+      // If updating start date, ensure end date is still valid
+      if (field === 'startDate' && typeof value === 'string') {
+        const currentSemester = updatedSemesters[index];
+        if (currentSemester.endDate && value >= currentSemester.endDate) {
+          // Clear end date if it becomes invalid
+          updatedSemesters[index] = { ...currentSemester, endDate: '' };
+        }
+      }
+
+      return updatedSemesters;
+    });
   };
 
   const removeSemester = (index: number) => {
@@ -172,11 +263,22 @@ export default function CreateAcademicCalendarModal({
     field: keyof SchoolHoliday,
     value: string | boolean
   ) => {
-    setHolidays((prev) =>
-      prev.map((holiday, i) =>
+    setHolidays((prev) => {
+      const updatedHolidays = prev.map((holiday, i) =>
         i === index ? { ...holiday, [field]: value } : holiday
-      )
-    );
+      );
+
+      // If updating start date, ensure end date is still valid
+      if (field === 'startDate' && typeof value === 'string') {
+        const currentHoliday = updatedHolidays[index];
+        if (currentHoliday.endDate && value > currentHoliday.endDate) {
+          // Clear end date if it becomes invalid
+          updatedHolidays[index] = { ...currentHoliday, endDate: '' };
+        }
+      }
+
+      return updatedHolidays;
+    });
   };
 
   const removeHoliday = (index: number) => {
@@ -285,6 +387,7 @@ export default function CreateAcademicCalendarModal({
                   type="date"
                   value={formData.endDate}
                   onChange={(e) => handleInputChange("endDate", e.target.value)}
+                  min={getMinEndDate()}
                   className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
                     errors.endDate
                       ? "border-red-300 bg-red-50"
@@ -387,8 +490,15 @@ export default function CreateAcademicCalendarModal({
                           onChange={(e) =>
                             updateSemester(index, "startDate", e.target.value)
                           }
+                          min={getMinSemesterStartDate(index)}
+                          max={getAcademicYearDateConstraints().maxDate}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
+                        {getMinSemesterStartDate(index) && (
+                          <p className="mt-1 text-xs text-gray-500">
+                            Must be after {index > 0 ? 'previous semester' : 'academic year start'}
+                          </p>
+                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -400,8 +510,19 @@ export default function CreateAcademicCalendarModal({
                           onChange={(e) =>
                             updateSemester(index, "endDate", e.target.value)
                           }
+                          min={semester.startDate ? (() => {
+                            const startDate = new Date(semester.startDate);
+                            startDate.setDate(startDate.getDate() + 1);
+                            return startDate.toISOString().split('T')[0];
+                          })() : getMinSemesterStartDate(index)}
+                          max={getMaxSemesterEndDate(index)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
+                        {semester.startDate && (
+                          <p className="mt-1 text-xs text-gray-500">
+                            Must be after start date
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -484,8 +605,15 @@ export default function CreateAcademicCalendarModal({
                           onChange={(e) =>
                             updateHoliday(index, "startDate", e.target.value)
                           }
+                          min={getAcademicYearDateConstraints().minDate}
+                          max={getAcademicYearDateConstraints().maxDate}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
+                        {getAcademicYearDateConstraints().minDate && (
+                          <p className="mt-1 text-xs text-gray-500">
+                            Must be within academic year period
+                          </p>
+                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -497,8 +625,18 @@ export default function CreateAcademicCalendarModal({
                           onChange={(e) =>
                             updateHoliday(index, "endDate", e.target.value)
                           }
+                          min={holiday.startDate ? (() => {
+                            const startDate = new Date(holiday.startDate);
+                            return startDate.toISOString().split('T')[0];
+                          })() : getAcademicYearDateConstraints().minDate}
+                          max={getAcademicYearDateConstraints().maxDate}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
+                        {holiday.startDate && (
+                          <p className="mt-1 text-xs text-gray-500">
+                            Must be on or after start date
+                          </p>
+                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">

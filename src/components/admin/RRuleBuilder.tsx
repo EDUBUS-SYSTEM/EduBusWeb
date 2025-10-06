@@ -172,35 +172,35 @@ export default function RRuleBuilder({
             Select Schedule Pattern
           </h4>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {ACADEMIC_RRULE_PATTERNS.map((pattern) => (
               <div
                 key={pattern.id}
                 onClick={() => handlePatternSelect(pattern)}
-                className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
+                className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 min-h-[140px] ${
                   selectedPattern?.id === pattern.id
                     ? "border-[#FDC700] bg-yellow-50 shadow-lg"
                     : "border-gray-200 hover:border-[#FDC700] hover:shadow-md"
                 }`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center mb-2">
+                <div className="flex flex-col h-full">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center">
                       <span className="text-2xl mr-3">{pattern.icon}</span>
-                      <h5 className="font-semibold text-gray-800">
+                      <h5 className="font-semibold text-gray-800 text-sm">
                         {pattern.name}
                       </h5>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">
-                      {pattern.description}
-                    </p>
-                    <div className="text-xs text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded w-full max-w-full whitespace-pre-wrap break-words overflow-x-auto">
-                      {pattern.rrule}
-                    </div>
+                    {selectedPattern?.id === pattern.id && (
+                      <FaCheck className="w-4 h-4 text-[#FDC700] flex-shrink-0" />
+                    )}
                   </div>
-                  {selectedPattern?.id === pattern.id && (
-                    <FaCheck className="w-5 h-5 text-[#FDC700] ml-2" />
-                  )}
+                  <p className="text-xs text-gray-600 mb-3 flex-grow">
+                    {pattern.description}
+                  </p>
+                  <div className="text-xs text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded break-all">
+                    {pattern.rrule}
+                  </div>
                 </div>
               </div>
             ))}
@@ -238,7 +238,7 @@ export default function RRuleBuilder({
 
           <div className="bg-gray-50 rounded-xl p-6 space-y-6">
             {/* Frequency and Interval */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <FaCalendarAlt className="inline w-4 h-4 mr-2" />
@@ -337,7 +337,7 @@ export default function RRuleBuilder({
                 <label className="block text-sm font-medium text-gray-700 mb-3">
                   Select Months of Year
                 </label>
-                <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                   {Object.entries(MONTH_NAMES).map(([month, name]) => (
                     <button
                       type="button"
@@ -366,15 +366,29 @@ export default function RRuleBuilder({
                 value={
                   config.until ? config.until.toISOString().split("T")[0] : ""
                 }
-                onChange={(e) =>
+                min={previewStartDate ? new Date(previewStartDate).toISOString().split("T")[0] : undefined}
+                max={previewEndDate ? new Date(previewEndDate).toISOString().split("T")[0] : undefined}
+                onChange={(e) => {
+                  const selectedDate = e.target.value ? new Date(e.target.value) : undefined;
+                  
+                  // Validate end date
+                  if (selectedDate && previewStartDate) {
+                    const startDate = new Date(previewStartDate);
+                    if (selectedDate <= startDate) {
+                      // Show validation error
+                      return;
+                    }
+                  }
+                  
                   handleConfigChange({
-                    until: e.target.value
-                      ? new Date(e.target.value)
-                      : undefined,
-                  })
-                }
+                    until: selectedDate,
+                  });
+                }}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FDC700] focus:border-transparent"
               />
+              <p className="mt-1 text-xs text-gray-500">
+                End date must be after the start date and within the effective period
+              </p>
             </div>
           </div>
         </div>
@@ -424,7 +438,7 @@ export default function RRuleBuilder({
             <FaPlay className="w-4 h-4 mr-2" />
             Preview Next 10 Days:
           </h5>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
             {previewDates.map((date, index) => (
               <div
                 key={index}
