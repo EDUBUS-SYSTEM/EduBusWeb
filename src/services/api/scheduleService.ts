@@ -43,6 +43,7 @@ export interface UpdateScheduleDto {
   effectiveTo?: string;
   exceptions: Date[]; // Changed from string[] to Date[] to match backend
   isActive: boolean;
+  timeOverrides?: ScheduleTimeOverride[]; // Added to preserve overrides
 }
 
 export interface ScheduleQueryParams {

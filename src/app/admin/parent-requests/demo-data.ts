@@ -4,12 +4,12 @@
 export const mockParentRequests = [
   {
     id: "550e8400-e29b-41d4-a716-446655440001",
-    parentEmail: "nguyen.van.a@email.com",
+    parentEmail: "john.doe@email.com",
     parentInfo: {
-      firstName: "Nguyễn",
-      lastName: "Văn A",
+      firstName: "John",
+      lastName: "Doe",
       phoneNumber: "0901234567",
-      address: "123 Đường ABC, Quận 1, TP.HCM",
+      address: "123 Main Street, District 1, City",
       dateOfBirth: "1985-03-15T00:00:00Z",
       gender: 1,
       createdAt: "2024-01-15T08:30:00Z"
@@ -17,21 +17,21 @@ export const mockParentRequests = [
     students: [
       {
         id: "student-001",
-        firstName: "Nguyễn",
-        lastName: "Thị B"
+        firstName: "Jane",
+        lastName: "Smith"
       },
       {
         id: "student-002", 
-        firstName: "Nguyễn",
-        lastName: "Văn C"
+        firstName: "Bob",
+        lastName: "Johnson"
       }
     ],
-    addressText: "456 Đường XYZ, Quận 2, TP.HCM",
+    addressText: "456 Oak Avenue, District 2, City",
     latitude: 10.762622,
     longitude: 106.660172,
     distanceKm: 5.2,
-    description: "Điểm đón tại cổng chính trường học",
-    reason: "Nhà xa trường, cần dịch vụ đưa đón",
+    description: "Pickup point at main school gate",
+    reason: "Home is far from school, need transportation service",
     unitPriceVndPerKm: 50000,
     estimatedPriceVnd: 260000,
     status: "Pending" as const,

@@ -74,14 +74,13 @@ export default function VehicleListClient() {
       setLoading(true);
       setError(null);
       const response = await vehicleService.getVehicles(searchFilters);
-      if (response.success) {
-        setVehicles(response.data);
-      } else {
-        setError(response.message || 'Failed to fetch vehicles');
-      }
+      // Use the correct API response structure
+      const vehiclesData = response.data || [];
+      setVehicles(Array.isArray(vehiclesData) ? vehiclesData : []);
     } catch (err) {
       console.error('Error fetching vehicles:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch vehicles');
+      setVehicles([]); // Ensure vehicles is always an array
     } finally {
       setLoading(false);
     }
@@ -271,7 +270,7 @@ export default function VehicleListClient() {
                 </tr>
               </thead>
               <tbody>
-                {vehicles.length === 0 ? (
+                {!vehicles || vehicles.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
                       No vehicles found
@@ -327,7 +326,7 @@ export default function VehicleListClient() {
         </div>
 
         {/* Pagination - Fixed at bottom */}
-        {vehicles.length > 0 && (
+        {vehicles && vehicles.length > 0 && (
           <div className="mt-6 flex justify-center">
             <Pagination
               currentPage={filters.page || 1}

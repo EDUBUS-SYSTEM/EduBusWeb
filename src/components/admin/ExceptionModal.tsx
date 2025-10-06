@@ -97,6 +97,7 @@ export default function ExceptionModal({
           : undefined,
         exceptions: updatedExceptions,
         isActive: schedule.isActive,
+        timeOverrides: schedule.timeOverrides || [],
       });
 
       onSuccess();
@@ -138,6 +139,7 @@ export default function ExceptionModal({
           : undefined,
         exceptions: updatedExceptions,
         isActive: schedule.isActive,
+        timeOverrides: schedule.timeOverrides || [],
       });
 
       onSuccess();
@@ -177,11 +179,34 @@ export default function ExceptionModal({
             </button>
           </div>
 
-          <div className="mb-4 p-3 bg-orange-50 rounded-lg">
-            <p className="text-sm text-orange-800">
-              <strong>Schedule:</strong> {schedule.name}
-            </p>
-            <p className="text-xs text-orange-600 mt-1">
+          <div className="mb-6 p-4 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-xl border border-orange-100">
+            <div className="flex items-center gap-3 mb-2">
+              <FaCalendarAlt className="w-5 h-5 text-orange-600" />
+              <h4 className="text-lg font-semibold text-orange-800">Schedule: {schedule.name}</h4>
+            </div>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-orange-600 font-medium">Academic Year:</span>
+                <span className="ml-2 text-orange-800">{schedule.academicYear || "Not assigned"}</span>
+              </div>
+              <div>
+                <span className="text-orange-600 font-medium">Schedule Type:</span>
+                <span className="ml-2 text-orange-800">{schedule.scheduleType}</span>
+              </div>
+              <div>
+                <span className="text-orange-600 font-medium">Time Range:</span>
+                <span className="ml-2 text-orange-800">{schedule.startTime} - {schedule.endTime}</span>
+              </div>
+              <div>
+                <span className="text-orange-600 font-medium">Status:</span>
+                <span className={`ml-2 px-2 py-1 rounded-full text-xs font-semibold ${
+                  schedule.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                }`}>
+                  {schedule.isActive ? "Active" : "Inactive"}
+                </span>
+              </div>
+            </div>
+            <p className="text-xs text-orange-600 mt-3 italic">
               Exceptions are dates when this schedule will not run
             </p>
           </div>
