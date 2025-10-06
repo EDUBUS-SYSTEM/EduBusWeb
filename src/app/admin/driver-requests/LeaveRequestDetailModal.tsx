@@ -30,6 +30,19 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
     });
   };
 
+  // Kiểm tra xem ngày nghỉ đã hết hạn chưa
+  const isLeaveExpired = (startDate: string, endDate: string) => {
+    const today = new Date();
+    const leaveEndDate = new Date(endDate);
+    
+    // Set time to start of day to avoid timezone issues
+    today.setHours(0, 0, 0, 0);
+    leaveEndDate.setHours(0, 0, 0, 0);
+    
+    // Leave đã hết hạn nếu endDate < today
+    return leaveEndDate < today;
+  };
+
   const getStatusBadge = (status: number) => {
     const baseClasses = "px-2 py-1 rounded-full text-sm font-medium";
     switch (status) {
@@ -349,6 +362,24 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
             </div>
           )}
 
+          {/* Expired Leave Notice */}
+          {leave.status === 1 && isLeaveExpired(leave.startDate, leave.endDate) && (
+            <div className="bg-red-50 rounded-xl p-6 border border-red-200">
+              <h3 className="text-lg font-semibold text-red-900 mb-4 flex items-center">
+                <FaClock className="mr-2 h-5 w-5" />
+                Thông báo hết hạn
+              </h3>
+              <div className="bg-white p-4 rounded-lg border border-red-200">
+                <p className="text-red-800 font-medium">
+                  Đã quá hạn duyệt
+                </p>
+                <p className="text-red-700 text-sm mt-2">
+                  Yêu cầu nghỉ phép này đã hết hạn và không thể được duyệt nữa.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Attachments */}
           {leave.attachments && leave.attachments.length > 0 && (
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
@@ -378,7 +409,7 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
         <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 rounded-b-2xl">
           <div className="flex justify-center">
             <div className="flex space-x-3">
-              {leave.status === 1 && onApprove && onReject && (
+              {leave.status === 1 && onApprove && onReject && !isLeaveExpired(leave.startDate, leave.endDate) && (
                 <>
                   <button
                     onClick={() => setShowApproveStep1Modal(true)}

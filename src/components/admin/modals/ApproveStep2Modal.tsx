@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { DriverLeaveRequest } from "@/services/api/driverLeaveRequests";
 import { getAvailableDrivers, GetAvailableDriverDto } from "@/services/api/drivers";
 
@@ -26,18 +26,43 @@ export default function ApproveStep2Modal({
   const [availableDrivers, setAvailableDrivers] = useState<GetAvailableDriverDto[]>([]);
   const [loadingDrivers, setLoadingDrivers] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Track component mount state để tránh duplicate calls
+  const isMountedRef = useRef(false);
+  const fetchStateRef = useRef({
+    hasFetched: false,
+    leaveId: '',
+    startDate: '',
+    endDate: ''
+  });
 
-  // Fetch available drivers when modal opens
+  // Fetch available drivers chỉ một lần duy nhất khi component mount
   useEffect(() => {
+    // Nếu component đã mount rồi thì skip
+    if (isMountedRef.current) {
+      return;
+    }
+    
+    // Mark component as mounted
+    isMountedRef.current = true;
+    
     const fetchAvailableDrivers = async () => {
       setLoadingDrivers(true);
       try {
-        // Use the leave request dates to get available drivers for that period
         const startDate = new Date(leave.startDate);
         const endDate = new Date(leave.endDate);
-        
+        console.log("Start date:", startDate);
+        console.log("End date:", endDate);
         const drivers = await getAvailableDrivers(startDate, endDate);
         setAvailableDrivers(drivers);
+        
+        // Update fetch state
+        fetchStateRef.current = {
+          hasFetched: true,
+          leaveId: leave.id,
+          startDate: leave.startDate,
+          endDate: leave.endDate
+        };
       } catch (error) {
         console.error('Error fetching drivers:', error);
       } finally {
@@ -46,7 +71,7 @@ export default function ApproveStep2Modal({
     };
     
     fetchAvailableDrivers();
-  }, [leave.startDate, leave.endDate]);
+  }, []); 
 
   const filteredDrivers = availableDrivers.filter(driver => {
     const matchesSearch = driver.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||

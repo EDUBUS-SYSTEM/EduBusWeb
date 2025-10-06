@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, startTransition, useMemo } from "react";
 import { FaSearch, FaFilter, FaEye, FaCheck, FaTimes, FaUser, FaClock, FaFileAlt } from "react-icons/fa";
 import LeaveRequestDetailModal from "./LeaveRequestDetailModal";
 import ApproveStep1Modal from "@/components/admin/modals/ApproveStep1Modal";
@@ -37,7 +37,7 @@ export default function LeaveRequestsTab() {
   const [showApproveStep2Modal, setShowApproveStep2Modal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
-
+  console.log("render LeaveRequestsTab");
   // Step 2 modal state
   const [approveNotes, setApproveNotes] = useState("");
 
@@ -91,16 +91,18 @@ export default function LeaveRequestsTab() {
     }
   };
 
-  // Update handleApproveStep1 to receive additional parameter
+  // Batch state updates để tránh multiple re-renders
   const handleApproveStep1 = (notes: string, needsReplacement: boolean) => {
-    setApproveNotes(notes);
-    if (needsReplacement) {
-      setShowApproveStep1Modal(false);
-      setShowApproveStep2Modal(true);
-    } else {
-      // Direct approval without replacement driver
-      handleApproveDirect(notes);
-    }
+    startTransition(() => {
+      setApproveNotes(notes);
+      if (needsReplacement) {
+        setShowApproveStep1Modal(false);
+        setShowApproveStep2Modal(true);
+      } else {
+        // Direct approval without replacement driver
+        handleApproveDirect(notes);
+      }
+    });
   };
 
   // Add direct approval function
@@ -282,10 +284,45 @@ export default function LeaveRequestsTab() {
     return diffDays;
   };
 
+  // Kiểm tra xem ngày nghỉ đã hết hạn chưa
+  const isLeaveExpired = (startDate: string, endDate: string) => {
+    const today = new Date();
+    const leaveEndDate = new Date(endDate);
+    
+    // Set time to start of day to avoid timezone issues
+    today.setHours(0, 0, 0, 0);
+    leaveEndDate.setHours(0, 0, 0, 0);
+    
+    // Leave đã hết hạn nếu endDate < today
+    return leaveEndDate < today;
+  };
+
   // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [statusFilter, leaveTypeFilter, searchTerm, sortBy]);
+
+  // Memoize ApproveStep2Modal để tránh re-render không cần thiết
+  const memoizedApproveStep2Modal = useMemo(() => {
+    if (!showApproveStep2Modal || !selectedLeave) return null;
+    
+    return (
+      <ApproveStep2Modal
+        leave={selectedLeave}
+        notes={approveNotes}
+        onApprove={handleApproveStep2}
+        onBack={() => {
+          setShowApproveStep2Modal(false);
+          setShowApproveStep1Modal(true);
+        }}
+        onClose={() => {
+          setShowApproveStep2Modal(false);
+          setSelectedLeave(null);
+        }}
+        loading={actionLoading}
+      />
+    );
+  }, [showApproveStep2Modal, selectedLeave?.id, approveNotes, actionLoading]);
 
   if (loading && leaves.length === 0) {
     return (
@@ -504,7 +541,7 @@ export default function LeaveRequestsTab() {
                           <FaEye className="h-4 w-4" />
                         </button>
 
-                        {leave.status === 1 && (
+                        {leave.status === 1 && !isLeaveExpired(leave.startDate, leave.endDate) && (
                           <>
                             <button
                               onClick={() => {
@@ -527,6 +564,13 @@ export default function LeaveRequestsTab() {
                               <FaTimes className="h-4 w-4" />
                             </button>
                           </>
+                        )}
+
+                        {/* Hiển thị icon disabled cho trường hợp đã hết hạn */}
+                        {leave.status === 1 && isLeaveExpired(leave.startDate, leave.endDate) && (
+                          <div className="p-2 text-gray-300 cursor-not-allowed" title="Đã quá hạn duyệt">
+                            <FaClock className="h-4 w-4" />
+                          </div>
                         )}
                       </div>
                     </td>
@@ -605,22 +649,8 @@ export default function LeaveRequestsTab() {
         />
       )}
 
-      {showApproveStep2Modal && selectedLeave && (
-        <ApproveStep2Modal
-          leave={selectedLeave}
-          notes={approveNotes}
-          onApprove={handleApproveStep2}
-          onBack={() => {
-            setShowApproveStep2Modal(false);
-            setShowApproveStep1Modal(true);
-          }}
-          onClose={() => {
-            setShowApproveStep2Modal(false);
-            setSelectedLeave(null);
-          }}
-          loading={actionLoading}
-        />
-      )}
+      {/* Sử dụng memoized modal */}
+      {memoizedApproveStep2Modal}
 
       {showRejectModal && selectedLeave && (
         <RejectLeaveModal
