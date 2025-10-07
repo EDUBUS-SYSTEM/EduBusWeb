@@ -9,6 +9,7 @@ export interface VehicleDto extends BaseEntity {
 
 export interface VehicleListResponse {
   vehicles: VehicleDto[];
+  data: VehicleDto[];
   totalCount: number;
   page: number;
   perPage: number;
