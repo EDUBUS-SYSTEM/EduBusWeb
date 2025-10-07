@@ -1,11 +1,11 @@
 
 import { apiService } from '@/lib/api';
-import { 
-  VehicleListResponse, 
-  VehicleFilters, 
-  CreateVehicleRequest, 
-  CreateVehicleResponse, 
-  VehicleGetResponse, 
+import {
+  VehicleListResponse,
+  VehicleFilters,
+  CreateVehicleRequest,
+  CreateVehicleResponse,
+  VehicleGetResponse,
   VehicleUpdateResponse,
   UpdateVehicleRequest,
   DriverAssignmentRequest,
@@ -168,6 +168,23 @@ export class VehicleService {
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { error?: string } } };
       if (axiosError.response?.data?.error) throw new Error(axiosError.response.data.error);
+      throw error;
+    }
+  }
+
+  async getUnassignedVehicles(excludeRouteId?: string): Promise<VehicleListResponse> {
+    try {
+      const params: Record<string, unknown> = {};
+      if (excludeRouteId) {
+        params.excludeRouteId = excludeRouteId;
+      }
+
+      return await apiService.get<VehicleListResponse>('/vehicle/unassigned', params);
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { data?: { error?: string } } };
+      if (axiosError.response?.data?.error) {
+        throw new Error(axiosError.response.data.error);
+      }
       throw error;
     }
   }
