@@ -208,6 +208,39 @@ class AcademicCalendarService {
     return semesters.filter((semester) => semester.isActive);
   }
 
+  async getCurrentSemester(): Promise<AcademicSemester | null> {
+    try {
+      const calendars = await this.getActiveAcademicCalendars();
+      const now = new Date();
+
+      for (const calendar of calendars) {
+        const calendarStart = new Date(calendar.startDate);
+        const calendarEnd = new Date(calendar.endDate);
+
+        // Check if current date is within this academic year
+        if (now >= calendarStart && now <= calendarEnd) {
+          // Find active semester within this academic year
+          for (const semester of calendar.semesters) {
+            if (semester.isActive) {
+              const semesterStart = new Date(semester.startDate);
+              const semesterEnd = new Date(semester.endDate);
+              
+              // Check if current date is within this semester
+              if (now >= semesterStart && now <= semesterEnd) {
+                return semester;
+              }
+            }
+          }
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Error getting current semester:", error);
+      return null;
+    }
+  }
+
   // Validation helpers
   async validateDateRange(
     academicCalendarId: string,

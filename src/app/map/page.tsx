@@ -8,6 +8,8 @@ import { Loader } from '@googlemaps/js-api-loader';
 import { pickupPointService } from '@/services/pickupPointService';
 import { transactionService, CalculateFeeResponse } from '@/services/transactionService';
 import { unitPriceService } from '@/services/unitPriceService';
+import { academicCalendarService } from '@/services/api/academicCalendarService';
+import { AcademicSemester } from '@/types';
 
 type Student = {
   id?: string | number;
@@ -57,6 +59,10 @@ export default function MapPage() {
   const [students, setStudents] = useState<Student[]>([]);
   // const [studentsLoading, setStudentsLoading] = useState(false); // Removed - not used anymore
   const [studentsError, setStudentsError] = useState('');
+  
+  // Current semester
+  const [currentSemester, setCurrentSemester] = useState<AcademicSemester | null>(null);
+  const [isLoadingSemester, setIsLoadingSemester] = useState(false);
 
   // Selected coords from clicks/search
   const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -98,6 +104,27 @@ export default function MapPage() {
 
     loadCurrentUnitPrice();
   }, []);
+
+  // Load current semester
+  useEffect(() => {
+    const loadCurrentSemester = async () => {
+      try {
+        setIsLoadingSemester(true);
+        const semester = await academicCalendarService.getCurrentSemester();
+        setCurrentSemester(semester);
+      } catch (error) {
+        console.warn('Failed to load current semester:', error);
+        setCurrentSemester(null);
+      } finally {
+        setIsLoadingSemester(false);
+      }
+    };
+
+    // Only load semester if we have parent email (user is authenticated)
+    if (parentEmail) {
+      loadCurrentSemester();
+    }
+  }, [parentEmail]);
 
   // Distance will be calculated from Directions result (driving distance)
 
@@ -1014,6 +1041,87 @@ export default function MapPage() {
             </div>
           </div>
 
+          {/* Linked Students Section - Compact */}
+          {parentEmail && (
+            <div className="mt-3">
+              <div className="bg-white rounded-xl p-3 shadow-soft">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-6 h-6 bg-gradient-to-br from-[#D08700] to-[#FDC700] rounded-lg flex items-center justify-center">
+                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                    </svg>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-semibold text-gray-800">Linked Students</h4>
+                    {isLoadingSemester ? (
+                      <div className="w-1.5 h-1.5 bg-[#D08700] rounded-full animate-pulse"></div>
+                    ) : currentSemester ? (
+                      <div className="flex items-center gap-1">
+                        <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+                        <span className="text-xs font-medium text-green-700 bg-green-100 px-1.5 py-0.5 rounded-full">
+                          {currentSemester.name}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-500">No semester</span>
+                    )}
+                  </div>
+                </div>
+                
+                {false ? (
+                  <div className="flex items-center justify-center py-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 border-2 border-[#D08700] border-t-transparent rounded-full animate-spin"></div>
+                      <span className="text-xs text-gray-500">Loading...</span>
+                    </div>
+                  </div>
+                ) : studentsError ? (
+                  <div className="p-2 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-xs text-red-600 flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {studentsError}
+                    </p>
+                  </div>
+                ) : students.length === 0 ? (
+                  <div className="p-2 bg-gray-50 border border-gray-200 rounded-lg">
+                    <p className="text-xs text-gray-500 flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                      </svg>
+                      No Students Found
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {students.map((s, idx) => (
+                      <motion.div
+                        key={s.id || idx}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: idx * 0.05 }}
+                        className="flex items-center gap-2 bg-gray-50 rounded-lg border border-[#FDC700] px-2 py-1.5 hover:shadow-sm transition-all duration-200 hover:border-[#D08700]"
+                      >
+                        <div className="w-5 h-5 bg-gradient-to-br from-[#D08700] to-[#FDC700] rounded-full flex items-center justify-center">
+                          <span className="text-white font-bold text-xs">
+                            {(s.fullName || s.name || 'S').charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-gray-800 truncate">
+                            {s.fullName || s.name || 'Student'}
+                          </p>
+                        </div>
+                        <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {error && (
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -1086,31 +1194,6 @@ export default function MapPage() {
         transition={{ duration: 0.6, delay: 0.4 }}
         className="relative h-[600px] w-full"
       >
-        {/* Students list (right top below buttons on desktop, above map on mobile) */}
-        {!showSubmitForm && parentEmail && (
-          <div className="absolute left-4 top-4 z-20 max-w-[360px]">
-            <div className="bg-white/95 backdrop-blur rounded-2xl shadow p-4">
-              <p className="text-sm text-gray-500">Students Linked To</p>
-              <p className="text-sm font-semibold text-gray-800 break-all mb-2">{parentEmail}</p>
-              {false ? (
-                <p className="text-gray-500 text-sm">Loading Students...</p>
-              ) : studentsError ? (
-                <p className="text-red-600 text-sm">{studentsError}</p>
-              ) : students.length === 0 ? (
-                <p className="text-gray-500 text-sm">No Students Found.</p>
-              ) : (
-                <ul className="text-sm text-gray-800 space-y-1 max-h-40 overflow-auto pr-1">
-                  {students.map((s, idx) => (
-                    <li key={s.id || idx} className="flex items-center gap-2">
-                      <span className="text-[#D08700]">•</span>
-                      <span>{s.fullName || s.name || 'Student'}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        )}
         {/* Map action buttons */}
         {!showSubmitForm && (
           <div className="absolute z-20 right-4 top-4 flex flex-col gap-2">

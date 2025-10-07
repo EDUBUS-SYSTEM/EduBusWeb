@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaTimes, FaSave } from "react-icons/fa";
-import { CreateUnitPriceRequest } from "@/types/unitPrice";
+import { CreateUnitPriceRequest, UnitPrice } from "@/types/unitPrice";
 import { unitPriceService } from "@/services/unitPriceService";
 
 interface CreateUnitPriceModalProps {
@@ -20,6 +20,50 @@ export default function CreateUnitPriceModal({ onClose, onSuccess }: CreateUnitP
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [existingUnitPrices, setExistingUnitPrices] = useState<UnitPrice[]>([]);
+  const [minEffectiveFrom, setMinEffectiveFrom] = useState<string>("");
+
+  // Load existing unit prices and calculate minimum effective from date
+  useEffect(() => {
+    const loadExistingUnitPrices = async () => {
+      try {
+        const unitPrices = await unitPriceService.getAllUnitPrices();
+        setExistingUnitPrices(unitPrices);
+        
+        // Find the latest end date among existing unit prices
+        let latestEndDate = "";
+        unitPrices.forEach(price => {
+          if (price.effectiveTo && price.effectiveTo > latestEndDate) {
+            latestEndDate = price.effectiveTo;
+          }
+        });
+        
+        // If there are existing unit prices, set min date to the day after the latest end date
+        if (latestEndDate) {
+          const nextDay = new Date(latestEndDate);
+          nextDay.setDate(nextDay.getDate() + 1);
+          setMinEffectiveFrom(nextDay.toISOString().split('T')[0]);
+          
+          // Update form data if current effectiveFrom is before the minimum
+          if (formData.effectiveFrom < nextDay.toISOString().split('T')[0]) {
+            setFormData(prev => ({
+              ...prev,
+              effectiveFrom: nextDay.toISOString().split('T')[0]
+            }));
+          }
+        } else {
+          // If no existing unit prices, allow any date from today
+          setMinEffectiveFrom(new Date().toISOString().split('T')[0]);
+        }
+      } catch (error) {
+        console.error('Failed to load existing unit prices:', error);
+        // Fallback to today's date
+        setMinEffectiveFrom(new Date().toISOString().split('T')[0]);
+      }
+    };
+
+    loadExistingUnitPrices();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -61,10 +105,16 @@ export default function CreateUnitPriceModal({ onClose, onSuccess }: CreateUnitP
 
     if (!formData.effectiveFrom) {
       errors.effectiveFrom = "Effective from date is required";
+    } else if (minEffectiveFrom && formData.effectiveFrom < minEffectiveFrom) {
+      errors.effectiveFrom = `Effective from date must be after ${minEffectiveFrom} (end date of previous unit price)`;
     }
 
-    if (formData.effectiveTo && formData.effectiveTo <= formData.effectiveFrom) {
-      errors.effectiveTo = "Effective end date must be after effective start date";
+    if (formData.effectiveTo) {
+      if (formData.effectiveTo <= formData.effectiveFrom) {
+        errors.effectiveTo = "Effective end date must be after effective start date";
+      } else if (minEffectiveFrom && formData.effectiveTo < minEffectiveFrom) {
+        errors.effectiveTo = `Effective end date must be after ${minEffectiveFrom} (end date of previous unit price)`;
+      }
     }
 
     setValidationErrors(errors);
@@ -215,10 +265,16 @@ export default function CreateUnitPriceModal({ onClose, onSuccess }: CreateUnitP
                 name="effectiveFrom"
                 value={formData.effectiveFrom}
                 onChange={handleInputChange}
+                min={minEffectiveFrom}
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#fad23c] ${
                   validationErrors.effectiveFrom ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
+              {minEffectiveFrom && (
+                <p className="text-sm text-blue-600 mt-1">
+                  ⚠️ Start date must be after the end date of previous unit price ({minEffectiveFrom})
+                </p>
+              )}
               {validationErrors.effectiveFrom && (
                 <p className="text-red-500 text-sm mt-1">{validationErrors.effectiveFrom}</p>
               )}
@@ -234,10 +290,16 @@ export default function CreateUnitPriceModal({ onClose, onSuccess }: CreateUnitP
                 name="effectiveTo"
                 value={formData.effectiveTo || ""}
                 onChange={handleInputChange}
+                min={minEffectiveFrom}
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#fad23c] ${
                   validationErrors.effectiveTo ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
+              {minEffectiveFrom && (
+                <p className="text-sm text-blue-600 mt-1">
+                  ⚠️ End date must be after the end date of previous unit price ({minEffectiveFrom})
+                </p>
+              )}
               {validationErrors.effectiveTo && (
                 <p className="text-red-500 text-sm mt-1">{validationErrors.effectiveTo}</p>
               )}
