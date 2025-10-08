@@ -8,8 +8,8 @@ import { Loader } from '@googlemaps/js-api-loader';
 import { pickupPointService } from '@/services/pickupPointService';
 import { transactionService, CalculateFeeResponse } from '@/services/transactionService';
 import { unitPriceService } from '@/services/unitPriceService';
-import { academicCalendarService } from '@/services/api/academicCalendarService';
-import { AcademicSemester } from '@/types';
+import { publicSemesterService, AcademicSemesterInfo } from '@/services/api/publicSemesterService';
+import { SemesterInfoCard } from '@/components/SemesterInfoCard';
 
 type Student = {
   id?: string | number;
@@ -61,7 +61,7 @@ export default function MapPage() {
   const [studentsError, setStudentsError] = useState('');
   
   // Current semester
-  const [currentSemester, setCurrentSemester] = useState<AcademicSemester | null>(null);
+  const [currentSemester, setCurrentSemester] = useState<AcademicSemesterInfo | null>(null);
   const [isLoadingSemester, setIsLoadingSemester] = useState(false);
 
   // Selected coords from clicks/search
@@ -110,7 +110,7 @@ export default function MapPage() {
     const loadCurrentSemester = async () => {
       try {
         setIsLoadingSemester(true);
-        const semester = await academicCalendarService.getCurrentSemester();
+        const semester = await publicSemesterService.getNextSemester();
         setCurrentSemester(semester);
       } catch (error) {
         console.warn('Failed to load current semester:', error);
@@ -120,11 +120,9 @@ export default function MapPage() {
       }
     };
 
-    // Only load semester if we have parent email (user is authenticated)
-    if (parentEmail) {
-      loadCurrentSemester();
-    }
-  }, [parentEmail]);
+    // Load semester for all users (no authentication required)
+    loadCurrentSemester();
+  }, []);
 
   // Distance will be calculated from Directions result (driving distance)
 
@@ -153,19 +151,19 @@ export default function MapPage() {
         setFeeError('Chưa có đơn giá vận chuyển được thiết lập. Vui lòng liên hệ quản trị viên để thiết lập đơn giá.');
         
         // Use fallback calculation with current unit price (from API or default)
-        const fallbackFee = currentUnitPrice * distanceKm * 90; // Assume 90 school days per semester
+        const fallbackFee = currentUnitPrice * distanceKm * (currentSemester?.totalSchoolDays || 90); // Use actual school days from semester
         const fallbackResponse = {
           totalFee: fallbackFee,
           unitPricePerKm: currentUnitPrice,
           distanceKm: distanceKm,
-          totalSchoolDays: 90,
-          totalTrips: 180,
-          totalDistanceKm: distanceKm * 90,
-          semesterName: 'Fallback Semester',
-          academicYear: '2024-2025',
-          semesterStartDate: new Date().toISOString(),
-          semesterEndDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
-          holidays: [],
+          totalSchoolDays: currentSemester?.totalSchoolDays || 90,
+          totalTrips: currentSemester?.totalTrips || 180,
+          totalDistanceKm: distanceKm * (currentSemester?.totalSchoolDays || 90),
+          semesterName: currentSemester?.name || 'Fallback Semester',
+          academicYear: currentSemester?.academicYear || '2024-2025',
+          semesterStartDate: currentSemester?.startDate || new Date().toISOString(),
+          semesterEndDate: currentSemester?.endDate || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+          holidays: currentSemester?.holidays || [],
           calculationDetails: `Fallback calculation using current price of ${currentUnitPrice.toLocaleString('vi-VN')} VND/km`
         };
         setFeeCalculation(fallbackResponse);
@@ -896,6 +894,7 @@ export default function MapPage() {
               Enter your home address or click on the map to choose a location
             </p>
           </div>
+
           
           <div className="flex flex-col gap-4 md:flex-row md:items-center">
             <div className="flex-1 relative">
@@ -1133,6 +1132,19 @@ export default function MapPage() {
               </div>
             </motion.div>
           )}
+
+          {/* Semester Information Card - Compact */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            className="mt-3"
+          >
+            <SemesterInfoCard 
+              semester={currentSemester} 
+              isLoading={isLoadingSemester} 
+            />
+          </motion.div>
 
           {/* Submit Request Section - Only Show When Location Is Confirmed */}
           {selectedCoords && students.length > 0 && (
