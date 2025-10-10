@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { FaTimes, FaSave, FaCalendarAlt } from "react-icons/fa";
 import { ScheduleTimeOverride } from "@/types";
 import { scheduleService } from "@/services/api/scheduleService";
+import TimeSlotSelector from "./TimeSlotSelector";
 
 interface TimeOverrideModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface TimeOverrideModalProps {
   override?: ScheduleTimeOverride | null;
   effectiveFrom: string;
   effectiveTo?: string;
+  existingExceptions?: Date[];
 }
 
 export default function TimeOverrideModal({
@@ -24,9 +26,10 @@ export default function TimeOverrideModal({
   override = null,
   effectiveFrom,
   effectiveTo,
+  existingExceptions = [],
 }: TimeOverrideModalProps) {
   const [formData, setFormData] = useState({
-    date: "",
+    date: "", // Override date
     startTime: "",
     endTime: "",
     reason: "",
@@ -34,6 +37,8 @@ export default function TimeOverrideModal({
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [overrideType, setOverrideType] = useState<"exception" | "standalone">("standalone");
+  const [selectedExceptionDate, setSelectedExceptionDate] = useState<string>(""); // Exception date
 
   useEffect(() => {
     if (override) {
@@ -58,20 +63,42 @@ export default function TimeOverrideModal({
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.date) {
-      newErrors.date = "Date is required";
-    }
-
-    // Check date within schedule effective range
-    if (formData.date) {
-      const date = new Date(formData.date);
-      const from = effectiveFrom ? new Date(effectiveFrom) : null;
-      const to = effectiveTo ? new Date(effectiveTo) : null;
-      if (from && date < new Date(from.toISOString().split("T")[0])) {
-        newErrors.date = "Date must be on or after Effective From";
+    // Validate date based on override type
+    if (overrideType === "standalone") {
+      if (!formData.date) {
+        newErrors.date = "Date is required";
       }
-      if (to && date > new Date(to.toISOString().split("T")[0])) {
-        newErrors.date = "Date must be on or before Effective To";
+
+      // Check date within schedule effective range
+      if (formData.date) {
+        const date = new Date(formData.date);
+        const from = effectiveFrom ? new Date(effectiveFrom) : null;
+        const to = effectiveTo ? new Date(effectiveTo) : null;
+        if (from && date < new Date(from.toISOString().split("T")[0])) {
+          newErrors.date = "Date must be on or after Effective From";
+        }
+        if (to && date > new Date(to.toISOString().split("T")[0])) {
+          newErrors.date = "Date must be on or before Effective To";
+        }
+      }
+    } else {
+      // Exception override type
+      if (!selectedExceptionDate) {
+        newErrors.exceptionDate = "Please select an exception date";
+      }
+      if (!formData.date) {
+        newErrors.date = "Override date is required";
+      } else {
+        // Check override date within schedule effective range
+        const date = new Date(formData.date);
+        const from = effectiveFrom ? new Date(effectiveFrom) : null;
+        const to = effectiveTo ? new Date(effectiveTo) : null;
+        if (from && date < new Date(from.toISOString().split("T")[0])) {
+          newErrors.date = "Override date must be on or after Effective From";
+        }
+        if (to && date > new Date(to.toISOString().split("T")[0])) {
+          newErrors.date = "Override date must be on or before Effective To";
+        }
       }
     }
 
@@ -110,7 +137,10 @@ export default function TimeOverrideModal({
 
     try {
       const timeOverrideData: ScheduleTimeOverride = {
-        date: new Date(formData.date),
+        date: new Date(formData.date), // Override date (ngày học bù)
+        exceptionDate: overrideType === "exception" && selectedExceptionDate 
+          ? new Date(selectedExceptionDate) 
+          : undefined, // Exception date (ngày nghỉ)
         startTime: formData.startTime,
         endTime: formData.endTime,
         reason: formData.reason,
@@ -168,78 +198,154 @@ export default function TimeOverrideModal({
             </button>
           </div>
 
-          <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-800">
-              <strong>Schedule:</strong> {scheduleName}
+          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+            <div className="flex items-center gap-3 mb-2">
+              <FaCalendarAlt className="w-5 h-5 text-blue-600" />
+              <h4 className="text-lg font-semibold text-blue-800">Schedule: {scheduleName}</h4>
+            </div>
+            <p className="text-sm text-blue-600">
+              Override allows you to change the time for a specific date
             </p>
           </div>
 
+          {/* Override Type Selection */}
+          {!override && (
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Override Type *
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setOverrideType("standalone")}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                    overrideType === "standalone"
+                      ? "border-blue-500 bg-blue-50 text-blue-800"
+                      : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="text-center">
+                    <div className="text-lg font-semibold mb-1">Standalone Override</div>
+                    <div className="text-sm text-gray-600">Change time for any date</div>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOverrideType("exception")}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                    overrideType === "exception"
+                      ? "border-orange-500 bg-orange-50 text-orange-800"
+                      : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="text-center">
+                    <div className="text-lg font-semibold mb-1">Exception Override</div>
+                    <div className="text-sm text-gray-600">Change time for exception date</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Date */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Date *
-              </label>
-              <input
-                type="date"
-                value={formData.date}
-                min={effectiveFrom ? new Date(effectiveFrom).toISOString().split("T")[0] : undefined}
-                max={effectiveTo ? new Date(effectiveTo).toISOString().split("T")[0] : undefined}
-                onChange={(e) => handleInputChange("date", e.target.value)}
-                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
-                  errors.date ? "border-red-300 bg-red-50" : "border-gray-200"
-                }`}
-              />
-              {errors.date && (
-                <p className="mt-1 text-sm text-red-600">{errors.date}</p>
-              )}
-            </div>
+            {/* Date Selection */}
+            {overrideType === "standalone" ? (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Override Date *
+                </label>
+                <input
+                  type="date"
+                  value={formData.date}
+                  min={effectiveFrom ? new Date(effectiveFrom).toISOString().split("T")[0] : undefined}
+                  max={effectiveTo ? new Date(effectiveTo).toISOString().split("T")[0] : undefined}
+                  onChange={(e) => handleInputChange("date", e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
+                    errors.date ? "border-red-300 bg-red-50" : "border-gray-200"
+                  }`}
+                />
+                {errors.date && (
+                  <p className="mt-1 text-sm text-red-600">{errors.date}</p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Exception Date Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Exception Date *
+                  </label>
+                  {existingExceptions.length > 0 ? (
+                    <select
+                      value={selectedExceptionDate}
+                      onChange={(e) => {
+                        setSelectedExceptionDate(e.target.value);
+                        if (errors.exceptionDate) {
+                          setErrors(prev => ({ ...prev, exceptionDate: "" }));
+                        }
+                      }}
+                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
+                        errors.exceptionDate ? "border-red-300 bg-red-50" : "border-gray-200"
+                      }`}
+                    >
+                      <option value="">Select an exception date...</option>
+                      {existingExceptions.map((exception, index) => (
+                        <option key={index} value={new Date(exception).toISOString().split("T")[0]}>
+                          {new Date(exception).toLocaleDateString("en-US", {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric"
+                          })}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl">
+                      <p className="text-orange-800 text-sm">
+                        No exceptions available. Please create an exception first or use &quot;Standalone Override&quot;.
+                      </p>
+                    </div>
+                  )}
+                  {errors.exceptionDate && (
+                    <p className="mt-1 text-sm text-red-600">{errors.exceptionDate}</p>
+                  )}
+                </div>
+
+                {/* Override Date Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Override Date *
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.date}
+                    min={effectiveFrom ? new Date(effectiveFrom).toISOString().split("T")[0] : undefined}
+                    max={effectiveTo ? new Date(effectiveTo).toISOString().split("T")[0] : undefined}
+                    onChange={(e) => handleInputChange("date", e.target.value)}
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
+                      errors.date ? "border-red-300 bg-red-50" : "border-gray-200"
+                    }`}
+                  />
+                  {errors.date && (
+                    <p className="mt-1 text-sm text-red-600">{errors.date}</p>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Time Range */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Start Time *
-                </label>
-                <input
-                  type="time"
-                  value={formData.startTime}
-                  onChange={(e) =>
-                    handleInputChange("startTime", e.target.value)
-                  }
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
-                    errors.startTime
-                      ? "border-red-300 bg-red-50"
-                      : "border-gray-200"
-                  }`}
-                />
-                {errors.startTime && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.startTime}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  End Time *
-                </label>
-                <input
-                  type="time"
-                  value={formData.endTime}
-                  onChange={(e) => handleInputChange("endTime", e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
-                    errors.endTime
-                      ? "border-red-300 bg-red-50"
-                      : "border-gray-200"
-                  }`}
-                />
-                {errors.endTime && (
-                  <p className="mt-1 text-sm text-red-600">{errors.endTime}</p>
-                )}
-              </div>
-            </div>
+            <TimeSlotSelector
+              selectedStartTime={formData.startTime}
+              selectedEndTime={formData.endTime}
+              onStartTimeChange={(time) => handleInputChange("startTime", time)}
+              onEndTimeChange={(time) => handleInputChange("endTime", time)}
+              errors={{
+                startTime: errors.startTime,
+                endTime: errors.endTime
+              }}
+            />
 
             {/* Reason */}
             <div>

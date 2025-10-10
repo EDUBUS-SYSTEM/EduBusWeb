@@ -7,7 +7,15 @@ export interface VehicleDto extends BaseEntity {
   adminId: string;
 }
 
-export type VehicleListResponse = ApiResponse<VehicleDto[]>;
+export interface VehicleListResponse {
+  vehicles: VehicleDto[];
+  data: VehicleDto[];
+  totalCount: number;
+  page: number;
+  perPage: number;
+  totalPages: number;
+}
+//export type VehicleListResponse = ApiResponse<VehicleDto[]>;
 export type VehicleGetResponse = ApiResponse<VehicleDto>;
 export type VehicleUpdateResponse = ApiResponse<VehicleDto>;
 
@@ -21,6 +29,7 @@ export interface VehicleFilters {
   perPage?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  search?: string;
 }
 
 export interface CreateVehicleRequest {
@@ -95,10 +104,30 @@ export interface DriverInfoDto {
   id: string;
   fullName: string;
   phoneNumber: string;
+  email?: string;
+  status?: number | string;          
+  licenseNumber?: string | null;
+  hasValidLicense?: boolean;
+  hasHealthCertificate?: boolean;
 }
 
-export interface VehicleDriversResponse {
+export interface DriverInfoDto {
+  id: string;
+  fullName: string;
+  phoneNumber: string;
+  email?: string;
+  status?: number | string;         
+  licenseNumber?: string | null;
+  hasValidLicense?: boolean;
+  hasHealthCertificate?: boolean;
+}
+export interface ApiListResponse<T> {
   success: boolean;
-  data: DriverAssignmentDto[];
+  data: T;
+  error?: string;
+}
+export interface ApiListResponse<T> {
+  success: boolean;
+  data: T;
   error?: string;
 }

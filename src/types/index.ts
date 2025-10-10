@@ -235,7 +235,8 @@ export interface Schedule {
 }
 
 export interface ScheduleTimeOverride {
-  date: Date;
+  date: Date; // Override date
+  exceptionDate?: Date; // Exception date - optional for standalone overrides
   startTime: string;
   endTime: string;
   reason: string;

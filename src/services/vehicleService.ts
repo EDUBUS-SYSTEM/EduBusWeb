@@ -1,42 +1,65 @@
 
 import { apiService } from '@/lib/api';
-import { 
-  VehicleListResponse, 
-  VehicleFilters, 
-  CreateVehicleRequest, 
-  CreateVehicleResponse, 
-  VehicleGetResponse, 
+import {
+  VehicleListResponse,
+  VehicleFilters,
+  CreateVehicleRequest,
+  CreateVehicleResponse,
+  VehicleGetResponse,
   VehicleUpdateResponse,
   UpdateVehicleRequest,
   DriverAssignmentRequest,
   DriverAssignmentResponse,
-  VehicleDriversResponse
+  ApiListResponse,      
+  DriverInfoDto,  
 } from '@/types/vehicle';
 
 export class VehicleService {
   async getVehicles(filters: VehicleFilters): Promise<VehicleListResponse> {
-    const params: Record<string, unknown> = {};
-    
-    if (filters.status) params.status = filters.status;
-    if (filters.capacity) params.capacity = filters.capacity;
-    if (filters.adminId) params.adminId = filters.adminId;
-    if (filters.page) params.page = filters.page;
-    if (filters.perPage) params.perPage = filters.perPage;
-    if (filters.sortBy) params.sortBy = filters.sortBy;
-    if (filters.sortOrder) params.sortOrder = filters.sortOrder;
-
-    return apiService.get<VehicleListResponse>('/vehicle', params);
+  const searchParams = new URLSearchParams();
+  
+  // Only add status if it's not "all"
+  if (filters.status && filters.status !== "all") {
+    searchParams.append('status', filters.status);
   }
+  
+  if (filters.capacity)  searchParams.append('capacity', filters.capacity.toString());
+  if (filters.adminId)   searchParams.append('adminId', filters.adminId);
+  if (filters.search)    searchParams.append('search', filters.search);
+  
+  searchParams.append('page', (filters.page ?? 1).toString());
+  searchParams.append('perPage', (filters.perPage ?? 20).toString());
+  searchParams.append('sortBy', filters.sortBy ?? 'createdAt');
+  searchParams.append('sortOrder', filters.sortOrder ?? 'desc');
+
+  const url = `/vehicle?${searchParams.toString()}`;
+  
+  return apiService.get<VehicleListResponse>(url);
+}
+
 
   async createVehicle(vehicleData: CreateVehicleRequest): Promise<CreateVehicleResponse> {
     try {
       return await apiService.post<CreateVehicleResponse>('/vehicle', vehicleData);
     } catch (error: unknown) {
-      const axiosError = error as { response?: { data?: { errors?: unknown } } };
+      const axiosError = error as { response?: { data?: { success?: boolean, error?: string, message?: string, errors?: unknown } } };
+      
+      // Handle duplicate license plate error
+      if (axiosError.response?.data?.error === 'LICENSE_PLATE_ALREADY_EXISTS') {
+        throw new Error(axiosError.response.data.message || 'Vehicle with this license plate already exists.');
+      }
+      
+      // Handle validation errors
       if (axiosError.response?.data?.errors) {
         const validationErrors = axiosError.response.data.errors;
         throw new Error(JSON.stringify(validationErrors));
       }
+      
+      // Handle other errors
+      if (axiosError.response?.data?.message) {
+        throw new Error(axiosError.response.data.message);
+      }
+      
       throw error;
     }
   }
@@ -45,11 +68,24 @@ export class VehicleService {
     try {
       return await apiService.put<VehicleUpdateResponse>(`/vehicle/${vehicleId}`, vehicleData);
     } catch (error: unknown) {
-      const axiosError = error as { response?: { data?: { errors?: unknown } } };
+      const axiosError = error as { response?: { data?: { success?: boolean, error?: string, message?: string, errors?: unknown } } };
+      
+      // Handle duplicate license plate error
+      if (axiosError.response?.data?.error === 'LICENSE_PLATE_ALREADY_EXISTS') {
+        throw new Error(axiosError.response.data.message || 'Vehicle with this license plate already exists.');
+      }
+      
+      // Handle validation errors
       if (axiosError.response?.data?.errors) {
         const validationErrors = axiosError.response.data.errors;
         throw new Error(JSON.stringify(validationErrors));
       }
+      
+      // Handle other errors
+      if (axiosError.response?.data?.message) {
+        throw new Error(axiosError.response.data.message);
+      }
+      
       throw error;
     }
   }
@@ -58,11 +94,24 @@ export class VehicleService {
     try {
       return await apiService.patch<VehicleUpdateResponse>(`/vehicle/${vehicleId}`, vehicleData);
     } catch (error: unknown) {
-      const axiosError = error as { response?: { data?: { errors?: unknown } } };
+      const axiosError = error as { response?: { data?: { success?: boolean, error?: string, message?: string, errors?: unknown } } };
+      
+      // Handle duplicate license plate error
+      if (axiosError.response?.data?.error === 'LICENSE_PLATE_ALREADY_EXISTS') {
+        throw new Error(axiosError.response.data.message || 'Vehicle with this license plate already exists.');
+      }
+      
+      // Handle validation errors
       if (axiosError.response?.data?.errors) {
         const validationErrors = axiosError.response.data.errors;
         throw new Error(JSON.stringify(validationErrors));
       }
+      
+      // Handle other errors
+      if (axiosError.response?.data?.message) {
+        throw new Error(axiosError.response.data.message);
+      }
+      
       throw error;
     }
   }
@@ -81,20 +130,7 @@ export class VehicleService {
 
   async assignDriver(vehicleId: string, request: DriverAssignmentRequest): Promise<DriverAssignmentResponse> {
     try {
-      return await apiService.post<DriverAssignmentResponse>(`/Vehicle/${vehicleId}/drivers`, request);
-    } catch (error: unknown) {
-      const axiosError = error as { response?: { data?: { error?: string } } };
-      if (axiosError.response?.data?.error) {
-        throw new Error(axiosError.response.data.error);
-      }
-      throw error;
-    }
-  }
-
-  async getVehicleDrivers(vehicleId: string, isActive?: boolean): Promise<VehicleDriversResponse> {
-    try {
-      const params = isActive !== undefined ? `?isActive=${isActive}` : '';
-      return await apiService.get<VehicleDriversResponse>(`/Vehicle/${vehicleId}/drivers${params}`);
+      return await apiService.post<DriverAssignmentResponse>(`/DriverVehicle/vehicle/${vehicleId}/drivers`, request);
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { error?: string } } };
       if (axiosError.response?.data?.error) {
@@ -107,6 +143,43 @@ export class VehicleService {
   async getVehicleById(vehicleId: string): Promise<VehicleGetResponse> {
     try {
       return await apiService.get<VehicleGetResponse>(`/vehicle/${vehicleId}`);
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { data?: { error?: string } } };
+      if (axiosError.response?.data?.error) {
+        throw new Error(axiosError.response.data.error);
+      }
+      throw error;
+    }
+  }
+  async getVehicleAvailableDrivers(
+    vehicleId: string,
+    startTimeUtc?: string,
+    endTimeUtc?: string
+  ): Promise<ApiListResponse<DriverInfoDto[]>> {
+    try {
+      const q = new URLSearchParams();
+      q.set('availableOnly', 'true');
+      if (startTimeUtc) q.set('startTimeUtc', startTimeUtc);
+      if (endTimeUtc)   q.set('endTimeUtc', endTimeUtc);
+      const qs = `?${q.toString()}`;
+      return await apiService.get<ApiListResponse<DriverInfoDto[]>>(
+        `/DriverVehicle/vehicle/${vehicleId}/drivers${qs}`
+      );
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { data?: { error?: string } } };
+      if (axiosError.response?.data?.error) throw new Error(axiosError.response.data.error);
+      throw error;
+    }
+  }
+
+  async getUnassignedVehicles(excludeRouteId?: string): Promise<VehicleListResponse> {
+    try {
+      const params: Record<string, unknown> = {};
+      if (excludeRouteId) {
+        params.excludeRouteId = excludeRouteId;
+      }
+
+      return await apiService.get<VehicleListResponse>('/vehicle/unassigned', params);
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { error?: string } } };
       if (axiosError.response?.data?.error) {
