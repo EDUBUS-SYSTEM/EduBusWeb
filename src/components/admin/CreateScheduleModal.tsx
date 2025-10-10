@@ -58,7 +58,6 @@ export default function CreateScheduleModal({
   }, []);
   const [previewDates] = useState<Date[]>([]);
   const [showPreview, setShowPreview] = useState(false);
-
   const scheduleTypes = [
     {
       value: "school_day",
@@ -338,9 +337,8 @@ export default function CreateScheduleModal({
                 type="text"
                 value={formData.name}
                 onChange={(e) => handleInputChange("name", e.target.value)}
-                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
-                  errors.name ? "border-red-300 bg-red-50" : "border-gray-200"
-                }`}
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${errors.name ? "border-red-300 bg-red-50" : "border-gray-200"
+                  }`}
                 placeholder="Enter schedule name"
               />
               {errors.name && (
@@ -387,11 +385,10 @@ export default function CreateScheduleModal({
                 onChange={(e) =>
                   handleInputChange("academicYear", e.target.value)
                 }
-                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
-                  errors.academicYear
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${errors.academicYear
                     ? "border-red-300 bg-red-50"
                     : "border-gray-200"
-                }`}
+                  }`}
                 disabled={loadingAcademicYears}
               >
                 <option value="">
@@ -575,6 +572,7 @@ export default function CreateScheduleModal({
                 </button>
               </div>
             )}
+            {/* Preview Dates - Removed since previewDates was deleted */}
 
             {/* Submit Error */}
             {submitError && (

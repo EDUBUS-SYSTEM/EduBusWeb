@@ -35,7 +35,7 @@ export default function Sidebar() {
     { href: "/admin/shuttle", label: "Shuttle Register", icon: <FaClipboardList /> },
     { href: "/admin/revenue", label: "Revenue Statistic", icon: <FaChartBar /> },
     { href: "/admin/complaints", label: "Parent Complaint", icon: <FaCommentDots /> },
-    { href: "/admin/requests", label: "Driver's Requests", icon: <FaFileAlt /> },
+    { href: "/admin/driver-requests", label: "Driver's Requests", icon: <FaFileAlt /> },
     { href: "/admin/parent-requests", label: "Parent Requests", icon: <FaUserCheck /> },
     { href: "/admin/password", label: "Change Password", icon: <FaLock /> },
     {
