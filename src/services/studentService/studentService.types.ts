@@ -33,8 +33,7 @@ export interface UpdateStudentRequest {
   parentId?: string;
   firstName: string;
   lastName: string;
-  isActive: boolean;
-  parentPhoneNumber: string;
+  parentEmail: string;
 }
 
 export enum StudentStatus {
@@ -50,22 +49,23 @@ export interface StudentDto {
   parentId?: string;
   firstName: string;
   lastName: string;
-  isActive: boolean;
-  parentPhoneNumber: string;
+  parentEmail: string;
   status: StudentStatus;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export interface ImportStudentSuccess {
   firstName: string;
   lastName: string;
-  parentPhoneNumber: string;
+  parentEmail: string;
 }
 
 export interface ImportStudentError {
   rowNumber: number;
   firstName: string;
   lastName: string;
-  parentPhoneNumber: string;
+  parentEmail: string;
   errorMessage: string;
 }
 

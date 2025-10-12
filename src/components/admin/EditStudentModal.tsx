@@ -23,8 +23,7 @@ export default function EditStudentModal({
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
-    parentPhoneNumber: "",
-    isActive: true,
+    parentEmail: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -36,18 +35,16 @@ export default function EditStudentModal({
       setFormData({
         firstName: student.firstName,
         lastName: student.lastName,
-        parentPhoneNumber: student.parentPhoneNumber,
-        isActive: student.isActive,
+        parentEmail: student.parentEmail,
       });
       setErrors({});
     }
   }, [student]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    const newValue = type === "checkbox" ? checked : value;
+    const { name, value } = e.target;
 
-    setFormData((prev) => ({ ...prev, [name]: newValue }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
     // Clear error when user starts typing
     if (errors[name]) {
@@ -64,8 +61,28 @@ export default function EditStudentModal({
     if (!formData.lastName.trim()) {
       newErrors.lastName = "Last name is required";
     }
-    if (!formData.parentPhoneNumber.trim()) {
-      newErrors.parentPhoneNumber = "Parent phone number is required";
+    if (!formData.parentEmail.trim()) {
+      newErrors.parentEmail = "Parent email is required";
+    } else {
+      // Email format validation with strict domain check
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(formData.parentEmail)) {
+        newErrors.parentEmail = "Please enter a valid email address";
+      } else {
+        // Check for common domains only
+        const domain = formData.parentEmail.split('@')[1];
+        const commonDomains = [
+          'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'live.com',
+          'fpt.edu.vn', 'student.fpt.edu.vn', 'fpt.com.vn',
+          'edubus.com', 'student.edu', 'school.edu', 'university.edu',
+          'company.com', 'business.com', 'org.com', 'net.com'
+        ];
+        
+        // Only allow common domains
+        if (!commonDomains.includes(domain.toLowerCase())) {
+          newErrors.parentEmail = "Please use a valid email domain (e.g., @gmail.com, @fpt.edu.vn)";
+        }
+      }
     }
 
     setErrors(newErrors);
@@ -85,8 +102,7 @@ export default function EditStudentModal({
       const updateData: UpdateStudentRequest = {
         firstName: formData.firstName,
         lastName: formData.lastName,
-        parentPhoneNumber: formData.parentPhoneNumber,
-        isActive: formData.isActive,
+        parentEmail: formData.parentEmail,
       };
 
       await onSubmit(student.id, updateData);
@@ -163,49 +179,32 @@ export default function EditStudentModal({
             )}
           </div>
 
-          {/* Parent Phone Number */}
+          {/* Parent Email */}
           <div>
             <label
-              htmlFor="parentPhoneNumber"
+              htmlFor="parentEmail"
               className="block text-sm font-medium text-gray-700 mb-2"
             >
-              Parent Phone Number *
+              Parent Email *
             </label>
             <input
-              type="tel"
-              id="parentPhoneNumber"
-              name="parentPhoneNumber"
-              value={formData.parentPhoneNumber}
+              type="email"
+              id="parentEmail"
+              name="parentEmail"
+              value={formData.parentEmail}
               onChange={handleChange}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                errors.parentPhoneNumber ? "border-red-500" : "border-gray-300"
+                errors.parentEmail ? "border-red-500" : "border-gray-300"
               }`}
-              placeholder="Enter parent phone number"
+              placeholder="Enter parent email"
             />
-            {errors.parentPhoneNumber && (
+            {errors.parentEmail && (
               <p className="mt-1 text-sm text-red-600">
-                {errors.parentPhoneNumber}
+                {errors.parentEmail}
               </p>
             )}
           </div>
 
-          {/* Active Status */}
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="isActive"
-              name="isActive"
-              checked={formData.isActive}
-              onChange={handleChange}
-              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-            />
-            <label
-              htmlFor="isActive"
-              className="ml-2 block text-sm text-gray-700"
-            >
-              Active Student
-            </label>
-          </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">

@@ -45,6 +45,26 @@ export default function AddStudentModal({
     }
     if (!formData.parentEmail.trim()) {
       newErrors.parentEmail = 'Parent email is required';
+    } else {
+      // Email format validation with strict domain check
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(formData.parentEmail)) {
+        newErrors.parentEmail = "Please enter a valid email address";
+      } else {
+        // Check for common domains only
+        const domain = formData.parentEmail.split('@')[1];
+        const commonDomains = [
+          'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'live.com',
+          'fpt.edu.vn', 'student.fpt.edu.vn', 'fpt.com.vn',
+          'edubus.com', 'student.edu', 'school.edu', 'university.edu',
+          'company.com', 'business.com', 'org.com', 'net.com'
+        ];
+        
+        // Only allow common domains
+        if (!commonDomains.includes(domain.toLowerCase())) {
+          newErrors.parentEmail = "Please use a valid email domain (e.g., @gmail.com, @fpt.edu.vn)";
+        }
+      }
     }
 
     setErrors(newErrors);
