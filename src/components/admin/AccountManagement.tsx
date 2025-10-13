@@ -1,16 +1,14 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   FaLock,
   FaUnlock,
   FaSearch,
-  FaSort,
   FaCalendarAlt,
   FaInfoCircle,
-  FaChevronLeft,
-  FaChevronRight,
 } from "react-icons/fa";
+import Pagination from "@/components/ui/Pagination";
 import {
   userAccountService,
   GetUsersParams,
@@ -23,8 +21,9 @@ import {
 } from "@/services/userAccountService/userAccountService.type";
 
 export default function AccountManagement() {
-  const [users, setUsers] = useState<UserAccount[]>([]);
+  const [allUsers, setAllUsers] = useState<UserAccount[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sortBy, setSortBy] = useState<string>("firstName");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
@@ -40,9 +39,8 @@ export default function AccountManagement() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
-  const [totalCount, setTotalCount] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
   const [statusFilter, setStatusFilter] = useState<string>("");
+  const [roleFilter, setRoleFilter] = useState<string>("");
 
   // Validation state
   const [lockValidationError, setLockValidationError] = useState<string | null>(
@@ -54,45 +52,123 @@ export default function AccountManagement() {
 
   // Removed unused searchTimeoutRef
 
-  const fetchUsers = useCallback(async () => {
+  // Helper function to determine user role based on email pattern
+  const getUserRole = (user: UserAccount): "admin" | "parent" | "driver" => {
+    const email = user.email.toLowerCase();
+    if (email.includes("admin")) return "admin";
+    if (email.includes("driver")) return "driver";
+    if (email.includes("parent")) return "parent";
+    // Default fallback - could be improved with actual role data
+    return "parent";
+  };
+
+  // Helper function to check if user is locked
+  const isUserLocked = (user: UserAccount): boolean => {
+    return Boolean(
+      user.lockedUntil && new Date(user.lockedUntil + "Z") > new Date()
+    );
+  };
+
+  // Client-side filtering function
+  const filterUsers = useCallback((users: UserAccount[]) => {
+    let filtered = [...users];
+
+    // Apply search filter (only if there's a search term)
+    if (debouncedSearch && debouncedSearch.trim() !== "") {
+      const searchLower = debouncedSearch.toLowerCase();
+      filtered = filtered.filter(user => 
+        user.firstName.toLowerCase().includes(searchLower) ||
+        user.lastName.toLowerCase().includes(searchLower) ||
+        user.email.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Apply role filter
+    if (roleFilter) {
+      filtered = filtered.filter(user => getUserRole(user) === roleFilter);
+    }
+
+    // Apply status filter
+    if (statusFilter) {
+      if (statusFilter === "isNotLocked") {
+        filtered = filtered.filter(user => !isUserLocked(user));
+      } else if (statusFilter === "isLocked") {
+        filtered = filtered.filter(user => isUserLocked(user));
+      }
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let aValue: string | number;
+      let bValue: string | number;
+
+      if (sortBy === "firstName") {
+        aValue = `${a.firstName} ${a.lastName}`.toLowerCase();
+        bValue = `${b.firstName} ${b.lastName}`.toLowerCase();
+      } else if (sortBy === "createdAt") {
+        aValue = new Date(a.createdAt).getTime();
+        bValue = new Date(b.createdAt).getTime();
+      } else {
+        aValue = a[sortBy as keyof UserAccount] as string;
+        bValue = b[sortBy as keyof UserAccount] as string;
+      }
+
+      if (sortOrder === "asc") {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      } else {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+      }
+    });
+
+    return filtered;
+  }, [debouncedSearch, roleFilter, statusFilter, sortBy, sortOrder]);
+
+  // Pagination for filtered results
+  const paginatedUsers = useMemo(() => {
+    const filtered = filterUsers(allUsers);
+    const start = (currentPage - 1) * perPage;
+    const end = start + perPage;
+    return filtered.slice(start, end);
+  }, [filterUsers, allUsers, currentPage, perPage]);
+
+  const totalFilteredCount = useMemo(() => {
+    return filterUsers(allUsers).length;
+  }, [filterUsers, allUsers]);
+
+  const totalFilteredPages = useMemo(() => {
+    return Math.ceil(totalFilteredCount / perPage);
+  }, [totalFilteredCount, perPage]);
+
+  // Fetch all users (for client-side filtering)
+  const fetchAllUsers = useCallback(async () => {
     setLoading(true);
     try {
+      // Fetch all users without pagination
       const params: GetUsersParams = {
-        page: currentPage,
-        perPage: perPage,
-        sortBy: sortBy,
-        sortOrder: sortOrder,
-        status: statusFilter || undefined,
-        search: searchTerm || undefined,
+        page: 1,
+        perPage: 1000, // Large number to get all users
+        sortBy: "createdAt",
+        sortOrder: "desc",
       };
 
       const response = await userAccountService.getUsers(params);
-      setUsers(response.users);
-      setTotalCount(response.totalCount);
-      setTotalPages(response.totalPages);
+      setAllUsers(response.users);
     } catch {
       setError("Failed to fetch users");
     } finally {
       setLoading(false);
     }
-  }, [currentPage, perPage, sortBy, sortOrder, statusFilter, searchTerm]);
+  }, []);
 
   // Fetch users when dependencies change (except searchTerm)
   useEffect(() => {
-    fetchUsers();
-  }, [currentPage, perPage, sortBy, sortOrder, statusFilter, fetchUsers]);
+    fetchAllUsers();
+  }, [fetchAllUsers]);
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       setCurrentPage(1); // reset to first page
-      fetchUsers();
     }
-  };
-
-  const isUserLocked = (user: UserAccount): boolean => {
-    return Boolean(
-      user.lockedUntil && new Date(user.lockedUntil + "Z") > new Date()
-    );
   };
 
   const getLockStatus = (user: UserAccount) => {
@@ -165,7 +241,7 @@ export default function AccountManagement() {
       setLockFormData({ lockedUntil: "", reason: "" });
       setLockValidationError(null);
       setReasonValidationError(null);
-      fetchUsers();
+      fetchAllUsers();
     } catch {
       setError("Failed to lock user");
     }
@@ -175,7 +251,7 @@ export default function AccountManagement() {
     try {
       await userAccountService.unlockUser(userId);
       setSuccessMessage("User unlocked successfully");
-      fetchUsers();
+      fetchAllUsers();
     } catch {
       setError("Failed to unlock user");
     }
@@ -208,7 +284,7 @@ export default function AccountManagement() {
       setLockFormData({ lockedUntil: "", reason: "" });
       setLockValidationError(null);
       setReasonValidationError(null);
-      fetchUsers();
+      fetchAllUsers();
     } catch {
       setError("Failed to lock users");
     }
@@ -220,7 +296,7 @@ export default function AccountManagement() {
       await userAccountService.unlockMultipleUsers(req);
       setSuccessMessage(`${selectedUsers.length} users unlocked successfully`);
       setSelectedUsers([]);
-      fetchUsers();
+      fetchAllUsers();
     } catch {
       setError("Failed to unlock users");
     }
@@ -234,7 +310,7 @@ export default function AccountManagement() {
     );
   };
 
-  const selectAllUsers = () => setSelectedUsers(users.map((user) => user.id));
+  const selectAllUsers = () => setSelectedUsers(paginatedUsers.map((user) => user.id));
   const clearSelection = () => setSelectedUsers([]);
 
   const handleSort = (field: string) => {
@@ -264,10 +340,27 @@ export default function AccountManagement() {
     setSelectedUsers([]); // Clear selection
   };
 
+  const handleRoleFilterChange = (role: string) => {
+    setRoleFilter(role);
+    setCurrentPage(1); // Reset to first page when filtering
+    setSelectedUsers([]); // Clear selection
+  };
+
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
+
+  // Debounce searchTerm -> debouncedSearch 
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch]);
 
   if (loading) return <div className="flex justify-center p-8">Loading...</div>;
 
@@ -345,6 +438,49 @@ export default function AccountManagement() {
                 <option value="isNotLocked">Active</option>
                 <option value="isLocked">Locked</option>
               </select>
+              <select
+                value={roleFilter}
+                onChange={(e) => handleRoleFilterChange(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+              >
+                <option value="">All Roles</option>
+                <option value="admin">Admin</option>
+                <option value="parent">Parent</option>
+                <option value="driver">Driver</option>
+              </select>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Sort by:</span>
+                <button
+                  onClick={() => handleSort("firstName")}
+                  className={`px-3 py-1 text-sm rounded-lg border transition-colors flex items-center gap-1 ${
+                    sortBy === "firstName"
+                      ? "bg-yellow-100 border-yellow-300 text-yellow-800"
+                      : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  Name
+                  {sortBy === "firstName" && (
+                    <span className="text-xs">
+                      {sortOrder === "asc" ? "↑" : "↓"}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={() => handleSort("createdAt")}
+                  className={`px-3 py-1 text-sm rounded-lg border transition-colors flex items-center gap-1 ${
+                    sortBy === "createdAt"
+                      ? "bg-yellow-100 border-yellow-300 text-yellow-800"
+                      : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  Created Date
+                  {sortBy === "createdAt" && (
+                    <span className="text-xs">
+                      {sortOrder === "asc" ? "↑" : "↓"}
+                    </span>
+                  )}
+                </button>
+              </div>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
@@ -387,10 +523,10 @@ export default function AccountManagement() {
                   <input
                     type="checkbox"
                     checked={
-                      selectedUsers.length === users.length && users.length > 0
+                      selectedUsers.length === paginatedUsers.length && paginatedUsers.length > 0
                     }
                     onChange={
-                      selectedUsers.length === users.length
+                      selectedUsers.length === paginatedUsers.length
                         ? clearSelection
                         : selectAllUsers
                     }
@@ -398,12 +534,7 @@ export default function AccountManagement() {
                   />
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <button
-                    onClick={() => handleSort("firstName")}
-                    className="flex items-center gap-1 hover:text-gray-700"
-                  >
-                    Name <FaSort />
-                  </button>
+                  Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Email
@@ -412,15 +543,13 @@ export default function AccountManagement() {
                   Phone
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Role
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <button
-                    onClick={() => handleSort("createdAt")}
-                    className="flex items-center gap-1 hover:text-gray-700"
-                  >
-                    Created <FaSort />
-                  </button>
+                  Created
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -428,7 +557,7 @@ export default function AccountManagement() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((user) => {
+              {paginatedUsers.map((user) => {
                 const locked = isUserLocked(user);
                 const lockStatus = getLockStatus(user);
                 return (
@@ -453,6 +582,11 @@ export default function AccountManagement() {
                       <div className="text-sm text-gray-900">
                         {user.phoneNumber}
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                        {getUserRole(user).charAt(0).toUpperCase() + getUserRole(user).slice(1)}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
@@ -508,82 +642,18 @@ export default function AccountManagement() {
         </div>
 
         {/* Pagination */}
-        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-          <div className="flex-1 flex justify-between sm:hidden">
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Next
-            </button>
+        {paginatedUsers.length > 0 && (
+          <div className="mt-6 flex justify-center">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalFilteredPages}
+              onPageChange={handlePageChange}
+              totalItems={totalFilteredCount}
+              itemsPerPage={perPage}
+              showInfo={false}
+            />
           </div>
-          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                Showing{" "}
-                <span className="font-medium">
-                  {(currentPage - 1) * perPage + 1}
-                </span>{" "}
-                to{" "}
-                <span className="font-medium">
-                  {Math.min(currentPage * perPage, totalCount)}
-                </span>{" "}
-                of <span className="font-medium">{totalCount}</span> results
-              </p>
-            </div>
-            <div>
-              <nav
-                className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                aria-label="Pagination"
-              >
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <FaChevronLeft className="h-5 w-5" />
-                </button>
-
-                {/* Page numbers */}
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  const pageNum =
-                    Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
-                  if (pageNum > totalPages) return null;
-
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => handlePageChange(pageNum)}
-                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                        pageNum === currentPage
-                          ? "z-10 bg-yellow-50 border-yellow-500 text-yellow-600"
-                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
-
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <FaChevronRight className="h-5 w-5" />
-                </button>
-              </nav>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Lock Modal */}
