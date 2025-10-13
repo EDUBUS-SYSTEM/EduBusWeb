@@ -3,7 +3,7 @@
 import React from 'react';
 import { RouteDto } from '@/services/routeService/routeService.types';
 import { FaTimes, FaMapMarkerAlt, FaCheck } from 'react-icons/fa';
-import GoogleMapComponent from './GoogleMapComponent';
+import VietMapComponent from './VietMapComponent';
 
 interface RouteMapModalProps {
   isOpen: boolean;
@@ -52,7 +52,7 @@ const RouteMapModal: React.FC<RouteMapModalProps> = ({
         <div className="flex flex-1 overflow-hidden">
           {/* Map */}
           <div className="flex-1 relative">
-            <GoogleMapComponent
+            <VietMapComponent
               routes={routes}
               selectedRouteIds={selectedRouteIds}
               className="w-full h-full"

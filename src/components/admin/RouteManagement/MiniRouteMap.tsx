@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { RouteDto } from '@/services/routeService/routeService.types';
 import { FaMapMarkerAlt, FaExpand } from 'react-icons/fa';
-import GoogleMapComponent from './GoogleMapComponent';
+import VietMapComponent from './VietMapComponent';
 import RouteMapModal from './RouteMapModal';
 
 interface MiniRouteMapProps {
@@ -64,7 +64,7 @@ const MiniRouteMap: React.FC<MiniRouteMapProps> = ({
 
         {/* Map Container */}
         <div className="relative">
-          <GoogleMapComponent
+          <VietMapComponent
             routes={routes}
             selectedRouteIds={selectedRouteIds}
             className="h-44 w-full cursor-pointer"

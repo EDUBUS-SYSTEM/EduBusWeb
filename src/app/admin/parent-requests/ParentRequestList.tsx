@@ -105,6 +105,11 @@ export default function ParentRequestList() {
       // Refresh the requests list
       await fetchRequests();
       
+      // Notify other pages that a transaction was created
+      window.dispatchEvent(new CustomEvent('transactionCreated', { 
+        detail: { requestId, timestamp: Date.now() } 
+      }));
+      
       setShowApproveModal(false);
       setSelectedRequest(null);
       
@@ -332,7 +337,7 @@ export default function ParentRequestList() {
                             {request.addressText}
                           </div>
                           <div className="text-xs text-gray-500">
-                            {request.distanceKm.toFixed(2)} km • {formatCurrency(request.estimatedPriceVnd)}
+                            {request.distanceKm.toFixed(2)} km • {formatCurrency(request.totalFee)}
                           </div>
                         </div>
                       </div>
@@ -484,7 +489,7 @@ function ApproveModal({
             Location: {request.addressText}
           </p>
           <p className="text-sm text-gray-500">
-            Price: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(request.estimatedPriceVnd)}
+            Price: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(request.totalFee)}
           </p>
         </div>
 

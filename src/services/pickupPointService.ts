@@ -40,15 +40,13 @@ export interface VerifyOtpWithStudentsResponseDto {
 
 export interface SubmitPickupPointRequestDto {
 	email: string;
-	studentIds: string[];
+	studentIds: string[]; // Frontend sends string[], backend expects Guid[]
 	addressText: string;
 	latitude: number;
 	longitude: number;
 	distanceKm: number;
 	description?: string;
 	reason?: string;
-	unitPriceVndPerKm?: number;
-	estimatedPriceVnd: number;
 }
 
 export interface SubmitPickupPointRequestResponseDto {
@@ -81,8 +79,13 @@ export interface PickupPointRequestDetailDto {
 	distanceKm: number;
 	description: string;
 	reason: string;
-	unitPriceVndPerKm: number;
-	estimatedPriceVnd: number;
+	unitPricePerKm: number; // Match backend field name
+	totalFee: number; // Match backend field name
+	semesterName: string;
+	academicYear: string;
+	semesterStartDate: string;
+	semesterEndDate: string;
+	totalSchoolDays: number;
 	status: "Pending" | "Approved" | "Rejected";
 	adminNotes: string;
 	reviewedAt?: string;
@@ -129,8 +132,39 @@ export const pickupPointService = {
 		apiService.post<ParentRegistrationResponseDto>('/PickupPoint/register', data),
 	verifyOtp: (data: VerifyOtpRequest) =>
 		apiService.post<VerifyOtpWithStudentsResponseDto>('/PickupPoint/verify-otp', data),
-	submitRequest: (data: SubmitPickupPointRequestDto) =>
-		apiService.post<SubmitPickupPointRequestResponseDto>('/PickupPoint/submit-request', data),
+	submitRequest: async (data: SubmitPickupPointRequestDto) => {
+		// Custom JSON serialization to handle studentIds conversion
+		const serializedData = JSON.stringify(data, (key, value) => {
+			if (key === 'studentIds' && Array.isArray(value)) {
+				// Convert string[] to proper format for backend
+				return value.map((id: string) => {
+					// If it's already a valid GUID string, use it as is
+					if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+						return id;
+					}
+					// For numeric IDs, return as string (backend will handle conversion)
+					return id;
+				});
+			}
+			return value;
+		});
+		
+		// Use fetch with custom serialization
+		const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/PickupPoint/submit-request`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: serializedData
+		});
+		
+		if (!response.ok) {
+			const errorData = await response.json();
+			throw new Error(errorData.detail || errorData.message || 'Failed to submit request');
+		}
+		
+		return response.json();
+	},
 	
 	// Admin endpoints
 	listRequests: (query?: PickupPointRequestListQuery) =>
