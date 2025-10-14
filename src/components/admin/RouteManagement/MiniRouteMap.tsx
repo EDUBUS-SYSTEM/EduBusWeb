@@ -14,6 +14,29 @@ interface MiniRouteMapProps {
   onDeselectAllRoutes: () => void;
 }
 
+// Stable color assignment - same as VietMapComponent
+const ROUTE_COLORS = [
+  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+  '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
+];
+
+// Hash function for stable color assignment based on route ID
+const hashString = (str: string): number => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash);
+};
+
+// Get stable color for a route based on its ID
+const getRouteColor = (routeId: string): string => {
+  const hash = hashString(routeId);
+  return ROUTE_COLORS[hash % ROUTE_COLORS.length];
+};
+
 const MiniRouteMap: React.FC<MiniRouteMapProps> = ({
   routes,
   selectedRouteIds,
@@ -85,15 +108,12 @@ const MiniRouteMap: React.FC<MiniRouteMapProps> = ({
           <div className="p-3 border-t bg-gray-50">
             <div className="text-xs text-gray-600 mb-2">Showing routes:</div>
             <div className="space-y-1 max-h-20 overflow-y-auto">
-              {selectedRouteIds.map((routeId, index) => {
+              {selectedRouteIds.map((routeId) => {
                 const route = routes.find(r => r.id === routeId);
                 if (!route) return null;
                 
-                const routeColors = [
-                  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-                  '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
-                ];
-                const color = routeColors[index % routeColors.length];
+                // Use stable color based on route ID - same as map
+                const color = getRouteColor(routeId);
                 
                 return (
                   <div key={routeId} className="flex items-center justify-between text-xs">
