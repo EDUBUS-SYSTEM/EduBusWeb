@@ -44,6 +44,7 @@ export interface UpdateScheduleDto {
   exceptions: Date[]; // Changed from string[] to Date[] to match backend
   isActive: boolean;
   timeOverrides?: ScheduleTimeOverride[]; // Added to preserve overrides
+  updatedAt?: string; // Added for optimistic locking
 }
 
 export interface ScheduleQueryParams {
@@ -136,56 +137,88 @@ class ScheduleService {
 
   // Schedule CRUD operations
   async getSchedules(params?: ScheduleQueryParams): Promise<Schedule[]> {
-    const queryParams = new URLSearchParams();
+    try {
+      const queryParams = new URLSearchParams();
 
-    if (params?.scheduleType)
-      queryParams.append("scheduleType", params.scheduleType);
-    if (params?.startDate) queryParams.append("startDate", params.startDate);
-    if (params?.endDate) queryParams.append("endDate", params.endDate);
-    if (params?.activeOnly !== undefined)
-      queryParams.append("activeOnly", params.activeOnly.toString());
-    if (params?.page) queryParams.append("page", params.page.toString());
-    if (params?.perPage)
-      queryParams.append("perPage", params.perPage.toString());
-    if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
-    if (params?.sortOrder) queryParams.append("sortOrder", params.sortOrder);
+      if (params?.scheduleType)
+        queryParams.append("scheduleType", params.scheduleType);
+      if (params?.startDate) queryParams.append("startDate", params.startDate);
+      if (params?.endDate) queryParams.append("endDate", params.endDate);
+      if (params?.activeOnly !== undefined)
+        queryParams.append("activeOnly", params.activeOnly.toString());
+      if (params?.page) queryParams.append("page", params.page.toString());
+      if (params?.perPage)
+        queryParams.append("perPage", params.perPage.toString());
+      if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
+      if (params?.sortOrder) queryParams.append("sortOrder", params.sortOrder);
 
-    const response = await apiClient.get(`/schedule?${queryParams.toString()}`);
-    return response.data;
+      const response = await apiClient.get(
+        `/schedule?${queryParams.toString()}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching schedules:", error);
+      throw new Error("Failed to fetch schedules. Please try again.");
+    }
   }
 
   async getScheduleById(id: string): Promise<Schedule> {
-    const response = await apiClient.get(`/schedule/${id}`);
-    return response.data;
+    try {
+      const response = await apiClient.get(`/schedule/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching schedule:", error);
+      throw new Error("Failed to fetch schedule. Please try again.");
+    }
   }
 
   async createSchedule(schedule: CreateScheduleDto): Promise<Schedule> {
-    const response = await apiClient.post("/schedule", schedule);
-    return response.data;
+    try {
+      const response = await apiClient.post("/schedule", schedule);
+      return response.data;
+    } catch (error) {
+      console.error("Error creating schedule:", error);
+      throw new Error("Failed to create schedule. Please try again.");
+    }
   }
 
   async updateSchedule(id: string, schedule: UpdateScheduleDto): Promise<void> {
-    console.log("Update schedule request:", {
-      url: `/schedule/${id}`,
-      data: schedule,
-    });
-
-    const response = await apiClient.put(`/schedule/${id}`, schedule);
-    console.log("Update schedule response:", response);
+    try {
+      const response = await apiClient.put(`/schedule/${id}`, schedule);
+      console.log("Update schedule response:", response);
+    } catch (error) {
+      console.error("Error updating schedule:", error);
+      throw new Error("Failed to update schedule. Please try again.");
+    }
   }
 
   async deleteSchedule(id: string): Promise<void> {
-    await apiClient.delete(`/schedule/${id}`);
+    try {
+      await apiClient.delete(`/schedule/${id}`);
+    } catch (error) {
+      console.error("Error deleting schedule:", error);
+      throw new Error("Failed to delete schedule. Please try again.");
+    }
   }
 
   async getActiveSchedules(): Promise<Schedule[]> {
-    const response = await apiClient.get("/schedule/active");
-    return response.data;
+    try {
+      const response = await apiClient.get("/schedule/active");
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching active schedules:", error);
+      throw new Error("Failed to fetch active schedules. Please try again.");
+    }
   }
 
   async getSchedulesByType(scheduleType: string): Promise<Schedule[]> {
-    const response = await apiClient.get(`/schedule/type/${scheduleType}`);
-    return response.data;
+    try {
+      const response = await apiClient.get(`/schedule/type/${scheduleType}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching schedules by type:", error);
+      throw new Error("Failed to fetch schedules by type. Please try again.");
+    }
   }
 
   // Route Schedule CRUD operations
