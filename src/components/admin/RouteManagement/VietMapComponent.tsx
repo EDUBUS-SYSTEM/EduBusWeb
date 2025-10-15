@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import vietmapgl from '@vietmap/vietmap-gl-js/dist/vietmap-gl.js';
 import { RouteDto } from '@/services/routeService/routeService.types';
+import { vietmapService } from '@/services/vietmapService';
 
 interface VietMapComponentProps {
   routes: RouteDto[];
@@ -14,8 +15,8 @@ interface VietMapComponentProps {
 }
 
 const SCHOOL_LOCATION = {
-  lat: 10.790353,
-  lng: 106.748036
+  lat: 15.9796,
+  lng: 108.2605
 };
 
 // Stable color assignment - colors will remain consistent regardless of route order
@@ -39,6 +40,120 @@ const hashString = (str: string): number => {
 const getRouteColor = (routeId: string): string => {
   const hash = hashString(routeId);
   return ROUTE_COLORS[hash % ROUTE_COLORS.length];
+};
+
+// Decode polyline string to coordinates array
+const decodePolyline = (encoded: string): number[][] => {
+  const points: number[][] = [];
+  let index = 0;
+  const len = encoded.length;
+  let lat = 0;
+  let lng = 0;
+
+  while (index < len) {
+    let b: number;
+    let shift = 0;
+    let result = 0;
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    const dlat = ((result & 1) !== 0 ? ~(result >> 1) : (result >> 1));
+    lat += dlat;
+
+    shift = 0;
+    result = 0;
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    const dlng = ((result & 1) !== 0 ? ~(result >> 1) : (result >> 1));
+    lng += dlng;
+
+    points.push([lng / 1e5, lat / 1e5]);
+  }
+
+  return points;
+};
+
+// Get actual route coordinates using VietMap Routing API
+const getRouteCoordinates = async (route: RouteDto): Promise<number[][]> => {
+  try {
+    const sortedPoints = route.pickupPoints.sort((a, b) => a.sequenceOrder - b.sequenceOrder);
+    
+    if (sortedPoints.length === 0) {
+      return [];
+    }
+
+    // Start from school
+    let currentPoint = SCHOOL_LOCATION;
+    const allCoordinates: number[][] = [];
+
+    // Route from school to first pickup point
+    if (sortedPoints.length > 0) {
+      const firstPoint = sortedPoints[0].location;
+      const routeResult = await vietmapService.getRoute(
+        currentPoint,
+        { lat: firstPoint.latitude, lng: firstPoint.longitude },
+        'car'
+      );
+      
+      if (routeResult.paths && routeResult.paths.length > 0) {
+        const decodedPoints = decodePolyline(routeResult.paths[0].points);
+        allCoordinates.push(...decodedPoints);
+        currentPoint = { lat: firstPoint.latitude, lng: firstPoint.longitude };
+      }
+    }
+
+    // Route between pickup points
+    for (let i = 0; i < sortedPoints.length - 1; i++) {
+      const currentPickupPoint = sortedPoints[i].location;
+      const nextPickupPoint = sortedPoints[i + 1].location;
+      
+      const routeResult = await vietmapService.getRoute(
+        { lat: currentPickupPoint.latitude, lng: currentPickupPoint.longitude },
+        { lat: nextPickupPoint.latitude, lng: nextPickupPoint.longitude },
+        'car'
+      );
+      
+      if (routeResult.paths && routeResult.paths.length > 0) {
+        const decodedPoints = decodePolyline(routeResult.paths[0].points);
+        // Skip first point to avoid duplication
+        allCoordinates.push(...decodedPoints.slice(1));
+      }
+    }
+
+    // Route from last pickup point back to school
+    if (sortedPoints.length > 0) {
+      const lastPoint = sortedPoints[sortedPoints.length - 1].location;
+      const routeResult = await vietmapService.getRoute(
+        { lat: lastPoint.latitude, lng: lastPoint.longitude },
+        SCHOOL_LOCATION,
+        'car'
+      );
+      
+      if (routeResult.paths && routeResult.paths.length > 0) {
+        const decodedPoints = decodePolyline(routeResult.paths[0].points);
+        // Skip first point to avoid duplication
+        allCoordinates.push(...decodedPoints.slice(1));
+      }
+    }
+
+    return allCoordinates;
+  } catch (error) {
+    console.error(`Error getting route coordinates for ${route.routeName}:`, error);
+    
+    // Fallback to straight line if routing fails
+    const sortedPoints = route.pickupPoints.sort((a, b) => a.sequenceOrder - b.sequenceOrder);
+    const coordinates = [
+      [SCHOOL_LOCATION.lng, SCHOOL_LOCATION.lat],
+      ...sortedPoints.map(point => [point.location.longitude, point.location.latitude]),
+      [SCHOOL_LOCATION.lng, SCHOOL_LOCATION.lat]
+    ];
+    return coordinates;
+  }
 };
 
 const VietMapComponent: React.FC<VietMapComponentProps> = ({
@@ -116,7 +231,7 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
   }, []);
 
   // Add route markers and polylines
-  const addRouteElements = useCallback(() => {
+  const addRouteElements = useCallback(async () => {
     if (!mapInstanceRef.current || !isMapLoaded) {
       console.log('Map not ready:', {
         hasMap: !!mapInstanceRef.current,
@@ -138,16 +253,17 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
       selectedRouteIds
     });
 
-    selectedRoutes.forEach((route) => {
+    // Process routes sequentially to avoid API rate limits
+    for (const route of selectedRoutes) {
       // Use stable color based on route ID
       const color = getRouteColor(route.id);
       console.log(`Processing route ${route.routeName} (${route.id}) with color ${color}`);
 
       // Add pickup point markers
       // Add pickup point markers using symbol markers
-route.pickupPoints
-  .sort((a, b) => a.sequenceOrder - b.sequenceOrder)
-  .forEach((point, pointIndex) => {
+      route.pickupPoints
+        .sort((a, b) => a.sequenceOrder - b.sequenceOrder)
+        .forEach((point, pointIndex) => {
     // Add the main bus marker
     const busMarker = new vietmapgl.Marker({
       element: (() => {
@@ -215,19 +331,12 @@ route.pickupPoints
     markersRef.current.push(orderMarker);
   });
 
-      // Add route polyline
-      if (route.pickupPoints.length > 1) {
-        const coordinates = [
-          // Start at school
-          [SCHOOL_LOCATION.lng, SCHOOL_LOCATION.lat],
-          // Add all pickup points in sequence order
-          ...route.pickupPoints
-            .sort((a, b) => a.sequenceOrder - b.sequenceOrder)
-            .map(point => [point.location.longitude, point.location.latitude]),
-          // End at school
-          [SCHOOL_LOCATION.lng, SCHOOL_LOCATION.lat]
-        ];
-        console.log(`Adding polyline for route ${route.routeName}:`, coordinates);
+      // Add route polyline using actual road routes
+      if (route.pickupPoints.length > 0) {
+        try {
+          console.log(`Getting actual route coordinates for ${route.routeName}...`);
+          const coordinates = await getRouteCoordinates(route);
+          console.log(`Got ${coordinates.length} coordinates for route ${route.routeName}`);
 
         const sourceId = `route-${route.id}`;
         const layerId = `route-layer-${route.id}`;
@@ -269,13 +378,16 @@ route.pickupPoints
           } catch (err) {
             console.error(`Error adding route ${route.routeName}:`, err);
           }
-        } else {
-          console.warn(`Source ${sourceId} already exists, skipping`);
+          } else {
+            console.warn(`Source ${sourceId} already exists, skipping`);
+          }
+        } catch (error) {
+          console.error(`Error getting route coordinates for ${route.routeName}:`, error);
         }
       } else {
-        console.log(`Route ${route.routeName} has only ${route.pickupPoints.length} points, skipping polyline`);
+        console.log(`Route ${route.routeName} has no pickup points, skipping polyline`);
       }
-    });
+    }
   }, [routes, selectedRouteIds, isMapLoaded, currentMarkerSize.size, strokeWeight]);
 
   // Initialize map
@@ -347,10 +459,10 @@ route.pickupPoints
           if (isMounted && map.isStyleLoaded()) {
             console.log('Map style loaded, redrawing route elements');
             // Redraw route elements when style is loaded
-            setTimeout(() => {
+            setTimeout(async () => {
               if (mapInstanceRef.current && mapInstanceRef.current.isStyleLoaded()) {
                 clearMapElements();
-                addRouteElements();
+                await addRouteElements();
               }
             }, 100);
           }
@@ -421,12 +533,12 @@ route.pickupPoints
     // Create new AbortController
     abortControllerRef.current = new AbortController();
 
-    const timeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(async () => {
       if (mapInstanceRef.current &&
         mapInstanceRef.current.isStyleLoaded() &&
         !abortControllerRef.current?.signal.aborted) {
         clearMapElements();
-        addRouteElements();
+        await addRouteElements();
       }
     }, 100);
 
