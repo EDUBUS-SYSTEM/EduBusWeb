@@ -10,7 +10,10 @@ interface RequestDetailModalProps {
 }
 
 export default function RequestDetailModal({ request, onClose }: RequestDetailModalProps) {
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | undefined | null) => {
+    if (amount === undefined || amount === null || isNaN(amount)) {
+      return 'N/A';
+    }
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
@@ -230,14 +233,14 @@ export default function RequestDetailModal({ request, onClose }: RequestDetailMo
               <div>
                 <label className="text-sm font-medium text-gray-700">Unit Price per Kilometer</label>
                 <p className="text-2xl font-bold text-yellow-800 mt-1">
-                  {formatCurrency(request.unitPriceVndPerKm)}
+                  {formatCurrency(request.unitPricePerKm)}
                 </p>
               </div>
               
               <div>
                 <label className="text-sm font-medium text-gray-700">Estimated Total Price</label>
                 <p className="text-2xl font-bold text-yellow-800 mt-1">
-                  {formatCurrency(request.estimatedPriceVnd)}
+                  {formatCurrency(request.totalFee)}
                 </p>
               </div>
             </div>
