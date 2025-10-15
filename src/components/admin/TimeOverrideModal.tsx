@@ -15,6 +15,7 @@ interface TimeOverrideModalProps {
   effectiveFrom: string;
   effectiveTo?: string;
   existingExceptions?: Date[];
+  updatedAt?: string;
 }
 
 export default function TimeOverrideModal({
@@ -27,6 +28,7 @@ export default function TimeOverrideModal({
   effectiveFrom,
   effectiveTo,
   existingExceptions = [],
+  updatedAt,
 }: TimeOverrideModalProps) {
   const [formData, setFormData] = useState({
     date: "", // Override date
@@ -171,7 +173,11 @@ export default function TimeOverrideModal({
         await scheduleService.updateTimeOverride(scheduleId, timeOverrideData);
       } else {
         // Add new override
-        await scheduleService.addTimeOverride(scheduleId, timeOverrideData);
+        await scheduleService.addTimeOverride(
+          scheduleId,
+          timeOverrideData,
+          updatedAt
+        );
       }
 
       onSuccess();
@@ -223,7 +229,8 @@ export default function TimeOverrideModal({
         // Undo add by removing the override
         await scheduleService.removeTimeOverride(
           scheduleId,
-          lastAction.data.date.toISOString().split("T")[0]
+          lastAction.data.date.toISOString().split("T")[0],
+          updatedAt
         );
       } else if (lastAction.action === "update") {
         // Undo update by restoring previous data

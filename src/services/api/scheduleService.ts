@@ -324,12 +324,13 @@ class ScheduleService {
   // Time Override management
   async addTimeOverride(
     scheduleId: string,
-    timeOverride: ScheduleTimeOverride
+    timeOverride: ScheduleTimeOverride,
+    updatedAt?: string
   ): Promise<Schedule> {
-    const response = await apiClient.put(
-      `/schedule/${scheduleId}/overrides`,
-      timeOverride
-    );
+    const url = updatedAt
+      ? `/schedule/${scheduleId}/overrides?updatedAt=${encodeURIComponent(updatedAt)}`
+      : `/schedule/${scheduleId}/overrides`;
+    const response = await apiClient.put(url, timeOverride);
     return response.data;
   }
 
@@ -346,11 +347,13 @@ class ScheduleService {
 
   async removeTimeOverride(
     scheduleId: string,
-    date: string
+    date: string,
+    updatedAt?: string
   ): Promise<Schedule> {
-    const response = await apiClient.delete(
-      `/schedule/${scheduleId}/overrides?date=${encodeURIComponent(date)}`
-    );
+    const url = updatedAt
+      ? `/schedule/${scheduleId}/overrides?date=${encodeURIComponent(date)}&updatedAt=${encodeURIComponent(updatedAt)}`
+      : `/schedule/${scheduleId}/overrides?date=${encodeURIComponent(date)}`;
+    const response = await apiClient.delete(url);
     return response.data;
   }
 

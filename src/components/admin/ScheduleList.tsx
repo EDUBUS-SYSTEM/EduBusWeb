@@ -380,6 +380,7 @@ export default function ScheduleList({
         timeOverrides: selectedSchedule.timeOverrides
           ? selectedSchedule.timeOverrides
           : [], // Preserve overrides
+        updatedAt: selectedSchedule.updatedAt, // Send current timestamp for optimistic locking
       };
 
       console.log("Sending update request:", updateScheduleDto); // Debug log
@@ -1110,6 +1111,7 @@ export default function ScheduleList({
               : undefined
           }
           existingExceptions={selectedSchedule.exceptions}
+          updatedAt={selectedSchedule.updatedAt}
         />
       )}
 
