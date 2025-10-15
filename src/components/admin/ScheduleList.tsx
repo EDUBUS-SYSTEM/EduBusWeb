@@ -45,6 +45,9 @@ export default function ScheduleList({
   const [editingOverride, setEditingOverride] =
     useState<ScheduleTimeOverride | null>(null);
   const [showExceptionModal, setShowExceptionModal] = useState(false);
+  const [deletingScheduleId, setDeletingScheduleId] = useState<string | null>(
+    null
+  );
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -134,7 +137,6 @@ export default function ScheduleList({
     }
   };
 
-
   useEffect(() => {
     loadSchedules();
   }, [refreshTrigger]);
@@ -186,7 +188,10 @@ export default function ScheduleList({
   const paginatedSchedules = filteredSchedules.slice(startIndex, endIndex);
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    // Ensure page is within valid range
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
   };
 
   const getScheduleTypeColor = (type: string) => {
@@ -222,8 +227,8 @@ export default function ScheduleList({
   const formatDateForInput = (date: string) => {
     const d = new Date(date);
     const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
 
@@ -232,6 +237,7 @@ export default function ScheduleList({
       return;
     }
 
+    setDeletingScheduleId(scheduleId);
     try {
       await scheduleService.deleteSchedule(scheduleId);
       // Refresh the list after deletion
@@ -245,6 +251,8 @@ export default function ScheduleList({
       );
 
       alert(errorMessage);
+    } finally {
+      setDeletingScheduleId(null);
     }
   };
 
@@ -298,7 +306,6 @@ export default function ScheduleList({
     setShowExceptionModal(true);
   };
 
-
   const handleExceptionSuccess = async () => {
     if (selectedSchedule) {
       try {
@@ -314,13 +321,17 @@ export default function ScheduleList({
     }
   };
 
-
   const handleUpdateSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedSchedule) return;
 
-    // Frontend validations for dates and times
+    // Simple validation
     const errors: Record<string, string> = {};
+
+    if (!selectedSchedule.name.trim()) {
+      errors.name = "Schedule name is required";
+    }
+
     const startTime = selectedSchedule.startTime;
     const endTime = selectedSchedule.endTime;
     if (startTime && endTime && startTime >= endTime) {
@@ -334,7 +345,8 @@ export default function ScheduleList({
       ? new Date(selectedSchedule.effectiveTo)
       : null;
     if (effFrom && effTo && effTo <= effFrom) {
-      errors.effectiveTo = "Effective to date must be after effective from date";
+      errors.effectiveTo =
+        "Effective to date must be after effective from date";
     }
 
     setEditErrors(errors);
@@ -345,20 +357,30 @@ export default function ScheduleList({
     try {
       const updateScheduleDto = {
         id: selectedSchedule.id || "", // Backend will convert string to Guid
-        name: selectedSchedule.name || "",
+        name: selectedSchedule.name.trim(), // Simple trim instead of sanitization
         scheduleType: selectedSchedule.scheduleType || "",
         startTime: selectedSchedule.startTime || "",
         endTime: selectedSchedule.endTime || "",
         rRule: selectedSchedule.rRule || "", // Use actual RRule from schedule
         timezone: selectedSchedule.timezone || "UTC",
         academicYear: selectedSchedule.academicYear || "", // Include academic year
-        effectiveFrom: selectedSchedule.effectiveFrom ? new Date(selectedSchedule.effectiveFrom).toISOString() : new Date().toISOString(),
+        effectiveFrom: selectedSchedule.effectiveFrom
+          ? new Date(selectedSchedule.effectiveFrom).toISOString()
+          : new Date().toISOString(),
         effectiveTo: selectedSchedule.effectiveTo
           ? new Date(selectedSchedule.effectiveTo).toISOString()
           : undefined,
-        exceptions: selectedSchedule.exceptions ? selectedSchedule.exceptions : [], // Keep as Date[]
-        isActive: selectedSchedule.isActive !== undefined ? selectedSchedule.isActive : true,
-        timeOverrides: selectedSchedule.timeOverrides ? selectedSchedule.timeOverrides : [], // Preserve overrides
+        exceptions: selectedSchedule.exceptions
+          ? selectedSchedule.exceptions
+          : [], // Keep as Date[]
+        isActive:
+          selectedSchedule.isActive !== undefined
+            ? selectedSchedule.isActive
+            : true,
+        timeOverrides: selectedSchedule.timeOverrides
+          ? selectedSchedule.timeOverrides
+          : [], // Preserve overrides
+        updatedAt: selectedSchedule.updatedAt, // Send current timestamp for optimistic locking
       };
 
       console.log("Sending update request:", updateScheduleDto); // Debug log
@@ -372,12 +394,28 @@ export default function ScheduleList({
       loadSchedules();
     } catch (error: unknown) {
       console.error("Error updating schedule:", error);
-      console.error("Error response:", error); // Debug log
 
-      const errorMessage = getErrorMessage(
-        error,
-        "Failed to update schedule. Please try again."
-      );
+      // Simple error handling with concurrent update detection
+      let errorMessage = "Failed to update schedule. Please try again.";
+
+      if (error && typeof error === "object" && "response" in error) {
+        const axiosError = error as {
+          response?: {
+            status?: number;
+            data?: { message?: string };
+          };
+        };
+
+        // Handle concurrent update conflicts (409 Conflict)
+        if (axiosError.response?.status === 409) {
+          errorMessage =
+            "This schedule was modified by another user. Please refresh and try again.";
+          // Refresh the schedule list to get latest data
+          await loadSchedules();
+        } else if (axiosError.response?.data?.message) {
+          errorMessage = axiosError.response.data.message;
+        }
+      }
 
       alert(errorMessage);
     }
@@ -502,10 +540,23 @@ export default function ScheduleList({
                   </button>
                   <button
                     onClick={() => handleDeleteSchedule(schedule.id)}
-                    className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors duration-200"
-                    title="Delete Schedule"
+                    disabled={deletingScheduleId === schedule.id}
+                    className={`p-2 rounded-lg transition-colors duration-200 ${
+                      deletingScheduleId === schedule.id
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-red-600 hover:bg-red-100"
+                    }`}
+                    title={
+                      deletingScheduleId === schedule.id
+                        ? "Deleting..."
+                        : "Delete Schedule"
+                    }
                   >
-                    <FaTrash className="w-4 h-4" />
+                    {deletingScheduleId === schedule.id ? (
+                      <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <FaTrash className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -517,7 +568,9 @@ export default function ScheduleList({
       {/* Pagination - Always show */}
       <div className="mt-6">
         <div className="text-sm text-gray-500 mb-2 text-center">
-          Showing {startIndex + 1}-{Math.min(endIndex, filteredSchedules.length)} of {filteredSchedules.length} schedules
+          Showing {startIndex + 1}-
+          {Math.min(endIndex, filteredSchedules.length)} of{" "}
+          {filteredSchedules.length} schedules
         </div>
         <Pagination
           currentPage={currentPage}
@@ -552,7 +605,10 @@ export default function ScheduleList({
                         {selectedSchedule.name}
                       </h4>
                       <p className="mt-1 text-sm text-gray-600">
-                        Academic Year: <span className="font-medium">{selectedSchedule.academicYear}</span>
+                        Academic Year:{" "}
+                        <span className="font-medium">
+                          {selectedSchedule.academicYear}
+                        </span>
                       </p>
                     </div>
                     <span
@@ -562,7 +618,9 @@ export default function ScheduleList({
                           : "bg-red-100 text-red-800"
                       }`}
                     >
-                      <span className={`w-2 h-2 rounded-full ${selectedSchedule.isActive ? "bg-green-500" : "bg-red-500"}`}></span>
+                      <span
+                        className={`w-2 h-2 rounded-full ${selectedSchedule.isActive ? "bg-green-500" : "bg-red-500"}`}
+                      ></span>
                       {selectedSchedule.isActive ? "Active" : "Inactive"}
                     </span>
                   </div>
@@ -571,14 +629,20 @@ export default function ScheduleList({
                 {/* Info grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
-                    <p className="text-xs font-medium text-gray-500 mb-1">Schedule Type</p>
-                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getScheduleTypeColor(selectedSchedule.scheduleType)}`}>
+                    <p className="text-xs font-medium text-gray-500 mb-1">
+                      Schedule Type
+                    </p>
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getScheduleTypeColor(selectedSchedule.scheduleType)}`}
+                    >
                       {selectedSchedule.scheduleType}
                     </span>
                   </div>
 
                   <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
-                    <p className="text-xs font-medium text-gray-500 mb-1">Time Range</p>
+                    <p className="text-xs font-medium text-gray-500 mb-1">
+                      Time Range
+                    </p>
                     <p className="text-gray-900">
                       {formatTime(selectedSchedule.startTime)}
                       <span className="mx-1 text-gray-400">—</span>
@@ -587,14 +651,18 @@ export default function ScheduleList({
                   </div>
 
                   <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
-                    <p className="text-xs font-medium text-gray-500 mb-1">Effective Period</p>
+                    <p className="text-xs font-medium text-gray-500 mb-1">
+                      Effective Period
+                    </p>
                     <p className="text-gray-900">
                       {formatDate(selectedSchedule.effectiveFrom)}
                       <span className="mx-1 text-gray-400">→</span>
                       {selectedSchedule.effectiveTo ? (
                         <>{formatDate(selectedSchedule.effectiveTo)}</>
                       ) : (
-                        <span className="italic text-gray-500">No end date</span>
+                        <span className="italic text-gray-500">
+                          No end date
+                        </span>
                       )}
                     </p>
                   </div>
@@ -602,7 +670,9 @@ export default function ScheduleList({
 
                 {/* RRule box */}
                 <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4">
-                  <p className="text-sm font-semibold text-gray-800 mb-2">Recurrence Rule (RRULE)</p>
+                  <p className="text-sm font-semibold text-gray-800 mb-2">
+                    Recurrence Rule (RRULE)
+                  </p>
                   <div className="text-sm font-mono text-gray-800 bg-yellow-100 px-3 py-2 rounded w-full max-w-full whitespace-pre-wrap break-words overflow-x-auto">
                     {selectedSchedule.rRule}
                   </div>
@@ -611,10 +681,12 @@ export default function ScheduleList({
                 {/* Quick stats */}
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                    <FaCalendarAlt className="w-3 h-3" /> Exceptions: {selectedSchedule.exceptions.length}
+                    <FaCalendarAlt className="w-3 h-3" /> Exceptions:{" "}
+                    {selectedSchedule.exceptions.length}
                   </span>
                   <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    <FaClock className="w-3 h-3" /> Overrides: {selectedSchedule.timeOverrides?.length || 0}
+                    <FaClock className="w-3 h-3" /> Overrides:{" "}
+                    {selectedSchedule.timeOverrides?.length || 0}
                   </span>
                 </div>
               </div>
@@ -633,17 +705,20 @@ export default function ScheduleList({
                       <p className="text-gray-500 text-sm">No exceptions</p>
                     ) : (
                       <div className="space-y-1">
-                        {selectedSchedule.exceptions.map((exception: Date, index: number) => (
-                          <p key={index} className="text-sm text-gray-700">
-                            {new Date(exception).toLocaleDateString()}
-                          </p>
-                        ))}
+                        {selectedSchedule.exceptions.map(
+                          (exception: Date, index: number) => (
+                            <p key={index} className="text-sm text-gray-700">
+                              {new Date(exception).toLocaleDateString()}
+                            </p>
+                          )
+                        )}
                       </div>
                     )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Time Overrides ({selectedSchedule.timeOverrides?.length || 0})
+                      Time Overrides (
+                      {selectedSchedule.timeOverrides?.length || 0})
                     </label>
                     {!selectedSchedule.timeOverrides ||
                     selectedSchedule.timeOverrides.length === 0 ? (
@@ -742,8 +817,6 @@ export default function ScheduleList({
                   </select>
                 </div>
 
-
-
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -779,7 +852,9 @@ export default function ScheduleList({
                       required
                     />
                     {editErrors.endTime && (
-                      <p className="mt-1 text-sm text-red-600">{editErrors.endTime}</p>
+                      <p className="mt-1 text-sm text-red-600">
+                        {editErrors.endTime}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -831,7 +906,9 @@ export default function ScheduleList({
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
                     />
                     {editErrors.effectiveTo && (
-                      <p className="mt-1 text-sm text-red-600">{editErrors.effectiveTo}</p>
+                      <p className="mt-1 text-sm text-red-600">
+                        {editErrors.effectiveTo}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -976,7 +1053,8 @@ export default function ScheduleList({
                           <button
                             onClick={async () => {
                               if (!selectedSchedule) return;
-                              if (!confirm("Delete this time override?")) return;
+                              if (!confirm("Delete this time override?"))
+                                return;
                               try {
                                 await scheduleService.removeTimeOverride(
                                   selectedSchedule.id,
@@ -1033,6 +1111,7 @@ export default function ScheduleList({
               : undefined
           }
           existingExceptions={selectedSchedule.exceptions}
+          updatedAt={selectedSchedule.updatedAt}
         />
       )}
 
@@ -1045,7 +1124,6 @@ export default function ScheduleList({
           onSuccess={handleExceptionSuccess}
         />
       )}
-
     </div>
   );
 }
