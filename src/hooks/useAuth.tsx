@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("token");
     localStorage.removeItem("refreshToken");
     setUser(null);
-    router.replace("/");
+    router.replace("/login");
   }, [router]);
 
   // Check token when component mounts
@@ -33,18 +33,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const token = localStorage.getItem("token");
       if (token) {
         try {
-          //Place holder to fetch user info
+          // If we have a token, set a basic user object
+          // This prevents the race condition where login succeeds but user is null
+          const refreshToken = localStorage.getItem("refreshToken");
+          if (refreshToken) {
+            setUser({
+              id: "",
+              email: "",
+              createdAt: "",
+              updatedAt: "",
+              name: "Admin User", // Placeholder until we fetch real user info
+              role: "admin",
+            });
+          }
         } catch {
           logout();
         }
       } else {
-        logout();
+        // Only redirect to login if not already on login page
+        if (window.location.pathname !== "/login") {
+          router.replace("/login");
+        }
       }
       setLoading(false);
     };
 
     checkAuth();
-  }, [logout]);
+  }, [logout, router]);
+
+  // Listen for storage changes (cross-tab logout detection)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "token" && e.newValue === null) {
+        // Token was removed in another tab
+        setUser(null);
+        if (window.location.pathname !== "/login") {
+          router.replace("/login");
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [router]);
 
   const login = async (credentials: LoginCredentials) => {
     try {

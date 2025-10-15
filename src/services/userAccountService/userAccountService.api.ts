@@ -18,6 +18,7 @@ export interface GetUsersParams {
   sortOrder?: string;
   page?: number;
   perPage?: number;
+  role?: string;
 }
 
 export const userAccountService = {
@@ -35,6 +36,7 @@ export const userAccountService = {
     if (params?.sortOrder) queryParams.append('sortOrder', params.sortOrder);
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.perPage) queryParams.append('perPage', params.perPage.toString());
+    if (params?.role) queryParams.append('role', params.role);
     
     const queryString = queryParams.toString();
     const url = queryString ? `/UserAccount?${queryString}` : '/UserAccount';

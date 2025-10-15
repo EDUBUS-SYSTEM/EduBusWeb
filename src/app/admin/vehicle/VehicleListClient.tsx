@@ -47,7 +47,6 @@ const normalizePlate = (s: string) =>
 export default function VehicleListClient() {
   const [vehicles, setVehicles] = useState<VehicleDto[]>([]);
   const [tableLoading, setTableLoading] = useState(true);
-  const [prefetchLoading, setPrefetchLoading] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -60,7 +59,6 @@ export default function VehicleListClient() {
   });
 
   const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
   const [allVehicles, setAllVehicles] = useState<VehicleDto[]>([]);
   const [useClientSearch, setUseClientSearch] = useState(false);
   // Delete states
@@ -93,7 +91,6 @@ export default function VehicleListClient() {
       setError(null);
       const res = await vehicleService.getVehicles(filters);
       setVehicles(res.vehicles);
-      setTotalCount(res.totalCount);
       setTotalPages(res.totalPages);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch vehicles");
@@ -104,7 +101,6 @@ export default function VehicleListClient() {
 
   const fetchAllVehicles = useCallback(async () => {
     try {
-      setPrefetchLoading(true);
       setError(null);
       const per = 100;
       let page = 1;
@@ -129,8 +125,6 @@ export default function VehicleListClient() {
       setAllVehicles(acc);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch vehicles");
-    } finally {
-      setPrefetchLoading(false);
     }
   }, [selectedStatus]);
 
@@ -346,12 +340,9 @@ export default function VehicleListClient() {
   }
 
   return (
-    <div className="min-h-screen bg-yellow-50 p-6">
-      <Card
-        title="Vehicle List"
-        className="bg-yellow-50 border-yellow-100 rounded-xl"
-      >
-        <div className="flex items-center gap-4 mb-6">
+    <div className="min-h-screen bg-yellow-50 p-6 pt-8">
+      <h1 className="text-xl font-bold text-gray-800">Vehicle Management</h1>
+        <div className="flex items-center gap-4 my-6">
           <div className="flex-1">
             <Input
               placeholder="Find by license plate number"
@@ -486,7 +477,7 @@ export default function VehicleListClient() {
             />
           </div>
         )}
-      </Card>
+      {/* </Card> */}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
