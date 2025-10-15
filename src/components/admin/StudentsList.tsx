@@ -42,6 +42,10 @@ export default function StudentsList() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(6);
+
   const getStatusInfo = (status: StudentStatus) => {
     switch (status) {
       case StudentStatus.Available:
@@ -90,6 +94,7 @@ export default function StudentsList() {
   // Status filter - fetch from API when status changes
   useEffect(() => {
     fetchStudents(statusFilter);
+    setCurrentPage(1); // Reset to first page when filtering
   }, [statusFilter]);
   
   // Search (only one useEffect, null-safe)
@@ -99,17 +104,17 @@ export default function StudentsList() {
     const filtered = students.filter((s) => {
       const fn = (s.firstName || "").toLowerCase();
       const ln = (s.lastName || "").toLowerCase();
-      // phone có thể là number hoặc undefined -> ép thành string an toàn
-      const phone = String(s.parentPhoneNumber ?? "");
+      const email = (s.parentEmail || "").toLowerCase();
 
       return (
         fn.includes(term) ||
         ln.includes(term) ||
-        phone.includes(searchTerm || "")
+        email.includes(term)
       );
     });
 
     setFilteredStudents(filtered);
+    setCurrentPage(1); // Reset to first page when searching
   }, [searchTerm, students]);
 
   // Sort functionality
@@ -120,24 +125,53 @@ export default function StudentsList() {
       setSortBy(field);
       setSortOrder("asc");
     }
+    setCurrentPage(1); // Reset to first page when sorting
   };
 
   const sortedStudents = [...filteredStudents].sort((a, b) => {
-    let aValue: string;
-    let bValue: string;
-
     if (sortBy === "createdAt") {
-      aValue = (a.firstName ?? "").toLowerCase();
-      bValue = (b.firstName ?? "").toLowerCase();
+      // Sort by date
+      const aDate = new Date(a.createdAt).getTime();
+      const bDate = new Date(b.createdAt).getTime();
+      
+      if (sortOrder === "asc") {
+        return aDate - bDate;
+      } else {
+        return bDate - aDate;
+      }
     } else {
-      aValue = ((a[sortBy] as string) ?? "").toLowerCase();
-      bValue = ((b[sortBy] as string) ?? "").toLowerCase();
-    }
+      // Sort by string fields
+      const aValue = ((a[sortBy] as string) ?? "").toLowerCase();
+      const bValue = ((b[sortBy] as string) ?? "").toLowerCase();
 
-    if (sortOrder === "asc")
-      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-    return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+      if (sortOrder === "asc")
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+    }
   });
+
+  // Pagination logic
+  const totalPages = Math.ceil(sortedStudents.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedStudents = sortedStudents.slice(startIndex, endIndex);
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   const handleAddStudent = async (newStudent: CreateStudentRequest) => {
     try {
@@ -482,7 +516,7 @@ export default function StudentsList() {
           <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
             type="text"
-            placeholder="Search by first name, email or phone number..."
+            placeholder="Search by first name, last name or parent email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
@@ -549,7 +583,7 @@ export default function StudentsList() {
                 Parent Status
               </th>
               <th className="text-left py-3 px-3 font-semibold text-gray-700">
-                Phone Number
+                Parent Email
               </th>
               <th className="text-left py-3 px-3 font-semibold text-gray-700">
                 Address
@@ -566,7 +600,7 @@ export default function StudentsList() {
             </tr>
           </thead>
           <tbody>
-            {sortedStudents.map((student) => (
+            {paginatedStudents.map((student) => (
               <tr
                 key={student.id}
                 className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150"
@@ -580,7 +614,7 @@ export default function StudentsList() {
                   {student.parentId ? "Linked" : "Not linked"}
                 </td>
                 <td className="py-3 px-3 text-gray-600">
-                  {student.parentPhoneNumber}
+                  {student.parentEmail}
                 </td>
                 <td className="py-3 px-3 text-gray-600">
                   {student.parentId ? "Available" : "Not available"}
@@ -595,8 +629,7 @@ export default function StudentsList() {
                   </span>
                 </td>
                 <td className="py-3 px-3 text-gray-600">
-                  {/* {new Date(student.createdAt).toLocaleDateString('en-US')} */}
-                  todo
+                  {new Date(student.createdAt).toLocaleDateString('en-US')}
                 </td>
                 <td className="py-3 px-3">
                   <div className="flex justify-center gap-2">
@@ -683,7 +716,7 @@ export default function StudentsList() {
           </tbody>
         </table>
 
-        {sortedStudents.length === 0 && (
+        {paginatedStudents.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             <p className="text-lg">No students found</p>
             <p className="text-sm mt-2">
@@ -692,6 +725,76 @@ export default function StudentsList() {
           </div>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {sortedStudents.length > 0 && (
+        <div className="flex justify-center mt-6">
+          <div className="flex items-center space-x-2 bg-[#FEFCE8] rounded-xl px-4 py-2 shadow-sm">
+            {/* Previous Button */}
+            <button
+              onClick={handlePreviousPage}
+              disabled={currentPage === 1 || totalPages <= 1}
+              className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition-colors duration-200 ${
+                currentPage === 1 || totalPages <= 1
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              &lt;
+            </button>
+
+            {/* Page Numbers */}
+            <div className="flex space-x-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                // Show first page, last page, current page, and pages around current page
+                const shouldShow =
+                  page === 1 ||
+                  page === totalPages ||
+                  (page >= currentPage - 1 && page <= currentPage + 1);
+
+                if (!shouldShow) {
+                  // Show ellipsis for gaps
+                  if (page === currentPage - 2 || page === currentPage + 2) {
+                    return (
+                      <span key={page} className="w-8 h-8 flex items-center justify-center text-sm text-gray-500">
+                        ...
+                      </span>
+                    );
+                  }
+                  return null;
+                }
+
+                return (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition-colors duration-200 ${
+                      currentPage === page
+                        ? "bg-[#FAD23C] text-gray-800"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Next Button */}
+            <button
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages || totalPages <= 1}
+              className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition-colors duration-200 ${
+                currentPage === totalPages || totalPages <= 1
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              &gt;
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Add Student Modal */}
       <AddStudentModal
