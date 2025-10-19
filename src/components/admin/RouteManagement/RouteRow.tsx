@@ -1,7 +1,7 @@
 // EduBusWeb/src/components/admin/RouteManagement/RouteRow.tsx
 import React, { useState } from 'react';
 import { Droppable } from '@hello-pangea/dnd';
-import { FaBus, FaMapMarkerAlt, FaEdit } from 'react-icons/fa';
+import { FaBus, FaMapMarkerAlt, FaEdit, FaCalendarAlt } from 'react-icons/fa';
 import { RouteDto } from '@/services/routeService/routeService.types';
 import PickupPoint from './PickupPoint';
 
@@ -9,6 +9,7 @@ interface RouteRowProps {
   route: RouteDto;
   onRouteClick: (route: RouteDto) => void;
   onRouteMapToggle: (routeId: string) => void; // ✅ ADDED: Separate handler for map toggle
+  onScheduleClick: (route: RouteDto) => void;
   isModified: boolean;
   isSelectedInMap?: boolean;
 }
@@ -43,6 +44,7 @@ const RouteRow: React.FC<RouteRowProps> = ({
   route, 
   onRouteClick, 
   onRouteMapToggle, 
+  onScheduleClick,
   isModified, 
   isSelectedInMap = false 
 }) => {
@@ -103,8 +105,17 @@ const RouteRow: React.FC<RouteRowProps> = ({
             </div>
           </Tooltip>
 
-          {/* ✅ Edit Button - Separate click handler */}
-          <div className="flex-shrink-0 ml-3">
+          <div className="flex-shrink-0 ml-3 flex flex-col gap-2 items-center">
+            {/* Schedule Management Button */}
+            <button
+              onClick={() => onScheduleClick(route)}
+              className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+              title="Manage schedules"
+            >
+              <FaCalendarAlt size={16} />
+            </button>
+            
+            {/* Edit Button */}
             <button
               onClick={() => onRouteClick(route)}
               className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
