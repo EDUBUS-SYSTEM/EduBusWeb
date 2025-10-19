@@ -14,24 +14,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Mock successful login for testing
-    const mockUser = {
-      id: '1',
-      email: email,
-      name: 'Test User',
-      role: 'user',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
     const token = `test-token-${Date.now()}`;
     const refreshToken = `test-refresh-${Date.now()}`;
 
     return NextResponse.json({
       success: true,
       data: {
-        user: mockUser,
-        token,
-        refreshToken,
+        accessToken: token,
+        refreshToken: refreshToken,
+        fullName: 'Admin User',
+        role: 'admin',
       },
       message: 'Login successful'
     });

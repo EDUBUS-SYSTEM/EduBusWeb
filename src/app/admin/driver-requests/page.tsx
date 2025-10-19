@@ -8,7 +8,7 @@ export default function DriverRequestsPage() {
     <div>
       <Sidebar />
       <Header />
-      <main className="ml-64 px-6 py-8">
+      <main className="ml-64 px-6 py-8 pb-16">
         <div className="max-w-7xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-[#463B3B] mb-2">
@@ -18,7 +18,9 @@ export default function DriverRequestsPage() {
               Manage all driver requests and leave applications
             </p>
           </div>
-          <DriverRequestsList />
+          <div className="pb-8">
+            <DriverRequestsList />
+          </div>
         </div>
       </main>
     </div>

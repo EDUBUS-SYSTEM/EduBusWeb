@@ -2,9 +2,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { FaSearch, FaFilter, FaEye, FaTimes, FaFileAlt, FaUser, FaClock } from "react-icons/fa";
 import GeneralRequestDetailModal from "./GeneralRequestDetailModal";
-// Mock data temporarily removed
-const mockGeneralRequests: GeneralDriverRequest[] = [];
-const simulateApiDelay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+// TODO: Implement real API service for general driver requests
+// This will need to be created based on the backend API
 
 // General Driver Request Type
 export interface GeneralDriverRequest {
@@ -66,43 +65,27 @@ export default function GeneralRequestsTab() {
     setError(null);
     
     try {
-      await simulateApiDelay(500);
+      // TODO: Replace with real API call
+      // Example: const response = await generalDriverRequestService.getRequests({...filters});
       
-      // Simulate API call with filters
-      let filteredData = [...mockGeneralRequests];
+      // For now, show empty state until API is implemented
+      setRequests([]);
+      setTotalItems(0);
       
-      // Apply filters
-      if (statusFilter) {
-        filteredData = filteredData.filter(request => request.status === statusFilter);
-      }
+      // Remove this comment when API is ready:
+      // const params = {
+      //   status: statusFilter || undefined,
+      //   requestType: requestTypeFilter || undefined,
+      //   priority: priorityFilter || undefined,
+      //   searchDriverName: searchDriverName.trim() || undefined,
+      //   searchDriverEmail: searchDriverEmail.trim() || undefined,
+      //   page: currentPage,
+      //   perPage: itemsPerPage,
+      // };
+      // const response = await generalDriverRequestService.getRequests(params);
+      // setRequests(response.data);
+      // setTotalItems(response.totalCount);
       
-      if (requestTypeFilter) {
-        filteredData = filteredData.filter(request => request.requestType === requestTypeFilter);
-      }
-      
-      if (priorityFilter) {
-        filteredData = filteredData.filter(request => request.priority === priorityFilter);
-      }
-      
-      if (searchDriverName.trim()) {
-        filteredData = filteredData.filter(request => {
-          const fullName = `${request.driverInfo.firstName} ${request.driverInfo.lastName}`.toLowerCase();
-          return fullName.includes(searchDriverName.toLowerCase());
-        });
-      }
-      
-      if (searchDriverEmail.trim()) {
-        filteredData = filteredData.filter(request => 
-          request.driverInfo.email.toLowerCase().includes(searchDriverEmail.toLowerCase())
-        );
-      }
-      
-      // Apply pagination
-      const skip = (currentPage - 1) * itemsPerPage;
-      const paginatedData = filteredData.slice(skip, skip + itemsPerPage);
-      
-      setRequests(paginatedData);
-      setTotalItems(filteredData.length);
     } catch (err: unknown) {
       const errorMessage = (err as { message?: string }).message || 
                           "Failed to load general requests. Please try again.";
@@ -197,7 +180,7 @@ export default function GeneralRequestsTab() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       {/* Search and Filter Section */}
       <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
         <div className="flex flex-col lg:flex-row gap-4">

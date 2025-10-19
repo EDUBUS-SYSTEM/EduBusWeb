@@ -233,7 +233,7 @@ export default function VietMapPageComponent({
               'line-cap': 'round'
             },
             paint: {
-              'line-color': '#FDC700',
+              'line-color': '#0066CC',
               'line-width': 4,
               'line-opacity': 0.8
             }

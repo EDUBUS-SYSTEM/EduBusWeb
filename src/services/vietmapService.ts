@@ -87,6 +87,7 @@ class VietMapService {
     }
 
     const data = await response.json();
+    console.log('VietMap Geocode API Response:', data);
     
     if (Array.isArray(data) && data.length > 0) {
       return data.map((item: unknown) => {
@@ -116,6 +117,89 @@ class VietMapService {
     }
 
     return [];
+  }
+
+  // Get place details by ref_id to get coordinates
+  async getPlaceDetails(ref_id: string): Promise<{ lat: number; lng: number } | null> {
+    if (!this.apiKey || this.apiKey === 'YOUR_API_KEY_HERE') {
+      console.warn('VietMap API key not configured, using mock coordinates');
+      return {
+        lat: 16.0544 + (Math.random() - 0.5) * 0.1,
+        lng: 108.2022 + (Math.random() - 0.5) * 0.1
+      };
+    }
+
+    try {
+      const params = new URLSearchParams({
+        apikey: this.apiKey,
+        ref_id: ref_id
+      });
+
+      const response = await fetch(`https://maps.vietmap.vn/api/place/details?${params}`);
+      
+      if (!response.ok) {
+        throw new Error(`Place details API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('VietMap Place Details API Response:', data);
+      
+      // Extract coordinates from response
+      if (data && typeof data === 'object') {
+        // Try different possible field names for coordinates
+        const coords = data.coordinates || data.coord || data.location || data.geometry?.location;
+        
+        if (coords && (coords.lat || coords.latitude) && (coords.lng || coords.longitude)) {
+          return {
+            lat: coords.lat || coords.latitude,
+            lng: coords.lng || coords.longitude
+          };
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error getting place details:', error);
+      return null;
+    }
+  }
+
+  // Fallback geocoding using OpenStreetMap Nominatim
+  async geocodeWithNominatim(query: string): Promise<{ lat: number; lng: number } | null> {
+    try {
+      const params = new URLSearchParams({
+        q: query,
+        format: 'json',
+        limit: '1',
+        countrycodes: 'vn' // Limit to Vietnam
+      });
+
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
+        headers: {
+          'User-Agent': 'EduBusWeb/1.0'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Nominatim API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Nominatim API Response:', data);
+      
+      if (Array.isArray(data) && data.length > 0) {
+        const result = data[0];
+        return {
+          lat: parseFloat(result.lat),
+          lng: parseFloat(result.lon)
+        };
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error with Nominatim geocoding:', error);
+      return null;
+    }
   }
 
   // Autocomplete API v3 - Get address suggestions

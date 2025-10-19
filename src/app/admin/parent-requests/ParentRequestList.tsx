@@ -180,7 +180,7 @@ export default function ParentRequestList() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       {/* Search and Filter Section */}
       <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
         <div className="flex flex-col lg:flex-row gap-4">
@@ -399,7 +399,7 @@ export default function ParentRequestList() {
 
       {/* Pagination */}
       {totalItems > itemsPerPage && (
-        <div className="flex justify-center items-center space-x-2">
+        <div className="flex justify-center items-center space-x-2 py-6 bg-white rounded-xl border border-gray-200">
           <button
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}

@@ -55,10 +55,23 @@ export default function VerifyOtpPage() {
       });
       
       if (result.verified) {
-        // Store students and emailExists for map page
+        console.log('✅ OTP verification successful');
+        console.log('📧 Email:', email);
+        console.log('👥 Students:', result.students);
+        console.log('📧 Email exists:', result.emailExists);
+        
+        // Store students and emailExists for student selection page
         sessionStorage.setItem('parentStudents', JSON.stringify(result.students));
         sessionStorage.setItem('parentEmailExists', String(result.emailExists));
-        router.replace('/map');
+        
+        console.log('💾 Data saved to sessionStorage:');
+        console.log('  - parentStudents:', sessionStorage.getItem('parentStudents'));
+        console.log('  - parentEmailExists:', sessionStorage.getItem('parentEmailExists'));
+        
+        // Redirect to student selection page with data
+        const studentsParam = encodeURIComponent(JSON.stringify(result.students));
+        console.log('🔄 Redirecting to student-selection page...');
+        router.replace(`/student-selection?students=${studentsParam}&email=${encodeURIComponent(email)}`);
       } else {
         setError(result.message || 'Invalid OTP code. Please try again.');
       }

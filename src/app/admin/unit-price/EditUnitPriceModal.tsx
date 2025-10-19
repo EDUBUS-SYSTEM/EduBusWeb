@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaTimes } from "react-icons/fa";
 import { unitPriceService } from "@/services/unitPriceService";
 import { UnitPriceResponseDto, UpdateUnitPriceDto } from "@/types/unitPrice";
@@ -21,6 +21,46 @@ export default function EditUnitPriceModal({ unitPrice, onClose, onSuccess }: Ed
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [existingUnitPrices, setExistingUnitPrices] = useState<UnitPriceResponseDto[]>([]);
+
+  // Load existing unit prices on component mount
+  useEffect(() => {
+    const loadExistingPrices = async () => {
+      try {
+        const data = await unitPriceService.getAllUnitPrices();
+        setExistingUnitPrices(data || []);
+      } catch (error) {
+        console.error("Error loading existing unit prices:", error);
+        setExistingUnitPrices([]);
+      }
+    };
+    loadExistingPrices();
+  }, []);
+
+  // Get the minimum allowed date for effectiveFrom (after the latest end date of existing active unit prices, excluding current one)
+  const getMinEffectiveFromDate = () => {
+    const activeUnitPrices = existingUnitPrices.filter(up => up.isActive && up.id !== unitPrice.id);
+    
+    if (activeUnitPrices.length === 0) {
+      return new Date().toISOString().split('T')[0]; // Today if no other active unit prices
+    }
+
+    // Find the latest end date among other active unit prices
+    const latestEndDate = activeUnitPrices.reduce((latest, up) => {
+      if (up.effectiveTo) {
+        const endDate = new Date(up.effectiveTo);
+        return endDate > latest ? endDate : latest;
+      }
+      // If unit price has no end date (ongoing), return a far future date
+      return new Date('2099-12-31');
+    }, new Date('1900-01-01'));
+
+    // Return the day after the latest end date
+    const minDate = new Date(latestEndDate);
+    minDate.setDate(minDate.getDate() + 1);
+    
+    return minDate.toISOString().split('T')[0];
+  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -39,6 +79,34 @@ export default function EditUnitPriceModal({ unitPrice, onClose, onSuccess }: Ed
 
     if (formData.effectiveTo && formData.effectiveTo <= formData.effectiveFrom) {
       newErrors.effectiveTo = "Effective to date must be after effective from date";
+    }
+
+    // Check for overlapping date ranges with existing unit prices (excluding current one)
+    if (formData.effectiveFrom) {
+      const hasOverlap = existingUnitPrices.some(existing => {
+        // Skip the current unit price being edited
+        if (existing.id === formData.id) return false;
+        
+        const existingFrom = new Date(existing.effectiveFrom);
+        const existingTo = existing.effectiveTo ? new Date(existing.effectiveTo) : null;
+        const newFrom = new Date(formData.effectiveFrom);
+        const newTo = formData.effectiveTo ? new Date(formData.effectiveTo) : null;
+
+        // Check if new period overlaps with existing period
+        if (newTo) {
+          // New period has end date
+          return (existingTo ? newFrom <= existingTo : true) && 
+                 (newTo >= existingFrom) && 
+                 existing.isActive;
+        } else {
+          // New period has no end date (ongoing)
+          return (existingTo ? newFrom <= existingTo : true) && existing.isActive;
+        }
+      });
+
+      if (hasOverlap) {
+        newErrors.effectiveFrom = "This date range overlaps with an existing active unit price";
+      }
     }
 
     setErrors(newErrors);
@@ -155,12 +223,18 @@ export default function EditUnitPriceModal({ unitPrice, onClose, onSuccess }: Ed
               type="date"
               value={formData.effectiveFrom}
               onChange={(e) => handleInputChange("effectiveFrom", e.target.value)}
+              min={getMinEffectiveFromDate()}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all ${
                 errors.effectiveFrom ? "border-red-300" : "border-gray-300"
               }`}
             />
             {errors.effectiveFrom && (
               <p className="mt-1 text-sm text-red-600">{errors.effectiveFrom}</p>
+            )}
+            {existingUnitPrices.filter(up => up.isActive && up.id !== unitPrice.id).length > 0 && !errors.effectiveFrom && (
+              <p className="mt-1 text-sm text-gray-500">
+                Must be after the latest end date of other active unit prices
+              </p>
             )}
           </div>
 
@@ -173,6 +247,7 @@ export default function EditUnitPriceModal({ unitPrice, onClose, onSuccess }: Ed
               type="date"
               value={formData.effectiveTo}
               onChange={(e) => handleInputChange("effectiveTo", e.target.value)}
+              min={formData.effectiveFrom || new Date().toISOString().split('T')[0]}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all ${
                 errors.effectiveTo ? "border-red-300" : "border-gray-300"
               }`}

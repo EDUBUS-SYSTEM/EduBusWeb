@@ -348,7 +348,7 @@ export default function LeaveRequestsTab() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       {/* Search and Filter Section */}
       <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
         <div className="flex flex-col lg:flex-row gap-4 items-center">
@@ -584,7 +584,7 @@ export default function LeaveRequestsTab() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="px-6 py-4 border-t border-gray-200">
+        <div className="px-6 py-6 border-t border-gray-200 bg-white">
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}

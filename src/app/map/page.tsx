@@ -8,12 +8,38 @@ import VietMapPageComponent from '@/components/VietMapPageComponent';
 import { pickupPointService } from '@/services/pickupPointService';
 import { vietmapService, VietMapGeocodeResult } from '@/services/vietmapService';
 import { unitPriceService, UnitPriceResponseDto } from '@/services/unitPriceService';
+
+// Helper function to calculate distance between two coordinates using Haversine formula
+function calculateDistance(coord1: { lat: number; lng: number }, coord2: { lat: number; lng: number }): number {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = (coord2.lat - coord1.lat) * Math.PI / 180;
+  const dLng = (coord2.lng - coord1.lng) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(coord1.lat * Math.PI / 180) * Math.cos(coord2.lat * Math.PI / 180) * 
+    Math.sin(dLng/2) * Math.sin(dLng/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c; // Distance in kilometers
+}
+// import { academicCalendarService } from '@/services/api/academicCalendarService';
 // import { transactionService, CalculateFeeResponse } from '@/services/transactionService';
 
 type Student = {
   id?: string | number;
   fullName?: string;
   name?: string;
+  firstName?: string;
+  lastName?: string;
+};
+
+type SemesterFeeInfo = {
+  totalFee: number;
+  semesterInfo: {
+    name: string;
+    academicYear: string;
+    totalSchoolDays: number;
+    totalTrips: number;
+  };
 };
 
 const SCHOOL_LOCATION = {
@@ -43,7 +69,7 @@ export default function MapPage() {
   const [error, setError] = useState('');
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   type TravelModeString = 'DRIVING' | 'WALKING' | 'BICYCLING' | 'TRANSIT';
-  const [travelMode, setTravelMode] = useState<TravelModeString>('DRIVING');
+  const [travelMode] = useState<TravelModeString>('DRIVING');
   const [isRouting, setIsRouting] = useState(false);
 
   // Parent email and students
@@ -78,11 +104,46 @@ export default function MapPage() {
   const [unitPriceError, setUnitPriceError] = useState('');
   
   // Semester fee calculation state
-  const [semesterFeeInfo, setSemesterFeeInfo] = useState<unknown | null>(null);
+  const [semesterFeeInfo, setSemesterFeeInfo] = useState<SemesterFeeInfo | null>(null);
   const [semesterFeeLoading, setSemesterFeeLoading] = useState(false);
   const [semesterFeeError, setSemesterFeeError] = useState('');
+  
+  // Academic calendar state
+  const [currentSemesterInfo, setCurrentSemesterInfo] = useState<{
+    name: string;
+    code: string;
+    academicYear: string;
+    startDate: string;
+    endDate: string;
+    holidays: string[];
+  } | null>(null);
+  const [, setSemesterLoading] = useState(false);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  // Load current semester info (temporarily disabled due to authentication requirement)
+  const loadCurrentSemesterInfo = useCallback(async () => {
+    try {
+      setSemesterLoading(true);
+      console.log('📚 Academic calendar loading disabled - requires authentication');
+      
+      // Set mock semester info for now
+      setCurrentSemesterInfo({
+        name: 'Semester 1',
+        code: 'S1',
+        academicYear: '2024-2025',
+        startDate: '2024-09-01',
+        endDate: '2024-12-31',
+        holidays: []
+      });
+      
+      console.log('📚 Using mock semester info for fee calculation');
+    } catch (error) {
+      console.error('Error setting mock semester info:', error);
+    } finally {
+      setSemesterLoading(false);
+    }
+  }, []);
 
   // Calculate semester fee when distance changes
   const calculateSemesterFee = useCallback(async (distanceKm: number) => {
@@ -141,7 +202,7 @@ export default function MapPage() {
   // Distance will be calculated from Directions result (driving distance)
 
   // Memoized route drawing - now handled by VietMapPageComponent
-  const drawRoute = useCallback((origin: { lat: number; lng: number }, destination: { lat: number; lng: number }, options?: { fitBounds?: boolean }) => {
+  const drawRoute = useCallback((origin: { lat: number; lng: number }, destination: { lat: number; lng: number }) => {
     // Route calculation is now handled by VietMapPageComponent using VietMap API
     // This function is kept for compatibility but the actual route drawing happens in the component
     console.log('Route drawing requested:', { origin, destination });
@@ -337,13 +398,57 @@ export default function MapPage() {
 
       try {
         setStudentsError('');
-        // Note: This would need to be implemented in the backend
-        // For now, we'll use a mock response
+        
+        // Get all students from sessionStorage (from OTP verification)
+        const allStudentsData = sessionStorage.getItem('parentStudents');
+        const selectedStudentIds = JSON.parse(localStorage.getItem('selectedStudents') || '[]');
+        
+        console.log('Debug - allStudentsData:', allStudentsData);
+        console.log('Debug - selectedStudentIds:', selectedStudentIds);
+        console.log('Debug - parentEmail:', parentEmail);
+        
+        if (allStudentsData && selectedStudentIds.length > 0) {
+          const allStudents = JSON.parse(allStudentsData);
+          
+          console.log('Debug - allStudents:', allStudents);
+          console.log('Debug - filtering students with IDs:', selectedStudentIds);
+          
+          // Filter only selected students (ensure both are strings for comparison)
+          const filteredStudents = allStudents.filter((student: Student) => 
+            selectedStudentIds.includes(student.id?.toString() || '') || 
+            selectedStudentIds.includes(String(student.id || ''))
+          );
+          
+          console.log('Debug - filteredStudents:', filteredStudents);
+          
+          // Convert to the format expected by the component
+          const formattedStudents = filteredStudents.map((student: Student) => ({
+            id: student.id,
+            fullName: `${student.firstName} ${student.lastName}`,
+            name: `${student.firstName} ${student.lastName}`
+          }));
+          
+          setStudents(formattedStudents);
+          console.log('Debug - final formatted students:', formattedStudents);
+        } else if (allStudentsData) {
+          // If we have all students but no selection, show all students (fallback)
+          console.log('No selection found, showing all students');
+          const allStudents = JSON.parse(allStudentsData);
+          const formattedStudents = allStudents.map((student: Student) => ({
+            id: student.id,
+            fullName: `${student.firstName} ${student.lastName}`,
+            name: `${student.firstName} ${student.lastName}`
+          }));
+          setStudents(formattedStudents);
+        } else {
+          // Fallback to mock data if no data at all
+          console.log('No student data found, using mock data');
         const mockStudents = [
           { id: '1', fullName: 'Student 1', name: 'Student 1' },
           { id: '2', fullName: 'Student 2', name: 'Student 2' }
         ];
         setStudents(mockStudents);
+        }
       } catch (err) {
         console.error('Error loading students:', err);
         setStudentsError('Failed to load students. Please check the email address.');
@@ -381,29 +486,10 @@ export default function MapPage() {
       const results = await vietmapService.geocode(searchQuery, schoolLocation);
       console.log('Search results:', results);
       
+      if (results.length > 0) {
+        // Show search results for user to choose
       setSearchResults(results);
       setShowSearchResults(true);
-      
-      if (results.length > 0) {
-        // Auto-select first result
-        const firstResult = results[0];
-        console.log('Auto-selecting first result:', firstResult);
-        
-        // Extract coordinates from boundaries or use mock coordinates
-        const mockCoords = {
-          lat: 16.0544 + (Math.random() - 0.5) * 0.1,
-          lng: 108.2022 + (Math.random() - 0.5) * 0.1
-        };
-        
-        setClickedCoords(mockCoords);
-        // setIsRouteDisplayed(true);
-        setTempCoords(mockCoords);
-        
-        // Don't call createTempMarker here, let the component handle it via tempCoords
-        console.log('Setting tempCoords to:', mockCoords);
-        
-        setSearchQuery(firstResult.display);
-        setShowSearchResults(false);
       } else {
         console.log('No search results found');
         setError('No results found for the search query.');
@@ -466,23 +552,139 @@ export default function MapPage() {
   }, [schoolLocation]);
 
   // Handle search result selection
-  const handleSearchResultSelect = useCallback((result: VietMapGeocodeResult) => {
+  const handleSearchResultSelect = useCallback(async (result: VietMapGeocodeResult) => {
     console.log('Search result selected:', result);
     
-    // Extract coordinates from boundaries or use mock coordinates
-    // Since v4 API doesn't provide lat/lng directly, we'll use mock coordinates around Da Nang
-    const mockCoords = {
+    // Hide search results first
+    setShowSearchResults(false);
+    setError('');
+    
+    // Try to get coordinates from VietMap API
+    let coords = null;
+    if (result.ref_id) {
+      console.log('Getting coordinates for ref_id:', result.ref_id);
+      try {
+        coords = await vietmapService.getPlaceDetails(result.ref_id);
+        console.log('Got coordinates from API:', coords);
+      } catch (error) {
+        console.error('Error getting coordinates:', error);
+      }
+    }
+    
+    // Fallback to Nominatim geocoding if VietMap fails
+    if (!coords) {
+      console.log('VietMap failed, trying Nominatim geocoding');
+      try {
+        coords = await vietmapService.geocodeWithNominatim(result.display);
+        console.log('Got coordinates from Nominatim:', coords);
+      } catch (error) {
+        console.error('Nominatim also failed:', error);
+      }
+    }
+    
+    // Final fallback to mock coordinates
+    if (!coords) {
+      console.log('Using mock coordinates as final fallback');
+      coords = {
       lat: 16.0544 + (Math.random() - 0.5) * 0.1,
       lng: 108.2022 + (Math.random() - 0.5) * 0.1
     };
+    }
     
+    // Update search query and coordinates
     setSearchQuery(result.display);
-    setClickedCoords(mockCoords);
-    // setIsRouteDisplayed(true);
-    setTempCoords(mockCoords);
-    // Don't call createTempMarker here, let the component handle it via tempCoords
-    setShowSearchResults(false);
-  }, []);
+    setClickedCoords(coords);
+    setTempCoords(coords);
+    
+    console.log('Final selected coordinates:', coords);
+    
+        // Calculate distance and fee immediately after selecting location
+        if (coords && schoolLocation) {
+          try {
+            // Simple distance calculation using Haversine formula
+            const distanceKm = calculateDistance(schoolLocation, coords);
+            console.log('Distance calculated:', distanceKm, 'km');
+            
+            if (distanceKm > 0) {
+              setTempDistance(`${distanceKm.toFixed(1)} km`);
+              setTempDuration('~30 mins'); // Mock duration
+              
+              // Calculate fare for single trip
+              if (unitPrice && unitPrice.pricePerKm) {
+                const singleTripFare = unitPrice.pricePerKm * distanceKm;
+                setTempFare(singleTripFare.toLocaleString('vi-VN') + '₫');
+              }
+              
+              // Calculate semester fee
+              console.log('Calculating semester fee for distance:', distanceKm);
+              await calculateSemesterFee(distanceKm);
+            }
+          } catch (error) {
+            console.error('Error calculating distance:', error);
+          }
+        }
+  }, [schoolLocation, unitPrice, calculateSemesterFee]);
+
+  // Get user's current location
+  const handleGetMyLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported by this browser.');
+      return;
+    }
+
+    setIsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const userCoords = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        
+        console.log('User location:', userCoords);
+        setTempCoords(userCoords);
+        setSearchQuery('My Current Location');
+        setIsLoading(false);
+        
+        // Calculate distance and fee immediately after getting location
+        if (userCoords && schoolLocation) {
+          (async () => {
+            try {
+              // Simple distance calculation using Haversine formula
+              const distanceKm = calculateDistance(schoolLocation, userCoords);
+              console.log('Distance calculated for current location:', distanceKm, 'km');
+              
+              if (distanceKm > 0) {
+                setTempDistance(`${distanceKm.toFixed(1)} km`);
+                setTempDuration('~30 mins'); // Mock duration
+                
+                // Calculate fare for single trip
+                if (unitPrice && unitPrice.pricePerKm) {
+                  const singleTripFare = unitPrice.pricePerKm * distanceKm;
+                  setTempFare(singleTripFare.toLocaleString('vi-VN') + '₫');
+                }
+                
+                // Calculate semester fee
+                console.log('Calculating semester fee for current location distance:', distanceKm);
+                await calculateSemesterFee(distanceKm);
+              }
+            } catch (error) {
+              console.error('Error calculating distance for current location:', error);
+            }
+          })();
+        }
+      },
+      (error) => {
+        console.error('Error getting location:', error);
+        setError('Unable to retrieve your location. Please try again.');
+        setIsLoading(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000
+      }
+    );
+  }, [schoolLocation, unitPrice, calculateSemesterFee]);
 
   // Handle click outside to close dropdown
   useEffect(() => {
@@ -514,20 +716,6 @@ export default function MapPage() {
       handleSearch();
     }
   };
-
-  // Close search results when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (inputRef.current && !inputRef.current.contains(event.target as Node)) {
-        setShowSearchResults(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
 
   // Cleanup timeouts on unmount
   useEffect(() => {
@@ -623,50 +811,57 @@ export default function MapPage() {
       }
     };
 
-    loadUnitPrice();
-  }, []);
+    const loadData = async () => {
+      await Promise.all([
+        loadUnitPrice(),
+        loadCurrentSemesterInfo()
+      ]);
+    };
+
+    loadData();
+  }, [loadCurrentSemesterInfo]);
 
   // Load parent email from previous step
   useEffect(() => {
     try {
-      const email = sessionStorage.getItem('parentEmail') || '';
+      console.log('🚌 Map page mounted - checking for parent email...');
+      
+      // First try localStorage (from student-selection page)
+      let email = localStorage.getItem('parentEmail') || '';
+      
+      // Fallback to sessionStorage (from verify-otp page)
+      if (!email) {
+        email = sessionStorage.getItem('parentEmail') || '';
+      }
+      
+      console.log('📧 Loaded parent email:', email);
+      
+      if (!email) {
+        console.error('❌ No parent email found - this will cause redirect to home in 5 seconds');
+        console.log('🔍 Checking localStorage keys:', Object.keys(localStorage));
+        console.log('🔍 Checking sessionStorage keys:', Object.keys(sessionStorage));
+        
+        // Add delay so user can see the logs
+        setTimeout(() => {
+          console.log('🏠 Redirecting to home now...');
+          router.push('/');
+        }, 5000);
+        return;
+      }
+      
+      console.log('✅ Parent email found, staying on map page');
       setParentEmail(email);
     } catch (error) {
-      console.warn('Unable to access sessionStorage:', error);
-      setParentEmail('');
-    }
-  }, []);
-
-  // Load students from sessionStorage (set by verify-otp page)
-  const loadStudentsFromStorage = useCallback(() => {
-    try {
-      const storedStudents = sessionStorage.getItem('parentStudents');
-      const storedEmailExists = sessionStorage.getItem('parentEmailExists');
+      console.error('💥 Unable to access storage:', error);
+      console.log('🏠 Error loading email - redirecting to home in 3 seconds');
       
-      if (storedStudents) {
-        const parsedStudents = JSON.parse(storedStudents);
-        setStudents(parsedStudents.map((s: { id: string; firstName: string; lastName: string }) => ({
-          id: s.id,
-          fullName: `${s.firstName} ${s.lastName}`,
-          name: `${s.firstName} ${s.lastName}`
-        })));
-      }
-      
-      if (storedEmailExists) {
-        // Email exists info is available but not used in current UI
-        console.log('Email exists in system:', storedEmailExists === 'true');
-      }
-    } catch (error) {
-      console.error('Error loading students from storage:', error);
-      setStudentsError('Unable to load students data. Please refresh the page and try again.');
+      setTimeout(() => {
+        router.push('/');
+      }, 3000);
     }
-  }, []);
+  }, [router]);
 
-  useEffect(() => {
-    if (parentEmail) {
-      loadStudentsFromStorage();
-    }
-  }, [parentEmail, loadStudentsFromStorage]);
+  // Note: loadStudentsFromStorage function removed - now using the main loadStudents useEffect above
 
   return (
     <div className="min-h-screen bg-white">
@@ -675,7 +870,7 @@ export default function MapPage() {
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-[#FEFCE8] to-[#FFF085] shadow-soft"
+        className="flex items-center justify-between px-6 py-4 bg-[#FEFAD9] shadow-soft"
       >
         <motion.div 
           initial={{ opacity: 0, x: -30 }}
@@ -704,18 +899,19 @@ export default function MapPage() {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => router.push('/')}
-          className="bg-gradient-to-r from-[#fad23c] to-[#FFF085] text-[#463B3B] px-6 py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+             className="bg-[#FBD748] hover:bg-[#FBD748]/90 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
         >
           Back to Home
         </motion.button>
       </motion.header>
 
-      {/* Search Section */}
+      {/* Search Section - Only show when NOT submitting */}
+      {!showSubmitForm && (
       <motion.div 
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.3 }}
-        className="bg-gradient-to-br from-[#FEFCE8] to-[#FFF085] px-6 py-8"
+          className="bg-white px-6 py-8"
       >
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-6">
@@ -747,7 +943,7 @@ export default function MapPage() {
               
               {/* Search Results Dropdown */}
               {showSearchResults && searchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-lg border border-gray-200 z-[9999] max-h-60 overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-lg border border-gray-200 z-[10000] max-h-60 overflow-y-auto">
                   {searchResults.map((result, index) => (
                     <div
                       key={index}
@@ -757,16 +953,14 @@ export default function MapPage() {
                         console.log('Search result clicked:', result);
                         handleSearchResultSelect(result);
                       }}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f9fafb';
                       }}
-                      onTouchEnd={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('Search result touched:', result);
-                        handleSearchResultSelect(result);
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'white';
                       }}
-                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors duration-200"
+                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors duration-200 select-none"
+                      style={{ pointerEvents: 'auto' }}
                     >
                       <div className="font-medium text-gray-800">{result.display}</div>
                       <div className="text-sm text-gray-500">{result.address}</div>
@@ -783,23 +977,21 @@ export default function MapPage() {
               )}
             </div>
             <div className="flex gap-3 items-center">
-              <select
-                className="px-3 py-3 rounded-2xl border-2 border-[#fad23c] bg-white text-[#463B3B] shadow-lg"
-                value={travelMode}
-                onChange={(e) => setTravelMode(e.target.value as TravelModeString)}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleGetMyLocation}
                 disabled={!isMapLoaded || unitPriceLoading}
+                className="bg-[#FBD748] hover:bg-[#FBD748]/90 text-white px-4 py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                <option value={'DRIVING'}>Driving</option>
-                <option value={'WALKING'}>Walking</option>
-                <option value={'BICYCLING'}>Bicycling</option>
-                <option value={'TRANSIT'}>Transit</option>
-              </select>
+                📍 Get My Location
+              </motion.button>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleSearch}
                 disabled={!isMapLoaded || !searchQuery.trim() || unitPriceLoading}
-                className="bg-gradient-to-r from-[#fad23c] to-[#FFF085] text-[#463B3B] px-6 py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-[#FBD748] hover:bg-[#FBD748]/90 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Search
               </motion.button>
@@ -819,100 +1011,15 @@ export default function MapPage() {
             </motion.div>
           )}
 
-          {/* Show temporary info when location is selected but not confirmed */}
-          {tempCoords && (tempDistance || tempDuration || tempFare) && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="mt-4 text-center"
-            >
-              <div className="bg-gradient-to-br from-[#FEFCE8] to-[#FFF085] border-2 border-[#fad23c] rounded-2xl p-4 shadow-soft-lg inline-block">
-                <div className="flex items-center justify-center gap-2 mb-3">
-                  <span className="text-[#D08700] text-lg">📍</span>
-                  <span className="text-[#463B3B] font-semibold">Temporary Location</span>
-                </div>
-                <div className="flex flex-col md:flex-row gap-3 items-center justify-center">
-                  {tempDistance && (
-                    <p className="text-lg font-semibold text-[#463B3B]">
-                      Distance: <span className="text-[#D08700] text-2xl font-bold">{tempDistance}</span>
-                    </p>
-                  )}
-                  {tempDuration && (
-                    <p className="text-lg font-semibold text-[#463B3B]">
-                      Duration: <span className="text-[#D08700] text-2xl font-bold">{tempDuration}</span>
-                    </p>
-                  )}
-                  {tempFare && (
-                    <p className="text-lg font-semibold text-[#463B3B]">
-                      Per Trip: <span className="text-[#D08700] text-2xl font-bold">{tempFare}</span>
-                      <span className="text-sm text-[#463B3B] opacity-70 ml-2">({unitPrice?.pricePerKm?.toLocaleString('vi-VN') || '7,000'}₫/km)</span>
-                    </p>
-                  )}
-                </div>
-                
-                {/* Semester Fee Information */}
-                {/* {semesterFeeInfo && (
-                  <div className="mt-4 p-3 bg-gradient-to-br from-[#FEFCE8] to-[#FFF085] border border-[#fad23c] rounded-xl">
-                    <div className="text-center">
-                      <h4 className="text-[#463B3B] font-semibold mb-2">📚 Semester Fee Calculation</h4>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div>
-                          <span className="text-[#463B3B] opacity-80 font-medium">Semester:</span>
-                          <div className="text-[#463B3B] font-semibold">{(semesterFeeInfo as any).semesterName}</div>
-                        </div>
-                        <div>
-                          <span className="text-[#463B3B] opacity-80 font-medium">Academic Year:</span>
-                          <div className="text-[#463B3B] font-semibold">{(semesterFeeInfo as any).academicYear}</div>
-                        </div>
-                        <div>
-                          <span className="text-[#463B3B] opacity-80 font-medium">School Days:</span>
-                          <div className="text-[#463B3B] font-semibold">{(semesterFeeInfo as any).totalSchoolDays} days</div>
-                        </div>
-                        <div>
-                          <span className="text-[#463B3B] opacity-80 font-medium">Total Trips:</span>
-                          <div className="text-[#463B3B] font-semibold">{(semesterFeeInfo as any).totalTrips} trips</div>
-                        </div>
-                      </div>
-                      <div className="mt-3 p-2 bg-[#fad23c] rounded-lg">
-                        <div className="text-[#463B3B] font-bold text-lg">
-                          Total Semester Fee: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format((semesterFeeInfo as any).totalFee)}
-                        </div>
-                        <div className="text-[#463B3B] opacity-80 text-sm mt-1">
-                          {(semesterFeeInfo as any).totalDistanceKm.toFixed(1)} km total distance
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )} */}
-                
-                {semesterFeeLoading && (
-                  <div className="mt-4 p-3 bg-gradient-to-br from-[#FEFCE8] to-[#FFF085] border border-[#fad23c] rounded-xl text-center">
-                    <div className="text-[#463B3B]">🔄 Calculating semester fee...</div>
-                  </div>
-                )}
-                
-                {semesterFeeError && (
-                  <div className="mt-4 p-3 bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-xl text-center">
-                    <div className="text-red-700">⚠️ {semesterFeeError}</div>
-                  </div>
-                )}
-                
-                <div className="mt-3 text-sm text-[#463B3B] flex items-center justify-center gap-2">
-                  <span className="text-[#D08700]">💡</span>
-                  <span>Click vào marker trên bản đồ để xác nhận vị trí này</span>
-                </div>
-              </div>
-            </motion.div>
-          )}
 
-          {/* Show confirmed info when location is confirmed */}
-          {selectedCoords && (distance || duration || fare) && (
+          {/* Show confirmed info when location is confirmed - Only show when NOT submitting */}
+          {selectedCoords && (distance || duration || fare) && !showSubmitForm && (
             <motion.div 
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               className="mt-4 text-center"
             >
-              <div className="bg-gradient-to-br from-[#FEFCE8] to-[#FFF085] rounded-2xl p-4 shadow-soft-lg inline-block border border-[#fad23c]">
+              <div className="bg-white rounded-2xl p-4 shadow-soft-lg inline-block border border-[#FBD748]">
                 <div className="flex items-center justify-center gap-2 mb-3">
                   <span className="text-[#D08700] text-lg">✅</span>
                   <span className="text-[#463B3B] font-semibold">Confirmed Location</span>
@@ -939,29 +1046,135 @@ export default function MapPage() {
                   <div className="mt-2 text-sm text-[#463B3B] opacity-80 flex items-center justify-center gap-2">
                     <span className="text-[#D08700]">★</span>
                     <span>Số tiền trên là cho một chuyến đi duy nhất.</span>
-                  </div>
+                        </div>
                 )}
-              </div>
+                        </div>
             </motion.div>
           )}
 
-          {/* Parent email and coordinate display */}
-          <div className="mt-4 grid md:grid-cols-2 gap-4">
-            <div className="bg-gradient-to-br from-[#FEFCE8] to-[#FFF085] rounded-2xl p-4 shadow-soft border border-[#fad23c]">
-              <p className="text-sm text-[#463B3B] opacity-80 mb-1">Parent Email</p>
-              <p className="text-[#463B3B] font-semibold break-all">{parentEmail || '—'}</p>
-            </div>
-            <div className="bg-gradient-to-br from-[#FEFCE8] to-[#FFF085] rounded-2xl p-4 shadow-soft border border-[#fad23c]">
-              <p className="text-sm text-[#463B3B] opacity-80 mb-1">Selected Coordinates</p>
+          {/* Fee Calculation - Moved up and redesigned */}
+          {tempCoords && tempDistance && !showSubmitForm && (
+            <div className="mt-4">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-gradient-to-br from-[#FEFCE8] to-[#FFF085] rounded-2xl p-6 shadow-lg border-2 border-[#FBD748]"
+              >
+                <div className="text-center mb-4">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <span className="text-2xl">💰</span>
+                    <h3 className="text-xl font-bold text-[#463B3B]">Fee Calculation</h3>
+                        </div>
+                  <div className="text-sm text-[#463B3B] opacity-70">
+                    Distance: {tempDistance} • Duration: {tempDuration}
+                        </div>
+                      </div>
+                
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="text-center">
+                    <div className="text-sm text-[#463B3B] opacity-70 mb-2">Per Trip Cost</div>
+                    <div className="text-3xl font-bold text-[#D08700]">{tempFare}</div>
+                        </div>
+                  
+                  <div className="text-center">
+                    <div className="text-sm text-[#463B3B] opacity-70 mb-2">Semester Total</div>
+                    {semesterFeeInfo ? (
+                      <div className="text-3xl font-bold text-[#D08700]">{semesterFeeInfo.totalFee?.toLocaleString('vi-VN')}₫</div>
+                    ) : semesterFeeLoading ? (
+                      <div className="text-lg text-[#463B3B] opacity-70">🔄 Calculating...</div>
+                    ) : semesterFeeError ? (
+                      <div className="text-sm text-red-600">⚠️ Error</div>
+                    ) : (
+                      <div className="text-lg text-[#463B3B] opacity-70">Pending...</div>
+                    )}
+                        </div>
+                      </div>
+                
+                {tempDistance && (
+                  <div className="mt-4 text-center">
+                    <div className="text-xs text-[#463B3B] opacity-70 flex items-center justify-center gap-1">
+                      <span>💡</span>
+                      <span>Click on the map marker to confirm this location</span>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+                  </div>
+                )}
+                
+          {/* Parent email and coordinate display - Side by side cards */}
+          {!showSubmitForm && (
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <div className="bg-white rounded-2xl p-4 shadow-soft border border-[#FBD748]">
+                <p className="text-sm text-[#463B3B] opacity-80 mb-1">📧 Email</p>
+                <p className="text-[#463B3B] font-semibold text-sm break-all">{parentEmail || '—'}</p>
+                  </div>
+              <div className="bg-white rounded-2xl p-4 shadow-soft border border-[#FBD748]">
+                <p className="text-sm text-[#463B3B] opacity-80 mb-1">📍 Location</p>
               {selectedCoords ? (
-                <p className="text-[#463B3B] font-semibold">Lat: {selectedCoords.lat.toFixed(6)} — Lng: {selectedCoords.lng.toFixed(6)}</p>
+                  <p className="text-[#463B3B] font-semibold text-sm">{selectedCoords.lat.toFixed(4)}, {selectedCoords.lng.toFixed(4)}</p>
               ) : tempCoords ? (
-                <p className="text-[#D08700] font-semibold">Lat: {tempCoords.lat.toFixed(6)} — Lng: {tempCoords.lng.toFixed(6)} <span className="text-sm text-[#463B3B] opacity-70">(temporary)</span></p>
+                  <p className="text-[#D08700] font-semibold text-sm">{tempCoords.lat.toFixed(4)}, {tempCoords.lng.toFixed(4)}</p>
               ) : (
-                <p className="text-[#463B3B] opacity-70">Click on the map to select a location</p>
+                  <p className="text-[#463B3B] opacity-70 text-sm">Click map to select</p>
+              )}
+                </div>
+              </div>
+          )}
+
+          {/* Semester Info - Side by side with Your Children */}
+          {currentSemesterInfo && !showSubmitForm && (
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <div className="bg-white rounded-2xl p-4 shadow-soft border border-[#FBD748]">
+                <p className="text-sm text-[#463B3B] opacity-80 mb-1">📚 Current Semester</p>
+                <p className="text-[#463B3B] font-semibold text-sm">{currentSemesterInfo.name}</p>
+                <p className="text-[#463B3B] text-xs opacity-70">{currentSemesterInfo.academicYear}</p>
+                </div>
+              
+              {/* Students Linked To - Moved to same row as semester */}
+              {parentEmail && (
+                <div className="bg-white rounded-2xl p-4 shadow-soft border border-[#FBD748]">
+                  <p className="text-sm text-[#463B3B] opacity-80 mb-1">👥 Your Children ({students.length})</p>
+                  {false ? (
+                    <p className="text-[#463B3B] opacity-70 text-sm">Loading Students...</p>
+                  ) : studentsError ? (
+                    <p className="text-red-600 text-sm">{studentsError}</p>
+                  ) : students.length === 0 ? (
+                    <p className="text-[#463B3B] opacity-70 text-sm">No Students Found.</p>
+                  ) : (
+                    <div className="text-sm text-[#463B3B]">
+                      {students.length <= 3 ? (
+                        <div className="space-y-1">
+                          {students.map((s, idx) => (
+                            <div key={s.id || idx} className="flex items-center gap-2">
+                              <span className="text-[#D08700]">•</span>
+                              <span className="truncate">{s.fullName || s.name || 'Student'}</span>
+                </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="space-y-1 max-h-20 overflow-hidden">
+                            {students.slice(0, 2).map((s, idx) => (
+                              <div key={s.id || idx} className="flex items-center gap-2">
+                                <span className="text-[#D08700]">•</span>
+                                <span className="truncate">{s.fullName || s.name || 'Student'}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="text-[#463B3B] opacity-70 mt-1 text-xs">
+                            +{students.length - 2} more students
+                          </div>
+                  </div>
+                )}
+              </div>
+                  )}
+            </div>
               )}
             </div>
-          </div>
+          )}
+
+
 
           {error && (
             <motion.div 
@@ -975,15 +1188,52 @@ export default function MapPage() {
             </motion.div>
           )}
 
+        </div>
+      </motion.div>
+      )}
+
+
           {/* Submit Request Section - Only Show When Location Is Confirmed */}
-          {selectedCoords && students.length > 0 && (
+      {selectedCoords && students.length > 0 && showSubmitForm && (
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-6 text-center"
-            >
-              <div className="bg-gradient-to-br from-[#FEFCE8] to-[#FFF085] rounded-2xl p-6 shadow-soft-lg border border-[#fad23c]">
-                <h3 className="text-lg font-semibold text-[#463B3B] mb-4">Submit Pickup Point Request</h3>
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="bg-white px-6 py-8"
+        >
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white rounded-2xl p-6 shadow-soft-lg border border-[#FBD748]">
+              <div className="mb-4">
+                <div className="flex items-center justify-between">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      setShowSubmitForm(false);
+                      setSelectedCoords(null);
+                      setTempCoords(null);
+                      setClickedCoords(null);
+                      setDistance('');
+                      setDuration('');
+                      setFare('');
+                      setTempDistance('');
+                      setTempDuration('');
+                      setTempFare('');
+                      setSearchQuery('');
+                      setSearchResults([]);
+                      setShowSearchResults(false);
+                    }}
+                    className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 px-3 py-2 rounded-lg font-medium shadow-sm hover:shadow-md transition-all duration-300"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    <span>Back</span>
+                  </motion.button>
+                  <h3 className="text-lg font-semibold text-[#463B3B]">Submit Pickup Point Request</h3>
+                  <div className="w-20"></div> {/* Spacer để căn giữa title */}
+                </div>
+              </div>
                 
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between items-center">
@@ -1002,6 +1252,15 @@ export default function MapPage() {
                       {selectedCoords?.lat.toFixed(6)}, {selectedCoords?.lng.toFixed(6)}
                     </span>
                   </div>
+                
+                {currentSemesterInfo && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-[#463B3B] opacity-80">Semester:</span>
+                    <span className="font-semibold text-[#463B3B]">
+                      {currentSemesterInfo.name} - {currentSemesterInfo.academicYear}
+                    </span>
+                  </div>
+                )}
                   
                   {distance && (
                     <div className="flex justify-between items-center">
@@ -1048,41 +1307,40 @@ export default function MapPage() {
                       </div>
                     )}
                     
-                    {/* Semester Fee Information */}
-                    {/* {semesterFeeInfo && (
+                  {semesterFeeInfo && (
                       <div className="mt-4 p-4 bg-gradient-to-br from-[#FEFCE8] to-[#FFF085] border border-[#fad23c] rounded-xl">
-                        <h4 className="text-[#463B3B] font-semibold mb-3 text-center">📚 Semester Fee Details</h4>
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <span className="text-[#463B3B] opacity-80 font-medium">Semester:</span>
-                            <div className="text-[#463B3B] font-semibold">{(semesterFeeInfo as any).semesterName}</div>
+                      <div className="text-center mb-3">
+                        <h4 className="font-bold text-[#463B3B] text-lg">📊 Semester Fee Calculation</h4>
+                        <p className="text-[#463B3B] text-sm opacity-80">
+                          {semesterFeeInfo.semesterInfo?.name} - {semesterFeeInfo.semesterInfo?.academicYear}
+                        </p>
                           </div>
-                          <div>
-                            <span className="text-[#463B3B] opacity-80 font-medium">Academic Year:</span>
-                            <div className="text-[#463B3B] font-semibold">{(semesterFeeInfo as any).academicYear}</div>
+                      
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[#463B3B] opacity-80">School Days:</span>
+                          <span className="font-semibold text-[#463B3B]">{semesterFeeInfo.semesterInfo?.totalSchoolDays} days</span>
                           </div>
-                          <div>
-                            <span className="text-[#463B3B] opacity-80 font-medium">School Days:</span>
-                            <div className="text-[#463B3B] font-semibold">{(semesterFeeInfo as any).totalSchoolDays} days</div>
+                        
+                        <div className="flex justify-between items-center">
+                          <span className="text-[#463B3B] opacity-80">Total Trips:</span>
+                          <span className="font-semibold text-[#463B3B]">{semesterFeeInfo.semesterInfo?.totalTrips} trips</span>
                           </div>
-                          <div>
-                            <span className="text-[#463B3B] opacity-80 font-medium">Total Trips:</span>
-                            <div className="text-[#463B3B] font-semibold">{(semesterFeeInfo as any).totalTrips} trips</div>
+                        
+                        <div className="flex justify-between items-center">
+                          <span className="text-[#463B3B] opacity-80">Total Distance:</span>
+                          <span className="font-semibold text-[#463B3B]">{(semesterFeeInfo.semesterInfo?.totalSchoolDays * parseFloat(distance?.replace(/[^\d.]/g, '') || '0')).toFixed(1)} km</span>
                           </div>
+                        
+                        <div className="border-t border-[#fad23c] pt-2 mt-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[#463B3B] font-bold">Total Semester Fee:</span>
+                            <span className="font-bold text-[#D08700] text-lg">{semesterFeeInfo.totalFee?.toLocaleString('vi-VN')}₫</span>
                         </div>
-                        <div className="mt-3 p-3 bg-[#fad23c] rounded-lg text-center">
-                          <div className="text-[#463B3B] font-bold text-xl">
-                            Total Semester Fee: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format((semesterFeeInfo as any).totalFee)}
                           </div>
-                          <div className="text-[#463B3B] opacity-80 text-sm mt-1">
-                            {(semesterFeeInfo as any).totalDistanceKm.toFixed(1)} km total distance
                           </div>
-                          <div className="text-[#463B3B] opacity-70 text-xs mt-2">
-                            💡 This is the amount you&apos;ll pay for the entire semester
                           </div>
-                        </div>
-                      </div>
-                    )} */}
+                  )}
                     
                     {semesterFeeLoading && (
                       <div className="mt-4 p-3 bg-gradient-to-br from-[#FEFCE8] to-[#FFF085] border border-[#fad23c] rounded-xl text-center">
@@ -1116,99 +1374,28 @@ export default function MapPage() {
                   whileTap={{ scale: 0.98 }}
                   onClick={handleSubmitRequest}
                   disabled={isSubmitting}
-                  className="bg-gradient-to-r from-[#fad23c] to-[#FFF085] text-[#463B3B] px-8 py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-[#FBD748] hover:bg-[#FBD748]/90 text-white px-8 py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? 'Submitting...' : 'Submit Request'}
                 </motion.button>
               </div>
-            </motion.div>
-          )}
         </div>
       </motion.div>
+      )}
 
-      {/* Map Container */}
+      {/* Map Container - Hide when submit form is active */}
+      {!showSubmitForm && (
       <motion.div 
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.4 }}
-        className="relative h-[400px] w-full"
-      >
-        {/* Students list (right top below buttons on desktop, above map on mobile) */}
-        {!showSubmitForm && parentEmail && (
-          <div className="absolute left-4 top-4 z-20 max-w-[360px]">
-            <div className="bg-gradient-to-br from-[#FEFCE8] to-[#FFF085] backdrop-blur rounded-2xl shadow-lg p-4 border border-[#fad23c]">
-              <p className="text-sm text-[#463B3B] opacity-80">Students Linked To</p>
-              <p className="text-sm font-semibold text-[#463B3B] break-all mb-2">{parentEmail}</p>
-              {false ? (
-                <p className="text-[#463B3B] opacity-70 text-sm">Loading Students...</p>
-              ) : studentsError ? (
-                <p className="text-red-600 text-sm">{studentsError}</p>
-              ) : students.length === 0 ? (
-                <p className="text-[#463B3B] opacity-70 text-sm">No Students Found.</p>
-              ) : (
-                <ul className="text-sm text-[#463B3B] space-y-1 max-h-40 overflow-auto pr-1">
-                  {students.map((s, idx) => (
-                    <li key={s.id || idx} className="flex items-center gap-2">
-                      <span className="text-[#D08700]">•</span>
-                      <span>{s.fullName || s.name || 'Student'}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        )}
-        {/* Map action buttons */}
-        {!showSubmitForm && (
-          <div className="absolute z-20 right-4 top-4 flex flex-col gap-2">
-          <button
-            onClick={() => {
-              if (!mapInstanceRef.current) return;
-              // Center on school for VietMap
-              console.log('Center on school');
-            }}
-            className="bg-gradient-to-r from-[#FEFCE8] to-[#FFF085] hover:from-[#FFF085] hover:to-[#fad23c] text-[#463B3B] px-4 py-2 rounded-xl shadow-lg border border-[#fad23c] transition-all duration-300"
-          >
-            Center on School
-          </button>
-          <button
-            onClick={() => {
-              if (!mapInstanceRef.current) return;
-              // Fit route for VietMap
-              console.log('Fit route');
-            }}
-            className="bg-gradient-to-r from-[#FEFCE8] to-[#FFF085] hover:from-[#FFF085] hover:to-[#fad23c] text-[#463B3B] px-4 py-2 rounded-xl shadow-lg border border-[#fad23c] transition-all duration-300"
-          >
-            Fit Route
-          </button>
-          <button
-            onClick={() => {
-              if (markerRef.current) {
-                markerRef.current = null;
-              }
-              setDistance('');
-              setDuration('');
-              setFare('');
-              setTempDistance('');
-              setTempDuration('');
-              setTempFare('');
-              setSelectedCoords(null);
-              setTempCoords(null);
-              setShowConfirmModal(false);
-              setShowSubmitForm(false);
-              setError('');
-            }}
-            className="bg-gradient-to-r from-[#FEFCE8] to-[#FFF085] hover:from-[#FFF085] hover:to-[#fad23c] text-[#463B3B] px-4 py-2 rounded-xl shadow-lg border border-[#fad23c] transition-all duration-300"
-          >
-            Clear Location
-          </button>
-          </div>
-        )}
+          className="relative h-[600px] w-3/4 mx-auto"
+        >
 
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#fad23c] mx-auto mb-4"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FBD748] mx-auto mb-4"></div>
               <p className="text-gray-600">Loading Map...</p>
             </div>
           </div>
@@ -1259,6 +1446,7 @@ export default function MapPage() {
           </div>
         )}
       </motion.div>
+      )}
 
       {/* Instructions */}
       {!showSubmitForm && (
@@ -1266,27 +1454,27 @@ export default function MapPage() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.5 }}
-          className="bg-gradient-to-br from-[#FEFCE8] to-[#FFF085] px-6 py-8"
+          className="bg-white px-6 py-8"
         >
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-2xl font-bold text-[#463B3B] mb-4">How to use</h2>
           <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-br from-[#FEFCE8] to-[#FFF085] rounded-2xl p-6 border border-[#fad23c] shadow-lg">
-              <div className="w-12 h-12 bg-[#fad23c] rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="bg-white rounded-2xl p-6 border border-[#FBD748] shadow-lg">
+              <div className="w-12 h-12 bg-[#FBD748] rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">🔍</span>
               </div>
               <h3 className="font-semibold text-[#463B3B] mb-2">Search Address</h3>
               <p className="text-[#463B3B] opacity-80 text-sm">Enter your home address in the search box</p>
             </div>
-            <div className="bg-gradient-to-br from-[#FEFCE8] to-[#FFF085] rounded-2xl p-6 border border-[#fad23c] shadow-lg">
-              <div className="w-12 h-12 bg-[#fad23c] rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="bg-white rounded-2xl p-6 border border-[#FBD748] shadow-lg">
+              <div className="w-12 h-12 bg-[#FBD748] rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">📍</span>
               </div>
               <h3 className="font-semibold text-[#463B3B] mb-2">Click on the Map</h3>
               <p className="text-[#463B3B] opacity-80 text-sm">Click your home location on the map to preview</p>
             </div>
-            <div className="bg-gradient-to-br from-[#FEFCE8] to-[#FFF085] rounded-2xl p-6 border border-[#fad23c] shadow-lg">
-              <div className="w-12 h-12 bg-[#fad23c] rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="bg-white rounded-2xl p-6 border border-[#FBD748] shadow-lg">
+              <div className="w-12 h-12 bg-[#FBD748] rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">✅</span>
               </div>
               <h3 className="font-semibold text-[#463B3B] mb-2">Confirm Location</h3>
