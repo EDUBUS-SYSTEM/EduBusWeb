@@ -573,6 +573,7 @@ const RouteManagement: React.FC = () => {
                 onRouteClick={handleRouteClick} 
                 onRouteMapToggle={handleRouteMapToggle} // ✅ Map toggle handler
                 isModified={isRouteModified(route.id)}
+                isDraft={hasSuggestions}
               />
             ))}
 

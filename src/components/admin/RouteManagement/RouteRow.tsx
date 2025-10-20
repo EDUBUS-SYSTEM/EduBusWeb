@@ -11,19 +11,20 @@ interface RouteRowProps {
   onRouteMapToggle: (routeId: string) => void; // ✅ ADDED: Separate handler for map toggle
   onScheduleClick: (route: RouteDto) => void;
   isModified: boolean;
+  isDraft: boolean;
   isSelectedInMap?: boolean;
 }
 
 // Simple Tooltip Component
-const Tooltip: React.FC<{ 
-  children: React.ReactNode; 
-  content: React.ReactNode; 
+const Tooltip: React.FC<{
+  children: React.ReactNode;
+  content: React.ReactNode;
   className?: string;
 }> = ({ children, content, className = "" }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   return (
-    <div 
+    <div
       className={`relative ${className}`}
       onMouseEnter={() => setIsVisible(true)}
       onMouseLeave={() => setIsVisible(false)}
@@ -40,13 +41,14 @@ const Tooltip: React.FC<{
   );
 };
 
-const RouteRow: React.FC<RouteRowProps> = ({ 
-  route, 
-  onRouteClick, 
-  onRouteMapToggle, 
+const RouteRow: React.FC<RouteRowProps> = ({
+  route,
+  onRouteClick,
+  onRouteMapToggle,
   onScheduleClick,
-  isModified, 
-  isSelectedInMap = false 
+  isModified,
+  isDraft = false,
+  isSelectedInMap = false
 }) => {
   // Helper function to truncate text
   const truncateText = (text: string, maxLength: number = 11): string => {
@@ -81,7 +83,7 @@ const RouteRow: React.FC<RouteRowProps> = ({
               <FaMapMarkerAlt className="text-white" size={8} />
             </div>
           )}
-          
+
           {/* ✅ Route Info Section - Click to toggle map visibility */}
           <Tooltip content={tooltipContent}>
             <div
@@ -99,13 +101,14 @@ const RouteRow: React.FC<RouteRowProps> = ({
               <div className="flex items-center justify-start mt-1 space-x-2">
                 <FaBus className="text-3xl text-gray-700" />
                 <span className="text-sm font-semibold text-gray-800">
-                {route.vehicleNumberPlate}
+                  {route.vehicleNumberPlate}
                 </span>
               </div>
             </div>
           </Tooltip>
 
-          <div className="flex-shrink-0 ml-3 flex flex-col gap-2 items-center">
+          <div className="flex-shrink-0 ml-3 flex flex-col gap-2 items-center"
+            style={{ visibility: isDraft ? 'hidden' : 'visible' }}>
             {/* Schedule Management Button */}
             <button
               onClick={() => onScheduleClick(route)}
@@ -114,7 +117,7 @@ const RouteRow: React.FC<RouteRowProps> = ({
             >
               <FaCalendarAlt size={16} />
             </button>
-            
+
             {/* Edit Button */}
             <button
               onClick={() => onRouteClick(route)}
