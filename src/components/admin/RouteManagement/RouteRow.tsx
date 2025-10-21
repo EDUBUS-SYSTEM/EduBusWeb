@@ -1,7 +1,7 @@
 // EduBusWeb/src/components/admin/RouteManagement/RouteRow.tsx
 import React, { useState } from 'react';
 import { Droppable } from '@hello-pangea/dnd';
-import { FaBus, FaMapMarkerAlt, FaEdit } from 'react-icons/fa';
+import { FaBus, FaMapMarkerAlt, FaEdit, FaCalendarAlt } from 'react-icons/fa';
 import { RouteDto } from '@/services/routeService/routeService.types';
 import PickupPoint from './PickupPoint';
 
@@ -9,20 +9,22 @@ interface RouteRowProps {
   route: RouteDto;
   onRouteClick: (route: RouteDto) => void;
   onRouteMapToggle: (routeId: string) => void; // ✅ ADDED: Separate handler for map toggle
+  onScheduleClick: (route: RouteDto) => void;
   isModified: boolean;
+  isDraft: boolean;
   isSelectedInMap?: boolean;
 }
 
 // Simple Tooltip Component
-const Tooltip: React.FC<{ 
-  children: React.ReactNode; 
-  content: React.ReactNode; 
+const Tooltip: React.FC<{
+  children: React.ReactNode;
+  content: React.ReactNode;
   className?: string;
 }> = ({ children, content, className = "" }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   return (
-    <div 
+    <div
       className={`relative ${className}`}
       onMouseEnter={() => setIsVisible(true)}
       onMouseLeave={() => setIsVisible(false)}
@@ -39,12 +41,14 @@ const Tooltip: React.FC<{
   );
 };
 
-const RouteRow: React.FC<RouteRowProps> = ({ 
-  route, 
-  onRouteClick, 
-  onRouteMapToggle, 
-  isModified, 
-  isSelectedInMap = false 
+const RouteRow: React.FC<RouteRowProps> = ({
+  route,
+  onRouteClick,
+  onRouteMapToggle,
+  onScheduleClick,
+  isModified,
+  isDraft = false,
+  isSelectedInMap = false
 }) => {
   // Helper function to truncate text
   const truncateText = (text: string, maxLength: number = 11): string => {
@@ -79,7 +83,7 @@ const RouteRow: React.FC<RouteRowProps> = ({
               <FaMapMarkerAlt className="text-white" size={8} />
             </div>
           )}
-          
+
           {/* ✅ Route Info Section - Click to toggle map visibility */}
           <Tooltip content={tooltipContent}>
             <div
@@ -97,14 +101,24 @@ const RouteRow: React.FC<RouteRowProps> = ({
               <div className="flex items-center justify-start mt-1 space-x-2">
                 <FaBus className="text-3xl text-gray-700" />
                 <span className="text-sm font-semibold text-gray-800">
-                {route.vehicleNumberPlate}
+                  {route.vehicleNumberPlate}
                 </span>
               </div>
             </div>
           </Tooltip>
 
-          {/* ✅ Edit Button - Separate click handler */}
-          <div className="flex-shrink-0 ml-3">
+          <div className="flex-shrink-0 ml-3 flex flex-col gap-2 items-center"
+            style={{ visibility: isDraft ? 'hidden' : 'visible' }}>
+            {/* Schedule Management Button */}
+            <button
+              onClick={() => onScheduleClick(route)}
+              className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+              title="Manage schedules"
+            >
+              <FaCalendarAlt size={16} />
+            </button>
+
+            {/* Edit Button */}
             <button
               onClick={() => onRouteClick(route)}
               className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

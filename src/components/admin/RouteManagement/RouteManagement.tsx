@@ -13,6 +13,7 @@ import RouteRow from './RouteRow';
 import LobbyArea from './LobbyArea';
 import { pickupPointService, PickupPointDto } from '@/services/pickupPointService';
 import MiniRouteMap from './MiniRouteMap';
+import RouteScheduleModal from './RouteScheduleModal';
 
 const RouteManagement: React.FC = () => {
   const [routes, setRoutes] = useState<RouteDto[]>([]);
@@ -28,6 +29,8 @@ const RouteManagement: React.FC = () => {
   const [isApplySuggestionsModalOpen, setIsApplySuggestionsModalOpen] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
   const [selectedRouteIds, setSelectedRouteIds] = useState<string[]>([]);
+  const [selectedRouteForSchedule, setSelectedRouteForSchedule] = useState<RouteDto | null>(null);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
 
   // Store original routes for comparison
   const originalRoutesRef = useRef<RouteDto[]>([]);
@@ -65,6 +68,20 @@ const RouteManagement: React.FC = () => {
       updatedAt: suggestion.generatedAt,
       isDeleted: false
     };
+  };
+
+  const handleScheduleClick = (route: RouteDto) => {
+    setSelectedRouteForSchedule(route);
+    setIsScheduleModalOpen(true);
+  };
+
+  const handleScheduleModalClose = () => {
+    setSelectedRouteForSchedule(null);
+    setIsScheduleModalOpen(false);
+  };
+
+  const handleScheduleSuccess = () => {
+    console.log('Schedule management completed successfully');
   };
 
   useEffect(() => {
@@ -552,9 +569,11 @@ const RouteManagement: React.FC = () => {
               <RouteRow
                 key={route.id}
                 route={route}
+                onScheduleClick={handleScheduleClick} 
                 onRouteClick={handleRouteClick} 
                 onRouteMapToggle={handleRouteMapToggle} // ✅ Map toggle handler
                 isModified={isRouteModified(route.id)}
+                isDraft={hasSuggestions}
               />
             ))}
 
@@ -597,6 +616,15 @@ const RouteManagement: React.FC = () => {
         isApplying={isApplying}
         suggestedRoutesCount={routes.length}
       />
+
+      {/* Route Schedule Management Modal */}
+      {isScheduleModalOpen && selectedRouteForSchedule && (
+        <RouteScheduleModal
+          route={selectedRouteForSchedule}
+          onClose={handleScheduleModalClose}
+          onSuccess={handleScheduleSuccess}
+        />
+      )}
     </>
   );
 };
