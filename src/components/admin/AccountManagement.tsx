@@ -7,7 +7,9 @@ import {
   FaSearch,
   FaCalendarAlt,
   FaInfoCircle,
+  FaPlus,
 } from "react-icons/fa";
+import { useRouter } from "next/navigation";
 import Pagination from "@/components/ui/Pagination";
 import {
   userAccountService,
@@ -16,21 +18,20 @@ import {
 import {
   UserAccount,
   LockUserRequest,
-  LockMultipleUsersRequest,
-  UnlockMultipleUsersRequest,
 } from "@/services/userAccountService/userAccountService.type";
 
 export default function AccountManagement() {
+  const router = useRouter();
   const [allUsers, setAllUsers] = useState<UserAccount[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sortBy, setSortBy] = useState<string>("firstName");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showLockModal, setShowLockModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [lockFormData, setLockFormData] = useState({
     lockedUntil: "",
     reason: "",
@@ -38,7 +39,6 @@ export default function AccountManagement() {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(20);
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [roleFilter, setRoleFilter] = useState<string>("");
 
@@ -123,7 +123,8 @@ export default function AccountManagement() {
     return filtered;
   }, [debouncedSearch, roleFilter, statusFilter, sortBy, sortOrder]);
 
-  // Pagination for filtered results
+  // Pagination for filtered results (fixed 20 items per page)
+  const perPage = 20;
   const paginatedUsers = useMemo(() => {
     const filtered = filterUsers(allUsers);
     const start = (currentPage - 1) * perPage;
@@ -238,6 +239,7 @@ export default function AccountManagement() {
       await userAccountService.lockUser(userId, req);
       setSuccessMessage("User locked successfully");
       setShowLockModal(false);
+      setSelectedUserId(null);
       setLockFormData({ lockedUntil: "", reason: "" });
       setLockValidationError(null);
       setReasonValidationError(null);
@@ -257,61 +259,6 @@ export default function AccountManagement() {
     }
   };
 
-  const handleBulkLock = async () => {
-    // Check validation before proceeding
-    if (lockValidationError || reasonValidationError) {
-      setError("Please fix validation errors before proceeding");
-      return;
-    }
-
-    try {
-      // Convert local datetime to UTC before sending
-      let lockedUntilUtc: string | undefined = undefined;
-      if (lockFormData.lockedUntil) {
-        const localDate = new Date(lockFormData.lockedUntil);
-        lockedUntilUtc = localDate.toISOString(); // Converts to UTC
-      }
-
-      const req: LockMultipleUsersRequest = {
-        userIds: selectedUsers,
-        lockedUntil: lockedUntilUtc,
-        reason: lockFormData.reason || "Bulk locked by admin",
-      };
-      await userAccountService.lockMultipleUsers(req);
-      setSuccessMessage(`${selectedUsers.length} users locked successfully`);
-      setSelectedUsers([]);
-      setShowLockModal(false);
-      setLockFormData({ lockedUntil: "", reason: "" });
-      setLockValidationError(null);
-      setReasonValidationError(null);
-      fetchAllUsers();
-    } catch {
-      setError("Failed to lock users");
-    }
-  };
-
-  const handleBulkUnlock = async () => {
-    try {
-      const req: UnlockMultipleUsersRequest = { userIds: selectedUsers };
-      await userAccountService.unlockMultipleUsers(req);
-      setSuccessMessage(`${selectedUsers.length} users unlocked successfully`);
-      setSelectedUsers([]);
-      fetchAllUsers();
-    } catch {
-      setError("Failed to unlock users");
-    }
-  };
-
-  const toggleUserSelection = (userId: string) => {
-    setSelectedUsers((prev) =>
-      prev.includes(userId)
-        ? prev.filter((id) => id !== userId)
-        : [...prev, userId]
-    );
-  };
-
-  const selectAllUsers = () => setSelectedUsers(paginatedUsers.map((user) => user.id));
-  const clearSelection = () => setSelectedUsers([]);
 
   const handleSort = (field: string) => {
     if (sortBy === field) {
@@ -325,25 +272,17 @@ export default function AccountManagement() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    setSelectedUsers([]); // Clear selection when changing pages
   };
 
-  const handlePerPageChange = (newPerPage: number) => {
-    setPerPage(newPerPage);
-    setCurrentPage(1); // Reset to first page when changing per page
-    setSelectedUsers([]); // Clear selection
-  };
 
   const handleStatusFilterChange = (status: string) => {
     setStatusFilter(status);
     setCurrentPage(1); // Reset to first page when filtering
-    setSelectedUsers([]); // Clear selection
   };
 
   const handleRoleFilterChange = (role: string) => {
     setRoleFilter(role);
     setCurrentPage(1); // Reset to first page when filtering
-    setSelectedUsers([]); // Clear selection
   };
 
   // Handle search input change
@@ -365,272 +304,261 @@ export default function AccountManagement() {
   if (loading) return <div className="flex justify-center p-8">Loading...</div>;
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-[#463B3B]">User Management</h1>
-        <div className="flex gap-2">
-          {selectedUsers.length > 0 && (
-            <>
-              <button
-                onClick={() => setShowLockModal(true)}
-                className="bg-[#D32F2F] text-white px-4 py-2 rounded-lg hover:bg-[#a82020] flex items-center gap-2"
-              >
-                <FaLock /> Lock Selected ({selectedUsers.length})
-              </button>
-              <button
-                onClick={handleBulkUnlock}
-                className="bg-[#388E3C] text-white px-4 py-2 rounded-lg hover:bg-[#206924] flex items-center gap-2"
-              >
-                <FaUnlock /> Unlock Selected ({selectedUsers.length})
-              </button>
-            </>
-          )}
+    <div className="space-y-8">
+      {/* Header Section */}
+      <div className="bg-[#fdc600bd] rounded-2xl p-4 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-[#463B3B] mb-1">User Management</h1>
+            <p className="text-[#463B3B] text-sm opacity-80">Manage user accounts and permissions</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* Create Account Button */}
+            <button
+              onClick={() => router.push('/create-account')}
+              className="bg-white hover:bg-gray-50 text-[#463B3B] p-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+              title="Create Account"
+            >
+              <FaPlus className="w-5 h-5" />
+            </button>
+            {/* Total Users Counter */}
+            <div className="bg-white rounded-xl p-3 shadow-md">
+              <div className="text-center">
+                <div className="text-lg font-bold text-[#463B3B]">{totalFilteredCount}</div>
+                <div className="text-xs text-gray-600">Total Users</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Alert Messages */}
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded flex items-center gap-2">
-          <FaInfoCircle />
-          {error}
-          <button
-            onClick={() => setError(null)}
-            className="ml-auto text-red-500 hover:text-red-700"
-          >
-            ×
-          </button>
+        <div className="bg-gradient-to-r from-red-50 to-red-100 border-l-4 border-red-500 p-4 rounded-lg shadow-md">
+          <div className="flex items-center gap-3">
+            <FaInfoCircle className="text-red-500 text-xl" />
+            <div className="flex-1">
+              <p className="text-red-700 font-medium">{error}</p>
+            </div>
+            <button
+              onClick={() => setError(null)}
+              className="text-red-500 hover:text-red-700 text-xl font-bold"
+            >
+              ×
+            </button>
+          </div>
         </div>
       )}
 
       {successMessage && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded flex items-center gap-2">
-          <FaInfoCircle />
-          {successMessage}
-          <button
-            onClick={() => setSuccessMessage(null)}
-            className="ml-auto text-green-500 hover:text-green-700"
-          >
-            ×
-          </button>
+        <div className="bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-green-500 p-4 rounded-lg shadow-md">
+          <div className="flex items-center gap-3">
+            <FaInfoCircle className="text-green-500 text-xl" />
+            <div className="flex-1">
+              <p className="text-green-700 font-medium">{successMessage}</p>
+            </div>
+            <button
+              onClick={() => setSuccessMessage(null)}
+              className="text-green-500 hover:text-green-700 text-xl font-bold"
+            >
+              ×
+            </button>
+          </div>
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-4">
+      {/* Main Content Card */}
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+        {/* Search and Filter Section */}
+        <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-6 border-b border-gray-200">
+          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+            {/* Search and Filters */}
+            <div className="flex flex-col sm:flex-row gap-4 items-center">
               <div className="relative">
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search by name or email..."
                   value={searchTerm}
                   onKeyDown={handleSearchKeyDown}
                   onChange={handleSearchChange}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                  className="pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 w-80"
                 />
               </div>
+              
               <select
                 value={statusFilter}
                 onChange={(e) => handleStatusFilterChange(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 bg-white"
               >
                 <option value="">All Status</option>
                 <option value="isNotLocked">Active</option>
                 <option value="isLocked">Locked</option>
               </select>
+              
               <select
                 value={roleFilter}
                 onChange={(e) => handleRoleFilterChange(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 bg-white"
               >
                 <option value="">All Roles</option>
                 <option value="admin">Admin</option>
                 <option value="parent">Parent</option>
                 <option value="driver">Driver</option>
               </select>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">Sort by:</span>
-                <button
-                  onClick={() => handleSort("firstName")}
-                  className={`px-3 py-1 text-sm rounded-lg border transition-colors flex items-center gap-1 ${
-                    sortBy === "firstName"
-                      ? "bg-yellow-100 border-yellow-300 text-yellow-800"
-                      : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  Name
-                  {sortBy === "firstName" && (
-                    <span className="text-xs">
-                      {sortOrder === "asc" ? "↑" : "↓"}
-                    </span>
-                  )}
-                </button>
-                <button
-                  onClick={() => handleSort("createdAt")}
-                  className={`px-3 py-1 text-sm rounded-lg border transition-colors flex items-center gap-1 ${
-                    sortBy === "createdAt"
-                      ? "bg-yellow-100 border-yellow-300 text-yellow-800"
-                      : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  Created Date
-                  {sortBy === "createdAt" && (
-                    <span className="text-xs">
-                      {sortOrder === "asc" ? "↑" : "↓"}
-                    </span>
-                  )}
-                </button>
-              </div>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600">Per page:</label>
-                <select
-                  value={perPage}
-                  onChange={(e) => handlePerPageChange(Number(e.target.value))}
-                  className="px-2 py-1 border border-gray-300 rounded text-sm"
-                >
-                  <option value={1}>1</option>
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={selectAllUsers}
-                  className="text-sm text-blue-600 hover:text-blue-800"
-                >
-                  Select All
-                </button>
-                <button
-                  onClick={clearSelection}
-                  className="text-sm text-gray-600 hover:text-gray-800"
-                >
-                  Clear Selection
-                </button>
-              </div>
+            
+            {/* Sort Options */}
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-gray-700">Sort by:</span>
+              <button
+                onClick={() => handleSort("firstName")}
+                className={`px-4 py-2 text-sm rounded-xl border transition-all duration-300 flex items-center gap-2 ${
+                  sortBy === "firstName"
+                    ? "bg-[#fad23c] border-[#fad23c] text-[#463B3B] shadow-md"
+                    : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                Name
+                {sortBy === "firstName" && (
+                  <span className="text-xs font-bold">
+                    {sortOrder === "asc" ? "↑" : "↓"}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => handleSort("createdAt")}
+                className={`px-4 py-2 text-sm rounded-xl border transition-all duration-300 flex items-center gap-2 ${
+                  sortBy === "createdAt"
+                    ? "bg-[#fad23c] border-[#fad23c] text-[#463B3B] shadow-md"
+                    : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                Created Date
+                {sortBy === "createdAt" && (
+                  <span className="text-xs font-bold">
+                    {sortOrder === "asc" ? "↑" : "↓"}
+                  </span>
+                )}
+              </button>
             </div>
           </div>
         </div>
 
+        {/* Table Section */}
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-gradient-to-r from-gray-100 to-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left">
-                  <input
-                    type="checkbox"
-                    checked={
-                      selectedUsers.length === paginatedUsers.length && paginatedUsers.length > 0
-                    }
-                    onChange={
-                      selectedUsers.length === paginatedUsers.length
-                        ? clearSelection
-                        : selectAllUsers
-                    }
-                    className="rounded border-gray-300"
-                  />
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  User Information
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Contact Details
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Email
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Role & Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Phone
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Account Info
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Role
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Created
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-gray-100">
               {paginatedUsers.map((user) => {
                 const locked = isUserLocked(user);
                 const lockStatus = getLockStatus(user);
                 return (
-                  <tr key={user.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <input
-                        type="checkbox"
-                        checked={selectedUsers.includes(user.id)}
-                        onChange={() => toggleUserSelection(user.id)}
-                        className="rounded border-gray-300"
-                      />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {user.firstName} {user.lastName}
+                  <tr key={user.id} className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 transition-all duration-200">
+                    {/* User Information */}
+                    <td className="px-6 py-6">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-12 w-12">
+                          <div className="h-12 w-12 rounded-full bg-gradient-to-r from-[#fad23c] to-[#FFF085] flex items-center justify-center">
+                            <span className="text-[#463B3B] font-bold text-lg">
+                              {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-semibold text-gray-900">
+                            {user.firstName} {user.lastName}
+                          </div>
+                          <div className="text-xs text-gray-500">ID: {user.id.slice(0, 8)}...</div>
+                        </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{user.email}</div>
+                    
+                    {/* Contact Details */}
+                    <td className="px-6 py-6">
+                      <div className="space-y-1">
+                        <div className="text-sm text-gray-900 font-medium">{user.email}</div>
+                        <div className="text-sm text-gray-500">{user.phoneNumber}</div>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    
+                    {/* Role & Status */}
+                    <td className="px-6 py-6">
+                      <div className="space-y-2">
+                        <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800">
+                          {getUserRole(user).charAt(0).toUpperCase() + getUserRole(user).slice(1)}
+                        </span>
+                        <div>
+                          <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${lockStatus.color}`}>
+                            {lockStatus.status}
+                          </span>
+                        </div>
+                        {locked && user.lockedUntil && (
+                          <div className="text-xs text-gray-500 flex items-center gap-1">
+                            <FaCalendarAlt className="text-red-500" />
+                            Until: {new Date(user.lockedUntil + "Z").toLocaleDateString()}
+                          </div>
+                        )}
+                        {user.lockReason && (
+                          <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
+                            Reason: {user.lockReason}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    
+                    {/* Account Info */}
+                    <td className="px-6 py-6">
                       <div className="text-sm text-gray-900">
-                        {user.phoneNumber}
+                        Created: {new Date(user.createdAt).toLocaleDateString()}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                        {getUserRole(user).charAt(0).toUpperCase() + getUserRole(user).slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${lockStatus.color}`}
-                      >
-                        {lockStatus.status}
-                      </span>
-                      {locked && user.lockedUntil && (
-                        <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                          <FaCalendarAlt />
-                          Until:{" "}
-                          {new Date(user.lockedUntil + "Z").toLocaleString()}
-                        </div>
-                      )}
-                      {user.lockReason && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          Reason: {user.lockReason}
+                      {user.updatedAt && (
+                        <div className="text-xs text-gray-500">
+                          Updated: {new Date(user.updatedAt).toLocaleDateString()}
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(user.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center gap-2">
+                    
+                    {/* Actions */}
+                    <td className="px-6 py-6">
+                      <div className="flex items-center gap-3">
                         <button
                           onClick={() => {
                             setLockFormData({ lockedUntil: "", reason: "" });
-                            setSelectedUsers([user.id]);
+                            setSelectedUserId(user.id);
                             setShowLockModal(true);
                           }}
                           disabled={locked}
-                          className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                           title="Lock User"
                         >
-                          <FaLock />
+                          <FaLock className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleUnlockUser(user.id)}
                           disabled={!locked}
-                          className="text-green-600 hover:text-green-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="p-2 text-green-600 hover:text-green-900 hover:bg-green-50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                           title="Unlock User"
                         >
-                          <FaUnlock />
+                          <FaUnlock className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -643,111 +571,126 @@ export default function AccountManagement() {
 
         {/* Pagination */}
         {paginatedUsers.length > 0 && (
-          <div className="mt-6 flex justify-center">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalFilteredPages}
-              onPageChange={handlePageChange}
-              totalItems={totalFilteredCount}
-              itemsPerPage={perPage}
-              showInfo={false}
-            />
+          <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-700">
+                Showing <span className="font-semibold">{(currentPage - 1) * perPage + 1}</span> to{" "}
+                <span className="font-semibold">
+                  {Math.min(currentPage * perPage, totalFilteredCount)}
+                </span>{" "}
+                of <span className="font-semibold">{totalFilteredCount}</span> users
+              </div>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalFilteredPages}
+                onPageChange={handlePageChange}
+                totalItems={totalFilteredCount}
+                itemsPerPage={perPage}
+                showInfo={false}
+              />
+            </div>
           </div>
         )}
       </div>
 
       {/* Lock Modal */}
       {showLockModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">
-              Lock User{selectedUsers.length > 1 ? "s" : ""}
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Lock Until (Optional)
-                </label>
-                <input
-                  type="datetime-local"
-                  value={lockFormData.lockedUntil}
-                  min={new Date(Date.now() + 60 * 60 * 1000)
-                    .toISOString()
-                    .slice(0, 16)} // 1 hour from now
-                  onChange={(e) =>
-                    handleLockFormChange("lockedUntil", e.target.value)
-                  }
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
-                    lockValidationError ? "border-red-300" : "border-gray-300"
-                  }`}
-                />
-                {lockValidationError && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {lockValidationError}
-                  </p>
-                )}
-                <p className="text-xs text-gray-500 mt-1">
-                  Leave empty for permanent lock (minimum 1 hour from now)
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Reason (Optional)
-                  <span className="text-gray-500 font-normal ml-1">
-                    ({lockFormData.reason.length}/300)
-                  </span>
-                </label>
-                <textarea
-                  value={lockFormData.reason}
-                  onChange={(e) =>
-                    handleLockFormChange("reason", e.target.value)
-                  }
-                  placeholder="Enter reason for locking..."
-                  maxLength={300}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
-                    reasonValidationError ? "border-red-300" : "border-gray-300"
-                  }`}
-                  rows={3}
-                />
-                {reasonValidationError && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {reasonValidationError}
-                  </p>
-                )}
-                <p className="text-xs text-gray-500 mt-1">
-                  Maximum 300 characters
-                </p>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="bg-gradient-to-r from-red-500 to-red-600 p-6 rounded-t-2xl">
+              <div className="flex items-center gap-3">
+                <div className="bg-white bg-opacity-20 p-2 rounded-lg">
+                  <FaLock className="text-white text-xl" />
+                </div>
+                <h3 className="text-xl font-bold text-white">
+                  Lock User Account
+                </h3>
               </div>
             </div>
-            <div className="flex justify-end gap-2 mt-6">
-              <button
-                onClick={() => {
-                  setShowLockModal(false);
-                  setLockFormData({ lockedUntil: "", reason: "" });
-                  setLockValidationError(null);
-                  setReasonValidationError(null);
-                }}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={
-                  selectedUsers.length > 1
-                    ? handleBulkLock
-                    : () => handleLockUser(selectedUsers[0])
-                }
-                disabled={
-                  lockValidationError !== null || reasonValidationError !== null
-                }
-                className={`px-4 py-2 rounded-lg ${
-                  lockValidationError || reasonValidationError
-                    ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-                    : "bg-[#D32F2F] text-white hover:bg-[#a82020]"
-                }`}
-              >
-                Lock User{selectedUsers.length > 1 ? "s" : ""}
-              </button>
+            <div className="p-6">
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Lock Until (Optional)
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={lockFormData.lockedUntil}
+                    min={new Date(Date.now() + 60 * 60 * 1000)
+                      .toISOString()
+                      .slice(0, 16)} // 1 hour from now
+                    onChange={(e) =>
+                      handleLockFormChange("lockedUntil", e.target.value)
+                    }
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent transition-all duration-200 ${
+                      lockValidationError ? "border-red-300 bg-red-50" : "border-gray-300"
+                    }`}
+                  />
+                  {lockValidationError && (
+                    <p className="text-sm text-red-600 mt-2 font-medium">
+                      {lockValidationError}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-2">
+                    Leave empty for permanent lock (minimum 1 hour from now)
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Reason (Optional)
+                    <span className="text-gray-500 font-normal ml-2">
+                      ({lockFormData.reason.length}/300)
+                    </span>
+                  </label>
+                  <textarea
+                    value={lockFormData.reason}
+                    onChange={(e) =>
+                      handleLockFormChange("reason", e.target.value)
+                    }
+                    placeholder="Enter reason for locking this user account..."
+                    maxLength={300}
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent transition-all duration-200 ${
+                      reasonValidationError ? "border-red-300 bg-red-50" : "border-gray-300"
+                    }`}
+                    rows={4}
+                  />
+                  {reasonValidationError && (
+                    <p className="text-sm text-red-600 mt-2 font-medium">
+                      {reasonValidationError}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-2">
+                    Maximum 300 characters
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-8">
+                <button
+                  onClick={() => {
+                    setShowLockModal(false);
+                    setSelectedUserId(null);
+                    setLockFormData({ lockedUntil: "", reason: "" });
+                    setLockValidationError(null);
+                    setReasonValidationError(null);
+                  }}
+                  className="px-6 py-3 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all duration-200 font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => selectedUserId && handleLockUser(selectedUserId)}
+                  disabled={
+                    lockValidationError !== null || reasonValidationError !== null || !selectedUserId
+                  }
+                  className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
+                    lockValidationError || reasonValidationError || !selectedUserId
+                      ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                      : "bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 shadow-lg hover:shadow-xl"
+                  }`}
+                >
+                  Lock User
+                </button>
+              </div>
             </div>
           </div>
         </div>

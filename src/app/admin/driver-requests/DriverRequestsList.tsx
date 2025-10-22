@@ -13,27 +13,27 @@ export default function DriverRequestsList() {
       id: "leave",
       label: "Leave Requests",
       icon: <FaCalendarAlt />,
-      count: 5, // Will be calculated from actual data
+      count: 0, // TODO: Calculate from actual data
       component: <LeaveRequestsTab />
     },
     {
       id: "general",
       label: "General Requests",
       icon: <FaFileAlt />,
-      count: 3,
+      count: 0, // TODO: Calculate from actual data
       component: <GeneralRequestsTab />
     },
     {
       id: "all",
       label: "All Requests",
       icon: <FaList />,
-      count: 8,
+      count: 0, // TODO: Calculate from actual data
       component: <AllRequestsTab />
     }
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       {/* Tab Navigation */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
         <div className="border-b border-gray-200">
@@ -63,7 +63,7 @@ export default function DriverRequestsList() {
         </div>
 
         {/* Tab Content */}
-        <div className="p-6">
+        <div className="p-6 pb-8">
           {tabs.find(tab => tab.id === activeTab)?.component}
         </div>
       </div>

@@ -67,10 +67,9 @@ export default function AdminLoginPage() {
       if (axios.isAxiosError(error)) {
         // This will catch 401, 403, etc.
         const status = error.response?.status;
-        console.log("Hello", status);
 
         if (status === 401) {
-          errMsg = "Wrong username or password"; 
+          errMsg = "Wrong email or password"; 
         } else {
           errMsg = error.response?.data?.message || "Login failed. Please try again.";
         }
@@ -224,20 +223,6 @@ export default function AdminLoginPage() {
                 'Sign in'
               )}
             </button>
-
-            {/* Create Account Link */}
-            <div className="text-center mt-6">
-              <p className="text-gray-600 text-sm">
-                Don&apos;t have an account?{' '}
-                <button
-                  type="button"
-                  onClick={() => router.push('/create-account')}
-                  className="text-[#FDC700] hover:text-[#D08700] font-medium transition-colors"
-                >
-                  Create one here
-                </button>
-              </p>
-            </div>
           </form>
         </div>
       </div>

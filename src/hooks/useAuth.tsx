@@ -50,8 +50,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           logout();
         }
       } else {
-        // Only redirect to login if not already on login page
-        if (window.location.pathname !== "/login") {
+        // Only redirect to login for admin pages that require authentication
+        const publicPages = ["/", "/start", "/verify-otp", "/student-selection", "/map"];
+        const currentPath = window.location.pathname;
+        const isAdminPage = currentPath.startsWith("/admin") || currentPath.startsWith("/create-account");
+        
+        if (isAdminPage && currentPath !== "/login") {
           router.replace("/login");
         }
       }
@@ -67,7 +71,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (e.key === "token" && e.newValue === null) {
         // Token was removed in another tab
         setUser(null);
-        if (window.location.pathname !== "/login") {
+        const currentPath = window.location.pathname;
+        const isAdminPage = currentPath.startsWith("/admin") || currentPath.startsWith("/create-account");
+        
+        if (isAdminPage && currentPath !== "/login") {
           router.replace("/login");
         }
       }

@@ -3,10 +3,8 @@ import { useState, useEffect, useCallback } from "react";
 import { FaSearch, FaFilter, FaEye, FaCalendarAlt, FaFileAlt, FaUser, FaClock, FaTimes } from "react-icons/fa";
 import LeaveRequestDetailModal from "./LeaveRequestDetailModal";
 import GeneralRequestDetailModal from "./GeneralRequestDetailModal";
-// Mock data temporarily removed
-const mockDriverLeaves: DriverLeaveRequest[] = [];
-const mockGeneralRequests: GeneralDriverRequest[] = [];
-const simulateApiDelay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+// TODO: Implement real API service for combined requests
+// This will combine both leave requests and general requests from the backend
 import { DriverLeaveRequest } from "@/services/api/driverLeaveRequests";
 import { GeneralDriverRequest } from "./GeneralRequestsTab";
 
@@ -41,64 +39,34 @@ export default function AllRequestsTab() {
     setError(null);
     
     try {
-      await simulateApiDelay(500);
+      // TODO: Replace with real API calls
+      // Example: 
+      // const [leaveRequestsResponse, generalRequestsResponse] = await Promise.all([
+      //   driverLeaveRequestService.getLeaveRequests({...leaveFilters}),
+      //   generalDriverRequestService.getRequests({...generalFilters})
+      // ]);
       
-      // Combine both types of requests
-      const leaveRequests: CombinedRequest[] = mockDriverLeaves.map(leave => ({
-        type: 'leave' as const,
-        data: leave
-      }));
+      // For now, show empty state until APIs are implemented
+      setRequests([]);
+      setTotalItems(0);
       
-      const generalRequests: CombinedRequest[] = mockGeneralRequests.map(request => ({
-        type: 'general' as const,
-        data: request
-      }));
+      // Remove this comment when APIs are ready:
+      // const leaveRequests: CombinedRequest[] = leaveRequestsResponse.data.map(leave => ({
+      //   type: 'leave' as const,
+      //   data: leave
+      // }));
+      // 
+      // const generalRequests: CombinedRequest[] = generalRequestsResponse.data.map(request => ({
+      //   type: 'general' as const,
+      //   data: request
+      // }));
+      // 
+      // let combinedData = [...leaveRequests, ...generalRequests];
+      // 
+      // // Apply filters and pagination as needed
+      // setRequests(combinedData);
+      // setTotalItems(combinedData.length);
       
-      let combinedData = [...leaveRequests, ...generalRequests];
-      
-      // Sort by submission date (newest first)
-      combinedData.sort((a, b) => {
-        const dateA = new Date(a.type === 'leave' ? a.data.requestedAt : a.data.submittedAt).getTime();
-        const dateB = new Date(b.type === 'leave' ? b.data.requestedAt : b.data.submittedAt).getTime();
-        return dateB - dateA;
-      });
-      
-      // Apply filters
-      if (statusFilter) {
-        combinedData = combinedData.filter(item => item.data.status === statusFilter);
-      }
-      
-      if (typeFilter) {
-        combinedData = combinedData.filter(item => item.type === typeFilter);
-      }
-      
-      if (searchDriverName.trim()) {
-        combinedData = combinedData.filter(item => {
-          if (item.type === 'leave') {
-            return item.data.driverName.toLowerCase().includes(searchDriverName.toLowerCase());
-          } else {
-            const fullName = `${item.data.driverInfo.firstName} ${item.data.driverInfo.lastName}`.toLowerCase();
-            return fullName.includes(searchDriverName.toLowerCase());
-          }
-        });
-      }
-      
-      if (searchDriverEmail.trim()) {
-        combinedData = combinedData.filter(item => {
-          if (item.type === 'leave') {
-            return item.data.driverEmail.toLowerCase().includes(searchDriverEmail.toLowerCase());
-          } else {
-            return item.data.driverInfo.email.toLowerCase().includes(searchDriverEmail.toLowerCase());
-          }
-        });
-      }
-      
-      // Apply pagination
-      const skip = (currentPage - 1) * itemsPerPage;
-      const paginatedData = combinedData.slice(skip, skip + itemsPerPage);
-      
-      setRequests(paginatedData);
-      setTotalItems(combinedData.length);
     } catch (err: unknown) {
       const errorMessage = (err as { message?: string }).message || 
                           "Failed to load requests. Please try again.";
@@ -191,7 +159,7 @@ export default function AllRequestsTab() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       {/* Search and Filter Section */}
       <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
         <div className="flex flex-col lg:flex-row gap-4">
