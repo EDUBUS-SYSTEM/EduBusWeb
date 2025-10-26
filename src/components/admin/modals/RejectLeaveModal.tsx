@@ -16,6 +16,7 @@ export default function RejectLeaveModal({
   loading 
 }: RejectLeaveModalProps) {
   const [reason, setReason] = useState("");
+  const [error, setError] = useState("");
 
   const getLeaveTypeText = (leaveType: number) => {
     switch (leaveType) {
@@ -27,6 +28,22 @@ export default function RejectLeaveModal({
       case 6: return "Other";
       default: return "Unknown";
     }
+  };
+
+  const handleReject = async () => {
+    // Validate reason
+    if (!reason.trim()) {
+      setError("Please provide a rejection reason");
+      return;
+    }
+
+    if (reason.trim().length < 10) {
+      setError("Reason must be at least 10 characters");
+      return;
+    }
+
+    setError(""); // Clear error
+    await onReject(leave.id, reason.trim());
   };
 
   return (
@@ -45,15 +62,24 @@ export default function RejectLeaveModal({
 
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Rejection Reason (Optional)
+            Rejection Reason <span className="text-red-500">*</span>
           </label>
           <textarea
             value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Enter rejection reason (optional)..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent resize-none"
+            onChange={(e) => {
+              setReason(e.target.value);
+              setError(""); // Clear error when typing
+            }}
+            placeholder="Enter rejection reason (required, minimum 10 characters)..."
+            className={`w-full px-3 py-2 border ${
+              error ? "border-red-500" : "border-gray-300"
+            } rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent resize-none`}
             rows={3}
+            required
           />
+          {error && (
+            <p className="mt-1 text-sm text-red-500">{error}</p>
+          )}
         </div>
 
         <div className="flex justify-end space-x-3">
@@ -65,9 +91,9 @@ export default function RejectLeaveModal({
             Cancel
           </button>
           <button
-            onClick={() => onReject(leave.id, reason)}
-            disabled={loading}
-            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 disabled:opacity-50 flex items-center space-x-2 font-medium"
+            onClick={handleReject}
+            disabled={loading || !reason.trim()}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 font-medium"
           >
             {loading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
             <span>Reject</span>
