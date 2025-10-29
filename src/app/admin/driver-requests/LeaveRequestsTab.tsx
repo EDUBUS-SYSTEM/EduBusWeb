@@ -11,17 +11,13 @@ import {
   DriverLeaveRequest,
   DriverLeaveRequestFilters
 } from "@/services/api/driverLeaveRequests";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchLeaveRequests, setCurrentPage, updateLeaveInList } from "@/store/slices/driverRequestsSlice";
 
 export default function LeaveRequestsTab() {
-  const [leaves, setLeaves] = useState<DriverLeaveRequest[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+  const { leaves, loading, error, pagination } = useAppSelector(state => state.driverRequests);
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const itemsPerPage = 5;
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState<string>("");
@@ -37,61 +33,37 @@ export default function LeaveRequestsTab() {
   const [showApproveStep2Modal, setShowApproveStep2Modal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
-  console.log("render LeaveRequestsTab");
+
   // Step 2 modal state
   const [approveNotes, setApproveNotes] = useState("");
-
+  const itemsPerPage = 5;
   // Single fetch function that handles all cases
   const fetchLeaves = useCallback(async () => {
-    console.log("Fetching leaves with current state");
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await driverLeaveRequestService.getLeaveRequests({
-        status: statusFilter || undefined,
-        leaveType: leaveTypeFilter || undefined,
-        searchTerm: searchTerm || undefined,
-        sortBy: sortBy || "desc",
-        page: currentPage,
-        perPage: itemsPerPage
-      });
-
-      setLeaves(response.data);
-      setTotalItems(response.pagination.totalItems);
-      setTotalPages(response.pagination.totalPages);
-    } catch (err: unknown) {
-      console.error("Error fetching leave requests:", err);
-      setError("Failed to fetch leave requests. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, [statusFilter, leaveTypeFilter, searchTerm, sortBy, currentPage, itemsPerPage]);
+    dispatch(fetchLeaveRequests({
+      status: statusFilter || undefined,
+      leaveType: leaveTypeFilter || undefined,
+      searchTerm: searchTerm || undefined,
+      sortBy: sortBy || "desc",
+      page: pagination.currentPage,
+      perPage: itemsPerPage
+    }));
+  }, [dispatch, statusFilter, leaveTypeFilter, searchTerm, sortBy, pagination.currentPage]);
 
   // Combined effect for all changes
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       fetchLeaves();
-    }, searchTerm ? 500 : 0); // Debounce only for search, immediate for other changes
+    }, searchTerm ? 500 : 0);
 
     return () => clearTimeout(timeoutId);
-  }, [statusFilter, leaveTypeFilter, sortBy, currentPage, searchTerm]);
+  }, [statusFilter, leaveTypeFilter, sortBy, pagination.currentPage, searchTerm, fetchLeaves]);
 
-  // Update a specific leave in the local state
-  const updateLeaveInList = (updatedLeave: DriverLeaveRequest) => {
-    setLeaves(prevLeaves =>
-      prevLeaves.map(leave =>
-        leave.id === updatedLeave.id ? updatedLeave : leave
-      )
-    );
-
-    // Update selectedLeave if it's the one being updated
-    if (selectedLeave && selectedLeave.id === updatedLeave.id) {
-      setSelectedLeave(updatedLeave);
-    }
+  // Handle page change with Redux
+  const handlePageChange = (page: number) => {
+    dispatch(setCurrentPage(page));
   };
 
-  // Batch state updates để tránh multiple re-renders
+  // Batch state updates to avoid multiple re-renders
   const handleApproveStep1 = (notes: string, needsReplacement: boolean) => {
     startTransition(() => {
       setApproveNotes(notes);
@@ -114,11 +86,10 @@ export default function LeaveRequestsTab() {
     try {
       const updatedLeave = await driverLeaveRequestService.approveLeaveRequest(selectedLeave.id, {
         notes: notes
-        // No replacementDriverId - optional
       });
 
       // Update local state instead of refetching
-      updateLeaveInList(updatedLeave);
+      dispatch(updateLeaveInList(updatedLeave));
 
       setShowApproveStep1Modal(false);
 
@@ -150,7 +121,7 @@ export default function LeaveRequestsTab() {
       });
 
       // Update local state instead of refetching
-      updateLeaveInList(updatedLeave);
+      dispatch(updateLeaveInList(updatedLeave));
 
       setShowApproveStep2Modal(false);
 
@@ -179,7 +150,7 @@ export default function LeaveRequestsTab() {
       console.log("Updated leave after reject:", updatedLeave);
 
       // Update local state instead of refetching
-      updateLeaveInList(updatedLeave);
+      dispatch(updateLeaveInList(updatedLeave));
 
       setShowRejectModal(false);
 
@@ -288,24 +259,24 @@ export default function LeaveRequestsTab() {
   const isLeaveExpired = (startDate: string, endDate: string) => {
     const today = new Date();
     const leaveEndDate = new Date(endDate);
-    
+
     // Set time to start of day to avoid timezone issues
     today.setHours(0, 0, 0, 0);
     leaveEndDate.setHours(0, 0, 0, 0);
-    
+
     // Leave đã hết hạn nếu endDate < today
     return leaveEndDate < today;
   };
 
   // Reset pagination when filters change
   useEffect(() => {
-    setCurrentPage(1);
-  }, [statusFilter, leaveTypeFilter, searchTerm, sortBy]);
+    dispatch(setCurrentPage(1));
+  }, [statusFilter, leaveTypeFilter, searchTerm, sortBy, dispatch]);
 
-  // Memoize ApproveStep2Modal để tránh re-render không cần thiết
+  // Memoize ApproveStep2Modal to avoid unnecessary re-render 
   const memoizedApproveStep2Modal = useMemo(() => {
     if (!showApproveStep2Modal || !selectedLeave) return null;
-    
+
     return (
       <ApproveStep2Modal
         leave={selectedLeave}
@@ -583,13 +554,13 @@ export default function LeaveRequestsTab() {
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
+      {pagination.totalPages > 1 && (
         <div className="px-6 py-6 border-t border-gray-200 bg-white">
           <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-            totalItems={totalItems}
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            onPageChange={handlePageChange}
+            totalItems={pagination.totalItems}
             itemsPerPage={itemsPerPage}
           />
         </div>
@@ -613,7 +584,7 @@ export default function LeaveRequestsTab() {
               });
 
               // Update local state
-              updateLeaveInList(updatedLeave);
+              dispatch(updateLeaveInList(updatedLeave));
 
               // Close modals
               setShowApproveStep1Modal(false);

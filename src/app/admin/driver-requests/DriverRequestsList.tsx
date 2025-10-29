@@ -4,32 +4,20 @@ import { FaCalendarAlt, FaFileAlt, FaList } from "react-icons/fa";
 import LeaveRequestsTab from "./LeaveRequestsTab";
 import GeneralRequestsTab from "./GeneralRequestsTab";
 import AllRequestsTab from "./AllRequestsTab";
+import { useAppSelector } from "@/store/hooks";
 
 export default function DriverRequestsList() {
   const [activeTab, setActiveTab] = useState("leave");
-
+  const pendingLeavesCount = useAppSelector(state => state.driverRequests.pendingLeavesCount);
   const tabs = [
     {
       id: "leave",
       label: "Leave Requests",
       icon: <FaCalendarAlt />,
-      count: 0, // TODO: Calculate from actual data
+      count: pendingLeavesCount, 
       component: <LeaveRequestsTab />
     },
-    {
-      id: "general",
-      label: "General Requests",
-      icon: <FaFileAlt />,
-      count: 0, // TODO: Calculate from actual data
-      component: <GeneralRequestsTab />
-    },
-    {
-      id: "all",
-      label: "All Requests",
-      icon: <FaList />,
-      count: 0, // TODO: Calculate from actual data
-      component: <AllRequestsTab />
-    }
+    
   ];
 
   return (

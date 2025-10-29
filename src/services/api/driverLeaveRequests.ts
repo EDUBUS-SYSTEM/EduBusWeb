@@ -45,6 +45,8 @@ export interface DriverLeaveRequestResponse {
     totalItems: number;
     totalPages: number;
   };
+  pendingLeavesCount: number;
+  error?: string;
 }
 
 export interface ApproveLeaveRequestData {

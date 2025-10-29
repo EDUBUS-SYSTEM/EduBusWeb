@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Roboto_Slab } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/hooks/useAuth";
+import { Providers } from "./providers";
 
 const robotoSlab = Roboto_Slab({
   subsets: ["latin"],
@@ -23,9 +23,9 @@ export default function RootLayout({
       <body
         className={`${robotoSlab.variable} font-roboto-slab antialiased`}
       >
-        <AuthProvider>
+        <Providers>
           {children}
-        </AuthProvider>
+        </Providers>
       </body>
     </html>
   );
