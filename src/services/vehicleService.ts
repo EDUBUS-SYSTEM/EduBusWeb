@@ -130,7 +130,8 @@ export class VehicleService {
 
   async assignDriver(vehicleId: string, request: DriverAssignmentRequest): Promise<DriverAssignmentResponse> {
     try {
-      return await apiService.post<DriverAssignmentResponse>(`/DriverVehicle/vehicle/${vehicleId}/drivers`, request);
+      // Use assign-enhanced endpoint to ensure full time conflict validation
+      return await apiService.post<DriverAssignmentResponse>(`/DriverVehicle/vehicle/${vehicleId}/drivers/assign-enhanced`, request);
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { error?: string } } };
       if (axiosError.response?.data?.error) {

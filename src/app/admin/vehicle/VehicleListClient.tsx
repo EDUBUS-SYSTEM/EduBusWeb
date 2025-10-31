@@ -11,8 +11,31 @@ import { Plus, Search, Edit, Trash2, User } from "lucide-react";
 import Link from "next/link";
 import vehicleService from "@/services/vehicleService";
 import type { Driver } from "@/services/driverService";
-
 const PER_PAGE = 5;
+
+// Date utilities
+const formatDateLocal = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const localDateToUTCStart = (localDate: string): string => {
+  if (!localDate) return '';
+  // Parse date and create UTC date at 00:00:00
+  const [year, month, day] = localDate.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+  return date.toISOString();
+};
+
+const localDateToUTCEnd = (localDate: string): string => {
+  if (!localDate) return '';
+  // Parse date and create UTC date at 23:59:59
+  const [year, month, day] = localDate.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day, 23, 59, 59));
+  return date.toISOString();
+};
 
 function StatusBadge({
   status,
@@ -75,6 +98,7 @@ export default function VehicleListClient() {
   const [driversLoading, setDriversLoading] = useState(false);
   const [assignLoading, setAssignLoading] = useState(false);
   const [selectedDriverId, setSelectedDriverId] = useState<string>("");
+  const [assignError, setAssignError] = useState<string>("");
 
   const searchFilters = useMemo(() => {
     const result = {
@@ -223,16 +247,20 @@ export default function VehicleListClient() {
   const openAssignDriverModal = useCallback(async (vehicleId: string) => {
     setShowAssignDriverModal(vehicleId);
     setSelectedDriverId("");
-    await fetchAvailableDrivers(vehicleId /*, startDate, endDate*/);
-  }, [fetchAvailableDrivers]);
+    setAssignError("");
+    // Don't load drivers immediately - wait for user to select dates
+  }, []);
 
   const closeAssignDriverModal = useCallback(() => {
     setShowAssignDriverModal(null);
     setSelectedDriverId("");
+    setDrivers([]);
+    setAssignError("");
   }, []);
 
   const handleSelectDriver = useCallback((driverId: string) => {
     setSelectedDriverId(driverId);
+    setAssignError(""); // Clear error when user selects a different driver
   }, []);
 
   const handleAssignDriver = useCallback(async () => {
@@ -240,22 +268,40 @@ export default function VehicleListClient() {
 
     try {
       setAssignLoading(true);
+      setAssignError(""); // Clear previous errors
+      
+      // Get start and end dates from modal inputs
+      const startDateInput = document.getElementById('assign-start-date') as HTMLInputElement;
+      const endDateInput = document.getElementById('assign-end-date') as HTMLInputElement;
+      const isPrimaryInput = document.getElementById('assign-primary') as HTMLInputElement;
+      
+      // Convert local date to UTC (00:00:00 for start, 23:59:59 for end)
+      const startTime = startDateInput?.value 
+        ? localDateToUTCStart(startDateInput.value) 
+        : localDateToUTCStart(formatDateLocal(new Date()));
+      const endTime = endDateInput?.value 
+        ? localDateToUTCEnd(endDateInput.value) 
+        : undefined;
+      const isPrimary = isPrimaryInput?.checked ?? true;
+      
       await vehicleService.assignDriver(showAssignDriverModal, {
         driverId: selectedDriverId,
-        isPrimaryDriver: true,
-        startTimeUtc: new Date().toISOString(),
-        endTimeUtc: undefined, // No end time - permanent assignment
+        isPrimaryDriver: isPrimary,
+        startTimeUtc: startTime,
+        endTimeUtc: endTime,
       });
 
       closeAssignDriverModal();
-      // Optionally refresh the vehicle list or show success message
+      handleRefresh();
     } catch (error) {
       console.error("Error assigning driver:", error);
-      // TODO: Show error message to user
+      // Show error message to user
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      setAssignError(errorMessage);
     } finally {
       setAssignLoading(false);
     }
-  }, [selectedDriverId, showAssignDriverModal, closeAssignDriverModal]);
+  }, [selectedDriverId, showAssignDriverModal, closeAssignDriverModal, handleRefresh]);
 
   const filteredAll = useMemo(() => {
     if (!useClientSearch) return [];
@@ -532,10 +578,127 @@ export default function VehicleListClient() {
                   Assign Driver to Vehicle
                 </h3>
                 <p className="text-sm text-gray-500">
-                  Select a driver to assign to this vehicle
+                  Select a driver and set assignment period
                 </p>
               </div>
             </div>
+
+                {/* Date Selection */}
+                <div className="grid grid-cols-2 gap-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Start Date
+                </label>
+                <input
+                  id="assign-start-date"
+                  type="date"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  defaultValue={(() => {
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    return formatDateLocal(tomorrow);
+                  })()}
+                  min={(() => {
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    return formatDateLocal(tomorrow);
+                  })()}
+                  onChange={async (e) => {
+                    setAssignError("");
+                    if (e.target.value && showAssignDriverModal) {
+                      const startDateInput = e.target.value;
+                      const endDateInput = (document.getElementById('assign-end-date') as HTMLInputElement)?.value;
+                      
+                      const startTime = localDateToUTCStart(startDateInput);
+                      const endTime = endDateInput ? localDateToUTCEnd(endDateInput) : undefined;
+                      
+                      try {
+                        setDriversLoading(true);
+                        await fetchAvailableDrivers(showAssignDriverModal, new Date(startTime), endTime ? new Date(endTime) : undefined);
+                      } catch (error) {
+                        console.error("Error loading drivers:", error);
+                      } finally {
+                        setDriversLoading(false);
+                      }
+                    }
+                  }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  End Date (Optional)
+                </label>
+                <input
+                  id="assign-end-date"
+                  type="date"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  min={(() => {
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    return formatDateLocal(tomorrow);
+                  })()}
+                  onChange={async (e) => {
+                    setAssignError("");
+                    if (showAssignDriverModal) {
+                      const startDateInput = (document.getElementById('assign-start-date') as HTMLInputElement)?.value;
+                      const endDateInput = e.target.value;
+                      
+                      if (startDateInput) {
+                        const startTime = localDateToUTCStart(startDateInput);
+                        const endTime = endDateInput ? localDateToUTCEnd(endDateInput) : undefined;
+                        
+                        try {
+                          setDriversLoading(true);
+                          await fetchAvailableDrivers(showAssignDriverModal, new Date(startTime), endTime ? new Date(endTime) : undefined);
+                        } catch (error) {
+                          console.error("Error loading drivers:", error);
+                        } finally {
+                          setDriversLoading(false);
+                        }
+                      }
+                    }
+                  }}
+                />
+                <p className="text-xs text-gray-500 mt-1">Leave empty for ongoing assignment</p>
+              </div>
+            </div>
+
+            {/* Primary Driver Checkbox */}
+            <div className="mb-6">
+              <label className="flex items-center gap-2">
+                <input
+                  id="assign-primary"
+                  type="checkbox"
+                  className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                  defaultChecked
+                  onChange={() => setAssignError("")}
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  Set as Primary Driver
+                </span>
+              </label>
+            </div>
+
+            {/* Error Message */}
+            {assignError && (
+              <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4 rounded-md">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-red-800">
+                      Assignment Failed
+                    </h3>
+                    <div className="mt-2 text-sm text-red-700">
+                      <p>{assignError}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {driversLoading ? (
               <div className="flex items-center justify-center py-8">
