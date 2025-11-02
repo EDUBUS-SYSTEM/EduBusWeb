@@ -59,6 +59,40 @@ export interface RejectLeaveRequestData {
   rejectionReason?: string; // Alternative field name
 }
 
+// Replacement Info Response
+export interface ReplacementInfoResponse {
+  id: string;
+  driverId: string;
+  driverName: string;
+  driverEmail: string;
+  driverPhoneNumber: string;
+  driverLicenseNumber: string;
+  leaveType: number;
+  startDate: string;
+  endDate: string;
+  reason: string;
+  status: number;
+  requestedAt: string;
+  approvedByAdminId?: string;
+  approvedByAdminName?: string;
+  approvedAt?: string;
+  approvalNote?: string;
+  autoReplacementEnabled: boolean;
+  suggestedReplacementDriverId?: string;
+  suggestedReplacementDriverName?: string;
+  suggestedReplacementVehicleId?: string;
+  suggestedReplacementVehiclePlate?: string;
+  suggestionGeneratedAt?: string;
+}
+
+// Replacement Match DTO
+export interface ReplacementMatchDto {
+  driverId: string;
+  vehicleId: string | null;
+  startDate: string;
+  endDate: string;
+}
+
 // API Service for Driver Leave Requests
 export const driverLeaveRequestService = {
   // Get all driver leave requests with filters
@@ -110,5 +144,33 @@ export const driverLeaveRequestService = {
       approved: number;
       rejected: number;
     }>("/driver-leave-requests/stats");
+  },
+
+  // Get active replacement info for a driver
+  getReplacementInfo: async (driverId: string): Promise<ReplacementInfoResponse | null> => {
+    try {
+      const response = await apiService.get<ReplacementInfoResponse>(`/Driver/${driverId}/replacement-info`);
+      
+      // Check if response has id (indicates valid replacement data)
+      if (response && response.id) {
+        return response;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error fetching replacement info:', error);
+      return null;
+    }
+  },
+
+  // Get active replacement matches
+  getActiveReplacementMatches: async (): Promise<ReplacementMatchDto[]> => {
+    try {
+      const response = await apiService.get<ReplacementMatchDto[]>("/Driver/active-replacement-matches");
+      return response || [];
+    } catch (error) {
+      console.error('Error fetching active replacement matches:', error);
+      return [];
+    }
   },
 };
