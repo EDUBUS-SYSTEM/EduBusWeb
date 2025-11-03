@@ -15,6 +15,7 @@ import {
 import { createDriver, uploadHealthCertificate } from "@/services/api/drivers";
 import { createParent } from "@/services/api/parents";
 import { uploadUserPhoto } from "@/services/api/userAccount";
+import { createParentWithFullSetup } from "@/services/api/adminParentService";
 import {
   createDriverLicense,
   uploadLicenseImage,
@@ -208,7 +209,21 @@ const CreateAccountPage: React.FC = () => {
     }
   };
 
-  const handleParentSubmit = async (data: ParentAccountData) => {
+  const handleParentSubmit = async (data: ParentAccountData & {
+    selectedStudents?: any[];
+    pickupPoint?: {
+      addressText: string;
+      latitude: number;
+      longitude: number;
+      distanceKm: number;
+    };
+    feeCalculation?: {
+      perTripFee: number;
+      semesterFee: number;
+      totalSchoolDays: number;
+      totalTrips: number;
+    };
+  }) => {
     setLoading(true);
     setErrors({});
 
@@ -216,6 +231,28 @@ const CreateAccountPage: React.FC = () => {
       const newErrors = validateParent(data);
       if (Object.keys(newErrors).length > 0) {
         setErrors(newErrors);
+        return;
+      }
+
+      // Validate new required fields
+      if (!data.selectedStudents || data.selectedStudents.length === 0) {
+        setErrors({
+          general: "Please select at least one student for this parent.",
+        });
+        return;
+      }
+
+      if (!data.pickupPoint) {
+        setErrors({
+          general: "Please select a pickup point location on the map.",
+        });
+        return;
+      }
+
+      if (!data.feeCalculation) {
+        setErrors({
+          general: "Fee calculation is missing. Please select pickup point again.",
+        });
         return;
       }
 
@@ -230,7 +267,7 @@ const CreateAccountPage: React.FC = () => {
         "other": 3
       };
 
-      const payload = {
+      const parentPayload = {
         email: data.email,
         firstName: data.firstName,
         lastName: data.lastName,
@@ -240,21 +277,31 @@ const CreateAccountPage: React.FC = () => {
         address: data.address,
       };
 
-      console.log("Sending parent payload to backend:", payload);
-      let res;
+      const setupPayload = {
+        studentIds: data.selectedStudents.map((s: any) => s.id),
+        pickupPoint: data.pickupPoint,
+        feeCalculation: data.feeCalculation,
+      };
+
+      console.log("Creating parent with full setup...");
+      console.log("Parent data:", parentPayload);
+      console.log("Setup data:", setupPayload);
+
+      let result;
       try {
-        res = await createParent(payload);
+        result = await createParentWithFullSetup(parentPayload, setupPayload);
       } catch (e: unknown) {
         let status: number | undefined;
-        let data: unknown;
+        let responseData: unknown;
         let msg = "";
         if (isAxiosError(e)) {
           status = e.response?.status;
-          data = e.response?.data;
-          msg = (data ?? e.message ?? "").toString();
+          responseData = e.response?.data;
+          msg = (responseData ?? e.message ?? "").toString();
         } else if (e instanceof Error) {
           msg = e.message;
         }
+
         if (status === 409) {
           const conflictErrors: AccountFormErrors = {};
           if (/email/i.test(msg))
@@ -265,15 +312,15 @@ const CreateAccountPage: React.FC = () => {
           setErrors({
             ...conflictErrors,
             general:
-              "Parent creation failed. Data was not saved to the database.",
+              "Parent creation failed. Please check the errors above.",
           });
           return;
         }
+
         if (status === 400) {
           const fieldErrors: AccountFormErrors = {};
-          if (typeof data === "object" && data) {
-            // ModelState  { Field: ["err1","err2"] }
-            const record = data as Record<string, unknown>;
+          if (typeof responseData === "object" && responseData) {
+            const record = responseData as Record<string, unknown>;
             for (const k of Object.keys(record)) {
               const value = record[k];
               const first = Array.isArray(value)
@@ -286,29 +333,44 @@ const CreateAccountPage: React.FC = () => {
           setErrors({
             ...fieldErrors,
             general:
-              "Parent creation failed. Data was not saved to the database.",
+              "Parent creation failed. Please check the errors above.",
           });
           return;
         }
+
+        // Generic error
         setErrors({
           general:
-            "Parent creation failed. Data was not saved to the database.",
+            msg || "Failed to create parent account with full setup. Please try again.",
         });
         return;
       }
-      console.log("Backend response:", res);
 
-      // Show backend-generated password
-      alert(`Parent created successfully. Temporary password: ${res.password}`);
+      console.log("Parent created successfully:", result);
+
+      // Show success message with password
+      const studentCount = data.selectedStudents.length;
+      const feeFormatted = data.feeCalculation.semesterFee.toLocaleString('vi-VN');
+
+      alert(
+        `✅ Parent Account Created Successfully!\n\n` +
+        `Email: ${data.email}\n` +
+        `Temporary Password: ${result.password}\n\n` +
+        `📚 Students Assigned: ${studentCount}\n` +
+        `📍 Pickup Point: ${data.pickupPoint.addressText}\n` +
+        `💰 Semester Fee: ${feeFormatted}₫\n\n` +
+        `A transaction has been created for the parent to pay.\n` +
+        `Please provide the login credentials to the parent.`
+      );
 
       // Reset form after successful creation
-      setFormKey(prev => prev + 1); // Force form re-render to reset
+      setFormKey(prev => prev + 1);
 
     } catch (error) {
-      console.error("Error creating parent account:", error);
+      console.error("Error creating parent account with full setup:", error);
       setErrors({
         general:
-          "Failed to create parent account. Please check data or try again.",
+          "An unexpected error occurred. Please try again or contact support.",
       });
     } finally {
       setLoading(false);
