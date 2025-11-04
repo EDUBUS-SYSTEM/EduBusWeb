@@ -1,4 +1,5 @@
 import { apiService } from "@/lib/api";
+import { CreateUserResponse } from "./parents";
 
 /**
  * Admin-specific services for creating parent accounts with full setup
@@ -82,7 +83,7 @@ export const createParentWithFullSetup = async (
 
   try {
     // Step 1: Create parent account
-    const parentResponse = await apiService.post(`/parent`, parentData);
+    const parentResponse = await apiService.post<CreateUserResponse>(`/parent`, parentData);
     const parentId = parentResponse.id;
 
     // Step 2: Link students to parent
