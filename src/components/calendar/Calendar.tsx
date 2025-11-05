@@ -11,8 +11,12 @@ export default function Calendar({
   onViewChange,
   onEventClick,
   onEventCreate,
+  onEventMove,
   onDateChange,
   className = "",
+  routes = [],
+  selectedRoute = 'all',
+  onRouteChange,
 }: CalendarProps) {
   const [currentView, setCurrentView] = useState<CalendarView>(initialView);
 
@@ -36,6 +40,10 @@ export default function Calendar({
     onEventCreate?.(date);
   };
 
+  const handleEventMove = (eventId: string, newStart: Date, newEnd: Date) => {
+    onEventMove?.(eventId, newStart, newEnd);
+  };
+
   return (
     <div className={`calendar-container ${className}`}>
       <CalendarHeader
@@ -43,6 +51,9 @@ export default function Calendar({
         onViewChange={handleViewChange}
         onDateChange={handleDateChange}
         onTodayClick={handleTodayClick}
+        routes={routes}
+        selectedRoute={selectedRoute}
+        onRouteChange={onRouteChange}
       />
 
       <CalendarGrid
@@ -50,6 +61,7 @@ export default function Calendar({
         events={events}
         onEventClick={onEventClick}
         onEventCreate={handleEventCreate}
+        onEventMove={handleEventMove}
       />
     </div>
   );

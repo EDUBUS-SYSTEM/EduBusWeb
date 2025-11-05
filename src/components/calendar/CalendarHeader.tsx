@@ -8,13 +8,19 @@ interface CalendarHeaderProps {
   onViewChange: (view: CalendarView) => void;
   onDateChange: (date: Date) => void;
   onTodayClick: () => void;
+  routes?: { id: string; name: string }[];
+  selectedRoute?: string;
+  onRouteChange?: (routeId: string) => void;
 }
 
 export default function CalendarHeader({ 
   view, 
   onViewChange, 
   onDateChange, 
-  onTodayClick 
+  onTodayClick,
+  routes = [],
+  selectedRoute = 'all',
+  onRouteChange
 }: CalendarHeaderProps) {
   const formatDate = (date: Date) => {
     const options: Intl.DateTimeFormatOptions = {
@@ -81,6 +87,29 @@ export default function CalendarHeader({
 
         {/* Right side - View selector and search */}
         <div className="flex items-center space-x-4">
+          {/* Route Filter Dropdown */}
+          {routes.length > 0 && onRouteChange && (
+            <div className="relative">
+              <select
+                value={selectedRoute}
+                onChange={(e) => onRouteChange(e.target.value)}
+                className="pl-4 pr-10 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-200 appearance-none bg-white cursor-pointer min-w-[180px]"
+              >
+                <option value="all">All Routes</option>
+                {routes.map((route) => (
+                  <option key={route.id} value={route.id}>
+                    Route: {route.name}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          )}
+
           {/* Search */}
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

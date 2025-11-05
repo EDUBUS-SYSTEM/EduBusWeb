@@ -314,6 +314,70 @@ export interface TripStop {
   attendance: Attendance[];
 }
 
+// Trip DTOs matching backend API
+export interface ScheduleSnapshotDto {
+  scheduleId: string;
+  name: string;
+  startTime: string;
+  endTime: string;
+  rRule: string;
+}
+
+export interface TripDto {
+  id: string;
+  routeId: string;
+  serviceDate: string; // ISO date string
+  plannedStartAt: string; // ISO datetime string
+  plannedEndAt: string; // ISO datetime string
+  startTime?: string; // ISO datetime string
+  endTime?: string; // ISO datetime string
+  status: "Scheduled" | "InProgress" | "Completed" | "Cancelled";
+  scheduleSnapshot: ScheduleSnapshotDto;
+  stops: TripStopDto[];
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface TripStopDto {
+  id: string;
+  name: string;
+  plannedArrival: string; // ISO datetime string
+  actualArrival?: string; // ISO datetime string
+  plannedDeparture: string; // ISO datetime string
+  actualDeparture?: string; // ISO datetime string
+  sequence: number;
+}
+
+export interface CreateTripDto {
+  routeId: string;
+  serviceDate: string; // ISO date string
+  plannedStartAt: string; // ISO datetime string
+  plannedEndAt: string; // ISO datetime string
+  status?: "Scheduled" | "InProgress" | "Completed" | "Cancelled";
+  scheduleSnapshot: ScheduleSnapshotDto;
+  stops: TripStopDto[];
+}
+
+export interface UpdateTripDto {
+  id: string;
+  routeId: string;
+  serviceDate: string; // ISO date string
+  plannedStartAt: string; // ISO datetime string
+  plannedEndAt: string; // ISO datetime string
+  startTime?: string; // ISO datetime string
+  endTime?: string; // ISO datetime string
+  status: "Scheduled" | "InProgress" | "Completed" | "Cancelled";
+  scheduleSnapshot: ScheduleSnapshotDto;
+  stops: TripStopDto[];
+}
+
+export interface GenerateTripsFromScheduleDto {
+  scheduleId: string;
+  routeId: string;
+  startDate: string; // ISO date string
+  endDate: string; // ISO date string
+}
+
 export interface Attendance {
   studentId: string;
   boardedAt?: string;
@@ -348,8 +412,12 @@ export interface CalendarProps {
   onViewChange: (view: CalendarView) => void;
   onEventClick?: (event: CalendarEvent) => void;
   onEventCreate?: (date: Date) => void;
+  onEventMove?: (eventId: string, newStart: Date, newEnd: Date) => void;
   onDateChange?: (date: Date) => void;
   className?: string;
+  routes?: { id: string; name: string }[];
+  selectedRoute?: string;
+  onRouteChange?: (routeId: string) => void;
 }
 
 // Academic Calendar types based on backend models
