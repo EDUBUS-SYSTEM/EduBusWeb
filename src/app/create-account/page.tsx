@@ -15,6 +15,7 @@ import {
 import { createDriver, uploadHealthCertificate } from "@/services/api/drivers";
 import { createParent } from "@/services/api/parents";
 import { uploadUserPhoto } from "@/services/api/userAccount";
+import { createParentWithFullSetup } from "@/services/api/adminParentService";
 import {
   createDriverLicense,
   uploadLicenseImage,
@@ -24,6 +25,7 @@ import { useDriverImport } from "@/hooks/useDriverImport";
 import { useParentImport } from "@/hooks/useParentImport";
 import ImportResults from "@/components/layout/ImportResults";
 import { validateDriver, validateParent } from "@/lib/validation";
+import Modal from "@/components/ui/Modal";
 
 const CreateAccountPage: React.FC = () => {
   const [activeAccountType, setActiveAccountType] =
@@ -31,6 +33,9 @@ const CreateAccountPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<AccountFormErrors>({});
   const [formKey, setFormKey] = useState(0); // Add key to force form reset
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successData, setSuccessData] = useState<{ email: string; password: string } | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   const {
     importLoading: driverImportLoading,
     importResult: driverImportResult,
@@ -143,8 +148,12 @@ const CreateAccountPage: React.FC = () => {
       }
       console.log("Backend response:", res);
 
-      // Show backend-generated password
-      alert(`Driver created successfully. Temporary password: ${res.password}`);
+      // Show success modal for driver
+      setSuccessData({
+        email: data.email,
+        password: res.password,
+      });
+      setShowSuccessModal(true);
 
       // Reset form after successful creation
       setFormKey(prev => prev + 1); // Force form re-render to reset
@@ -208,7 +217,25 @@ const CreateAccountPage: React.FC = () => {
     }
   };
 
-  const handleParentSubmit = async (data: ParentAccountData) => {
+  interface StudentWithId {
+    id: string;
+  }
+
+  const handleParentSubmit = async (data: ParentAccountData & {
+    selectedStudents?: StudentWithId[];
+    pickupPoint?: {
+      addressText: string;
+      latitude: number;
+      longitude: number;
+      distanceKm: number;
+    } | null;
+    feeCalculation?: {
+      perTripFee: number;
+      semesterFee: number;
+      totalSchoolDays: number;
+      totalTrips: number;
+    } | null;
+  }) => {
     setLoading(true);
     setErrors({});
 
@@ -218,6 +245,7 @@ const CreateAccountPage: React.FC = () => {
         setErrors(newErrors);
         return;
       }
+
 
       // Map to backend payload
       const dDob = new Date(data.dateOfBirth!);
@@ -230,7 +258,7 @@ const CreateAccountPage: React.FC = () => {
         "other": 3
       };
 
-      const payload = {
+      const parentPayload = {
         email: data.email,
         firstName: data.firstName,
         lastName: data.lastName,
@@ -240,21 +268,54 @@ const CreateAccountPage: React.FC = () => {
         address: data.address,
       };
 
-      console.log("Sending parent payload to backend:", payload);
-      let res;
+      const setupPayload = {
+        studentIds: (data.selectedStudents || []).map((s) => s.id),
+        pickupPoint: data.pickupPoint || null,
+        feeCalculation: data.feeCalculation || null,
+      };
+
+      console.log("Creating parent...");
+      console.log("Parent data:", parentPayload);
+      console.log("Setup data:", setupPayload);
+
+      // Check if we have setup data (students and pickup point)
+      const hasSetupData = setupPayload.studentIds.length > 0 && 
+                          setupPayload.pickupPoint !== null && 
+                          setupPayload.feeCalculation !== null;
+
+      let result;
       try {
-        res = await createParent(payload);
+        if (hasSetupData) {
+          // Use full setup if we have students and pickup point
+          console.log("Creating parent with full setup...");
+          // Type assertion: we know pickupPoint and feeCalculation are not null here
+          result = await createParentWithFullSetup(parentPayload, {
+            studentIds: setupPayload.studentIds,
+            pickupPoint: setupPayload.pickupPoint!,
+            feeCalculation: setupPayload.feeCalculation!,
+          });
+        } else {
+          // Otherwise, just create parent account without setup
+          console.log("Creating simple parent account...");
+          const parentResponse = await createParent(parentPayload);
+          result = {
+            success: true,
+            parentId: parentResponse.id,
+            password: parentResponse.password,
+          };
+        }
       } catch (e: unknown) {
         let status: number | undefined;
-        let data: unknown;
+        let responseData: unknown;
         let msg = "";
         if (isAxiosError(e)) {
           status = e.response?.status;
-          data = e.response?.data;
-          msg = (data ?? e.message ?? "").toString();
+          responseData = e.response?.data;
+          msg = (responseData ?? e.message ?? "").toString();
         } else if (e instanceof Error) {
           msg = e.message;
         }
+
         if (status === 409) {
           const conflictErrors: AccountFormErrors = {};
           if (/email/i.test(msg))
@@ -265,15 +326,15 @@ const CreateAccountPage: React.FC = () => {
           setErrors({
             ...conflictErrors,
             general:
-              "Parent creation failed. Data was not saved to the database.",
+              "Parent creation failed. Please check the errors above.",
           });
           return;
         }
+
         if (status === 400) {
           const fieldErrors: AccountFormErrors = {};
-          if (typeof data === "object" && data) {
-            // ModelState  { Field: ["err1","err2"] }
-            const record = data as Record<string, unknown>;
+          if (typeof responseData === "object" && responseData) {
+            const record = responseData as Record<string, unknown>;
             for (const k of Object.keys(record)) {
               const value = record[k];
               const first = Array.isArray(value)
@@ -286,29 +347,36 @@ const CreateAccountPage: React.FC = () => {
           setErrors({
             ...fieldErrors,
             general:
-              "Parent creation failed. Data was not saved to the database.",
+              "Parent creation failed. Please check the errors above.",
           });
           return;
         }
+
+        // Generic error
         setErrors({
           general:
-            "Parent creation failed. Data was not saved to the database.",
+            msg || "Failed to create parent account with full setup. Please try again.",
         });
         return;
       }
-      console.log("Backend response:", res);
 
-      // Show backend-generated password
-      alert(`Parent created successfully. Temporary password: ${res.password}`);
+      console.log("Parent created successfully:", result);
+
+      // Show success modal
+      setSuccessData({
+        email: data.email,
+        password: result.password,
+      });
+      setShowSuccessModal(true);
 
       // Reset form after successful creation
-      setFormKey(prev => prev + 1); // Force form re-render to reset
+      setFormKey(prev => prev + 1);
 
     } catch (error) {
-      console.error("Error creating parent account:", error);
+      console.error("Error creating parent account with full setup:", error);
       setErrors({
         general:
-          "Failed to create parent account. Please check data or try again.",
+          "An unexpected error occurred. Please try again or contact support.",
       });
     } finally {
       setLoading(false);
@@ -395,6 +463,126 @@ const CreateAccountPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Success Modal */}
+      <Modal
+        isOpen={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          setSuccessData(null);
+          setCopiedField(null);
+        }}
+        title=""
+        size="md"
+      >
+        <div className="text-center">
+          {/* Success Icon */}
+          <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mb-6">
+            <svg
+              className="h-12 w-12 text-green-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+
+          {/* Title */}
+          <h3 className="text-2xl font-bold text-gray-800 mb-2">
+            {activeAccountType === "parent" 
+              ? "Parent Account Created Successfully!" 
+              : "Driver Account Created Successfully!"}
+          </h3>
+          <p className="text-gray-600 mb-6">
+            Please provide the login credentials to the {activeAccountType === "parent" ? "parent" : "driver"}
+          </p>
+
+          {/* Credentials Box */}
+          <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl p-6 mb-6 border-2 border-yellow-200">
+            <div className="space-y-4">
+              {/* Email */}
+              <div className="text-left">
+                <label className="text-sm font-semibold text-gray-700 mb-1 block">
+                  Email
+                </label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-white rounded-lg px-4 py-3 border border-gray-200">
+                    <p className="text-gray-800 font-mono text-sm break-all">
+                      {successData?.email}
+                    </p>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      if (successData?.email) {
+                        await navigator.clipboard.writeText(successData.email);
+                        setCopiedField("email");
+                        setTimeout(() => setCopiedField(null), 2000);
+                      }
+                    }}
+                    className={`px-4 py-3 rounded-lg transition-all duration-200 font-semibold text-sm min-w-[80px] ${
+                      copiedField === "email"
+                        ? "bg-green-500 text-white"
+                        : "bg-yellow-400 hover:bg-yellow-500 text-gray-800"
+                    }`}
+                    title="Copy email"
+                  >
+                    {copiedField === "email" ? "Copied!" : "Copy"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Password */}
+              <div className="text-left">
+                <label className="text-sm font-semibold text-gray-700 mb-1 block">
+                  Temporary Password
+                </label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-white rounded-lg px-4 py-3 border border-gray-200">
+                    <p className="text-gray-800 font-mono text-sm">
+                      {successData?.password}
+                    </p>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      if (successData?.password) {
+                        await navigator.clipboard.writeText(successData.password);
+                        setCopiedField("password");
+                        setTimeout(() => setCopiedField(null), 2000);
+                      }
+                    }}
+                    className={`px-4 py-3 rounded-lg transition-all duration-200 font-semibold text-sm min-w-[80px] ${
+                      copiedField === "password"
+                        ? "bg-green-500 text-white"
+                        : "bg-yellow-400 hover:bg-yellow-500 text-gray-800"
+                    }`}
+                    title="Copy password"
+                  >
+                    {copiedField === "password" ? "Copied!" : "Copy"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Button */}
+          <button
+            onClick={() => {
+              setShowSuccessModal(false);
+              setSuccessData(null);
+              setCopiedField(null);
+            }}
+            className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-semibold py-3 px-6 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg"
+          >
+            Got it
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 };

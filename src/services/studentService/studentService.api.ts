@@ -94,4 +94,9 @@ export const studentService = {
   getByStatus: async (status: StudentStatus): Promise<StudentDto[]> => {
     return await apiService.get<StudentDto[]>(`/Student/status/${status}`);
   },
+
+  // Get students without parent (unassigned)
+  getUnassigned: async (): Promise<StudentDto[]> => {
+    return await apiService.get<StudentDto[]>("/Student/unassigned");
+  },
 };

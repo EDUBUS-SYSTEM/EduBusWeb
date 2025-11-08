@@ -6,19 +6,41 @@ import Select from "@/components/ui/Select";
 import { ParentAccountData, AccountFormErrors } from "@/types";
 
 interface ParentAccountFormProps {
-  onSubmit: (data: ParentAccountData) => void;
+  onSubmit: (data: ParentAccountData & PickupPointData) => void;
   loading?: boolean;
   errors?: AccountFormErrors;
-  key?: string | number; // Add key prop to force re-render and reset form
+  key?: string | number;
 }
+
+interface StudentWithId {
+  id: string;
+}
+
+interface PickupPointData {
+  selectedStudents: StudentWithId[];
+  pickupPoint: {
+    addressText: string;
+    latitude: number;
+    longitude: number;
+    distanceKm: number;
+  } | null;
+  feeCalculation: {
+    perTripFee: number;
+    semesterFee: number;
+    totalSchoolDays: number;
+    totalTrips: number;
+  } | null;
+}
+
 
 const ParentAccountForm: React.FC<ParentAccountFormProps> = ({
   onSubmit,
   loading = false,
   errors = {},
 }) => {
+  // Basic parent info
   const [formData, setFormData] = useState<ParentAccountData>({
-    email: "parent_1@gmail.com",
+    email: "",
     firstName: "",
     lastName: "",
     phoneNumber: "",
@@ -29,11 +51,13 @@ const ParentAccountForm: React.FC<ParentAccountFormProps> = ({
     students: [],
   });
 
+
   const genderOptions = [
     { value: "male", label: "Male" },
     { value: "female", label: "Female" },
     { value: "other", label: "Other" },
   ];
+
 
   const handleInputChange = (field: keyof ParentAccountData, value: string) => {
     setFormData((prev) => ({
@@ -42,16 +66,20 @@ const ParentAccountForm: React.FC<ParentAccountFormProps> = ({
     }));
   };
 
-  // const handleFileChange = (field: keyof ParentAccountData, files: File[]) => {
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     [field]: files,
-  //   }));
-  // };
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+
+    const submitData: ParentAccountData & PickupPointData = {
+      ...formData,
+      studentIds: [],
+      students: [],
+      selectedStudents: [],
+      pickupPoint: null,
+      feeCalculation: null,
+    };
+
+    onSubmit(submitData);
   };
 
   return (
@@ -89,57 +117,59 @@ const ParentAccountForm: React.FC<ParentAccountFormProps> = ({
             error={errors.lastName}
             required
           />
-                     <Input
-             label="PhoneNumber*"
-             placeholder="Enter PhoneNumber"
-             value={formData.phoneNumber}
-             onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
-             error={errors.phoneNumber}
-             required
-           />
 
-           <Input
-             label="Address*"
-             placeholder="Enter Address"
-             value={formData.address}
-             onChange={(e) => handleInputChange("address", e.target.value)}
-             error={errors.address}
-             required
-           />
+          <Input
+            label="Phone Number*"
+            placeholder="Enter Phone Number"
+            value={formData.phoneNumber}
+            onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
+            error={errors.phoneNumber}
+            required
+          />
 
-           <Select
-             label="Gender*"
-             options={genderOptions}
-             placeholder="Select Gender"
-             value={formData.gender}
-             onChange={(value) => handleInputChange("gender", value)}
-             error={errors.gender}
-             required
-           />
+          <Input
+            label="Address*"
+            placeholder="Enter Address"
+            value={formData.address}
+            onChange={(e) => handleInputChange("address", e.target.value)}
+            error={errors.address}
+            required
+          />
 
-           <Input
-             label="Date of Birth*"
-             type="date"
-             placeholder="Select date of birth"
-             value={formData.dateOfBirth}
-             onChange={(e) => handleInputChange("dateOfBirth", e.target.value)}
-             error={errors.dateOfBirth}
-             required
-           /> 
+          <Select
+            label="Gender*"
+            options={genderOptions}
+            placeholder="Select Gender"
+            value={formData.gender}
+            onChange={(value) => handleInputChange("gender", value)}
+            error={errors.gender}
+            required
+          />
+
+          <Input
+            label="Date of Birth*"
+            type="date"
+            placeholder="Select date of birth"
+            value={formData.dateOfBirth}
+            onChange={(e) => handleInputChange("dateOfBirth", e.target.value)}
+            error={errors.dateOfBirth}
+            required
+          />
         </div>
       </div>
+
 
       {/* Submit Button */}
       <div className="flex justify-center">
         <button
           type="submit"
           disabled={loading}
-          className="bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-semibold 
-                     py-3 px-8 rounded-2xl transition-all duration-300 
+          className="bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-semibold
+                     py-3 px-8 rounded-2xl transition-all duration-300
                      transform hover:scale-105 shadow-lg hover:shadow-xl
                      disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
         >
-          {loading ? "Creating..." : "Create New Account"}
+          {loading ? "Creating..." : "Create Parent Account"}
         </button>
       </div>
     </form>
