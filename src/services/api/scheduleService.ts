@@ -24,6 +24,7 @@ export interface CreateScheduleDto {
   rRule: string;
   timezone: string;
   academicYear: string; // Added to match backend
+  semesterCode?: string; // Optional semester code for semester-based schedules
   effectiveFrom: string;
   effectiveTo?: string;
   exceptions: Date[]; // Changed from string[] to Date[] to match backend
@@ -39,6 +40,7 @@ export interface UpdateScheduleDto {
   rRule: string;
   timezone: string;
   academicYear: string; // Added to match backend
+  semesterCode?: string; // Optional semester code for semester-based schedules
   effectiveFrom: string;
   effectiveTo?: string;
   exceptions: Date[]; // Changed from string[] to Date[] to match backend
