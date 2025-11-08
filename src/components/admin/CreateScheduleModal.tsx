@@ -13,6 +13,7 @@ import {
   CreateScheduleDto,
 } from "@/services/api/scheduleService";
 import { academicCalendarService } from "@/services/api/academicCalendarService";
+import { AcademicSemester } from "@/types";
 import RRuleBuilder from "@/components/admin/RRuleBuilder";
 import TimeSlotSelector from "@/components/admin/TimeSlotSelector";
 
@@ -31,6 +32,7 @@ export default function CreateScheduleModal({
     startTime: "",
     endTime: "",
     academicYear: "",
+    semesterCode: "",
     effectiveFrom: "",
     effectiveTo: "",
     description: "",
@@ -42,6 +44,8 @@ export default function CreateScheduleModal({
   const [submitError, setSubmitError] = useState<string>("");
   const [academicYears, setAcademicYears] = useState<string[]>([]);
   const [loadingAcademicYears, setLoadingAcademicYears] = useState(true);
+  const [semesters, setSemesters] = useState<AcademicSemester[]>([]);
+  const [loadingSemesters, setLoadingSemesters] = useState(false);
   const [rruleValidation, setRruleValidation] = useState<{
     isValid: boolean;
     errors: string[];
@@ -163,15 +167,66 @@ export default function CreateScheduleModal({
     return `${year}-${month}-${day}`;
   };
 
-  // Auto-fill effective dates when academic year is selected
+  // Load semesters when academic year is selected
   useEffect(() => {
-    const loadAcademicYearDetails = async () => {
+    const loadSemesters = async () => {
+      if (formData.academicYear) {
+        try {
+          setLoadingSemesters(true);
+          const academicCalendar =
+            await academicCalendarService.getAcademicCalendarByYear(
+              formData.academicYear
+            );
+          const activeSemesters = academicCalendar.semesters.filter(
+            (s) => s.isActive
+          );
+          setSemesters(activeSemesters);
+
+          // Reset semester code when academic year changes
+          setFormData((prev) => ({
+            ...prev,
+            semesterCode: "",
+          }));
+        } catch (error) {
+          console.error("Error loading semesters:", error);
+          setSemesters([]);
+        } finally {
+          setLoadingSemesters(false);
+        }
+      } else {
+        setSemesters([]);
+      }
+    };
+
+    loadSemesters();
+  }, [formData.academicYear]);
+
+  // Auto-fill effective dates when academic year or semester is selected
+  useEffect(() => {
+    const loadEffectiveDates = async () => {
       if (formData.academicYear) {
         try {
           const academicCalendar =
             await academicCalendarService.getAcademicCalendarByYear(
               formData.academicYear
             );
+
+          // If semester is selected, use semester dates; otherwise use academic year dates
+          if (formData.semesterCode) {
+            const semester = academicCalendar.semesters.find(
+              (s) => s.code === formData.semesterCode && s.isActive
+            );
+            if (semester) {
+              setFormData((prev) => ({
+                ...prev,
+                effectiveFrom: formatDateForInput(semester.startDate),
+                effectiveTo: formatDateForInput(semester.endDate),
+              }));
+              return;
+            }
+          }
+
+          // Fallback to academic year dates
           setFormData((prev) => ({
             ...prev,
             effectiveFrom: academicCalendar.startDate
@@ -182,13 +237,13 @@ export default function CreateScheduleModal({
               : "",
           }));
         } catch (error) {
-          console.error("Error loading academic year details:", error);
+          console.error("Error loading effective dates:", error);
         }
       }
     };
 
-    loadAcademicYearDetails();
-  }, [formData.academicYear]);
+    loadEffectiveDates();
+  }, [formData.academicYear, formData.semesterCode]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -274,6 +329,7 @@ export default function CreateScheduleModal({
         rRule: formData.rRule,
         timezone: "UTC",
         academicYear: formData.academicYear,
+        semesterCode: formData.semesterCode || undefined,
         effectiveFrom: formData.effectiveFrom,
         effectiveTo: formData.effectiveTo || undefined,
         exceptions: [],
@@ -428,6 +484,40 @@ export default function CreateScheduleModal({
               )}
             </div>
 
+            {/* Semester (Optional) */}
+            {formData.academicYear && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <FaGraduationCap className="inline w-4 h-4 mr-2" />
+                  Semester (Optional)
+                </label>
+                <select
+                  value={formData.semesterCode}
+                  onChange={(e) =>
+                    handleInputChange("semesterCode", e.target.value)
+                  }
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                  disabled={loadingSemesters}
+                >
+                  <option value="">
+                    {loadingSemesters
+                      ? "Loading semesters..."
+                      : "Select Semester (Optional - leave empty for full academic year)"}
+                  </option>
+                  {semesters.map((semester) => (
+                    <option key={semester.code} value={semester.code}>
+                      {semester.name} ({semester.code})
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  {formData.semesterCode
+                    ? "Effective dates will be set from selected semester"
+                    : "Leave empty to use full academic year dates"}
+                </p>
+              </div>
+            )}
+
             {/* Time Range */}
             <TimeSlotSelector
               selectedStartTime={formData.startTime}
@@ -447,7 +537,9 @@ export default function CreateScheduleModal({
                   <FaCalendarAlt className="inline w-4 h-4 mr-2" />
                   Effective From{" "}
                   {formData.academicYear
-                    ? "(Auto-filled from Academic Year)"
+                    ? formData.semesterCode
+                      ? "(Auto-filled from Semester)"
+                      : "(Auto-filled from Academic Year)"
                     : "*"}
                 </label>
                 <input
@@ -472,7 +564,9 @@ export default function CreateScheduleModal({
                 )}
                 {formData.academicYear && (
                   <p className="mt-1 text-xs text-blue-600">
-                    Automatically set from Academic Year
+                    {formData.semesterCode
+                      ? "Automatically set from selected Semester"
+                      : "Automatically set from Academic Year"}
                   </p>
                 )}
               </div>
@@ -481,7 +575,9 @@ export default function CreateScheduleModal({
                   <FaCalendarAlt className="inline w-4 h-4 mr-2" />
                   Effective To{" "}
                   {formData.academicYear
-                    ? "(Auto-filled from Academic Year)"
+                    ? formData.semesterCode
+                      ? "(Auto-filled from Semester)"
+                      : "(Auto-filled from Academic Year)"
                     : "*"}
                 </label>
                 <input
@@ -507,7 +603,9 @@ export default function CreateScheduleModal({
                 )}
                 {formData.academicYear && (
                   <p className="mt-1 text-xs text-blue-600">
-                    Automatically set from Academic Year
+                    {formData.semesterCode
+                      ? "Automatically set from selected Semester"
+                      : "Automatically set from Academic Year"}
                   </p>
                 )}
               </div>
