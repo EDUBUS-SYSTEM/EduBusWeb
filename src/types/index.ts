@@ -326,16 +326,36 @@ export interface ScheduleSnapshotDto {
 export interface TripDto {
   id: string;
   routeId: string;
-  serviceDate: string; // ISO date string
-  plannedStartAt: string; // ISO datetime string
-  plannedEndAt: string; // ISO datetime string
-  startTime?: string; // ISO datetime string
-  endTime?: string; // ISO datetime string
+  routeName: string;
+  serviceDate: string;
+  plannedStartAt: string;
+  plannedEndAt: string;
+  startTime?: string;
+  endTime?: string;
   status: "Scheduled" | "InProgress" | "Completed" | "Cancelled";
+  vehicleId: string;
+  driverVehicleId?: string;
+  vehicle?: VehicleSnapshotDto;
+  driver?: DriverSnapshotDto;
   scheduleSnapshot: ScheduleSnapshotDto;
   stops: TripStopDto[];
   createdAt: string;
   updatedAt?: string;
+}
+
+export interface VehicleSnapshotDto {
+  id: string;
+  maskedPlate: string;
+  capacity: number;
+  status: string;
+}
+
+export interface DriverSnapshotDto {
+  id: string;
+  fullName: string;
+  phone: string;
+  isPrimary: boolean;
+  snapshottedAtUtc: string;
 }
 
 export interface TripStopDto {
@@ -350,10 +370,14 @@ export interface TripStopDto {
 
 export interface CreateTripDto {
   routeId: string;
-  serviceDate: string; // ISO date string
-  plannedStartAt: string; // ISO datetime string
-  plannedEndAt: string; // ISO datetime string
+  serviceDate: string;
+  plannedStartAt: string;
+  plannedEndAt: string;
   status?: "Scheduled" | "InProgress" | "Completed" | "Cancelled";
+  vehicleId: string;
+  driverVehicleId?: string;
+  vehicle?: VehicleSnapshotDto;
+  driver?: DriverSnapshotDto;
   scheduleSnapshot: ScheduleSnapshotDto;
   stops: TripStopDto[];
 }
@@ -361,12 +385,16 @@ export interface CreateTripDto {
 export interface UpdateTripDto {
   id: string;
   routeId: string;
-  serviceDate: string; // ISO date string
-  plannedStartAt: string; // ISO datetime string
-  plannedEndAt: string; // ISO datetime string
-  startTime?: string; // ISO datetime string
-  endTime?: string; // ISO datetime string
+  serviceDate: string;
+  plannedStartAt: string;
+  plannedEndAt: string;
+  startTime?: string;
+  endTime?: string;
   status: "Scheduled" | "InProgress" | "Completed" | "Cancelled";
+  vehicleId: string;
+  driverVehicleId?: string;
+  vehicle?: VehicleSnapshotDto;
+  driver?: DriverSnapshotDto;
   scheduleSnapshot: ScheduleSnapshotDto;
   stops: TripStopDto[];
 }

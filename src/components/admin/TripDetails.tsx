@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { TripDto } from '@/types';
-import { FaRoute, FaClock, FaCheckCircle, FaTimesCircle, FaMapMarkerAlt, FaCalendarAlt } from 'react-icons/fa';
+import { FaRoute, FaClock, FaCheckCircle, FaTimesCircle, FaMapMarkerAlt, FaCalendarAlt, FaUser, FaPhone, FaCar } from 'react-icons/fa';
 
 interface TripDetailsProps {
   trip: TripDto;
@@ -12,6 +12,7 @@ interface TripDetailsProps {
 }
 
 export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDetailsProps) {
+  console.log(trip);
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Scheduled':
@@ -108,6 +109,10 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
                   <p className="text-gray-800 font-medium">{formatDate(trip.serviceDate)}</p>
                 </div>
                 <div>
+                  <label className="text-sm text-gray-500">Route</label>
+                  <p className="text-gray-800 font-medium">{trip.routeName || trip.routeId}</p>
+                </div>
+                <div>
                   <label className="text-sm text-gray-500">Route ID</label>
                   <p className="text-gray-800 font-medium font-mono text-sm">{trip.routeId}</p>
                 </div>
@@ -138,37 +143,99 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
             </div>
           </div>
 
-          {/* Actual Times */}
-          {(trip.startTime || trip.endTime) && (
+          {/* Driver Information - NEW */}
+          {trip.driver && (
             <div className="border-t border-gray-200 pt-6">
               <h4 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                <FaCheckCircle className="text-green-500" />
-                Actual Times
+                <FaUser className="text-[#fad23c]" />
+                Driver Information
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="text-sm text-gray-500">Actual Start</label>
-                  <p className="text-gray-800 font-medium">
-                    {trip.startTime ? formatDateTime(trip.startTime) : '-'}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-500">Actual End</label>
-                  <p className="text-gray-800 font-medium">
-                    {trip.endTime ? formatDateTime(trip.endTime) : '-'}
-                  </p>
-                </div>
-                {trip.startTime && trip.endTime && (
-                  <div className="md:col-span-2">
-                    <label className="text-sm text-gray-500">Actual Duration</label>
-                    <p className="text-gray-800 font-medium">
-                      {calculateDuration(trip.startTime, trip.endTime)}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm text-gray-500">Driver Name</label>
+                    <p className="text-gray-800 font-medium flex items-center gap-2">
+                      <FaUser className="text-gray-400" />
+                      {trip.driver.fullName || 'N/A'}
                     </p>
                   </div>
-                )}
+                  <div>
+                    <label className="text-sm text-gray-500">Phone Number</label>
+                    <p className="text-gray-800 font-medium flex items-center gap-2">
+                      <FaPhone className="text-gray-400" />
+                      {trip.driver.phone || 'N/A'}
+                    </p>
+                  </div>
+                  {trip.driver.isPrimary && (
+                    <div className="md:col-span-2">
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Primary Driver
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
+
+          {/* Vehicle Information - UPDATED */}
+          {trip.vehicle && (
+            <div className="border-t border-gray-200 pt-6">
+              <h4 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                <FaCar className="text-[#fad23c]" />
+                Vehicle Information
+              </h4>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm text-gray-500">Vehicle Number Plate</label>
+                    <p className="text-gray-800 font-medium flex items-center gap-2">
+                      <FaCar className="text-gray-400" />
+                      {trip.vehicle.maskedPlate || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-500">Capacity</label>
+                    <p className="text-gray-800 font-medium">{trip.vehicle.capacity || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-500">Status</label>
+                    <p className="text-gray-800 font-medium">{trip.vehicle.status || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Actual Times - UPDATED to always show */}
+          <div className="border-t border-gray-200 pt-6">
+            <h4 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
+              <FaCheckCircle className="text-green-500" />
+              Actual Times
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="text-sm text-gray-500">Actual Start</label>
+                <p className="text-gray-800 font-medium">
+                  {trip.startTime ? formatDateTime(trip.startTime) : '-'}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-500">Actual End</label>
+                <p className="text-gray-800 font-medium">
+                  {trip.endTime ? formatDateTime(trip.endTime) : '-'}
+                </p>
+              </div>
+              {trip.startTime && trip.endTime && (
+                <div className="md:col-span-2">
+                  <label className="text-sm text-gray-500">Actual Duration</label>
+                  <p className="text-gray-800 font-medium">
+                    {calculateDuration(trip.startTime, trip.endTime)}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Schedule Snapshot */}
           {trip.scheduleSnapshot && (

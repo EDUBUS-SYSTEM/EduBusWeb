@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { TripDto } from '@/types';
 import { FaEdit, FaTrash, FaEye, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
@@ -9,6 +9,7 @@ interface TripTableProps {
   currentPage: number;
   totalPages: number;
   perPage: number;
+  totalItems: number; // ADD THIS PROP
   onPageChange: (page: number) => void;
   onPerPageChange: (perPage: number) => void;
   onView: (trip: TripDto) => void;
@@ -19,11 +20,39 @@ interface TripTableProps {
   onSort?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
 }
 
+// Tooltip component
+const Tooltip: React.FC<{
+  children: React.ReactNode;
+  content: string;
+  className?: string;
+}> = ({ children, content, className = '' }) => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  return (
+    <div
+      className={`relative inline-block ${className}`}
+      onMouseEnter={() => setIsVisible(true)}
+      onMouseLeave={() => setIsVisible(false)}
+    >
+      {children}
+      {isVisible && content && (
+        <div className="absolute z-50 px-3 py-2 text-sm text-white bg-gray-900 rounded-lg shadow-lg bottom-full left-1/2 transform -translate-x-1/2 mb-2 whitespace-nowrap">
+          {content}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+            <div className="border-4 border-transparent border-t-gray-900"></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function TripTable({
   trips,
   currentPage,
   totalPages,
   perPage,
+  totalItems,
   onPageChange,
   onPerPageChange,
   onView,
@@ -42,7 +71,7 @@ export default function TripTable({
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.Scheduled;
-    
+
     return (
       <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
         {config.label}
@@ -78,13 +107,20 @@ export default function TripTable({
     return sortOrder === 'asc' ? '↑' : '↓';
   };
 
+  // Truncate route name helper
+  const truncateRouteName = (routeName: string, maxLength: number = 20): string => {
+    if (!routeName) return 'N/A';
+    if (routeName.length <= maxLength) return routeName;
+    return routeName.substring(0, maxLength) + '...';
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-soft-lg border border-gray-100 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('serviceDate')}
               >
@@ -96,7 +132,7 @@ export default function TripTable({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Route
               </th>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('plannedStartAt')}
               >
@@ -105,7 +141,7 @@ export default function TripTable({
                   <SortIcon column="plannedStartAt" />
                 </div>
               </th>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('plannedEndAt')}
               >
@@ -120,7 +156,7 @@ export default function TripTable({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actual End
               </th>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('status')}
               >
@@ -145,59 +181,73 @@ export default function TripTable({
                 </td>
               </tr>
             ) : (
-              trips.map((trip) => (
-                <tr key={trip.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {formatDate(trip.serviceDate)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    Route {trip.routeId.slice(0, 8)}...
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {formatDateTime(trip.plannedStartAt)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {formatDateTime(trip.plannedEndAt)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {trip.startTime ? formatDateTime(trip.startTime) : '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {trip.endTime ? formatDateTime(trip.endTime) : '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {getStatusBadge(trip.status)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {trip.stops.length} stops
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => onView(trip)}
-                        className="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="View Details"
-                      >
-                        <FaEye />
-                      </button>
-                      <button
-                        onClick={() => onEdit(trip)}
-                        className="text-yellow-600 hover:text-yellow-900 p-2 hover:bg-yellow-50 rounded-lg transition-colors"
-                        title="Edit Trip"
-                      >
-                        <FaEdit />
-                      </button>
-                      <button
-                        onClick={() => onDelete(trip)}
-                        className="text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Delete Trip"
-                      >
-                        <FaTrash />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+              trips.map((trip) => {
+                const displayRouteName = truncateRouteName(trip.routeName || trip.routeId);
+                const fullRouteName = trip.routeName || trip.routeId;
+                const showTooltip = (trip.routeName || trip.routeId).length > 20;
+
+                return (
+                  <tr key={trip.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {formatDate(trip.serviceDate)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {showTooltip ? (
+                        <Tooltip content={fullRouteName}>
+                          <span className="cursor-help underline decoration-dotted">
+                            {displayRouteName}
+                          </span>
+                        </Tooltip>
+                      ) : (
+                        <span>{displayRouteName}</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {formatDateTime(trip.plannedStartAt)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {formatDateTime(trip.plannedEndAt)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {trip.startTime ? formatDateTime(trip.startTime) : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {trip.endTime ? formatDateTime(trip.endTime) : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getStatusBadge(trip.status)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {trip.stops.length} stops
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => onView(trip)}
+                          className="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="View Details"
+                        >
+                          <FaEye />
+                        </button>
+                        <button
+                          onClick={() => onEdit(trip)}
+                          className="text-yellow-600 hover:text-yellow-900 p-2 hover:bg-yellow-50 rounded-lg transition-colors"
+                          title="Edit Trip"
+                        >
+                          <FaEdit />
+                        </button>
+                        <button
+                          onClick={() => onDelete(trip)}
+                          className="text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete Trip"
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
@@ -207,8 +257,8 @@ export default function TripTable({
       <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-700">
-            Showing {trips.length > 0 ? (currentPage - 1) * perPage + 1 : 0} to{' '}
-            {Math.min(currentPage * perPage, trips.length)} of {trips.length} trips
+            Showing {totalItems > 0 ? (currentPage - 1) * perPage + 1 : 0} to{' '}
+            {Math.min(currentPage * perPage, totalItems)} of {totalItems} trips
           </span>
           <select
             value={perPage}
@@ -245,4 +295,3 @@ export default function TripTable({
     </div>
   );
 }
-

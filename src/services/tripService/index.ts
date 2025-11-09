@@ -1,18 +1,20 @@
 import { apiService } from "@/lib/api";
 import { apiClient } from "@/lib/api";
-import { 
-  TripDto, 
-  CreateTripDto, 
+import {
+  TripDto,
+  CreateTripDto,
   UpdateTripDto
 } from "@/types";
 
 export interface GetAllTripsParams {
   page?: number;
   perPage?: number;
-  search?: string;
-  status?: string;
-  serviceDate?: string;
   routeId?: string;
+  serviceDate?: string;
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+  upcomingDays?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }
@@ -23,12 +25,29 @@ export interface GetAllTripsResponse {
   page: number;
   perPage: number;
   totalPages: number;
+  hasNextPage?: boolean;
+  hasPreviousPage?: boolean;
 }
 
 export const tripService = {
-  // Get all trips with pagination and filters
   getAllTrips: async (params?: GetAllTripsParams): Promise<GetAllTripsResponse> => {
-    const response = await apiService.get<GetAllTripsResponse>("/Trip", params as Record<string, unknown> | undefined);
+    const queryParams: Record<string, unknown> = {};
+    if (params?.page) queryParams.page = params.page;
+    if (params?.perPage) queryParams.perPage = params.perPage;
+    if (params?.routeId) queryParams.routeId = params.routeId;
+    if (params?.serviceDate) queryParams.serviceDate = params.serviceDate;
+    if (params?.startDate) queryParams.startDate = params.startDate;
+    if (params?.endDate) queryParams.endDate = params.endDate;
+    if (params?.status) queryParams.status = params.status;
+    if (params?.upcomingDays) queryParams.upcomingDays = params.upcomingDays;
+    if (params?.sortBy) queryParams.sortBy = params.sortBy;
+    if (params?.sortOrder) queryParams.sortOrder = params.sortOrder;
+
+    // The API now returns: { data, total, page, perPage, totalPages, ... }
+    const response = await apiService.get<GetAllTripsResponse>('/Trip', queryParams);
+
+    // If your API returns other properties (hasNextPage, etc), you can keep them in the type as well
+
     return response;
   },
 
@@ -43,8 +62,9 @@ export const tripService = {
   },
 
   // Update a trip
-  updateTrip: async (id: string, data: UpdateTripDto): Promise<TripDto> => {
-    return await apiService.put<TripDto>(`/Trip/${id}`, data);
+  updateTrip: async (id: string, data: UpdateTripDto): Promise<void> => {
+    // API returns NoContent, not TripDto
+    return await apiService.put<void>(`/Trip/${id}`, data);
   },
 
   // Delete a trip
@@ -54,11 +74,10 @@ export const tripService = {
 
   // Generate trips from schedule
   generateTripsFromSchedule: async (
-    scheduleId: string, 
-    startDate: string, 
+    scheduleId: string,
+    startDate: string,
     endDate: string
   ): Promise<TripDto[]> => {
-    // API uses query parameters: /Trip/generate-from-schedule?scheduleId={guid}&startDate={datetime}&endDate={datetime}
     const response = await apiClient.post<TripDto[]>("/Trip/generate-from-schedule", null, {
       params: {
         scheduleId,
@@ -70,26 +89,12 @@ export const tripService = {
   },
 
   // Get trips by route
-  getTripsByRoute: async (routeId: string, params?: GetAllTripsParams): Promise<GetAllTripsResponse> => {
-    return await apiService.get<GetAllTripsResponse>(`/Trip/route/${routeId}`, params as Record<string, unknown> | undefined);
-  },
-
-  // Get trips by date range
-  getTripsByDateRange: async (
-    startDate: string, 
-    endDate: string, 
-    params?: GetAllTripsParams
-  ): Promise<GetAllTripsResponse> => {
-    return await apiService.get<GetAllTripsResponse>("/Trip/date-range", {
-      ...(params as Record<string, unknown> | undefined),
-      startDate,
-      endDate
-    } as Record<string, unknown>);
+  getTripsByRoute: async (routeId: string): Promise<TripDto[]> => {
+    return await apiService.get<TripDto[]>(`/Trip/route/${routeId}`);
   },
 
   // Update trip status
-  updateTripStatus: async (id: string, status: "Scheduled" | "InProgress" | "Completed" | "Cancelled"): Promise<TripDto> => {
-    return await apiService.patch<TripDto>(`/Trip/${id}/status`, { status });
+  updateTripStatus: async (id: string, status: string, reason?: string): Promise<{ tripId: string; status: string; reason?: string; message: string }> => {
+    return await apiService.put<{ tripId: string; status: string; reason?: string; message: string }>(`/Trip/${id}/status`, { status, reason });
   },
 };
-
