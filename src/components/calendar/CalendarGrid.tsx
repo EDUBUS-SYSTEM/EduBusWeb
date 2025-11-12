@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { CalendarView, CalendarEvent } from '@/types';
 import EventCard from './EventCard';
+import { FaTimes, FaBus, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
 
 interface CalendarGridProps {
   view: CalendarView;
@@ -21,6 +22,7 @@ export default function CalendarGrid({
 }: CalendarGridProps) {
   const [draggedEvent, setDraggedEvent] = useState<CalendarEvent | null>(null);
   const [dragOverSlot, setDragOverSlot] = useState<{ date: Date; hour: number; minute: number } | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Generate time slots from 12 AM to 11 PM
@@ -400,71 +402,183 @@ export default function CalendarGrid({
     };
 
     return (
-      <div className="bg-white rounded-2xl shadow-soft-lg overflow-hidden border border-gray-100">
+      <div className="bg-white rounded-b-2xl shadow-soft-lg overflow-hidden border border-gray-100 border-t-0">
         {/* Header */}
-        <div className="grid grid-cols-7 border-b border-gray-100">
+        <div className="grid grid-cols-7 gap-0 border-b border-gray-100">
           {dayNames.map(day => (
-            <div key={day} className="p-4 text-center font-semibold text-gray-600 bg-gray-50">
+            <div key={day} className="p-4 text-center font-semibold text-gray-600 bg-gray-50 border-r border-gray-100 last:border-r-0">
               {day}
             </div>
           ))}
         </div>
         
         {/* Calendar grid */}
-        <div className="grid grid-cols-7">
-          {days.map((day, index) => (
-            <div
-              key={index}
-              className={`
-                min-h-[120px] border-r border-b border-gray-100 p-2 cursor-pointer
-                hover:bg-gray-50 transition-colors duration-200
-                ${day ? 'bg-white' : 'bg-gray-50'}
-                ${day && isToday(day) ? 'bg-gradient-to-br from-yellow-50 to-orange-50' : ''}
-              `}
-              onClick={() => day && handleCellClick(day, new Date().getHours())}
-            >
-              {day && (
-                <>
-                  <div className={`
-                    text-sm font-medium mb-2
-                    ${isToday(day) ? 'text-[#463B3B]' : 'text-gray-800'}
-                    ${!isCurrentMonth(day) ? 'text-gray-400' : ''}
-                  `}>
-                    {day.getDate()}
-                  </div>
-                  
-                  <div className="space-y-1">
-                    {getEventsForDate(day).slice(0, 3).map(event => (
-                      <EventCard
-                        key={event.id}
-                        event={event}
-                        onClick={onEventClick}
-                        className="text-xs"
-                      />
-                    ))}
-                    {getEventsForDate(day).length > 3 && (
-                      <div className="text-xs text-gray-500 font-medium">
-                        +{getEventsForDate(day).length - 3} more
+        <div className="grid grid-cols-7 gap-0">
+          {days.map((day, index) => {
+            const dayTripsCount = day ? getEventsForDate(day).length : 0;
+            return (
+              <div
+                key={index}
+                className={`
+                  min-h-[100px] border-r border-b border-gray-100 p-2 cursor-pointer
+                  hover:bg-gray-50 transition-colors duration-200 last:border-r-0
+                  ${day ? 'bg-white' : 'bg-gray-50'}
+                  ${day && isToday(day) ? 'bg-gradient-to-br from-yellow-50 to-orange-50' : ''}
+                `}
+                onClick={() => {
+                  if (!day) return;
+                  if (dayTripsCount > 0) {
+                    setSelectedDate(day);
+                  } else {
+                    // No trips - open create trip modal with this date
+                    onEventCreate?.(day);
+                  }
+                }}
+              >
+                {day && (
+                  <>
+                    <div className={`
+                      text-sm font-medium mb-2
+                      ${isToday(day) ? 'text-[#463B3B]' : 'text-gray-800'}
+                      ${!isCurrentMonth(day) ? 'text-gray-400' : ''}
+                    `}>
+                      {day.getDate()}
+                    </div>
+                    
+                    {dayTripsCount > 0 && (
+                      <div className="flex items-center justify-center">
+                        <div className="bg-gradient-to-br from-[#fad23c] to-[#FDC700] text-[#463B3B] rounded-full w-9 h-9 flex items-center justify-center text-sm font-bold shadow-md hover:shadow-lg transition-shadow">
+                          {dayTripsCount}
+                        </div>
                       </div>
                     )}
-                  </div>
-                </>
-              )}
-            </div>
-          ))}
+                  </>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     );
   };
 
-  switch (view.type) {
-    case 'day':
-      return renderDayView();
-    case 'week':
-      return renderWeekView();
-    case 'month':
-      return renderMonthView();
-    default:
-      return renderDayView();
-  }
+  // Modal component for showing trips of selected date
+  const DayTripsModal = ({ date, trips }: { date: Date; trips: CalendarEvent[] }) => {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col border border-gray-200">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-[#fad23c] to-[#FDC700] px-6 py-5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <FaBus className="w-6 h-6 text-[#463B3B]" />
+              <h2 className="text-xl font-bold text-[#463B3B]">
+                {date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+              </h2>
+              <span className="text-sm font-semibold text-[#463B3B] bg-white px-3 py-1 rounded-full">
+                {trips.length} trip{trips.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+            <button
+              onClick={() => setSelectedDate(null)}
+              className="text-[#463B3B] hover:bg-[#FDC700] p-2 rounded-lg transition-colors"
+            >
+              <FaTimes className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="overflow-y-auto flex-1 p-6 bg-gradient-to-b from-white to-gray-50">
+            {trips.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No trips for this date</p>
+            ) : (
+              <div className="space-y-3">
+                {trips.map((trip, index) => (
+                  <div
+                    key={trip.id}
+                    className="bg-white border-l-4 border-[#fad23c] rounded-lg p-4 hover:shadow-lg hover:border-[#FDC700] transition-all duration-200 cursor-pointer hover:scale-[1.02] transform"
+                    onClick={() => {
+                      onEventClick?.(trip);
+                      setSelectedDate(null);
+                    }}
+                  >
+                    <div className="flex items-start gap-4">
+                      {/* Bus Icon */}
+                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-[#fad23c] to-[#FDC700] rounded-lg flex items-center justify-center">
+                        <FaBus className="w-5 h-5 text-[#463B3B]" />
+                      </div>
+
+                      {/* Trip Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-semibold text-[#463B3B] text-base">
+                            {trip.title}
+                          </h3>
+                          {/* Shift Badge */}
+                          {(() => {
+                            const startHour = new Date(trip.start).getHours();
+                            const ismorning = startHour < 12;
+                            return (
+                              <span className={`px-2 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${
+                                ismorning 
+                                  ? 'bg-blue-100 text-blue-700' 
+                                  : 'bg-orange-100 text-orange-700'
+                              }`}>
+                                {ismorning ? '🌅 Morning' : '🌆 Afternoon'}
+                              </span>
+                            );
+                          })()}
+                        </div>
+                        <div className="space-y-1.5 text-sm">
+                          <div className="flex items-center gap-2 text-gray-700">
+                            <FaMapMarkerAlt className="w-4 h-4 text-[#fad23c] flex-shrink-0" />
+                            <span className="font-medium">Route:</span>
+                            <span className="text-gray-600">{trip.description?.split('|')[0] || 'N/A'}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-gray-700">
+                            <FaClock className="w-4 h-4 text-[#fad23c] flex-shrink-0" />
+                            <span className="font-medium">Time:</span>
+                            <span className="text-gray-600">
+                              {new Date(trip.start).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - {new Date(trip.end).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Status Badge */}
+                      <div className={`px-3 py-1.5 rounded-full text-xs font-semibold flex-shrink-0 ${
+                        trip.status === 'planned' ? 'bg-blue-100 text-blue-800' :
+                        trip.status === 'in-progress' ? 'bg-green-100 text-green-800' :
+                        trip.status === 'completed' ? 'bg-gray-100 text-gray-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {trip.status === 'in-progress' ? 'In Progress' : (trip.status ? trip.status.charAt(0).toUpperCase() + trip.status.slice(1) : 'Unknown')}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Always render month view
+  const monthView = renderMonthView();
+  
+  return (
+    <>
+      {monthView}
+      {selectedDate && (
+        <DayTripsModal 
+          date={selectedDate} 
+          trips={events.filter(event => {
+            const eventDate = new Date(event.start);
+            return eventDate.toDateString() === selectedDate.toDateString();
+          })}
+        />
+      )}
+    </>
+  );
 }

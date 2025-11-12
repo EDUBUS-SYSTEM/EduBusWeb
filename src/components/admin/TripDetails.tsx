@@ -65,9 +65,9 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex justify-between items-start p-6 border-b border-gray-100">
+        <div className="bg-gradient-to-r from-[#fad23c] to-[#FDC700] px-6 py-5 flex justify-between items-start">
           <div>
             <h3 className="text-2xl font-bold text-[#463B3B] mb-2">
               Trip Details
@@ -80,7 +80,7 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg"
+            className="text-[#463B3B] hover:bg-[#FDC700] transition-colors p-2 rounded-lg"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -90,52 +90,42 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
 
         {/* Content */}
         <div className="p-6 space-y-6">
-          {/* Trip ID */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <label className="text-xs text-gray-500 uppercase tracking-wide">Trip ID</label>
-            <p className="text-sm text-gray-700 font-mono mt-1">{trip.id}</p>
-          </div>
-
           {/* Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <h4 className="font-semibold text-gray-700 flex items-center gap-2">
-                <FaCalendarAlt className="text-[#fad23c]" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+              <h4 className="font-semibold text-blue-900 flex items-center gap-2 mb-3">
+                <FaCalendarAlt className="text-blue-600" />
                 Service Information
               </h4>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <div>
-                  <label className="text-sm text-gray-500">Service Date</label>
-                  <p className="text-gray-800 font-medium">{formatDate(trip.serviceDate)}</p>
+                  <label className="text-xs text-blue-700 font-medium">Service Date</label>
+                  <p className="text-blue-900 font-semibold">{formatDate(trip.serviceDate)}</p>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-500">Route</label>
-                  <p className="text-gray-800 font-medium">{trip.routeName || trip.routeId}</p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-500">Route ID</label>
-                  <p className="text-gray-800 font-medium font-mono text-sm">{trip.routeId}</p>
+                  <label className="text-xs text-blue-700 font-medium">Route</label>
+                  <p className="text-blue-900 font-semibold">{trip.routeName || trip.routeId}</p>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <h4 className="font-semibold text-gray-700 flex items-center gap-2">
-                <FaClock className="text-[#fad23c]" />
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
+              <h4 className="font-semibold text-purple-900 flex items-center gap-2 mb-3">
+                <FaClock className="text-purple-600" />
                 Time Information
               </h4>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <div>
-                  <label className="text-sm text-gray-500">Planned Start</label>
-                  <p className="text-gray-800 font-medium">{formatDateTime(trip.plannedStartAt)}</p>
+                  <label className="text-xs text-purple-700 font-medium">Planned Start</label>
+                  <p className="text-purple-900 font-semibold text-sm">{formatTime(trip.plannedStartAt)}</p>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-500">Planned End</label>
-                  <p className="text-gray-800 font-medium">{formatDateTime(trip.plannedEndAt)}</p>
+                  <label className="text-xs text-purple-700 font-medium">Planned End</label>
+                  <p className="text-purple-900 font-semibold text-sm">{formatTime(trip.plannedEndAt)}</p>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-500">Planned Duration</label>
-                  <p className="text-gray-800 font-medium">
+                  <label className="text-xs text-purple-700 font-medium">Duration</label>
+                  <p className="text-purple-900 font-semibold text-sm">
                     {calculateDuration(trip.plannedStartAt, trip.plannedEndAt)}
                   </p>
                 </div>
@@ -208,28 +198,28 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
           )}
 
           {/* Actual Times - UPDATED to always show */}
-          <div className="border-t border-gray-200 pt-6">
-            <h4 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
-              <FaCheckCircle className="text-green-500" />
+          <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+            <h4 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
+              <FaCheckCircle className="text-green-600" />
               Actual Times
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label className="text-sm text-gray-500">Actual Start</label>
-                <p className="text-gray-800 font-medium">
-                  {trip.startTime ? formatDateTime(trip.startTime) : '-'}
+                <label className="text-xs text-green-700 font-medium">Actual Start</label>
+                <p className="text-green-900 font-semibold text-sm">
+                  {trip.startTime ? formatTime(trip.startTime) : <span className="text-orange-600">Not Yet</span>}
                 </p>
               </div>
               <div>
-                <label className="text-sm text-gray-500">Actual End</label>
-                <p className="text-gray-800 font-medium">
-                  {trip.endTime ? formatDateTime(trip.endTime) : '-'}
+                <label className="text-xs text-green-700 font-medium">Actual End</label>
+                <p className="text-green-900 font-semibold text-sm">
+                  {trip.endTime ? formatTime(trip.endTime) : <span className="text-orange-600">Not Yet</span>}
                 </p>
               </div>
               {trip.startTime && trip.endTime && (
-                <div className="md:col-span-2">
-                  <label className="text-sm text-gray-500">Actual Duration</label>
-                  <p className="text-gray-800 font-medium">
+                <div>
+                  <label className="text-xs text-green-700 font-medium">Actual Duration</label>
+                  <p className="text-green-900 font-semibold text-sm">
                     {calculateDuration(trip.startTime, trip.endTime)}
                   </p>
                 </div>
@@ -247,12 +237,6 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
                     <div>
                       <label className="text-sm text-gray-500">Schedule Name</label>
                       <p className="text-gray-800 font-medium">{trip.scheduleSnapshot.name}</p>
-                    </div>
-                  )}
-                  {trip.scheduleSnapshot.scheduleId && (
-                    <div>
-                      <label className="text-sm text-gray-500">Schedule ID</label>
-                      <p className="text-gray-800 font-medium font-mono text-sm">{trip.scheduleSnapshot.scheduleId}</p>
                     </div>
                   )}
                   {trip.scheduleSnapshot.startTime && (
@@ -280,53 +264,25 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
 
           {/* Stops */}
           {trip.stops && trip.stops.length > 0 && (
-            <div className="border-t border-gray-200 pt-6">
-              <h4 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
+            <div className="border-t border-gray-200 pt-3">
+              <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2 text-sm">
                 <FaMapMarkerAlt className="text-[#fad23c]" />
                 Trip Stops ({trip.stops.length})
               </h4>
-              <div className="space-y-3">
+              <div className="space-y-1.5">
                 {trip.stops.map((stop, index) => (
-                  <div key={index} className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-8 h-8 bg-[#fad23c] rounded-full flex items-center justify-center text-white font-bold text-sm">
-                          {index + 1}
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium text-gray-800 mb-1">
-                            {stop.name || `Stop ${index + 1}`}
-                          </div>
-                          <div className="grid grid-cols-2 gap-4 mt-2">
-                            {stop.plannedArrival && (
-                              <div>
-                                <label className="text-xs text-gray-500">Planned Arrival</label>
-                                <p className="text-sm text-gray-800">{formatDateTime(stop.plannedArrival)}</p>
-                              </div>
-                            )}
-                            {stop.plannedDeparture && (
-                              <div>
-                                <label className="text-xs text-gray-500">Planned Departure</label>
-                                <p className="text-sm text-gray-800">{formatDateTime(stop.plannedDeparture)}</p>
-                              </div>
-                            )}
-                            {stop.actualArrival && (
-                              <div>
-                                <label className="text-xs text-gray-500">Actual Arrival</label>
-                                <p className="text-sm text-gray-800">{formatDateTime(stop.actualArrival)}</p>
-                              </div>
-                            )}
-                            {stop.actualDeparture && (
-                              <div>
-                                <label className="text-xs text-gray-500">Actual Departure</label>
-                                <p className="text-sm text-gray-800">{formatDateTime(stop.actualDeparture)}</p>
-                              </div>
-                            )}
-                          </div>
-                          <div className="mt-2">
-                            <span className="text-xs text-gray-500">Sequence: {stop.sequence}</span>
-                          </div>
-                        </div>
+                  <div key={index} className="flex items-start gap-2 py-2 px-2 hover:bg-gray-50 rounded transition-colors">
+                    <div className="flex-shrink-0 w-6 h-6 bg-[#fad23c] rounded-full flex items-center justify-center text-white font-bold text-sm mt-0.5">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-gray-800 text-sm leading-tight">
+                        {stop.name || `Stop ${index + 1}`}
+                      </div>
+                      <div className="text-sm text-gray-600 leading-tight">
+                        {stop.attendance && stop.attendance.length > 0 
+                          ? stop.attendance.map(a => a.studentName).join(', ')
+                          : 'No students'}
                       </div>
                     </div>
                   </div>
@@ -337,27 +293,21 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end space-x-3 p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-          >
-            Close
-          </button>
+        <div className="flex justify-end space-x-3 p-4 border-t border-gray-100 bg-gray-50 rounded-b-xl">
           {onEdit && (
             <button
               onClick={onEdit}
-              className="px-4 py-2 bg-gradient-to-r from-[#fad23c] to-[#FDC700] text-[#463B3B] rounded-lg hover:from-[#FDC700] hover:to-[#D08700] transition-all duration-300 font-semibold"
+              className="px-4 py-2 bg-gradient-to-r from-[#fad23c] to-[#FDC700] text-[#463B3B] rounded-lg hover:from-[#FDC700] hover:to-[#D08700] transition-all duration-300 font-semibold text-sm"
             >
-              Edit Trip
+              Edit
             </button>
           )}
           {onDelete && (
             <button
               onClick={onDelete}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-300 font-semibold"
+              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-300 font-semibold text-sm"
             >
-              Delete Trip
+              Delete
             </button>
           )}
         </div>

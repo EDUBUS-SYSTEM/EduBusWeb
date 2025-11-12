@@ -32,24 +32,12 @@ export default function CalendarHeader({
 
   const navigateDate = (direction: 'prev' | 'next') => {
     const newDate = new Date(view.date);
-    
-    switch (view.type) {
-      case 'day':
-        newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
-        break;
-      case 'week':
-        newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
-        break;
-      case 'month':
-        newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1));
-        break;
-    }
-    
+    newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1));
     onDateChange(newDate);
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-soft-lg p-6 mb-6 border border-gray-100">
+    <div className="sticky top-0 z-40 bg-white rounded-t-2xl shadow-soft-lg p-6 mb-0 border border-gray-100 border-b-0 transition-all duration-300">
       <div className="flex items-center justify-between">
         {/* Left side - Today button and navigation */}
         <div className="flex items-center space-x-4">
@@ -98,7 +86,7 @@ export default function CalendarHeader({
                 <option value="all">All Routes</option>
                 {routes.map((route) => (
                   <option key={route.id} value={route.id}>
-                    Route: {route.name}
+                    {route.name}
                   </option>
                 ))}
               </select>
@@ -110,36 +98,6 @@ export default function CalendarHeader({
             </div>
           )}
 
-          {/* Search */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              placeholder="Search events..."
-              className="pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-200 w-64"
-            />
-          </div>
-
-          {/* View selector */}
-          <div className="flex bg-gray-100 rounded-xl p-1">
-            {(['day', 'week', 'month'] as const).map((viewType) => (
-              <button
-                key={viewType}
-                onClick={() => onViewChange({ ...view, type: viewType })}
-                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 capitalize ${
-                  view.type === viewType
-                    ? 'bg-white text-[#463B3B] shadow-sm'
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                {viewType}
-              </button>
-            ))}
-          </div>
 
           {/* Calendar icon */}
           <button className="p-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors duration-200">

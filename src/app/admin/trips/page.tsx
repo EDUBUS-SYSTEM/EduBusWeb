@@ -21,7 +21,7 @@ import {
   setPerPage,
   generateTripsFromSchedule
 } from "@/store/slices/tripsSlice";
-import { FaPlus, FaTable, FaCalendarAlt, FaSearch, FaMapMarkedAlt, FaUsers, FaClock } from 'react-icons/fa';
+import { FaPlus, FaTable, FaCalendarAlt, FaMapMarkedAlt, FaUsers, FaClock } from 'react-icons/fa';
 
 type ViewMode = 'table' | 'calendar';
 
@@ -31,12 +31,11 @@ export default function TripManagementPage() {
 
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [calendarView, setCalendarView] = useState<CalendarView>({
-    type: 'week',
+    type: 'month',
     date: new Date()
   });
 
-  // Filters & Search - managed through Redux
-  const [searchTerm, setSearchTerm] = useState('');
+  // Filters - managed through Redux
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState('');
   const [routeFilter, setRouteFilter] = useState<string>('all');
@@ -273,36 +272,23 @@ export default function TripManagementPage() {
     dispatch(setPerPage(value));
   };
 
-  // Client-side filtering for search term (since API doesn't support search)
-  const filteredTrips = useMemo(() => {
-    if (!searchTerm) return trips;
-
-    const searchLower = searchTerm.toLowerCase();
-    return trips.filter(trip => {
-      return (
-        trip.routeId.toLowerCase().includes(searchLower) ||
-        trip.routeName?.toLowerCase()?.includes(searchLower) ||
-        trip.id.toLowerCase().includes(searchLower) ||
-        trip.status.toLowerCase().includes(searchLower) ||
-        trip.scheduleSnapshot?.name?.toLowerCase().includes(searchLower) ||
-        trip.vehicle?.maskedPlate?.toLowerCase().includes(searchLower) ||
-        trip.driver?.fullName?.toLowerCase().includes(searchLower)
-      );
-    });
-  }, [trips, searchTerm]);
+  // No client-side filtering needed since search is removed
+  const filteredTrips = trips;
 
   // Get unique routes from trips for dropdown
   const availableRoutes = useMemo(() => {
-    const routeSet = new Set<string>();
+    const routeMap = new Map<string, string>();
     trips.forEach(trip => {
-      if (trip.routeId) {
-        routeSet.add(trip.routeId);
+      if (trip.routeId && trip.routeName) {
+        routeMap.set(trip.routeId, trip.routeName);
       }
     });
-    return Array.from(routeSet).sort().map(routeId => ({
-      id: routeId,
-      name: routeId
-    }));
+    return Array.from(routeMap.entries())
+      .sort((a, b) => a[1].localeCompare(b[1]))
+      .map(([routeId, routeName]) => ({
+        id: routeId,
+        name: routeName
+      }));
   }, [trips]);
 
   // Convert trips to calendar events
@@ -313,8 +299,31 @@ export default function TripManagementPage() {
       : filteredTrips.filter(trip => trip.routeId === routeFilter);
 
     return tripsToShow.map(trip => {
-      const startDate = new Date(trip.plannedStartAt);
-      const endDate = new Date(trip.plannedEndAt);
+      // Use schedule snapshot times if available, otherwise use planned times
+      const serviceDate = new Date(trip.serviceDate);
+      
+      // Parse schedule times (format: HH:mm or similar)
+      const parseTimeString = (timeStr: string) => {
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        return { hours, minutes };
+      };
+
+      let startDate: Date;
+      let endDate: Date;
+
+      if (trip.scheduleSnapshot?.startTime && trip.scheduleSnapshot?.endTime) {
+        const startTime = parseTimeString(trip.scheduleSnapshot.startTime);
+        const endTime = parseTimeString(trip.scheduleSnapshot.endTime);
+        
+        startDate = new Date(serviceDate);
+        startDate.setHours(startTime.hours, startTime.minutes, 0, 0);
+        
+        endDate = new Date(serviceDate);
+        endDate.setHours(endTime.hours, endTime.minutes, 0, 0);
+      } else {
+        startDate = new Date(trip.plannedStartAt);
+        endDate = new Date(trip.plannedEndAt);
+      }
 
       // Map status to calendar event status
       const statusMap: Record<string, "planned" | "in-progress" | "completed" | "cancelled"> = {
@@ -340,7 +349,7 @@ export default function TripManagementPage() {
         allDay: false,
         color: colorMap[trip.status] || '#3B82F6',
         type: 'trip',
-        description: `Route: ${trip.routeId} | Status: ${trip.status}`,
+        description: `${trip.routeName || trip.routeId} | Status: ${trip.status}`,
         routeId: trip.routeId,
         tripId: trip.id,
         status: statusMap[trip.status] || 'planned',
@@ -358,7 +367,15 @@ export default function TripManagementPage() {
     }
   };
 
-  const handleCalendarEventCreate = (_date: Date) => {
+  const [initialServiceDate, setInitialServiceDate] = useState<string>('');
+
+  const handleCalendarEventCreate = (date: Date) => {
+    // Set the service date to the clicked date (YYYY-MM-DD format) in local timezone
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const serviceDate = `${year}-${month}-${day}`;
+    setInitialServiceDate(serviceDate);
     setShowCreateModal(true);
   };
 
@@ -431,8 +448,11 @@ export default function TripManagementPage() {
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 mb-6 justify-end">
+          {/* Page Header with Create Button */}
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-bold text-[#463B3B]">
+              Trip Management
+            </h1>
             <button
               onClick={() => setShowCreateModal(true)}
               className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#fad23c] to-[#FDC700] text-[#463B3B] rounded-lg hover:from-[#FDC700] hover:to-[#D08700] transition-all duration-300 font-semibold"
@@ -441,93 +461,60 @@ export default function TripManagementPage() {
               Create Trip
             </button>
           </div>
-          {/* Page Header */}
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-[#463B3B] mb-2">
-              Trip Management
-            </h1>
-            <p className="text-gray-600">
-              Manage bus trips, schedules, and routes with our interactive calendar.
-            </p>
-          </div>
 
           {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-            <div className="bg-white rounded-2xl shadow-soft-lg p-6 border border-gray-100">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Trips Today</p>
-                  <p className="text-2xl font-bold text-[#463B3B]">{stats.totalToday}</p>
+                  <p className="text-xs font-medium text-gray-600">Today</p>
+                  <p className="text-lg font-bold text-[#463B3B]">{stats.totalToday}</p>
                 </div>
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-500 rounded-xl flex items-center justify-center">
-                  <FaCalendarAlt className="w-6 h-6 text-white" />
-                </div>
+                <FaCalendarAlt className="w-5 h-5 text-blue-500" />
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-soft-lg p-6 border border-gray-100">
+            <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Active Routes</p>
-                  <p className="text-2xl font-bold text-green-600">{stats.activeRoutes}</p>
+                  <p className="text-xs font-medium text-gray-600">Routes</p>
+                  <p className="text-lg font-bold text-green-600">{stats.activeRoutes}</p>
                 </div>
-                <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-green-500 rounded-xl flex items-center justify-center">
-                  <FaMapMarkedAlt className="w-6 h-6 text-white" />
-                </div>
+                <FaMapMarkedAlt className="w-5 h-5 text-green-500" />
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-soft-lg p-6 border border-gray-100">
+            <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Students Transported</p>
-                  <p className="text-2xl font-bold text-orange-600">{stats.studentsTransported}</p>
+                  <p className="text-xs font-medium text-gray-600">Students</p>
+                  <p className="text-lg font-bold text-orange-600">{stats.studentsTransported}</p>
                 </div>
-                <div className="w-12 h-12 bg-gradient-to-r from-orange-400 to-orange-500 rounded-xl flex items-center justify-center">
-                  <FaUsers className="w-6 h-6 text-white" />
-                </div>
+                <FaUsers className="w-5 h-5 text-orange-500" />
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-soft-lg p-6 border border-gray-100">
+            <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">On-time Performance</p>
-                  <p className="text-2xl font-bold text-blue-600">{stats.onTimePerformance}%</p>
+                  <p className="text-xs font-medium text-gray-600">On-time</p>
+                  <p className="text-lg font-bold text-blue-600">{stats.onTimePerformance}%</p>
                 </div>
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-500 rounded-xl flex items-center justify-center">
-                  <FaClock className="w-6 h-6 text-white" />
-                </div>
+                <FaClock className="w-5 h-5 text-blue-500" />
               </div>
             </div>
           </div>
 
-          {/* Filters and View Toggle */}
+          {/* Filters and View Toggle for Table */}
           {viewMode === 'table' && (
-            <div className="bg-white rounded-2xl shadow-soft-lg p-6 border border-gray-100 mb-6">
-              <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-                {/* Search */}
-                <div className="flex-1 w-full md:w-auto">
-                  <div className="relative">
-                    <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Search trips..."
-                      value={searchTerm}
-                      onChange={(e) => {
-                        setSearchTerm(e.target.value);
-                      }}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
-                    />
-                  </div>
-                </div>
-
+            <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100 mb-4">
+              <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
                 {/* Filters */}
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                   <select
                     value={statusFilter}
                     onChange={(e) => handleStatusFilterChange(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
+                    className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
                   >
                     <option value="all">All Status</option>
                     <option value="Scheduled">Scheduled</option>
@@ -540,25 +527,25 @@ export default function TripManagementPage() {
                     type="date"
                     value={dateFilter}
                     onChange={(e) => handleDateFilterChange(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
+                    className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
                     placeholder="Filter by date"
                   />
                 </div>
 
                 {/* View Toggle */}
-                <div className="flex gap-2 bg-gray-100 rounded-lg p-1">
+                <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
                   <button
                     onClick={() => setViewMode('table')}
-                    className="px-4 py-2 rounded-lg transition-colors flex items-center gap-2 bg-white text-[#463B3B] shadow-sm"
+                    className="px-3 py-1.5 text-sm rounded-lg transition-colors flex items-center gap-1 bg-white text-[#463B3B] shadow-sm"
                   >
-                    <FaTable />
+                    <FaTable className="w-4 h-4" />
                     Table
                   </button>
                   <button
                     onClick={() => setViewMode('calendar')}
-                    className="px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-gray-600 hover:text-gray-800"
+                    className="px-3 py-1.5 text-sm rounded-lg transition-colors flex items-center gap-1 text-gray-600 hover:text-gray-800"
                   >
-                    <FaCalendarAlt />
+                    <FaCalendarAlt className="w-4 h-4" />
                     Calendar
                   </button>
                 </div>
@@ -568,20 +555,20 @@ export default function TripManagementPage() {
 
           {/* View Toggle for Calendar */}
           {viewMode === 'calendar' && (
-            <div className="mb-6 flex justify-end">
-              <div className="flex gap-2 bg-gray-100 rounded-lg p-1">
+            <div className="mb-4 flex justify-end">
+              <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
                 <button
                   onClick={() => setViewMode('table')}
-                  className="px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-gray-600 hover:text-gray-800"
+                  className="px-3 py-1.5 text-sm rounded-lg transition-colors flex items-center gap-1 text-gray-600 hover:text-gray-800"
                 >
-                  <FaTable />
+                  <FaTable className="w-4 h-4" />
                   Table
                 </button>
                 <button
                   onClick={() => setViewMode('calendar')}
-                  className="px-4 py-2 rounded-lg transition-colors flex items-center gap-2 bg-white text-[#463B3B] shadow-sm"
+                  className="px-3 py-1.5 text-sm rounded-lg transition-colors flex items-center gap-1 bg-white text-[#463B3B] shadow-sm"
                 >
-                  <FaCalendarAlt />
+                  <FaCalendarAlt className="w-4 h-4" />
                   Calendar
                 </button>
               </div>
@@ -628,8 +615,13 @@ export default function TripManagementPage() {
       {showCreateModal && (
         <CreateTripModal
           isOpen={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
+          onClose={() => {
+            setShowCreateModal(false);
+            setInitialServiceDate('');
+          }}
           onSubmit={handleCreateTrip}
+          initialServiceDate={initialServiceDate}
+          existingTrips={trips}
         />
       )}
 
