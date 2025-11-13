@@ -1,27 +1,35 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { CreateTripDto } from '@/types';
+import React, { useState, useEffect, useMemo } from 'react';
+import { CreateTripDto, TripDto } from '@/types';
 import { scheduleService } from "@/services/api/scheduleService";
 import { Schedule } from "@/types";
 import { routeService } from "@/services/routeService/routeService.api";
 import { RouteDto } from "@/services/routeService/routeService.types";
+import { routeScheduleService } from "@/services/routeScheduleService/routeSchedule.api";
 import { FaTimes } from 'react-icons/fa';
 
 interface CreateTripModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (trip: CreateTripDto) => void;
+  initialServiceDate?: string;
+  existingTrips?: TripDto[];
 }
 
 export default function CreateTripModal({
   isOpen,
   onClose,
   onSubmit,
+  initialServiceDate,
+  existingTrips = [],
 }: CreateTripModalProps) {
+  console.log('CreateTripModal - existingTrips:', existingTrips);
+  
   // New: Schedules state
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [routeScheduleIds, setRouteScheduleIds] = useState<string[]>([]);
 
   // Existing: Routes state
   const [routes, setRoutes] = useState<RouteDto[]>([]);
@@ -53,10 +61,18 @@ export default function CreateTripModal({
     if (isOpen) {
       loadRoutes();
       loadSchedules();
+      
+      // Set initial service date if provided (from calendar click)
+      if (initialServiceDate) {
+        setFormData(prev => ({
+          ...prev,
+          serviceDate: initialServiceDate
+        }));
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, initialServiceDate]);
 
-  // Set vehicleId from route selection
+  // Set vehicleId from route selection and load route schedules
   useEffect(() => {
     if (formData.routeId) {
       const selectedRoute = routes.find(r => r.id === formData.routeId);
@@ -65,7 +81,12 @@ export default function CreateTripModal({
           ...prev,
           vehicleId: selectedRoute.vehicleId
         }));
+        
+        // Load route schedules
+        loadRouteSchedules(formData.routeId);
       }
+    } else {
+      setRouteScheduleIds([]);
     }
   }, [formData.routeId, routes]);
 
@@ -93,6 +114,47 @@ export default function CreateTripModal({
     }
   };
 
+  const loadRouteSchedules = async (routeId: string) => {
+    try {
+      const routeSchedules = await routeScheduleService.getByRoute(routeId);
+      const scheduleIds = routeSchedules.map(rs => rs.scheduleId);
+      setRouteScheduleIds(scheduleIds);
+    } catch (error) {
+      console.error('Error loading route schedules:', error);
+      setRouteScheduleIds([]);
+    }
+  };
+
+  // Filter schedules to exclude those already used on the selected date
+  const availableSchedules = useMemo(() => {
+    if (!formData.serviceDate) return schedules;
+    
+    // Get schedule IDs already used on this date
+    const usedScheduleIds = existingTrips
+      .filter(trip => {
+        // Normalize date format (YYYY-MM-DD)
+        const tripDate = trip.serviceDate.split('T')[0]; // Handle ISO format
+        return tripDate === formData.serviceDate;
+      })
+      .map(trip => trip.scheduleSnapshot?.scheduleId)
+      .filter(Boolean);
+    
+    console.log('Service Date:', formData.serviceDate, 'Used Schedules:', usedScheduleIds, 'Existing Trips:', existingTrips);
+    
+    // Return schedules that are not used on this date
+    return schedules.filter(s => !usedScheduleIds.includes(s.id));
+  }, [schedules, formData.serviceDate, existingTrips]);
+
+  const selectedRoute = routes.find(r => r.id === formData.routeId);
+
+  // Filter schedules based on selected route and exclude already used schedules on this date
+  const filteredSchedules = useMemo(() => {
+    if (!formData.routeId || routeScheduleIds.length === 0) return [];
+    
+    // Filter schedules that are linked to this route AND not already used on this date
+    return availableSchedules.filter(s => routeScheduleIds.includes(s.id));
+  }, [formData.routeId, routeScheduleIds, availableSchedules]);
+
   if (!isOpen) return null;
 
   const validate = (): boolean => {
@@ -108,24 +170,25 @@ export default function CreateTripModal({
     }
     if (!formData.vehicleId) newErrors.vehicleId = 'Vehicle ID is required (set from route)';
     if (!formData.scheduleSnapshot?.scheduleId) newErrors.scheduleSnapshot = 'Schedule is required';
+    
+    // Validate service date is within schedule effective date range
+    if (formData.serviceDate && formData.scheduleSnapshot?.scheduleId) {
+      const selectedSchedule = schedules.find(s => s.id === formData.scheduleSnapshot?.scheduleId);
+      if (selectedSchedule) {
+        const serviceDate = new Date(formData.serviceDate);
+        const effectiveFrom = new Date(selectedSchedule.effectiveFrom);
+        const effectiveTo = selectedSchedule.effectiveTo ? new Date(selectedSchedule.effectiveTo) : null;
+        
+        if (serviceDate < effectiveFrom) {
+          newErrors.serviceDate = `Service date must be on or after ${effectiveFrom.toLocaleDateString()}`;
+        } else if (effectiveTo && serviceDate > effectiveTo) {
+          newErrors.serviceDate = `Service date must be on or before ${effectiveTo.toLocaleDateString()}`;
+        }
+      }
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
-
-  const handleScheduleChange = (id: string) => {
-    const schedule = schedules.find(s => s.id === id);
-    setFormData({
-      ...formData,
-      scheduleSnapshot: schedule
-        ? {
-          scheduleId: schedule.id,
-          name: schedule.name,
-          startTime: schedule.startTime,
-          endTime: schedule.endTime,
-          rRule: schedule.rRule
-        }
-        : { scheduleId: '', name: '', startTime: '', endTime: '', rRule: '' }
-    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -133,6 +196,18 @@ export default function CreateTripModal({
     setSubmissionError(null);
     if (validate()) {
       try {
+        // Check for duplicate trip before submitting
+        const tripExists = await checkTripExists(
+          formData.routeId,
+          formData.scheduleSnapshot?.scheduleId || '',
+          formData.serviceDate
+        );
+        
+        if (tripExists) {
+          setSubmissionError('A trip already exists for this route, schedule, and service date. Please choose a different date or schedule.');
+          return;
+        }
+        
         await onSubmit(formData);
         setSubmissionError(null);
       } catch (error: unknown) {
@@ -150,7 +225,59 @@ export default function CreateTripModal({
     }
   };
 
-  const selectedRoute = routes.find(r => r.id === formData.routeId);
+  const checkTripExists = async (routeId: string, scheduleId: string, serviceDate: string): Promise<boolean> => {
+    try {
+      // Import tripService if not already imported
+      // For now, we'll do a simple check - in production, you'd call an API endpoint
+      // This is a placeholder - you may need to implement this in the backend
+      return false; // TODO: Implement actual duplicate check via API
+    } catch (error) {
+      console.error('Error checking for duplicate trip:', error);
+      return false;
+    }
+  };
+
+  // Auto-fill planned times when schedule is selected
+  const handleScheduleChange = (id: string) => {
+    const schedule = schedules.find(s => s.id === id);
+    if (schedule && formData.serviceDate) {
+      // Parse schedule times and combine with service date
+      const [startHours, startMinutes] = schedule.startTime.split(':').map(Number);
+      const [endHours, endMinutes] = schedule.endTime.split(':').map(Number);
+      
+      // Create date in local timezone (not UTC)
+      const [year, month, day] = formData.serviceDate.split('-').map(Number);
+      
+      const plannedStart = new Date(year, month - 1, day, startHours, startMinutes, 0, 0);
+      const plannedEnd = new Date(year, month - 1, day, endHours, endMinutes, 0, 0);
+      
+      // Format as HH:mm for time input
+      const startTimeStr = `${String(startHours).padStart(2, '0')}:${String(startMinutes).padStart(2, '0')}`;
+      const endTimeStr = `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
+      
+      // Format as ISO string for datetime-local compatibility (YYYY-MM-DDTHH:mm)
+      const plannedStartAt = `${formData.serviceDate}T${startTimeStr}`;
+      const plannedEndAt = `${formData.serviceDate}T${endTimeStr}`;
+      
+      setFormData({
+        ...formData,
+        plannedStartAt: plannedStartAt,
+        plannedEndAt: plannedEndAt,
+        scheduleSnapshot: {
+          scheduleId: schedule.id,
+          name: schedule.name,
+          startTime: schedule.startTime,
+          endTime: schedule.endTime,
+          rRule: schedule.rRule
+        }
+      });
+    } else {
+      setFormData({
+        ...formData,
+        scheduleSnapshot: { scheduleId: '', name: '', startTime: '', endTime: '', rRule: '' }
+      });
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -199,16 +326,24 @@ export default function CreateTripModal({
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Schedule <span className="text-red-500">*</span>
             </label>
-            {scheduleLoading ? (
+            {!formData.routeId ? (
+              <div className="text-sm text-gray-500 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                Please select a route first to see available schedules
+              </div>
+            ) : scheduleLoading ? (
               <div className="text-sm text-gray-500">Loading schedules...</div>
+            ) : filteredSchedules.length === 0 ? (
+              <div className="text-sm text-gray-500 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                No schedules available for this route
+              </div>
             ) : (
               <select
                 value={formData.scheduleSnapshot?.scheduleId || ""}
                 onChange={e => handleScheduleChange(e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg ${errors.scheduleSnapshot ? 'border-red-500' : 'border-gray-300'}`}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent ${errors.scheduleSnapshot ? 'border-red-500' : 'border-gray-300'}`}
               >
                 <option value="">Select Schedule</option>
-                {schedules.map(sc =>
+                {filteredSchedules.map(sc =>
                   <option key={sc.id} value={sc.id}>
                     {sc.name} ({sc.startTime} - {sc.endTime})
                   </option>
@@ -243,9 +378,14 @@ export default function CreateTripModal({
               Planned Start Time <span className="text-red-500">*</span>
             </label>
             <input
-              type="datetime-local"
-              value={formData.plannedStartAt}
-              onChange={(e) => setFormData({ ...formData, plannedStartAt: e.target.value })}
+              type="time"
+              value={formData.plannedStartAt ? formData.plannedStartAt.slice(11, 16) : ''}
+              onChange={(e) => {
+                if (formData.serviceDate && e.target.value) {
+                  const dateTime = `${formData.serviceDate}T${e.target.value}`;
+                  setFormData({ ...formData, plannedStartAt: dateTime });
+                }
+              }}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent ${errors.plannedStartAt ? 'border-red-500' : 'border-gray-300'
                 }`}
             />
@@ -260,32 +400,20 @@ export default function CreateTripModal({
               Planned End Time <span className="text-red-500">*</span>
             </label>
             <input
-              type="datetime-local"
-              value={formData.plannedEndAt}
-              onChange={(e) => setFormData({ ...formData, plannedEndAt: e.target.value })}
+              type="time"
+              value={formData.plannedEndAt ? formData.plannedEndAt.slice(11, 16) : ''}
+              onChange={(e) => {
+                if (formData.serviceDate && e.target.value) {
+                  const dateTime = `${formData.serviceDate}T${e.target.value}`;
+                  setFormData({ ...formData, plannedEndAt: dateTime });
+                }
+              }}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent ${errors.plannedEndAt ? 'border-red-500' : 'border-gray-300'
                 }`}
             />
             {errors.plannedEndAt && (
               <p className="mt-1 text-sm text-red-500">{errors.plannedEndAt}</p>
             )}
-          </div>
-
-          {/* Status */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Status
-            </label>
-            <select
-              value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value as "Scheduled" | "InProgress" | "Completed" | "Cancelled" })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
-            >
-              <option value="Scheduled">Scheduled</option>
-              <option value="InProgress">In Progress</option>
-              <option value="Completed">Completed</option>
-              <option value="Cancelled">Cancelled</option>
-            </select>
           </div>
 
           {submissionError && (

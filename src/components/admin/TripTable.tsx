@@ -96,6 +96,22 @@ export default function TripTable({
     });
   };
 
+  const getScheduleTime = (trip: TripDto, timeType: 'start' | 'end') => {
+    // Use schedule snapshot time if available
+    if (trip.scheduleSnapshot) {
+      const timeStr = timeType === 'start' ? trip.scheduleSnapshot.startTime : trip.scheduleSnapshot.endTime;
+      if (timeStr) {
+        const serviceDate = new Date(trip.serviceDate);
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        const date = new Date(serviceDate);
+        date.setHours(hours, minutes, 0, 0);
+        return formatDateTime(date.toISOString());
+      }
+    }
+    // Fallback to planned time
+    return formatDateTime(timeType === 'start' ? trip.plannedStartAt : trip.plannedEndAt);
+  };
+
   const handleSort = (column: string) => {
     if (!onSort) return;
     const newOrder = sortBy === column && sortOrder === 'asc' ? 'desc' : 'asc';
@@ -115,60 +131,54 @@ export default function TripTable({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-soft-lg border border-gray-100 overflow-hidden">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                className="px-3 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('serviceDate')}
               >
-                <div className="flex items-center gap-2">
-                  Service Date
+                <div className="flex items-center gap-1">
+                  Date
                   <SortIcon column="serviceDate" />
                 </div>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                 Route
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                className="px-3 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('plannedStartAt')}
               >
-                <div className="flex items-center gap-2">
-                  Planned Start
+                <div className="flex items-center gap-1">
+                  Start
                   <SortIcon column="plannedStartAt" />
                 </div>
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                className="px-3 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('plannedEndAt')}
               >
-                <div className="flex items-center gap-2">
-                  Planned End
+                <div className="flex items-center gap-1">
+                  End
                   <SortIcon column="plannedEndAt" />
                 </div>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actual Start
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actual End
-              </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                className="px-3 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('status')}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   Status
                   <SortIcon column="status" />
                 </div>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-2 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
                 Stops
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-2 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -176,7 +186,7 @@ export default function TripTable({
           <tbody className="bg-white divide-y divide-gray-200">
             {trips.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
+                <td colSpan={7} className="px-3 py-8 text-center text-sm text-gray-500">
                   No trips found
                 </td>
               </tr>
@@ -188,10 +198,10 @@ export default function TripTable({
 
                 return (
                   <tr key={trip.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
                       {formatDate(trip.serviceDate)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
                       {showTooltip ? (
                         <Tooltip content={fullRouteName}>
                           <span className="cursor-help underline decoration-dotted">
@@ -202,46 +212,47 @@ export default function TripTable({
                         <span>{displayRouteName}</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatDateTime(trip.plannedStartAt)}
+                    <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                      {getScheduleTime(trip, 'start')}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatDateTime(trip.plannedEndAt)}
+                    <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                      {getScheduleTime(trip, 'end')}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {trip.startTime ? formatDateTime(trip.startTime) : '-'}
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                        trip.status === 'Scheduled' ? 'bg-blue-100 text-blue-800' :
+                        trip.status === 'InProgress' ? 'bg-green-100 text-green-800' :
+                        trip.status === 'Completed' ? 'bg-gray-100 text-gray-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {trip.status === 'InProgress' ? 'In Progress' : trip.status}
+                      </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {trip.endTime ? formatDateTime(trip.endTime) : '-'}
+                    <td className="px-3 py-2 whitespace-nowrap text-center text-sm text-gray-900">
+                      {trip.stops.length}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(trip.status)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {trip.stops.length} stops
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end gap-2">
+                    <td className="px-3 py-2 whitespace-nowrap text-right">
+                      <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => onView(trip)}
-                          className="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="text-blue-600 hover:text-blue-900 p-1.5 hover:bg-blue-50 rounded transition-colors"
                           title="View Details"
                         >
-                          <FaEye />
+                          <FaEye className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => onEdit(trip)}
-                          className="text-yellow-600 hover:text-yellow-900 p-2 hover:bg-yellow-50 rounded-lg transition-colors"
+                          className="text-yellow-600 hover:text-yellow-900 p-1.5 hover:bg-yellow-50 rounded transition-colors"
                           title="Edit Trip"
                         >
-                          <FaEdit />
+                          <FaEdit className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => onDelete(trip)}
-                          className="text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded-lg transition-colors"
+                          className="text-red-600 hover:text-red-900 p-1.5 hover:bg-red-50 rounded transition-colors"
                           title="Delete Trip"
                         >
-                          <FaTrash />
+                          <FaTrash className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -254,42 +265,44 @@ export default function TripTable({
       </div>
 
       {/* Pagination */}
-      <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-700">
-            Showing {totalItems > 0 ? (currentPage - 1) * perPage + 1 : 0} to{' '}
-            {Math.min(currentPage * perPage, totalItems)} of {totalItems} trips
-          </span>
+      <div className="bg-gray-50 px-4 py-4 border-t border-gray-200 flex flex-col items-center justify-center text-sm gap-3">
+        <div className="text-gray-700">
+          Showing <span className="font-semibold">{totalItems > 0 ? (currentPage - 1) * perPage + 1 : 0}</span> to{" "}
+          <span className="font-semibold">{Math.min(currentPage * perPage, totalItems)}</span> of{" "}
+          <span className="font-semibold">{totalItems}</span>
+        </div>
+
+        <div className="flex items-center gap-3">
           <select
             value={perPage}
             onChange={(e) => onPerPageChange(parseInt(e.target.value))}
-            className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
+            className="px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
           >
-            <option value={10}>10 per page</option>
-            <option value={20}>20 per page</option>
-            <option value={50}>50 per page</option>
-            <option value={100}>100 per page</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
           </select>
-        </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => onPageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="p-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
-          >
-            <FaChevronLeft />
-          </button>
-          <span className="text-sm text-gray-700 px-4">
-            Page {currentPage} of {totalPages || 1}
-          </span>
-          <button
-            onClick={() => onPageChange(currentPage + 1)}
-            disabled={currentPage >= totalPages}
-            className="p-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
-          >
-            <FaChevronRight />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="p-1 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+            >
+              <FaChevronLeft className="w-3 h-3" />
+            </button>
+            <span className="text-gray-700 px-2">
+              {currentPage}/{totalPages || 1}
+            </span>
+            <button
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages}
+              className="p-1 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+            >
+              <FaChevronRight className="w-3 h-3" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

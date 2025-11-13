@@ -24,6 +24,12 @@ function toLocalDatetimeInput(iso?: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+function toLocalTimeInput(iso?: string): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 export default function EditTripModal({
   isOpen,
@@ -54,10 +60,10 @@ export default function EditTripModal({
         id: trip.id,
         routeId: trip.routeId,
         serviceDate: toLocalDatetimeInput(trip.serviceDate).split('T')[0],
-        plannedStartAt: toLocalDatetimeInput(trip.plannedStartAt),
-        plannedEndAt: toLocalDatetimeInput(trip.plannedEndAt),
-        startTime: toLocalDatetimeInput(trip.startTime) || undefined,
-        endTime: toLocalDatetimeInput(trip.endTime) || undefined,
+        plannedStartAt: toLocalTimeInput(trip.plannedStartAt),
+        plannedEndAt: toLocalTimeInput(trip.plannedEndAt),
+        startTime: toLocalTimeInput(trip.startTime) || undefined,
+        endTime: toLocalTimeInput(trip.endTime) || undefined,
         status: trip.status,
         vehicleId: trip.vehicleId,
         driverVehicleId: trip.driverVehicleId,
@@ -66,6 +72,11 @@ export default function EditTripModal({
         scheduleSnapshot: trip.scheduleSnapshot,
         stops: trip.stops
       });
+      
+      // Auto-select schedule if trip has scheduleSnapshot
+      if (trip.scheduleSnapshot?.scheduleId) {
+        // Schedule will be auto-selected when schedules are loaded
+      }
     }
   }, [trip]);
 
@@ -77,6 +88,34 @@ export default function EditTripModal({
       }
     }
   }, [formData?.routeId, routes]);
+
+  // Auto-select schedule when schedules are loaded and trip has scheduleSnapshot
+  useEffect(() => {
+    if (schedules.length > 0 && formData?.scheduleSnapshot?.scheduleId && !formData.scheduleSnapshot.name) {
+      const schedule = schedules.find(s => s.id === formData.scheduleSnapshot?.scheduleId);
+      if (schedule) {
+        // Parse schedule times and update form
+        const [startHours, startMinutes] = schedule.startTime.split(':').map(Number);
+        const [endHours, endMinutes] = schedule.endTime.split(':').map(Number);
+        
+        const startTimeStr = `${String(startHours).padStart(2, '0')}:${String(startMinutes).padStart(2, '0')}`;
+        const endTimeStr = `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
+        
+        setFormData(prev => prev ? {
+          ...prev,
+          plannedStartAt: startTimeStr,
+          plannedEndAt: endTimeStr,
+          scheduleSnapshot: {
+            scheduleId: schedule.id,
+            name: schedule.name,
+            startTime: schedule.startTime,
+            endTime: schedule.endTime,
+            rRule: schedule.rRule
+          }
+        } : null);
+      }
+    }
+  }, [schedules, formData?.scheduleSnapshot?.scheduleId]);
 
   const loadRoutes = async () => {
     setLoadingRoutes(true);
@@ -123,18 +162,33 @@ export default function EditTripModal({
 
   const handleScheduleChange = (id: string) => {
     const schedule = schedules.find(s => s.id === id);
-    setFormData(formData => formData && {
-      ...formData,
-      scheduleSnapshot: schedule
-        ? {
+    if (schedule && formData) {
+      // Parse schedule times (format: HH:mm)
+      const [startHours, startMinutes] = schedule.startTime.split(':').map(Number);
+      const [endHours, endMinutes] = schedule.endTime.split(':').map(Number);
+      
+      // Format as HH:mm for time input
+      const startTimeStr = `${String(startHours).padStart(2, '0')}:${String(startMinutes).padStart(2, '0')}`;
+      const endTimeStr = `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
+      
+      setFormData({
+        ...formData,
+        plannedStartAt: startTimeStr,
+        plannedEndAt: endTimeStr,
+        scheduleSnapshot: {
           scheduleId: schedule.id,
           name: schedule.name,
           startTime: schedule.startTime,
           endTime: schedule.endTime,
           rRule: schedule.rRule
         }
-        : { scheduleId: '', name: '', startTime: '', endTime: '', rRule: '' }
-    });
+      });
+    } else {
+      setFormData(formData => formData && {
+        ...formData,
+        scheduleSnapshot: { scheduleId: '', name: '', startTime: '', endTime: '', rRule: '' }
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -250,7 +304,8 @@ export default function EditTripModal({
               Planned Start Time <span className="text-red-500">*</span>
             </label>
             <input
-              type="datetime-local"
+              type="time"
+              lang="en-US"
               value={formData.plannedStartAt}
               onChange={(e) => setFormData({ ...formData, plannedStartAt: e.target.value })}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent ${errors.plannedStartAt ? 'border-red-500' : 'border-gray-300'
@@ -267,7 +322,8 @@ export default function EditTripModal({
               Planned End Time <span className="text-red-500">*</span>
             </label>
             <input
-              type="datetime-local"
+              type="time"
+              lang="en-US"
               value={formData.plannedEndAt}
               onChange={(e) => setFormData({ ...formData, plannedEndAt: e.target.value })}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent ${errors.plannedEndAt ? 'border-red-500' : 'border-gray-300'
