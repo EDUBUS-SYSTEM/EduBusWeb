@@ -1,9 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
 import driverRequestsReducer from '@/store/slices/driverRequestsSlice';
+import tripsReducer from '@/store/slices/tripsSlice';
 
 export const store = configureStore({
   reducer: {
     driverRequests: driverRequestsReducer,
+    trips: tripsReducer,
   },
 });
 
