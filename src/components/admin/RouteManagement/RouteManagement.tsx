@@ -1,11 +1,12 @@
 // EduBusWeb/src/components/admin/RouteManagement/RouteManagement.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
-import { FaPlus, FaSave, FaMagic, FaTimes, FaCheck } from 'react-icons/fa';
+import { FaPlus, FaSave, FaMagic, FaTimes, FaCheck, FaBus } from 'react-icons/fa';
 import { routeService } from '@/services/routeService/routeService.api';
 import { RouteDto, PickupPointInfoDto, UpdateBulkRouteRequest, ReplaceAllRoutesRequest, RoutePickupPointRequest, UpdateBulkRouteItem, RouteSuggestionDto } from '@/services/routeService/routeService.types';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import '@/styles/route-management.css';
 import CreateRouteModal from './CreateRouteModal';
 import EditRouteModal from './EditRouteModal';
 import ApplySuggestionsModal from './ApplySuggestionsModal'
@@ -487,10 +488,10 @@ const RouteManagement: React.FC = () => {
 
   if (isLoading || isGenerating) {
     return (
-      <div className="p-4 bg-gray-100 min-h-screen flex items-center justify-center">
+      <div className="p-4 bg-[#FEFCE8] min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FDC700] mx-auto mb-4"></div>
+          <p className="text-[#463B3B] font-medium">
             {isGenerating ? 'Generating optimized routes...' : 'Loading routes and pickup points...'}
           </p>
         </div>
@@ -502,68 +503,87 @@ const RouteManagement: React.FC = () => {
     <>
       <ToastContainer />
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="p-4 bg-gray-100 min-h-screen">
+        <div className="p-6 bg-[#FEFCE8] min-h-screen">
           {/* Header with Save and Create Buttons */}
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-800">Route Management</h1>
+          <div className="bg-gradient-to-r from-[#FEF3C7] to-[#FDE68A] rounded-2xl p-6 shadow-lg mb-6 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-[#fad23c]/10 via-transparent to-[#fad23c]/5"></div>
+            <div className="flex justify-between items-center relative z-10">
+              <div>
+                <h1 className="text-3xl font-bold text-[#463B3B] mb-2">Route Management</h1>
+                <p className="text-[#463B3B]/80 flex items-center">
+                  <FaBus className="mr-2 text-[#fad23c]" />
+                  Manage bus routes and pickup points
+                </p>
+              </div>
 
-            <div className="flex items-center space-x-3">
-              {/* Save Changes Button */}
-              {modifiedRoutes.size > 0 && !hasSuggestions &&(
-                <button
-                  onClick={handleSaveChanges}
-                  disabled={isSaving}
-                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center transition-colors disabled:opacity-50"
-                >
-                  <FaSave className="mr-2" />
-                  {isSaving ? 'Saving...' : `Save Changes (${modifiedRoutes.size})`}
-                </button>
-              )}
+              <div className="flex items-center gap-3">
+                {/* Save Changes Button */}
+                {modifiedRoutes.size > 0 && !hasSuggestions &&(
+                  <button
+                    onClick={handleSaveChanges}
+                    disabled={isSaving}
+                    className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:from-green-300 disabled:to-green-400 text-white px-4 py-2 rounded-full flex items-center transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg disabled:opacity-50 disabled:transform-none relative overflow-hidden group"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-green-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <FaSave className="mr-2 relative z-10" size={14} />
+                    <span className="font-medium relative z-10 text-sm">
+                      {isSaving ? 'Saving...' : `Save Changes (${modifiedRoutes.size})`}
+                    </span>
+                  </button>
+                )}
 
-              {(hasSuggestions || modifiedRoutes.size > 0) && (
-                <button
-                  onClick={handleDiscardChanges}
-                  disabled={isLoading}
-                  className="bg-gray-500 hover:bg-gray-600 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
-                >
-                  <FaTimes className="mr-2" />
-                  {isLoading ? 'Loading...' : 'Discard'}
-                </button>
-              )}
+                {(hasSuggestions || modifiedRoutes.size > 0) && (
+                  <button
+                    onClick={handleDiscardChanges}
+                    disabled={isLoading}
+                    className="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 disabled:from-gray-300 disabled:to-gray-400 text-white px-4 py-2 rounded-full flex items-center transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg disabled:transform-none relative overflow-hidden group"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-gray-400/20 to-gray-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <FaTimes className="mr-2 relative z-10" size={14} />
+                    <span className="font-medium relative z-10 text-sm">
+                      {isLoading ? 'Loading...' : 'Discard'}
+                    </span>
+                  </button>
+                )}
 
-              {hasSuggestions && (
-                <button
-                  onClick={handleApplySuggestions}
-                  className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
-                >
-                  <FaCheck className="mr-2" />
-                  Apply Suggestions ({routes.length})
-                </button>
-              )}
-              
-              {!hasSuggestions && modifiedRoutes.size === 0 && (
-                <button
-                  onClick={handleGenerateRoutes}
-                  disabled={isGenerating || isLoading}
-                  className="bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
-                >
-                  <FaMagic className="mr-2" />
-                  {isGenerating ? 'Generating...' : 'Generate Routes'}
-                </button>
-              )}
+                {hasSuggestions && (
+                  <button
+                    onClick={handleApplySuggestions}
+                    className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl flex items-center transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
+                  >
+                    <FaCheck className="mr-2" />
+                    Apply Suggestions ({routes.length})
+                  </button>
+                )}
+                
+                {!hasSuggestions && modifiedRoutes.size === 0 && (
+                  <button
+                    onClick={handleGenerateRoutes}
+                    disabled={isGenerating || isLoading}
+                    className="bg-gradient-to-r from-[#F59E0B] to-[#D97706] hover:from-[#D97706] hover:to-[#B45309] disabled:from-[#FDE68A] disabled:to-[#FCD34D] text-white px-4 py-2 rounded-full flex items-center transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg disabled:transform-none relative overflow-hidden group"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#FBBF24]/20 to-[#F59E0B]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <FaMagic className="mr-2 relative z-10" size={14} />
+                    <span className="font-medium relative z-10 text-sm">
+                      {isGenerating ? 'Generating...' : 'Generate Routes'}
+                    </span>
+                  </button>
+                )}
 
-              {/* Create Route Button */}
-              <button
-                onClick={() => setIsCreateModalOpen(true)}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
-              >
-                <FaPlus className="mr-2" />
-                Create Route
-              </button>
+                {/* Create Route Button */}
+                <button
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="bg-gradient-to-r from-[#fad23c] to-[#F59E0B] hover:from-[#F59E0B] hover:to-[#D97706] text-[#463B3B] px-4 py-2 rounded-full flex items-center transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg relative overflow-hidden group font-semibold"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#FBBF24]/20 to-[#F59E0B]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <FaPlus className="mr-2 relative z-10" size={14} />
+                  <span className="font-medium relative z-10 text-sm">Create Route</span>
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             {/* Render Route Rows */}
             {routes.map(route => (
               <RouteRow
@@ -571,9 +591,10 @@ const RouteManagement: React.FC = () => {
                 route={route}
                 onScheduleClick={handleScheduleClick} 
                 onRouteClick={handleRouteClick} 
-                onRouteMapToggle={handleRouteMapToggle} // ✅ Map toggle handler
+                onRouteMapToggle={handleRouteMapToggle}
                 isModified={isRouteModified(route.id)}
                 isDraft={hasSuggestions}
+                isSelectedInMap={selectedRouteIds.includes(route.id)}
               />
             ))}
 

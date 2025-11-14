@@ -7,11 +7,7 @@ import {
   FaHome,
   FaUsers,
   FaUserCircle,
-  FaClipboardList,
-  FaChartBar,
-  FaCommentDots,
   FaFileAlt,
-  FaLock,
   FaMapMarkedAlt,
   FaList,
   FaBus,
@@ -21,7 +17,8 @@ import {
   FaRoute,
   FaDollarSign,
   FaReceipt,
-  FaUserCog
+  FaUserCog,
+  FaSchool
 } from "react-icons/fa";
 
 export default function Sidebar() {
@@ -35,12 +32,8 @@ export default function Sidebar() {
       icon: <FaUserCircle />,
     },
     { href: "/admin/users", label: "User Management", icon: <FaUsers /> },
-    { href: "/admin/shuttle", label: "Shuttle Register", icon: <FaClipboardList /> },
-    { href: "/admin/revenue", label: "Revenue Statistic", icon: <FaChartBar /> },
-    { href: "/admin/complaints", label: "Parent Complaint", icon: <FaCommentDots /> },
     { href: "/admin/driver-requests", label: "Driver's Requests", icon: <FaFileAlt /> },
     { href: "/admin/parent-requests", label: "Parent Requests", icon: <FaUserCheck /> },
-    { href: "/admin/password", label: "Change Password", icon: <FaLock /> },
     {
       href: "/admin/trips",
       label: "Trip Management",
@@ -62,6 +55,7 @@ export default function Sidebar() {
     { href: "/admin/routes", label: "Route Management", icon: <FaRoute /> },
     { href: "/admin/unit-price", label: "Unit Price Management", icon: <FaDollarSign /> },
     { href: "/admin/parent-transactions", label: "Parent Transactions", icon: <FaReceipt /> },
+    { href: "/admin/school", label: "School Management", icon: <FaSchool /> },
   ];
 
   return (
@@ -79,16 +73,27 @@ export default function Sidebar() {
       </div>
 
       {/* Menu */}
-      <nav className="flex-1 overflow-y-auto mt-2 text-[#463B3B] text-sm font-medium pr-1">
+      <nav className="flex-1 overflow-y-auto mt-2 text-[#463B3B] text-sm font-medium pr-1" style={{ scrollBehavior: 'smooth' }}>
         {links.map((link) => (
           <Link
             key={link.href}
             href={link.href}
-            className={`px-5 py-4 flex items-center gap-3 transition 
+            className={`px-5 py-4 flex items-center gap-3 transition-colors duration-200 block
               ${pathname === link.href
                 ? "bg-[#fad23c] font-semibold"
                 : "hover:bg-[#FFF085]"
               }`}
+            onClick={(e) => {
+              // Prevent scroll reset by not using default navigation behavior
+              const nav = e.currentTarget.closest('nav');
+              if (nav) {
+                const scrollTop = nav.scrollTop;
+                // Store scroll position temporarily
+                setTimeout(() => {
+                  nav.scrollTop = scrollTop;
+                }, 0);
+              }
+            }}
           >
             {link.icon} {link.label}
           </Link>

@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("token");
     localStorage.removeItem("refreshToken");
     setUser(null);
-    router.replace("/login");
+    router.replace("/");
   }, [router]);
 
   // Check token when component mounts

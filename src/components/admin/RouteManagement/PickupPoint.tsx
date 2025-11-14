@@ -112,19 +112,18 @@ const PickupPoint: React.FC<PickupPointProps> = ({ point, index, className = "" 
             ref={provided.innerRef}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
-            className={`bg-blue-100 hover:bg-blue-200 p-2 rounded flex items-center min-w-[120px] cursor-grab active:cursor-grabbing transition-colors ${className} ${
-              snapshot.isDragging ? 'opacity-50 rotate-2 scale-105' : ''
+            className={`bg-gradient-to-br from-[#E0F2FE] to-[#BAE6FD] hover:from-[#BAE6FD] hover:to-[#7DD3FC] border-2 border-[#0EA5E9] hover:border-[#0284C7] p-2 rounded-full flex flex-col items-center justify-center min-w-[60px] max-w-[60px] h-[60px] cursor-grab active:cursor-grabbing transition-all duration-200 shadow-md hover:shadow-lg passenger-seat ${className} ${
+              snapshot.isDragging ? 'opacity-70 rotate-6 scale-125 shadow-xl ring-3 ring-[#0EA5E9]' : ''
             }`}
           >
-            <FaMapMarkerAlt className="mr-2 text-blue-600 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-gray-800 truncate">
-                {truncatedText}
-              </div>
-              <div className="flex items-center text-xs text-gray-600">
-                <FaUser className="mr-1" />
-                {point.studentCount}
-              </div>
+            {/* Passenger Icon */}
+            <div className="w-6 h-6 bg-[#0EA5E9] rounded-full flex items-center justify-center mb-1">
+              <FaUser className="text-white text-xs" />
+            </div>
+            
+            {/* Student Count */}
+            <div className="text-xs font-bold text-[#0284C7] bg-white/90 rounded-full px-2 py-0.5 min-w-[24px] text-center">
+              {point.studentCount}
             </div>
           </div>
         </Tooltip>

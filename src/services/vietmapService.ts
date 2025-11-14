@@ -70,17 +70,16 @@ class VietMapService {
       return this.getMockGeocodeResults(query);
     }
 
+    // Use proxy route to avoid CORS issues
     const params = new URLSearchParams({
-      apikey: this.apiKey,
-      text: query,
-      display_type: '1' // New format (2 levels: ward, city)
+      text: query
     });
 
     if (location) {
       params.append('focus', `${location.lat},${location.lng}`);
     }
 
-    const response = await fetch(`https://maps.vietmap.vn/api/search/v4?${params}`);
+    const response = await fetch(`/api/vietmap/search?${params}`);
     
     if (!response.ok) {
       throw new Error(`Geocoding API error: ${response.status}`);
@@ -120,7 +119,7 @@ class VietMapService {
   }
 
   // Get place details by ref_id to get coordinates
-  async getPlaceDetails(ref_id: string): Promise<{ lat: number; lng: number } | null> {
+  async getPlaceDetails(ref_id: string, signal?: AbortSignal): Promise<{ lat: number; lng: number } | null> {
     if (!this.apiKey || this.apiKey === 'YOUR_API_KEY_HERE') {
       console.warn('VietMap API key not configured, using mock coordinates');
       return {
@@ -130,35 +129,65 @@ class VietMapService {
     }
 
     try {
+      // Use proxy route to avoid CORS issues
       const params = new URLSearchParams({
-        apikey: this.apiKey,
         ref_id: ref_id
       });
 
-      const response = await fetch(`https://maps.vietmap.vn/api/place/details?${params}`);
+      const response = await fetch(`/api/vietmap/place/details?${params}`, {
+        signal,
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
       
       if (!response.ok) {
+        // Don't throw for 404 or other client errors, just return null
+        if (response.status >= 400 && response.status < 500) {
+          console.warn(`Place details API returned ${response.status} for ref_id: ${ref_id}`);
+          return null;
+        }
         throw new Error(`Place details API error: ${response.status}`);
       }
 
       const data = await response.json();
+      
+      // Handle null response from proxy (when API returns 4xx)
+      if (data === null) {
+        return null;
+      }
+      
       console.log('VietMap Place Details API Response:', data);
       
       // Extract coordinates from response
       if (data && typeof data === 'object') {
         // Try different possible field names for coordinates
-        const coords = data.coordinates || data.coord || data.location || data.geometry?.location;
+        const coords = data.coordinates || data.coord || data.location || data.geometry?.location || 
+                      (data.geometry && data.geometry.coordinates ? 
+                        { lng: data.geometry.coordinates[0], lat: data.geometry.coordinates[1] } : null);
         
-        if (coords && (coords.lat || coords.latitude) && (coords.lng || coords.longitude)) {
+        if (coords && (coords.lat !== undefined || coords.latitude !== undefined) && 
+            (coords.lng !== undefined || coords.longitude !== undefined)) {
           return {
-            lat: coords.lat || coords.latitude,
-            lng: coords.lng || coords.longitude
+            lat: coords.lat ?? coords.latitude,
+            lng: coords.lng ?? coords.longitude
           };
         }
       }
 
       return null;
     } catch (error) {
+      // Ignore abort errors
+      if (error instanceof Error && error.name === 'AbortError') {
+        return null;
+      }
+      
+      // Handle network errors more gracefully
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        console.error('Network error getting place details. This might be due to network issues or API endpoint problems.');
+        return null;
+      }
+      
       console.error('Error getting place details:', error);
       return null;
     }
@@ -209,17 +238,16 @@ class VietMapService {
       return this.getMockAutocompleteResults(query);
     }
 
+    // Use proxy route to avoid CORS issues
     const params = new URLSearchParams({
-      apikey: this.apiKey,
-      text: query,
-      display_type: '1' // New format (2 levels: ward, city)
+      text: query
     });
 
     if (location) {
       params.append('focus', `${location.lat},${location.lng}`);
     }
 
-    const response = await fetch(`https://maps.vietmap.vn/api/autocomplete/v4?${params}`, {
+    const response = await fetch(`/api/vietmap/autocomplete?${params}`, {
       signal
     });
     
@@ -305,7 +333,7 @@ class VietMapService {
   }
 
   // Reverse Geocoding API v3 - Convert coordinates to address
-  async reverseGeocode(lat: number, lng: number): Promise<string> {
+  async reverseGeocode(lat: number, lng: number, signal?: AbortSignal): Promise<string> {
     if (!this.apiKey) {
       throw new Error('VietMap API key not configured');
     }
@@ -316,7 +344,9 @@ class VietMapService {
       lng: lng.toString()
     });
 
-    const response = await fetch(`https://maps.vietmap.vn/api/reverse/v3?${params}`);
+    const response = await fetch(`https://maps.vietmap.vn/api/reverse/v3?${params}`, {
+      signal
+    });
     
     if (!response.ok) {
       throw new Error(`Reverse Geocoding API error: ${response.status}`);
