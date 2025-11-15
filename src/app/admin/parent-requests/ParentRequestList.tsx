@@ -14,8 +14,7 @@ export default function ParentRequestList() {
   const [error, setError] = useState<string | null>(null);
   
   // Search and filter states
-  const [searchEmail, setSearchEmail] = useState("");
-  const [searchName, setSearchName] = useState("");
+  const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   
@@ -50,20 +49,31 @@ export default function ParentRequestList() {
         query.status = statusFilter;
       }
       
-      if (searchEmail.trim()) {
-        query.parentEmail = searchEmail.trim();
+      // If search text looks like an email, search by email via API
+      if (searchText.trim() && searchText.includes('@')) {
+        query.parentEmail = searchText.trim();
       }
       
       // Fetch data from API
       const data = await pickupPointService.listRequests(query);
       
-      // Apply client-side name filtering if needed (since API doesn't support name search)
+      // Apply client-side filtering for name or email (if not already filtered by API)
       let filteredData = data;
-      if (searchName.trim()) {
+      if (searchText.trim()) {
+        const searchLower = searchText.toLowerCase();
         filteredData = data.filter(req => {
-          if (!req.parentInfo) return false;
-          const fullName = `${req.parentInfo.firstName} ${req.parentInfo.lastName}`.toLowerCase();
-          return fullName.includes(searchName.toLowerCase());
+          // Search by email
+          if (req.parentEmail.toLowerCase().includes(searchLower)) {
+            return true;
+          }
+          // Search by name
+          if (req.parentInfo) {
+            const fullName = `${req.parentInfo.firstName} ${req.parentInfo.lastName}`.toLowerCase();
+            if (fullName.includes(searchLower)) {
+              return true;
+            }
+          }
+          return false;
         });
       }
       
@@ -81,20 +91,16 @@ export default function ParentRequestList() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, statusFilter, searchEmail, searchName, itemsPerPage]);
+  }, [currentPage, statusFilter, searchText, itemsPerPage]);
 
-  useEffect(() => {
-    fetchRequests();
-  }, [fetchRequests]);
-
-  // Debounce search inputs
+  // Debounce search input and fetch requests
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       fetchRequests();
-    }, 300);
+    }, searchText ? 300 : 0); // No delay if search is empty
 
     return () => clearTimeout(timeoutId);
-  }, [searchEmail, searchName, fetchRequests]);
+  }, [searchText, fetchRequests]);
 
   const handleApprove = async (requestId: string, notes?: string) => {
     setActionLoading(true);
@@ -182,46 +188,29 @@ export default function ParentRequestList() {
   return (
     <div className="space-y-6 pb-8">
       {/* Search and Filter Section */}
-      <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Search by Email */}
+      <div className="sticky top-16 z-40 bg-white rounded-3xl shadow-lg p-4 border border-gray-100">
+        <div className="flex flex-col lg:flex-row gap-3">
+          {/* Combined Search */}
           <div className="flex-1 relative">
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
             <input
-              key="search-email"
+              key="search-combined"
               type="text"
-              placeholder="Search by email..."
-              value={searchEmail}
-              onChange={(e) => setSearchEmail(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-200"
-              autoComplete="off"
-            />
-          </div>
-          
-          {/* Search by Name */}
-          <div className="flex-1 relative">
-            <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
-              key="search-name"
-              type="text"
-              placeholder="Search by name..."
-              value={searchName}
-              onChange={(e) => setSearchName(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-200"
+              placeholder="Search by email or name..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-200"
               autoComplete="off"
             />
           </div>
           
           {/* Clear Search */}
-          {(searchEmail || searchName) && (
+          {searchText && (
             <button
-              onClick={() => {
-                setSearchEmail("");
-                setSearchName("");
-              }}
-              className="flex items-center gap-2 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors duration-200 font-medium"
+              onClick={() => setSearchText("")}
+              className="flex items-center gap-1.5 px-3 py-2.5 text-sm bg-gray-100 text-gray-700 rounded-2xl hover:bg-gray-200 transition-colors duration-200 font-medium"
             >
-              <FaTimes />
+              <FaTimes className="text-xs" />
               Clear
             </button>
           )}
@@ -229,25 +218,25 @@ export default function ParentRequestList() {
           {/* Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 px-4 py-3 bg-[#fad23c] text-[#463B3B] rounded-xl hover:bg-[#FFF085] transition-colors duration-200 font-medium"
+            className="flex items-center gap-1.5 px-3 py-2.5 text-sm bg-[#fad23c] text-[#463B3B] rounded-2xl hover:bg-[#FFF085] transition-colors duration-200 font-medium"
           >
-            <FaFilter />
+            <FaFilter className="text-xs" />
             Filters
           </button>
         </div>
 
         {/* Filter Options */}
         {showFilters && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="flex flex-wrap gap-4">
+          <div className="mt-3 pt-3 border-t border-gray-200">
+            <div className="flex flex-wrap gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">
                   Status
                 </label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
                 >
                   <option value="">All Status</option>
                   <option value="Pending">Pending</option>

@@ -67,7 +67,7 @@ export default function ScheduleManagementPage() {
           </div>
 
           {/* Tabs and Search in one row */}
-          <div className="bg-white rounded-2xl shadow-soft-lg p-4 mb-4 border border-gray-100">
+          <div className="sticky top-16 z-40 bg-white rounded-2xl shadow-soft-lg p-4 mb-4 border border-gray-100">
             <div className="flex flex-col lg:flex-row gap-4">
               {/* Tabs */}
               <div className="flex space-x-1 bg-gray-100 p-1 rounded-xl">

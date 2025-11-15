@@ -67,23 +67,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(data);
     } catch (error) {
       clearTimeout(timeoutId);
-      console.error('[VietMap Proxy] Error:', error);
       
-      // Handle timeout errors
+      // Silently handle AbortError (timeout or user cancellation)
       if (error instanceof Error && error.name === 'AbortError') {
         return NextResponse.json(
           { error: 'Request timeout' },
           { status: 408 }
         );
       }
-
+      
+      // Only log non-abort errors
+      console.error('[VietMap Proxy] Error:', error);
       return NextResponse.json(
         { error: 'Internal server error' },
         { status: 500 }
       );
     }
   } catch (error) {
-    console.error('[VietMap Proxy] Error:', error);
+    // Only log if not an AbortError
+    if (!(error instanceof Error && error.name === 'AbortError')) {
+      console.error('[VietMap Proxy] Error:', error);
+    }
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

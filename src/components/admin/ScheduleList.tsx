@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   FaEdit,
   FaTrash,
@@ -166,20 +166,22 @@ export default function ScheduleList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showDetails, selectedSchedule?.id]);
 
-  const filteredSchedules = schedules.filter((schedule) => {
-    const q = (searchTerm || "").toString().toLowerCase();
-    const name = (schedule?.name || "").toString().toLowerCase();
-    const type = (schedule?.scheduleType || "").toString().toLowerCase();
-    const year = (schedule?.academicYear || "").toString().toLowerCase();
+  const filteredSchedules = useMemo(() => {
+    return schedules.filter((schedule) => {
+      const q = (searchTerm || "").toString().toLowerCase();
+      const name = (schedule?.name || "").toString().toLowerCase();
+      const type = (schedule?.scheduleType || "").toString().toLowerCase();
+      const year = (schedule?.academicYear || "").toString().toLowerCase();
 
-    const matchesSearch =
-      !q || name.includes(q) || type.includes(q) || year.includes(q);
+      const matchesSearch =
+        !q || name.includes(q) || type.includes(q) || year.includes(q);
 
-    const matchesFilter =
-      filterActive === null || schedule.isActive === filterActive;
+      const matchesFilter =
+        filterActive === null || schedule.isActive === filterActive;
 
-    return matchesSearch && matchesFilter;
-  });
+      return matchesSearch && matchesFilter;
+    });
+  }, [schedules, searchTerm, filterActive]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredSchedules.length / itemsPerPage);

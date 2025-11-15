@@ -441,13 +441,6 @@ export default function TripManagementPage() {
             </div>
           )}
 
-          {/* Loading Indicator */}
-          {loading && (
-            <div className="mb-4 p-4 bg-blue-100 border border-blue-400 text-blue-700 rounded-lg">
-              Loading trips...
-            </div>
-          )}
-
           {/* Page Header with Create Button */}
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-[#463B3B]">

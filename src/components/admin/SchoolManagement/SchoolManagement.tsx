@@ -825,7 +825,7 @@ export default function SchoolManagement() {
       {schoolId ? (
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-[#FEFCE8] to-[#FEF9C3] px-6 py-4 border-b border-gray-200">
+          <div className="sticky top-16 z-40 bg-gradient-to-r from-[#FEFCE8] to-[#FEF9C3] px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-[#463B3B] mb-1">Homepage Media</h2>

@@ -162,23 +162,24 @@ const LandingView: React.FC<LandingViewProps> = ({
             />
           </motion.div>
           <div>
-            <p className="text-sm text-gray-500">Welcome to</p>
             <h1 className="text-2xl font-bold text-[#1F1F1F]">{schoolName}</h1>
           </div>
         </motion.div>
-        <motion.div
-          initial={{ opacity: 0, x: 30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="flex items-end text-sm md:items-center"
-        >
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-2 rounded-[999px] px-6 py-3 text-sm font-bold text-black bg-[#FDC700] shadow-[0_10px_25px_rgba(253,199,0,0.35)] hover:brightness-95 hover:shadow-[0_12px_28px_rgba(253,199,0,0.45)] transition-all duration-200 hover:scale-105"
+        {!previewMode && !embedded && (
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="flex items-end text-sm md:items-center"
           >
-            Login
-          </Link>
-        </motion.div>
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-2 rounded-[999px] px-6 py-3 text-sm font-bold text-black bg-[#FDC700] shadow-[0_10px_25px_rgba(253,199,0,0.35)] hover:brightness-95 hover:shadow-[0_12px_28px_rgba(253,199,0,0.45)] transition-all duration-200 hover:scale-105"
+            >
+              Login
+            </Link>
+          </motion.div>
+        )}
       </motion.header>
 
       {/* Hero section */}

@@ -13,6 +13,7 @@ import ApplySuggestionsModal from './ApplySuggestionsModal'
 import RouteRow from './RouteRow';
 import LobbyArea from './LobbyArea';
 import { pickupPointService, PickupPointDto } from '@/services/pickupPointService';
+import { schoolService } from '@/services/schoolService/schoolService.api';
 import MiniRouteMap from './MiniRouteMap';
 import RouteScheduleModal from './RouteScheduleModal';
 
@@ -32,6 +33,7 @@ const RouteManagement: React.FC = () => {
   const [selectedRouteIds, setSelectedRouteIds] = useState<string[]>([]);
   const [selectedRouteForSchedule, setSelectedRouteForSchedule] = useState<RouteDto | null>(null);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [schoolLocation, setSchoolLocation] = useState<{ lat: number; lng: number } | undefined>(undefined);
 
   // Store original routes for comparison
   const originalRoutesRef = useRef<RouteDto[]>([]);
@@ -90,10 +92,11 @@ const RouteManagement: React.FC = () => {
       try {
         setIsLoading(true);
 
-        // Fetch routes and unassigned pickup points in parallel
-        const [routesData, unassignedData] = await Promise.all([
+        // Fetch routes, unassigned pickup points, and school location in parallel
+        const [routesData, unassignedData, schoolData] = await Promise.all([
           routeService.getAll(),
-          pickupPointService.getUnassignedPickupPoints()
+          pickupPointService.getUnassignedPickupPoints(),
+          schoolService.getForAdmin().catch(() => null) // Don't fail if school data is not available
         ]);
 
         setRoutes(routesData);
@@ -102,6 +105,14 @@ const RouteManagement: React.FC = () => {
         // Convert unassigned pickup points to PickupPointInfoDto format
         const lobbyPickupPoints = unassignedData.pickupPoints.map(convertToPickupPointInfo);
         setLobby(lobbyPickupPoints);
+
+        // Set school location if available
+        if (schoolData?.latitude && schoolData?.longitude) {
+          setSchoolLocation({
+            lat: schoolData.latitude,
+            lng: schoolData.longitude
+          });
+        }
 
         // Clear any existing modifications when fetching fresh data
         setModifiedRoutes(new Set());
@@ -505,7 +516,7 @@ const RouteManagement: React.FC = () => {
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="p-6 bg-[#FEFCE8] min-h-screen">
           {/* Header with Save and Create Buttons */}
-          <div className="bg-gradient-to-r from-[#FEF3C7] to-[#FDE68A] rounded-2xl p-6 shadow-lg mb-6 relative overflow-hidden">
+          <div className="sticky top-16 z-40 bg-gradient-to-r from-[#FEF3C7] to-[#FDE68A] rounded-2xl p-6 shadow-lg mb-6 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-[#fad23c]/10 via-transparent to-[#fad23c]/5"></div>
             <div className="flex justify-between items-center relative z-10">
               <div>
@@ -611,6 +622,7 @@ const RouteManagement: React.FC = () => {
         onRouteToggle={handleRouteMapToggle}
         onSelectAllRoutes={() => setSelectedRouteIds(routes.map(r => r.id))}
         onDeselectAllRoutes={() => setSelectedRouteIds([])}
+        schoolLocation={schoolLocation}
       />
 
       {/* Create Route Modal */}

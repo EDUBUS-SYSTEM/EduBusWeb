@@ -12,9 +12,11 @@ interface VietMapComponentProps {
   showControls?: boolean;
   markerSize?: 'small' | 'medium' | 'large';
   strokeWeight?: number;
+  schoolLocation?: { lat: number; lng: number };
 }
 
-const SCHOOL_LOCATION = {
+// Default fallback location (Đà Nẵng)
+const DEFAULT_SCHOOL_LOCATION = {
   lat: 15.9796,
   lng: 108.2605
 };
@@ -79,7 +81,10 @@ const decodePolyline = (encoded: string): number[][] => {
 };
 
 // Get actual route coordinates using VietMap Routing API
-const getRouteCoordinates = async (route: RouteDto): Promise<number[][]> => {
+const getRouteCoordinates = async (
+  route: RouteDto,
+  schoolLocation: { lat: number; lng: number }
+): Promise<number[][]> => {
   try {
     const sortedPoints = route.pickupPoints.sort((a, b) => a.sequenceOrder - b.sequenceOrder);
     
@@ -88,7 +93,7 @@ const getRouteCoordinates = async (route: RouteDto): Promise<number[][]> => {
     }
 
     // Start from school
-    let currentPoint = SCHOOL_LOCATION;
+    let currentPoint = schoolLocation;
     const allCoordinates: number[][] = [];
 
     // Route from school to first pickup point
@@ -130,7 +135,7 @@ const getRouteCoordinates = async (route: RouteDto): Promise<number[][]> => {
       const lastPoint = sortedPoints[sortedPoints.length - 1].location;
       const routeResult = await vietmapService.getRoute(
         { lat: lastPoint.latitude, lng: lastPoint.longitude },
-        SCHOOL_LOCATION,
+        schoolLocation,
         'car'
       );
       
@@ -148,9 +153,9 @@ const getRouteCoordinates = async (route: RouteDto): Promise<number[][]> => {
     // Fallback to straight line if routing fails
     const sortedPoints = route.pickupPoints.sort((a, b) => a.sequenceOrder - b.sequenceOrder);
     const coordinates = [
-      [SCHOOL_LOCATION.lng, SCHOOL_LOCATION.lat],
+      [schoolLocation.lng, schoolLocation.lat],
       ...sortedPoints.map(point => [point.location.longitude, point.location.latitude]),
-      [SCHOOL_LOCATION.lng, SCHOOL_LOCATION.lat]
+      [schoolLocation.lng, schoolLocation.lat]
     ];
     return coordinates;
   }
@@ -162,7 +167,8 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
   className = "w-full h-full",
   showControls = true,
   markerSize = 'medium',
-  strokeWeight = 4
+  strokeWeight = 4,
+  schoolLocation
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<vietmapgl.Map | null>(null);
@@ -334,8 +340,9 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
       // Add route polyline using actual road routes
       if (route.pickupPoints.length > 0) {
         try {
+          const currentSchoolLocation = schoolLocation || DEFAULT_SCHOOL_LOCATION;
           console.log(`Getting actual route coordinates for ${route.routeName}...`);
-          const coordinates = await getRouteCoordinates(route);
+          const coordinates = await getRouteCoordinates(route, currentSchoolLocation);
           console.log(`Got ${coordinates.length} coordinates for route ${route.routeName}`);
 
         const sourceId = `route-${route.id}`;
@@ -388,7 +395,7 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
         console.log(`Route ${route.routeName} has no pickup points, skipping polyline`);
       }
     }
-  }, [routes, selectedRouteIds, isMapLoaded, currentMarkerSize.size, strokeWeight]);
+  }, [routes, selectedRouteIds, isMapLoaded, currentMarkerSize.size, strokeWeight, schoolLocation]);
 
   // Initialize map
   useEffect(() => {
@@ -404,11 +411,13 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
 
         if (!isMounted || !mapRef.current) return;
 
+        const currentSchoolLocation = schoolLocation || DEFAULT_SCHOOL_LOCATION;
+
         // Initialize map
         const map = new vietmapgl.Map({
           container: mapRef.current,
           style: `https://maps.vietmap.vn/maps/styles/tm/style.json?apikey=${apiKey}`,
-          center: [SCHOOL_LOCATION.lng, SCHOOL_LOCATION.lat],
+          center: [currentSchoolLocation.lng, currentSchoolLocation.lat],
           zoom: 13
         });
 
@@ -430,7 +439,7 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
           element: schoolIcon,
           anchor: 'center'
         })
-          .setLngLat([SCHOOL_LOCATION.lng, SCHOOL_LOCATION.lat])
+          .setLngLat([currentSchoolLocation.lng, currentSchoolLocation.lat])
           .addTo(map);
 
         // Add school popup
@@ -514,7 +523,7 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
         console.warn('Error cleaning up map:', err);
       }
     };
-  }, [clearMapElements, showControls]);
+  }, [clearMapElements, showControls, schoolLocation]);
 
   // Update map elements when routes or selection changes
   useEffect(() => {

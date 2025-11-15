@@ -13,6 +13,7 @@ interface RouteMapModalProps {
   onRouteToggle: (routeId: string) => void;
   onSelectAllRoutes: () => void;
   onDeselectAllRoutes: () => void;
+  schoolLocation?: { lat: number; lng: number };
 }
 
 // Stable color assignment - same as VietMapComponent
@@ -45,7 +46,8 @@ const RouteMapModal: React.FC<RouteMapModalProps> = ({
   selectedRouteIds,
   onRouteToggle,
   onSelectAllRoutes,
-  onDeselectAllRoutes
+  onDeselectAllRoutes,
+  schoolLocation
 }) => {
   if (!isOpen) return null;
 
@@ -77,6 +79,7 @@ const RouteMapModal: React.FC<RouteMapModalProps> = ({
               showControls={true}
               markerSize="large"
               strokeWeight={6}
+              schoolLocation={schoolLocation}
             />
           </div>
 
