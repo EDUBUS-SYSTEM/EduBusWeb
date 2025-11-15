@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, memo } from "react";
 import {
   FaLock,
   FaUnlock,
@@ -10,7 +10,9 @@ import {
   FaPlus,
 } from "react-icons/fa";
 import { useRouter } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Pagination from "@/components/ui/Pagination";
+import { TableSkeleton } from "@/components/ui/Skeleton";
 import {
   userAccountService,
   GetUsersParams,
@@ -20,156 +22,28 @@ import {
   LockUserRequest,
 } from "@/services/userAccountService/userAccountService.type";
 
-export default function AccountManagement() {
-  const router = useRouter();
-  const [allUsers, setAllUsers] = useState<UserAccount[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [sortBy, setSortBy] = useState<string>("firstName");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [showLockModal, setShowLockModal] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [lockFormData, setLockFormData] = useState({
-    lockedUntil: "",
-    reason: "",
-  });
-
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [roleFilter, setRoleFilter] = useState<string>("");
-
-  // Validation state
-  const [lockValidationError, setLockValidationError] = useState<string | null>(
-    null
-  );
-  const [reasonValidationError, setReasonValidationError] = useState<
-    string | null
-  >(null);
-
-  // Removed unused searchTimeoutRef
-
-  // Helper function to determine user role based on email pattern
+// Memoized User Row Component
+const UserRow = memo(({ 
+  user, 
+  onLockClick, 
+  onUnlockClick 
+}: { 
+  user: UserAccount;
+  onLockClick: (userId: string) => void;
+  onUnlockClick: (userId: string) => void;
+}) => {
   const getUserRole = (user: UserAccount): "admin" | "parent" | "driver" => {
     const email = user.email.toLowerCase();
     if (email.includes("admin")) return "admin";
     if (email.includes("driver")) return "driver";
     if (email.includes("parent")) return "parent";
-    // Default fallback - could be improved with actual role data
     return "parent";
   };
 
-  // Helper function to check if user is locked
   const isUserLocked = (user: UserAccount): boolean => {
     return Boolean(
       user.lockedUntil && new Date(user.lockedUntil + "Z") > new Date()
     );
-  };
-
-  // Client-side filtering function
-  const filterUsers = useCallback((users: UserAccount[]) => {
-    let filtered = [...users];
-
-    // Apply search filter (only if there's a search term)
-    if (debouncedSearch && debouncedSearch.trim() !== "") {
-      const searchLower = debouncedSearch.toLowerCase();
-      filtered = filtered.filter(user => 
-        user.firstName.toLowerCase().includes(searchLower) ||
-        user.lastName.toLowerCase().includes(searchLower) ||
-        user.email.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Apply role filter
-    if (roleFilter) {
-      filtered = filtered.filter(user => getUserRole(user) === roleFilter);
-    }
-
-    // Apply status filter
-    if (statusFilter) {
-      if (statusFilter === "isNotLocked") {
-        filtered = filtered.filter(user => !isUserLocked(user));
-      } else if (statusFilter === "isLocked") {
-        filtered = filtered.filter(user => isUserLocked(user));
-      }
-    }
-
-    // Apply sorting
-    filtered.sort((a, b) => {
-      let aValue: string | number;
-      let bValue: string | number;
-
-      if (sortBy === "firstName") {
-        aValue = `${a.firstName} ${a.lastName}`.toLowerCase();
-        bValue = `${b.firstName} ${b.lastName}`.toLowerCase();
-      } else if (sortBy === "createdAt") {
-        aValue = new Date(a.createdAt).getTime();
-        bValue = new Date(b.createdAt).getTime();
-      } else {
-        aValue = a[sortBy as keyof UserAccount] as string;
-        bValue = b[sortBy as keyof UserAccount] as string;
-      }
-
-      if (sortOrder === "asc") {
-        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-      } else {
-        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-      }
-    });
-
-    return filtered;
-  }, [debouncedSearch, roleFilter, statusFilter, sortBy, sortOrder]);
-
-  // Pagination for filtered results (fixed 20 items per page)
-  const perPage = 20;
-  const paginatedUsers = useMemo(() => {
-    const filtered = filterUsers(allUsers);
-    const start = (currentPage - 1) * perPage;
-    const end = start + perPage;
-    return filtered.slice(start, end);
-  }, [filterUsers, allUsers, currentPage, perPage]);
-
-  const totalFilteredCount = useMemo(() => {
-    return filterUsers(allUsers).length;
-  }, [filterUsers, allUsers]);
-
-  const totalFilteredPages = useMemo(() => {
-    return Math.ceil(totalFilteredCount / perPage);
-  }, [totalFilteredCount, perPage]);
-
-  // Fetch all users (for client-side filtering)
-  const fetchAllUsers = useCallback(async () => {
-    setLoading(true);
-    try {
-      // Fetch all users without pagination
-      const params: GetUsersParams = {
-        page: 1,
-        perPage: 1000, // Large number to get all users
-        sortBy: "createdAt",
-        sortOrder: "desc",
-      };
-
-      const response = await userAccountService.getUsers(params);
-      setAllUsers(response.users);
-    } catch {
-      setError("Failed to fetch users");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Fetch users when dependencies change (except searchTerm)
-  useEffect(() => {
-    fetchAllUsers();
-  }, [fetchAllUsers]);
-
-  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      setCurrentPage(1); // reset to first page
-    }
   };
 
   const getLockStatus = (user: UserAccount) => {
@@ -180,18 +54,204 @@ export default function AccountManagement() {
     return { status: "Active", color: "bg-green-100 text-green-800" };
   };
 
-  // Validation functions
-  const validateLockUntil = (dateTimeString: string): string | null => {
-    if (!dateTimeString) return null; // Optional field
+  const locked = isUserLocked(user);
+  const lockStatus = getLockStatus(user);
+  const role = getUserRole(user);
 
+  return (
+    <tr className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 transition-all duration-200">
+      {/* User Information */}
+      <td className="px-6 py-6">
+        <div className="flex items-center">
+          <div className="flex-shrink-0 h-12 w-12">
+            <div className="h-12 w-12 rounded-full bg-gradient-to-r from-[#fad23c] to-[#FFF085] flex items-center justify-center">
+              <span className="text-[#463B3B] font-bold text-lg">
+                {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+              </span>
+            </div>
+          </div>
+          <div className="ml-4">
+            <div className="text-sm font-semibold text-gray-900">
+              {user.firstName} {user.lastName}
+            </div>
+            <div className="text-xs text-gray-500">ID: {user.id.slice(0, 8)}...</div>
+          </div>
+        </div>
+      </td>
+      
+      {/* Contact Details */}
+      <td className="px-6 py-6">
+        <div className="space-y-1">
+          <div className="text-sm text-gray-900 font-medium">{user.email}</div>
+          <div className="text-sm text-gray-500">{user.phoneNumber}</div>
+        </div>
+      </td>
+      
+      {/* Role & Status */}
+      <td className="px-6 py-6">
+        <div className="space-y-2">
+          <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800">
+            {role.charAt(0).toUpperCase() + role.slice(1)}
+          </span>
+          <div>
+            <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${lockStatus.color}`}>
+              {lockStatus.status}
+            </span>
+          </div>
+          {locked && user.lockedUntil && (
+            <div className="text-xs text-gray-500 flex items-center gap-1">
+              <FaCalendarAlt className="text-red-500" />
+              Until: {new Date(user.lockedUntil + "Z").toLocaleDateString()}
+            </div>
+          )}
+          {user.lockReason && (
+            <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
+              Reason: {user.lockReason}
+            </div>
+          )}
+        </div>
+      </td>
+      
+      {/* Account Info */}
+      <td className="px-6 py-6">
+        <div className="text-sm text-gray-900">
+          Created: {new Date(user.createdAt).toLocaleDateString()}
+        </div>
+        {user.updatedAt && (
+          <div className="text-xs text-gray-500">
+            Updated: {new Date(user.updatedAt).toLocaleDateString()}
+          </div>
+        )}
+      </td>
+      
+      {/* Actions */}
+      <td className="px-6 py-6">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => onLockClick(user.id)}
+            disabled={locked}
+            className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            title="Lock User"
+          >
+            <FaLock className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => onUnlockClick(user.id)}
+            disabled={!locked}
+            className="p-2 text-green-600 hover:text-green-900 hover:bg-green-50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            title="Unlock User"
+          >
+            <FaUnlock className="w-4 h-4" />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+});
+
+UserRow.displayName = 'UserRow';
+
+export default function AccountManagement() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [sortBy, setSortBy] = useState<string>("firstName");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [roleFilter, setRoleFilter] = useState<string>("");
+  
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [showLockModal, setShowLockModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [lockFormData, setLockFormData] = useState({
+    lockedUntil: "",
+    reason: "",
+  });
+
+  const [lockValidationError, setLockValidationError] = useState<string | null>(null);
+  const [reasonValidationError, setReasonValidationError] = useState<string | null>(null);
+
+  // Debounce search
+  React.useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, statusFilter, roleFilter, sortBy, sortOrder]);
+
+  // Build query params for server-side filtering
+  const queryParams = useMemo<GetUsersParams>(() => ({
+    page: currentPage,
+    perPage: 20, // Server-side pagination
+    sortBy,
+    sortOrder,
+    search: debouncedSearch || undefined,
+    status: statusFilter || undefined,
+    role: roleFilter || undefined,
+  }), [currentPage, sortBy, sortOrder, debouncedSearch, statusFilter, roleFilter]);
+
+  // Fetch users with React Query (server-side pagination)
+  const { data, isLoading, error: queryError } = useQuery({
+    queryKey: ['users', queryParams],
+    queryFn: () => userAccountService.getUsers(queryParams),
+    staleTime: 1000 * 30, // 30 seconds - data is fresh for 30 seconds
+  });
+
+  // Lock user mutation
+  const lockMutation = useMutation({
+    mutationFn: ({ userId, request }: { userId: string; request: LockUserRequest }) =>
+      userAccountService.lockUser(userId, request),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setSuccessMessage("User locked successfully");
+      setShowLockModal(false);
+      setSelectedUserId(null);
+      setLockFormData({ lockedUntil: "", reason: "" });
+      setLockValidationError(null);
+      setReasonValidationError(null);
+    },
+    onError: () => {
+      setError("Failed to lock user");
+    },
+  });
+
+  // Unlock user mutation
+  const unlockMutation = useMutation({
+    mutationFn: (userId: string) => userAccountService.unlockUser(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setSuccessMessage("User unlocked successfully");
+    },
+    onError: () => {
+      setError("Failed to unlock user");
+    },
+  });
+
+  const users = data?.users || [];
+  const totalCount = data?.totalCount || 0;
+  const totalPages = data?.totalPages || 1;
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      setCurrentPage(1);
+    }
+  };
+
+  const validateLockUntil = (dateTimeString: string): string | null => {
+    if (!dateTimeString) return null;
     const selectedDate = new Date(dateTimeString);
     const now = new Date();
-    const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000); // Add 1 hour
-
+    const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
     if (selectedDate <= oneHourFromNow) {
       return "Lock until date must be at least 1 hour from now";
     }
-
     return null;
   };
 
@@ -202,11 +262,8 @@ export default function AccountManagement() {
     return null;
   };
 
-  // Update the lock form data change handler
   const handleLockFormChange = (field: string, value: string) => {
     setLockFormData((prev) => ({ ...prev, [field]: value }));
-
-    // Validate based on field
     if (field === "lockedUntil") {
       const error = validateLockUntil(value);
       setLockValidationError(error);
@@ -216,49 +273,35 @@ export default function AccountManagement() {
     }
   };
 
-  // --- Lock/Unlock Handlers ---
   const handleLockUser = async (userId: string) => {
-    // Check validation before proceeding
     if (lockValidationError || reasonValidationError) {
       setError("Please fix validation errors before proceeding");
       return;
     }
 
-    try {
-      // Convert local datetime to UTC before sending
-      let lockedUntilUtc: string | undefined = undefined;
-      if (lockFormData.lockedUntil) {
-        const localDate = new Date(lockFormData.lockedUntil);
-        lockedUntilUtc = localDate.toISOString(); // Converts to UTC
-      }
-
-      const req: LockUserRequest = {
-        lockedUntil: lockedUntilUtc,
-        reason: lockFormData.reason || "Locked by admin",
-      };
-      await userAccountService.lockUser(userId, req);
-      setSuccessMessage("User locked successfully");
-      setShowLockModal(false);
-      setSelectedUserId(null);
-      setLockFormData({ lockedUntil: "", reason: "" });
-      setLockValidationError(null);
-      setReasonValidationError(null);
-      fetchAllUsers();
-    } catch {
-      setError("Failed to lock user");
+    let lockedUntilUtc: string | undefined = undefined;
+    if (lockFormData.lockedUntil) {
+      const localDate = new Date(lockFormData.lockedUntil);
+      lockedUntilUtc = localDate.toISOString();
     }
+
+    const req: LockUserRequest = {
+      lockedUntil: lockedUntilUtc,
+      reason: lockFormData.reason || "Locked by admin",
+    };
+    
+    lockMutation.mutate({ userId, request: req });
   };
 
-  const handleUnlockUser = async (userId: string) => {
-    try {
-      await userAccountService.unlockUser(userId);
-      setSuccessMessage("User unlocked successfully");
-      fetchAllUsers();
-    } catch {
-      setError("Failed to unlock user");
-    }
-  };
+  const handleUnlockUser = useCallback((userId: string) => {
+    unlockMutation.mutate(userId);
+  }, [unlockMutation]);
 
+  const handleLockClick = useCallback((userId: string) => {
+    setLockFormData({ lockedUntil: "", reason: "" });
+    setSelectedUserId(userId);
+    setShowLockModal(true);
+  }, []);
 
   const handleSort = (field: string) => {
     if (sortBy === field) {
@@ -267,41 +310,56 @@ export default function AccountManagement() {
       setSortBy(field);
       setSortOrder("asc");
     }
-    setCurrentPage(1); // Reset to first page when sorting
+    setCurrentPage(1);
   };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+    // Scroll to top when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
 
   const handleStatusFilterChange = (status: string) => {
     setStatusFilter(status);
-    setCurrentPage(1); // Reset to first page when filtering
+    setCurrentPage(1);
   };
 
   const handleRoleFilterChange = (role: string) => {
     setRoleFilter(role);
-    setCurrentPage(1); // Reset to first page when filtering
+    setCurrentPage(1);
   };
 
-  // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
-  // Debounce searchTerm -> debouncedSearch 
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 300);
-    return () => clearTimeout(t);
-  }, [searchTerm]);
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        <div className="bg-[#fdc600bd] rounded-2xl p-4 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-[#463B3B] mb-1">User Management</h1>
+              <p className="text-[#463B3B] text-sm opacity-80">Manage user accounts and permissions</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+          <TableSkeleton rows={5} cols={5} />
+        </div>
+      </div>
+    );
+  }
 
-  // Reset to page 1 when search changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearch]);
-
-  if (loading) return <div className="flex justify-center p-8">Loading...</div>;
+  if (queryError) {
+    return (
+      <div className="flex justify-center items-center p-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-700">Failed to load users. Please try again.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -313,7 +371,6 @@ export default function AccountManagement() {
             <p className="text-[#463B3B] text-sm opacity-80">Manage user accounts and permissions</p>
           </div>
           <div className="flex items-center gap-3">
-            {/* Create Account Button */}
             <button
               onClick={() => router.push('/create-account')}
               className="bg-white hover:bg-gray-50 text-[#463B3B] p-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
@@ -321,10 +378,9 @@ export default function AccountManagement() {
             >
               <FaPlus className="w-5 h-5" />
             </button>
-            {/* Total Users Counter */}
             <div className="bg-white rounded-xl p-3 shadow-md">
               <div className="text-center">
-                <div className="text-lg font-bold text-[#463B3B]">{totalFilteredCount}</div>
+                <div className="text-lg font-bold text-[#463B3B]">{totalCount}</div>
                 <div className="text-xs text-gray-600">Total Users</div>
               </div>
             </div>
@@ -372,7 +428,6 @@ export default function AccountManagement() {
         {/* Search and Filter Section */}
         <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-6 border-b border-gray-200">
           <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-            {/* Search and Filters */}
             <div className="flex flex-col sm:flex-row gap-4 items-center">
               <div className="relative">
                 <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -408,7 +463,6 @@ export default function AccountManagement() {
               </select>
             </div>
             
-            {/* Sort Options */}
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-gray-700">Sort by:</span>
               <button
@@ -468,124 +522,35 @@ export default function AccountManagement() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
-              {paginatedUsers.map((user) => {
-                const locked = isUserLocked(user);
-                const lockStatus = getLockStatus(user);
-                return (
-                  <tr key={user.id} className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 transition-all duration-200">
-                    {/* User Information */}
-                    <td className="px-6 py-6">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-12 w-12">
-                          <div className="h-12 w-12 rounded-full bg-gradient-to-r from-[#fad23c] to-[#FFF085] flex items-center justify-center">
-                            <span className="text-[#463B3B] font-bold text-lg">
-                              {user.firstName.charAt(0)}{user.lastName.charAt(0)}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-semibold text-gray-900">
-                            {user.firstName} {user.lastName}
-                          </div>
-                          <div className="text-xs text-gray-500">ID: {user.id.slice(0, 8)}...</div>
-                        </div>
-                      </div>
-                    </td>
-                    
-                    {/* Contact Details */}
-                    <td className="px-6 py-6">
-                      <div className="space-y-1">
-                        <div className="text-sm text-gray-900 font-medium">{user.email}</div>
-                        <div className="text-sm text-gray-500">{user.phoneNumber}</div>
-                      </div>
-                    </td>
-                    
-                    {/* Role & Status */}
-                    <td className="px-6 py-6">
-                      <div className="space-y-2">
-                        <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800">
-                          {getUserRole(user).charAt(0).toUpperCase() + getUserRole(user).slice(1)}
-                        </span>
-                        <div>
-                          <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${lockStatus.color}`}>
-                            {lockStatus.status}
-                          </span>
-                        </div>
-                        {locked && user.lockedUntil && (
-                          <div className="text-xs text-gray-500 flex items-center gap-1">
-                            <FaCalendarAlt className="text-red-500" />
-                            Until: {new Date(user.lockedUntil + "Z").toLocaleDateString()}
-                          </div>
-                        )}
-                        {user.lockReason && (
-                          <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
-                            Reason: {user.lockReason}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    
-                    {/* Account Info */}
-                    <td className="px-6 py-6">
-                      <div className="text-sm text-gray-900">
-                        Created: {new Date(user.createdAt).toLocaleDateString()}
-                      </div>
-                      {user.updatedAt && (
-                        <div className="text-xs text-gray-500">
-                          Updated: {new Date(user.updatedAt).toLocaleDateString()}
-                        </div>
-                      )}
-                    </td>
-                    
-                    {/* Actions */}
-                    <td className="px-6 py-6">
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => {
-                            setLockFormData({ lockedUntil: "", reason: "" });
-                            setSelectedUserId(user.id);
-                            setShowLockModal(true);
-                          }}
-                          disabled={locked}
-                          className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                          title="Lock User"
-                        >
-                          <FaLock className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleUnlockUser(user.id)}
-                          disabled={!locked}
-                          className="p-2 text-green-600 hover:text-green-900 hover:bg-green-50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                          title="Unlock User"
-                        >
-                          <FaUnlock className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+              {users.map((user) => (
+                <UserRow
+                  key={user.id}
+                  user={user}
+                  onLockClick={handleLockClick}
+                  onUnlockClick={handleUnlockUser}
+                />
+              ))}
             </tbody>
           </table>
         </div>
 
         {/* Pagination */}
-        {paginatedUsers.length > 0 && (
+        {users.length > 0 && (
           <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-700">
-                Showing <span className="font-semibold">{(currentPage - 1) * perPage + 1}</span> to{" "}
+                Showing <span className="font-semibold">{(currentPage - 1) * 20 + 1}</span> to{" "}
                 <span className="font-semibold">
-                  {Math.min(currentPage * perPage, totalFilteredCount)}
+                  {Math.min(currentPage * 20, totalCount)}
                 </span>{" "}
-                of <span className="font-semibold">{totalFilteredCount}</span> users
+                of <span className="font-semibold">{totalCount}</span> users
               </div>
               <Pagination
                 currentPage={currentPage}
-                totalPages={totalFilteredPages}
+                totalPages={totalPages}
                 onPageChange={handlePageChange}
-                totalItems={totalFilteredCount}
-                itemsPerPage={perPage}
+                totalItems={totalCount}
+                itemsPerPage={20}
                 showInfo={false}
               />
             </div>
@@ -618,7 +583,7 @@ export default function AccountManagement() {
                     value={lockFormData.lockedUntil}
                     min={new Date(Date.now() + 60 * 60 * 1000)
                       .toISOString()
-                      .slice(0, 16)} // 1 hour from now
+                      .slice(0, 16)}
                     onChange={(e) =>
                       handleLockFormChange("lockedUntil", e.target.value)
                     }

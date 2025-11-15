@@ -13,33 +13,56 @@ const LobbyArea: React.FC<LobbyAreaProps> = ({ lobby }) => {
   return (
     <Droppable droppableId="lobby" direction="horizontal">
       {(provided, snapshot) => (
-        <div className="bg-white p-4 rounded shadow-md flex items-center">
-          {/* Fixed-width left side */}
-          <div className="flex items-center w-40 flex-shrink-0">
-            <FaMapMarkerAlt className="text-3xl text-red-500 mr-4" />
-            <div>
-              <h3 className="text-lg font-bold">Lobby</h3>
-              <p className="text-sm text-gray-600">{lobby.length} pickup points</p>
+        <div className="bg-white border-2 border-[#FDE68A] hover:border-[#fad23c] rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+          <div className="flex items-stretch min-h-[120px]">
+            {/* Header Section */}
+            <div className="w-52 flex-shrink-0 bg-gradient-to-br from-[#FEF3C7] to-[#FDE68A] p-5 flex flex-col justify-center border-r border-[#FDE68A] relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#fad23c]/10 to-[#fad23c]/5"></div>
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-[#fad23c] rounded-full flex items-center justify-center shadow-md">
+                    <FaMapMarkerAlt className="text-[#463B3B]" size={16} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-[#463B3B]">Lobby</h3>
+                    <p className="text-sm font-medium text-[#463B3B]/80">
+                      {lobby.length} {lobby.length === 1 ? 'point' : 'points'}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-2 text-xs text-[#463B3B]/70 bg-white/70 rounded-full px-3 py-1 inline-block">
+                  Waiting passengers
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Scrollable pickup points (actual droppable area) */}
-          <div
-            {...provided.droppableProps}
-            ref={provided.innerRef}
-            className={`flex space-x-2 overflow-x-auto flex-1 min-h-[100px] min-w-[200px] 
-              border-2 border-dashed border-gray-300 rounded p-2
-              ${snapshot.isDraggingOver ? "border-blue-400 bg-blue-50" : "bg-gray-50"}`}
-          >
-            {lobby.map((point, index) => (
-              <PickupPoint
-                key={point.pickupPointId}
-                point={point}
-                index={index}
-                className="m-1"
-              />
-            ))}
-            {provided.placeholder}
+            {/* Scrollable pickup points (actual droppable area) */}
+            <div
+              {...provided.droppableProps}
+              ref={provided.innerRef}
+              className={`flex-1 flex items-center gap-3 overflow-x-auto px-5 py-4 min-h-[120px] transition-all duration-300 custom-scrollbar ${
+                snapshot.isDraggingOver 
+                  ? "bg-gradient-to-r from-[#FEF3C7] to-[#FDE68A] border-2 border-dashed border-[#fad23c]" 
+                  : "bg-gradient-to-r from-[#FEFCE8]/30 to-[#FEF3C7]/30"
+              }`}
+            >
+              {lobby.length === 0 ? (
+                <div className="flex-1 flex items-center justify-center text-[#463B3B]/40 text-sm">
+                  <FaMapMarkerAlt className="mr-2 text-[#fad23c]/60" />
+                  No passengers waiting
+                </div>
+              ) : (
+                lobby.map((point, index) => (
+                  <PickupPoint
+                    key={point.pickupPointId}
+                    point={point}
+                    index={index}
+                    className="flex-shrink-0"
+                  />
+                ))
+              )}
+              {provided.placeholder}
+            </div>
           </div>
         </div>
       )}

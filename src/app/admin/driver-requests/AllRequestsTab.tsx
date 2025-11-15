@@ -79,15 +79,11 @@ export default function AllRequestsTab() {
     }
   }, [currentPage, statusFilter, typeFilter, searchDriverName, searchDriverEmail, itemsPerPage]);
 
-  useEffect(() => {
-    fetchRequests();
-  }, [fetchRequests]);
-
-  // Debounce search inputs
+  // Debounce search inputs and fetch requests
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       fetchRequests();
-    }, 300);
+    }, (searchDriverName || searchDriverEmail) ? 300 : 0); // No delay if search is empty
 
     return () => clearTimeout(timeoutId);
   }, [searchDriverName, searchDriverEmail, fetchRequests]);

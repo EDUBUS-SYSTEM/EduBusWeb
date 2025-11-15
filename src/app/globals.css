@@ -69,20 +69,21 @@
 @layer components {
   .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
+    height: 8px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    background: #f1f5f9;
+    background: rgba(254, 252, 232, 0.5);
     border-radius: 10px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: linear-gradient(to bottom, #3b82f6, #1d4ed8);
+    background: linear-gradient(to bottom, #FDE68A, #FCD34D);
     border-radius: 10px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(to bottom, #2563eb, #1e40af);
+    background: linear-gradient(to bottom, #FCD34D, #FDE68A);
   }
 
   .animate-in {
@@ -216,6 +217,22 @@
     to {
       transform: rotate(360deg);
     }
+  }
+
+  @keyframes navigationLoading {
+    0% {
+      transform: translateX(-100%);
+    }
+    50% {
+      transform: translateX(0%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .animate-navigation-loading {
+    animation: navigationLoading 1.5s ease-in-out infinite;
   }
 
  

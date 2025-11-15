@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   FaPlus,
   FaSearch,
@@ -64,7 +64,7 @@ export default function StudentsList() {
   };
 
   // Fetch students with optional status filter
-  const fetchStudents = async (status?: StudentStatus | "all") => {
+  const fetchStudents = useCallback(async (status?: StudentStatus | "all") => {
     try {
       setLoading(true);
       setError(null);
@@ -85,17 +85,13 @@ export default function StudentsList() {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchStudents();
   }, []);
 
-  // Status filter - fetch from API when status changes
+  // Fetch students when status filter changes
   useEffect(() => {
     fetchStudents(statusFilter);
     setCurrentPage(1); // Reset to first page when filtering
-  }, [statusFilter]);
+  }, [statusFilter, fetchStudents]);
   
   // Search (only one useEffect, null-safe)
   useEffect(() => {

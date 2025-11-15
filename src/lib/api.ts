@@ -14,7 +14,7 @@ const FALLBACK_API_URLS = [
 // Create axios instance with default configuration
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 1000000,
+  timeout: 30000, // 30 seconds - reasonable timeout
   headers: {
     "Content-Type": "application/json",
   },
@@ -38,6 +38,12 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Silently handle AbortError (user-initiated cancellation)
+    if (axios.isCancel(error) || error.code === 'ERR_CANCELED' || error.name === 'AbortError' || error.message === 'canceled') {
+      // Don't log or show AbortError - it's expected when navigating
+      return Promise.reject(error);
+    }
+
     const url = error.config?.url || "";
     if (error.response?.status === 401 && !url.includes("/auth/login") && !url.includes("localhost:5000")) {
       // Handle when token expires

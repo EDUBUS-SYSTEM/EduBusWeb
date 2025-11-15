@@ -12,6 +12,7 @@ interface MiniRouteMapProps {
   onRouteToggle: (routeId: string) => void;
   onSelectAllRoutes: () => void;
   onDeselectAllRoutes: () => void;
+  schoolLocation?: { lat: number; lng: number };
 }
 
 // Stable color assignment - same as VietMapComponent
@@ -42,7 +43,8 @@ const MiniRouteMap: React.FC<MiniRouteMapProps> = ({
   selectedRouteIds,
   onRouteToggle,
   onSelectAllRoutes,
-  onDeselectAllRoutes
+  onDeselectAllRoutes,
+  schoolLocation
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -94,6 +96,7 @@ const MiniRouteMap: React.FC<MiniRouteMapProps> = ({
             showControls={false}
             markerSize="small"
             strokeWeight={3}
+            schoolLocation={schoolLocation}
           />
           
           {/* Click overlay to open modal */}
@@ -150,6 +153,7 @@ const MiniRouteMap: React.FC<MiniRouteMapProps> = ({
         onRouteToggle={onRouteToggle}
         onSelectAllRoutes={onSelectAllRoutes}
         onDeselectAllRoutes={onDeselectAllRoutes}
+        schoolLocation={schoolLocation}
       />
     </>
   );
