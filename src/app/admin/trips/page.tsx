@@ -22,8 +22,9 @@ import {
   generateTripsFromSchedule
 } from "@/store/slices/tripsSlice";
 import { FaPlus, FaTable, FaCalendarAlt, FaMapMarkedAlt, FaUsers, FaClock } from 'react-icons/fa';
+import LiveTripMonitoring from "@/components/admin/LiveTripMonitoring";
 
-type ViewMode = 'table' | 'calendar';
+type ViewMode = 'table' | 'calendar' | 'live';
 
 export default function TripManagementPage() {
   const dispatch = useAppDispatch();
@@ -301,7 +302,7 @@ export default function TripManagementPage() {
     return tripsToShow.map(trip => {
       // Use schedule snapshot times if available, otherwise use planned times
       const serviceDate = new Date(trip.serviceDate);
-      
+
       // Parse schedule times (format: HH:mm or similar)
       const parseTimeString = (timeStr: string) => {
         const [hours, minutes] = timeStr.split(':').map(Number);
@@ -314,10 +315,10 @@ export default function TripManagementPage() {
       if (trip.scheduleSnapshot?.startTime && trip.scheduleSnapshot?.endTime) {
         const startTime = parseTimeString(trip.scheduleSnapshot.startTime);
         const endTime = parseTimeString(trip.scheduleSnapshot.endTime);
-        
+
         startDate = new Date(serviceDate);
         startDate.setHours(startTime.hours, startTime.minutes, 0, 0);
-        
+
         endDate = new Date(serviceDate);
         endDate.setHours(endTime.hours, endTime.minutes, 0, 0);
       } else {
@@ -548,6 +549,13 @@ export default function TripManagementPage() {
                     <FaCalendarAlt className="w-4 h-4" />
                     Calendar
                   </button>
+                  <button
+                    onClick={() => setViewMode('live')}
+                    className="px-3 py-1.5 text-sm rounded-lg transition-colors flex items-center gap-1 text-gray-600 hover:text-gray-800"
+                  >
+                    <FaMapMarkedAlt className="w-4 h-4" />
+                    Live
+                  </button>
                 </div>
               </div>
             </div>
@@ -571,6 +579,42 @@ export default function TripManagementPage() {
                   <FaCalendarAlt className="w-4 h-4" />
                   Calendar
                 </button>
+                <button
+                  onClick={() => setViewMode('live')}
+                  className="px-3 py-1.5 text-sm rounded-lg transition-colors flex items-center gap-1 text-gray-600 hover:text-gray-800"
+                >
+                  <FaMapMarkedAlt className="w-4 h-4" />
+                  Live
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* View Toggle for Live */}
+          {viewMode === 'live' && (
+            <div className="mb-4 flex justify-end">
+              <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
+                <button
+                  onClick={() => setViewMode('table')}
+                  className="px-3 py-1.5 text-sm rounded-lg transition-colors flex items-center gap-1 text-gray-600 hover:text-gray-800"
+                >
+                  <FaTable className="w-4 h-4" />
+                  Table
+                </button>
+                <button
+                  onClick={() => setViewMode('calendar')}
+                  className="px-3 py-1.5 text-sm rounded-lg transition-colors flex items-center gap-1 text-gray-600 hover:text-gray-800"
+                >
+                  <FaCalendarAlt className="w-4 h-4" />
+                  Calendar
+                </button>
+                <button
+                  onClick={() => setViewMode('live')}
+                  className="px-3 py-1.5 text-sm rounded-lg transition-colors flex items-center gap-1 bg-white text-[#463B3B] shadow-sm"
+                >
+                  <FaMapMarkedAlt className="w-4 h-4" />
+                  Live
+                </button>
               </div>
             </div>
           )}
@@ -592,7 +636,7 @@ export default function TripManagementPage() {
               sortOrder={filters.sortOrder || 'desc'}
               onSort={handleSort}
             />
-          ) : (
+          ) : viewMode === 'calendar' ? (
             <div className="bg-white rounded-2xl shadow-soft-lg border border-gray-100">
               <Calendar
                 events={calendarEvents}
@@ -607,6 +651,8 @@ export default function TripManagementPage() {
                 onRouteChange={handleRouteFilterChange}
               />
             </div>
+          ) : (
+            <LiveTripMonitoring />
           )}
         </div>
       </main>
