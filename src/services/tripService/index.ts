@@ -97,4 +97,13 @@ export const tripService = {
   updateTripStatus: async (id: string, status: string, reason?: string): Promise<{ tripId: string; status: string; reason?: string; message: string }> => {
     return await apiService.put<{ tripId: string; status: string; reason?: string; message: string }>(`/Trip/${id}/status`, { status, reason });
   },
+
+  // Get ongoing trips (InProgress status)
+  getOngoingTrips: async (): Promise<TripDto[]> => {
+    const response = await apiService.get<GetAllTripsResponse>('/Trip', {
+      status: 'InProgress',
+      perPage: 100 // Get all ongoing trips
+    });
+    return response.data;
+  },
 };

@@ -366,7 +366,14 @@ export interface TripStopDto {
   plannedDeparture: string; // ISO datetime string
   actualDeparture?: string; // ISO datetime string
   sequence: number;
+  location?: StopLocationDto;
   attendance?: ParentAttendanceDto[];
+}
+
+export interface StopLocationDto {
+  latitude: number;
+  longitude: number;
+  address?: string;
 }
 
 export interface ParentAttendanceDto {
