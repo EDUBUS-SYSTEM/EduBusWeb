@@ -200,7 +200,7 @@ export default function LiveTripMonitoring() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
+        {/* <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-gray-600">Issues</p>
@@ -208,7 +208,7 @@ export default function LiveTripMonitoring() {
             </div>
             <FaExclamationTriangle className="w-5 h-5 text-red-500" />
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Trip Cards */}
