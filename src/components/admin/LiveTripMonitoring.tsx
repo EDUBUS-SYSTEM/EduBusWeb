@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { useLiveTripMonitoring } from '@/hooks/useLiveTripMonitoring';
+import { useAppDispatch } from '@/store/hooks';
+import { toggleTripSelection, selectAllTrips, deselectAllTrips } from '@/store/slices/liveTripsSlice';
 import { FaMapMarkerAlt, FaMap, FaUser, FaCar, FaClock, FaUsers, FaCheckCircle, FaExclamationTriangle, FaSync } from 'react-icons/fa';
 import LiveVehicleMapModal from './LiveVehicleMapModal';
 import TripDetails from './TripDetails';
@@ -9,11 +11,13 @@ import { TripDto, TripStopDto, ParentAttendanceDto } from '@/types';
 import { tripService } from '@/services/tripService';
 
 export default function LiveTripMonitoring() {
+  const dispatch = useAppDispatch();
   const {
     connectionStatus,
     ongoingTrips,
     locationUpdates,
     attendanceUpdates,
+    selectedTripIds, // ✅ Get from Redux via hook
     stats,
     loading,
     getLocationUpdate,
@@ -24,6 +28,19 @@ export default function LiveTripMonitoring() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<TripDto | null>(null);
   const [loadingTripDetails, setLoadingTripDetails] = useState(false);
+
+  // ✅ Use Redux actions for trip selection
+  const handleTripToggle = (tripId: string) => {
+    dispatch(toggleTripSelection(tripId));
+  };
+
+  const handleSelectAllTrips = () => {
+    dispatch(selectAllTrips());
+  };
+
+  const handleDeselectAllTrips = () => {
+    dispatch(deselectAllTrips());
+  };
 
   const handleTripCardClick = async (tripId: string) => {
     try {
@@ -273,9 +290,17 @@ export default function LiveTripMonitoring() {
       {/* Map Modal */}
       <LiveVehicleMapModal
         isOpen={isMapModalOpen}
-        onClose={() => setIsMapModalOpen(false)}
+        onClose={() => {
+          setIsMapModalOpen(false);
+          // Optional: Reset selection when modal closes
+          // dispatch(deselectAllTrips());
+        }}
         trips={ongoingTrips}
         locationUpdates={locationUpdates}
+        selectedTripIds={selectedTripIds} // ✅ Pass from Redux
+        onTripToggle={handleTripToggle} // ✅ Pass Redux action
+        onSelectAllTrips={handleSelectAllTrips} // ✅ Pass Redux action
+        onDeselectAllTrips={handleDeselectAllTrips} // ✅ Pass Redux action
       />
 
       {/* Trip Details Modal */}

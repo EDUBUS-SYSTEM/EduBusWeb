@@ -38,7 +38,7 @@ interface PerStopAttendanceSummary {
 export interface AttendanceUpdatedData {
   tripId: string;
   stopId: string;
-  attendance: PerStopAttendanceSummary; // ✅ Changed from any
+  attendance: PerStopAttendanceSummary;
   timestamp: string;
 }
 
@@ -101,6 +101,9 @@ interface LiveTripsState {
     onTimeTrips: number;
     issues: number;
   };
+
+  // ✅ Added: Selected trip IDs for map display
+  selectedTripIds: string[];
 }
 
 const initialState: LiveTripsState = {
@@ -119,6 +122,7 @@ const initialState: LiveTripsState = {
     onTimeTrips: 0,
     issues: 0,
   },
+  selectedTripIds: [], // ✅ Added
 };
 
 const liveTripsSlice = createSlice({
@@ -161,6 +165,8 @@ const liveTripsSlice = createSlice({
         // Remove from ongoing trips if status is not InProgress
         if (action.payload.status !== 'InProgress') {
           state.ongoingTrips.splice(tripIndex, 1);
+          // ✅ Also remove from selectedTripIds if trip is removed
+          state.selectedTripIds = state.selectedTripIds.filter(id => id !== action.payload.tripId);
         }
         state.stats = calculateStats(state.ongoingTrips, state.attendanceUpdates);
       }
@@ -182,11 +188,11 @@ const liveTripsSlice = createSlice({
         timestamp: timestamp
       };
 
-      // ✅ Update stop progress in ongoingTrips if arrival/departure times are provided
+      // Update stop progress in ongoingTrips if arrival/departure times are provided
       const tripIndex = state.ongoingTrips.findIndex(t => t.id === tripId);
       if (tripIndex !== -1) {
         const trip = state.ongoingTrips[tripIndex];
-        const stopIndex = trip.stops?.findIndex((s: TripStopDto) => { // ✅ Changed from any
+        const stopIndex = trip.stops?.findIndex((s: TripStopDto) => {
           const sId = String(s.id || '').toLowerCase();
           return sId === normalizedStopId;
         });
@@ -226,6 +232,8 @@ const liveTripsSlice = createSlice({
       delete state.locationUpdates[action.payload];
       delete state.statusChanges[action.payload];
       delete state.attendanceUpdates[action.payload];
+      // ✅ Also remove from selectedTripIds
+      state.selectedTripIds = state.selectedTripIds.filter(id => id !== action.payload);
 
       state.stats = calculateStats(state.ongoingTrips, state.attendanceUpdates);
     },
@@ -248,6 +256,29 @@ const liveTripsSlice = createSlice({
     // Clear error
     clearError: (state) => {
       state.error = null;
+    },
+
+    // ✅ Added: Trip selection reducers
+    toggleTripSelection: (state, action: PayloadAction<string>) => {
+      const tripId = action.payload;
+      const index = state.selectedTripIds.indexOf(tripId);
+      if (index === -1) {
+        state.selectedTripIds.push(tripId);
+      } else {
+        state.selectedTripIds.splice(index, 1);
+      }
+    },
+
+    selectAllTrips: (state) => {
+      state.selectedTripIds = state.ongoingTrips.map(trip => trip.id);
+    },
+
+    deselectAllTrips: (state) => {
+      state.selectedTripIds = [];
+    },
+
+    setSelectedTripIds: (state, action: PayloadAction<string[]>) => {
+      state.selectedTripIds = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -360,6 +391,11 @@ export const {
   updateOngoingTrip,
   clearRealTimeData,
   clearError,
+  // ✅ Added: Export selection actions
+  toggleTripSelection,
+  selectAllTrips,
+  deselectAllTrips,
+  setSelectedTripIds,
 } = liveTripsSlice.actions;
 
 export default liveTripsSlice.reducer;
