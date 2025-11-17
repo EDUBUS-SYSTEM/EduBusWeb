@@ -1,36 +1,56 @@
 import React from "react";
 import { ImportDriversResponse } from "@/services/api/drivers";
 import { ImportParentsResponse } from "@/services/api/parents";
+import { ImportSupervisorsResponse } from "@/services/api/supervisors";
+
+type ImportResult =
+  | ImportDriversResponse
+  | ImportParentsResponse
+  | ImportSupervisorsResponse;
+
+type ImportResultType = "driver" | "parent" | "supervisor";
 
 interface ImportResultsProps {
-  result: ImportDriversResponse | ImportParentsResponse;
+  result: ImportResult;
+  type: ImportResultType;
+  onExport?: () => void;
   onClose: () => void;
 }
 
-const ImportResults: React.FC<ImportResultsProps> = ({ result, onClose }) => {
+const ImportResults: React.FC<ImportResultsProps> = ({
+  result,
+  type,
+  onExport,
+  onClose,
+}) => {
   return (
     <div className="mb-6 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold text-gray-800">Import Results</h3>
         <div className="flex items-center gap-3">
-          {result?.successUsers && result.successUsers.length > 0 && (
-            <button className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center gap-2">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          {result?.successUsers &&
+            result.successUsers.length > 0 &&
+            onExport && (
+              <button
+                onClick={onExport}
+                className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center gap-2"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-              Export Accounts
-            </button>
-          )}
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+                Export {type === "driver" ? "Drivers" : type === "parent" ? "Parents" : "Supervisors"}
+              </button>
+            )}
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 text-sm"

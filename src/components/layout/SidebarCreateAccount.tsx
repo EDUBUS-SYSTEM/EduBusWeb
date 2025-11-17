@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import { ChevronLeft, User, Users } from 'lucide-react';
+import { ChevronLeft, User, Users, Shield } from 'lucide-react';
 
-export type AccountType = 'driver' | 'parent';
+export type AccountType = 'driver' | 'parent' | 'supervisor';
 
 interface SidebarCreateAccountProps {
   activeAccountType: AccountType;
@@ -28,6 +28,12 @@ const SidebarCreateAccount: React.FC<SidebarCreateAccountProps> = ({
       label: 'Parent Account',
       icon: Users,
       description: 'Parent account',
+    },
+    {
+      type: 'supervisor' as AccountType,
+      label: 'Supervisor Account',
+      icon: Shield,
+      description: 'Supervisor account',
     },
   ];
 
