@@ -21,7 +21,7 @@ export interface UserAccount {
   phoneNumber: string;
   dateOfBirth?: string; // ISO string from backend
   gender?: number;
-  role: "admin" | "parent" | "driver";
+  role: "admin" | "parent" | "driver" | "supervisor";
   userPhotoFileId?: string;
   createdAt: string;
   updatedAt?: string;

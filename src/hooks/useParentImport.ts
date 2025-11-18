@@ -1,11 +1,15 @@
-import { useState } from 'react';
-import { importParentsFromExcel } from '@/services/api/parents';
-import { ImportParentsResponse } from '@/services/api/parents';
-import { downloadParentTemplate } from '@/utils/excelTemplate';
+import { useState } from "react";
+import {
+  importParentsFromExcel,
+  ImportParentsResponse,
+  exportParentsToExcel,
+} from "@/services/api/parents";
+import { downloadParentTemplate } from "@/utils/excelTemplate";
 
 export const useParentImport = () => {
   const [importLoading, setImportLoading] = useState(false);
-  const [importResult, setImportResult] = useState<ImportParentsResponse | null>(null);
+  const [importResult, setImportResult] =
+    useState<ImportParentsResponse | null>(null);
 
   const handleUploadFiles = async (files: File[]) => {
     if (files.length === 0) return;
@@ -15,7 +19,7 @@ export const useParentImport = () => {
       const result = await importParentsFromExcel(files[0]);
       setImportResult(result);
     } catch (error) {
-      console.error('Error importing parents:', error);
+      console.error("Error importing parents:", error);
       // You might want to show an error message here
     } finally {
       setImportLoading(false);
@@ -26,7 +30,24 @@ export const useParentImport = () => {
     try {
       downloadParentTemplate();
     } catch (error) {
-      console.error('Error downloading template:', error);
+      console.error("Error downloading template:", error);
+    }
+  };
+
+  const handleExportParents = async () => {
+    try {
+      const blob = await exportParentsToExcel();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const today = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `parents_${today}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error exporting parents:", error);
     }
   };
 
@@ -39,6 +60,7 @@ export const useParentImport = () => {
     importResult,
     handleUploadFiles,
     handleDownloadTemplate,
+    handleExportParents,
     clearImportResult,
   };
 };

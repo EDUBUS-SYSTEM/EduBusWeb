@@ -150,6 +150,17 @@ export interface DriverAccountData {
   licenseImages?: File[];
 }
 
+export interface SupervisorAccountData {
+  email: string;
+  supervisorPhoto?: File[];
+  firstName: string;
+  lastName: string;
+  address: string;
+  phoneNumber: string;
+  gender: string;
+  dateOfBirth?: string;
+}
+
 export interface StudentInfo {
   id: string;
   fullName: string;

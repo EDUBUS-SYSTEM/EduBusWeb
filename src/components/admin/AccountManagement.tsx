@@ -16,6 +16,7 @@ import { TableSkeleton } from "@/components/ui/Skeleton";
 import {
   userAccountService,
   GetUsersParams,
+  UserListResponse,
 } from "@/services/userAccountService/userAccountService.api";
 import {
   UserAccount,
@@ -32,12 +33,8 @@ const UserRow = memo(({
   onLockClick: (userId: string) => void;
   onUnlockClick: (userId: string) => void;
 }) => {
-  const getUserRole = (user: UserAccount): "admin" | "parent" | "driver" => {
-    const email = user.email.toLowerCase();
-    if (email.includes("admin")) return "admin";
-    if (email.includes("driver")) return "driver";
-    if (email.includes("parent")) return "parent";
-    return "parent";
+  const getUserRole = (user: UserAccount): UserAccount["role"] => {
+    return user.role;
   };
 
   const isUserLocked = (user: UserAccount): boolean => {
@@ -198,10 +195,12 @@ export default function AccountManagement() {
   }), [currentPage, sortBy, sortOrder, debouncedSearch, statusFilter, roleFilter]);
 
   // Fetch users with React Query (server-side pagination)
-  const { data, isLoading, error: queryError } = useQuery({
+  const { data, isLoading, isFetching, error: queryError } = useQuery<UserListResponse, Error>({
     queryKey: ['users', queryParams],
     queryFn: () => userAccountService.getUsers(queryParams),
     staleTime: 1000 * 30, // 30 seconds - data is fresh for 30 seconds
+    refetchOnWindowFocus: false,
+    refetchOnMount: 'always',
   });
 
   // Lock user mutation
@@ -333,24 +332,6 @@ export default function AccountManagement() {
     setSearchTerm(e.target.value);
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-8">
-        <div className="bg-[#fdc600bd] rounded-2xl p-4 shadow-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-[#463B3B] mb-1">User Management</h1>
-              <p className="text-[#463B3B] text-sm opacity-80">Manage user accounts and permissions</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-          <TableSkeleton rows={5} cols={5} />
-        </div>
-      </div>
-    );
-  }
-
   if (queryError) {
     return (
       <div className="flex justify-center items-center p-8">
@@ -424,7 +405,7 @@ export default function AccountManagement() {
       )}
 
       {/* Main Content Card */}
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden relative">
         {/* Search and Filter Section */}
         <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-6 border-b border-gray-200">
           <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
@@ -460,6 +441,7 @@ export default function AccountManagement() {
                 <option value="admin">Admin</option>
                 <option value="parent">Parent</option>
                 <option value="driver">Driver</option>
+                <option value="supervisor">Supervisor</option>
               </select>
             </div>
             
@@ -501,38 +483,52 @@ export default function AccountManagement() {
 
         {/* Table Section */}
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gradient-to-r from-gray-100 to-gray-200">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  User Information
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  Contact Details
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  Role & Status
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  Account Info
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-100">
-              {users.map((user) => (
-                <UserRow
-                  key={user.id}
-                  user={user}
-                  onLockClick={handleLockClick}
-                  onUnlockClick={handleUnlockUser}
-                />
-              ))}
-            </tbody>
-          </table>
+          {isLoading && users.length === 0 ? (
+            <TableSkeleton rows={5} cols={5} />
+          ) : (
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gradient-to-r from-gray-100 to-gray-200">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    User Information
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Contact Details
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Role & Status
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Account Info
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-100">
+                {users.map((user: UserAccount) => (
+                  <UserRow
+                    key={user.id}
+                    user={user}
+                    onLockClick={handleLockClick}
+                    onUnlockClick={handleUnlockUser}
+                  />
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
+
+        {/* Small fetching overlay to indicate background loading without losing focus */}
+        {isFetching && !isLoading && (
+          <div className="absolute inset-x-0 top-0 flex justify-end p-3 pointer-events-none">
+            <div className="flex items-center gap-2 bg-white/80 rounded-full px-3 py-1 text-xs text-gray-500 shadow-sm">
+              <span className="animate-spin">⏳</span>
+              <span>Updating...</span>
+            </div>
+          </div>
+        )}
 
         {/* Pagination */}
         {users.length > 0 && (

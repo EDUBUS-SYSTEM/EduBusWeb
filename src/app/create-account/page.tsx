@@ -6,14 +6,17 @@ import SidebarCreateAccount, {
 } from "@/components/layout/SidebarCreateAccount";
 import DriverAccountForm from "@/components/forms/DriverAccountForm";
 import ParentAccountForm from "@/components/forms/ParentAccountForm";
+import SupervisorAccountForm from "@/components/forms/SupervisorAccountForm";
 import UploadButton from "@/components/ui/UploadButton";
 import {
   DriverAccountData,
   ParentAccountData,
+  SupervisorAccountData,
   AccountFormErrors,
 } from "@/types";
 import { createDriver, uploadHealthCertificate } from "@/services/api/drivers";
 import { createParent } from "@/services/api/parents";
+import { createSupervisor } from "@/services/api/supervisors";
 import { uploadUserPhoto } from "@/services/api/userAccount";
 import { createParentWithFullSetup } from "@/services/api/adminParentService";
 import {
@@ -23,8 +26,9 @@ import {
 import { isAxiosError } from "axios";
 import { useDriverImport } from "@/hooks/useDriverImport";
 import { useParentImport } from "@/hooks/useParentImport";
+import { useSupervisorImport } from "@/hooks/useSupervisorImport";
 import ImportResults from "@/components/layout/ImportResults";
-import { validateDriver, validateParent } from "@/lib/validation";
+import { validateDriver, validateParent, validateSupervisor } from "@/lib/validation";
 import Modal from "@/components/ui/Modal";
 
 const CreateAccountPage: React.FC = () => {
@@ -33,14 +37,17 @@ const CreateAccountPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<AccountFormErrors>({});
   const [formKey, setFormKey] = useState(0); // Add key to force form reset
+  const [photoUploadError, setPhotoUploadError] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successData, setSuccessData] = useState<{ email: string; password: string } | null>(null);
+  const [successAccountType, setSuccessAccountType] = useState<AccountType | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const {
     importLoading: driverImportLoading,
     importResult: driverImportResult,
     handleUploadFiles: handleDriverUploadFiles,
     handleDownloadTemplate: handleDriverDownloadTemplate,
+    handleExportDrivers,
     clearImportResult: clearDriverImportResult,
   } = useDriverImport();
 
@@ -49,8 +56,18 @@ const CreateAccountPage: React.FC = () => {
     importResult: parentImportResult,
     handleUploadFiles: handleParentUploadFiles,
     handleDownloadTemplate: handleParentDownloadTemplate,
+    handleExportParents,
     clearImportResult: clearParentImportResult,
   } = useParentImport();
+
+  const {
+    importLoading: supervisorImportLoading,
+    importResult: supervisorImportResult,
+    handleUploadFiles: handleSupervisorUploadFiles,
+    handleDownloadTemplate: handleSupervisorDownloadTemplate,
+    handleExportSupervisors,
+    clearImportResult: clearSupervisorImportResult,
+  } = useSupervisorImport();
 
   const handleAccountTypeChange = (type: AccountType) => {
     setActiveAccountType(type);
@@ -153,6 +170,7 @@ const CreateAccountPage: React.FC = () => {
         email: data.email,
         password: res.password,
       });
+      setSuccessAccountType("driver");
       setShowSuccessModal(true);
 
       // Reset form after successful creation
@@ -367,6 +385,7 @@ const CreateAccountPage: React.FC = () => {
         email: data.email,
         password: result.password,
       });
+      setSuccessAccountType("parent");
       setShowSuccessModal(true);
 
       // Reset form after successful creation
@@ -381,6 +400,142 @@ const CreateAccountPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSupervisorSubmit = async (data: SupervisorAccountData) => {
+    setLoading(true);
+    setErrors({});
+    setPhotoUploadError(null);
+
+    try {
+      const newErrors = validateSupervisor(data);
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        return;
+      }
+
+      const dDob = new Date(data.dateOfBirth!);
+      const dobDateOnly = `${dDob.getFullYear()}-${String(dDob.getMonth() + 1).padStart(2, "0")}-${String(
+        dDob.getDate()
+      ).padStart(2, "0")}`;
+
+      const payload = {
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phoneNumber: data.phoneNumber,
+        gender: Number(data.gender),
+        dateOfBirth: dobDateOnly,
+        address: data.address,
+      };
+
+      let res;
+      try {
+        res = await createSupervisor(payload);
+      } catch (e: unknown) {
+        let status: number | undefined;
+        let responseData: unknown;
+        let msg = "";
+        if (isAxiosError(e)) {
+          status = e.response?.status;
+          responseData = e.response?.data;
+          msg = (responseData ?? e.message ?? "").toString();
+        } else if (e instanceof Error) {
+          msg = e.message;
+        }
+
+        if (status === 409) {
+          const conflictErrors: AccountFormErrors = {};
+          if (/email/i.test(msg))
+            conflictErrors.email = "Email already exists in the system";
+          if (/phone/i.test(msg))
+            conflictErrors.phoneNumber =
+              "Phone number already exists in the system";
+          setErrors({
+            ...conflictErrors,
+            general:
+              "Supervisor creation failed. Data was not saved to the database.",
+          });
+          return;
+        }
+
+        if (status === 400) {
+          const fieldErrors: AccountFormErrors = {};
+          if (typeof responseData === "object" && responseData) {
+            const record = responseData as Record<string, unknown>;
+            for (const k of Object.keys(record)) {
+              const value = record[k];
+              const first = Array.isArray(value)
+                ? (value as unknown[])[0]
+                : value;
+              fieldErrors[k.charAt(0).toLowerCase() + k.slice(1)] =
+                first?.toString() || "Invalid value";
+            }
+          }
+          setErrors({
+            ...fieldErrors,
+            general:
+              "Supervisor creation failed. Data was not saved to the database.",
+          });
+          return;
+        }
+
+        setErrors({
+          general:
+            msg ||
+            "Supervisor creation failed. Data was not saved to the database.",
+        });
+        return;
+      }
+
+      setSuccessData({
+        email: data.email,
+        password: res.password,
+      });
+      setSuccessAccountType("supervisor");
+      setShowSuccessModal(true);
+
+      setFormKey((prev) => prev + 1);
+
+      if (data.supervisorPhoto && data.supervisorPhoto.length > 0) {
+        try {
+          await uploadUserPhoto(res.id, data.supervisorPhoto[0]);
+        } catch (e: unknown) {
+          console.error("Supervisor photo upload failed", e);
+          setPhotoUploadError(
+            "Supervisor created successfully but photo upload failed. Please try uploading again later."
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error creating supervisor account:", error);
+      setErrors({
+        general:
+          "Failed to create supervisor account. Please check data or try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isDriverActive = activeAccountType === "driver";
+  const isParentActive = activeAccountType === "parent";
+  const isSupervisorActive = activeAccountType === "supervisor";
+  const showImportControls = isDriverActive || isParentActive || isSupervisorActive;
+  const currentImportLoading =
+    (isDriverActive && driverImportLoading) ||
+    (isParentActive && parentImportLoading) ||
+    (isSupervisorActive && supervisorImportLoading);
+  const successTypeForModal = successAccountType ?? activeAccountType;
+  const successTitleMap: Record<AccountType, string> = {
+    driver: "Driver Account Created Successfully!",
+    parent: "Parent Account Created Successfully!",
+    supervisor: "Supervisor Account Created Successfully!",
+  };
+  const successRecipientMap: Record<AccountType, string> = {
+    driver: "driver",
+    parent: "parent",
+    supervisor: "supervisor",
   };
 
   return (
@@ -400,30 +555,45 @@ const CreateAccountPage: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-800">
               Create User Account
             </h1>
-            {(activeAccountType === "driver" || activeAccountType === "parent") && (
+            {showImportControls && (
               <div className="flex items-center gap-3">
-                {(driverImportLoading || parentImportLoading) && (
+                {currentImportLoading && (
                   <div className="text-sm text-blue-600">
                     <span className="animate-spin">⏳</span> Importing...
                   </div>
                 )}
                 <UploadButton
                   onFileSelect={(files) => {
-                    if (activeAccountType === "driver") {
+                    if (isDriverActive) {
                       handleDriverUploadFiles(files);
-                    } else if (activeAccountType === "parent") {
+                    } else if (isParentActive) {
                       handleParentUploadFiles(files);
+                    } else if (isSupervisorActive) {
+                      handleSupervisorUploadFiles(files);
                     }
                   }}
                   onDownloadTemplate={
-                    activeAccountType === "driver" 
-                      ? handleDriverDownloadTemplate 
-                      : handleParentDownloadTemplate
+                    isDriverActive
+                      ? handleDriverDownloadTemplate
+                      : isParentActive
+                      ? handleParentDownloadTemplate
+                      : handleSupervisorDownloadTemplate
                   }
                   showDownloadTemplate={true}
                   accept=".xlsx"
                   multiple={false}
                 />
+                {isSupervisorActive && (
+                  <button
+                    onClick={handleExportSupervisors}
+                    className="flex items-center space-x-2 px-4 py-2 rounded-lg
+                               bg-emerald-50 text-emerald-600 hover:bg-emerald-100
+                               transition-all duration-300 border border-emerald-200
+                               hover:border-emerald-300 text-sm font-medium"
+                  >
+                    <span>Export supervisors</span>
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -437,10 +607,28 @@ const CreateAccountPage: React.FC = () => {
 
           {/* Import Results */}
           {driverImportResult && activeAccountType === "driver" && (
-            <ImportResults result={driverImportResult} onClose={clearDriverImportResult} />
+            <ImportResults
+              result={driverImportResult}
+              type="driver"
+              onExport={handleExportDrivers}
+              onClose={clearDriverImportResult}
+            />
           )}
           {parentImportResult && activeAccountType === "parent" && (
-            <ImportResults result={parentImportResult} onClose={clearParentImportResult} />
+            <ImportResults
+              result={parentImportResult}
+              type="parent"
+              onExport={handleExportParents}
+              onClose={clearParentImportResult}
+            />
+          )}
+          {supervisorImportResult && activeAccountType === "supervisor" && (
+            <ImportResults
+              result={supervisorImportResult}
+              type="supervisor"
+              onExport={handleExportSupervisors}
+              onClose={clearSupervisorImportResult}
+            />
           )}
 
           {/* Form Content */}
@@ -452,10 +640,17 @@ const CreateAccountPage: React.FC = () => {
                 loading={loading}
                 errors={errors}
               />
-            ) : (
+            ) : activeAccountType === "parent" ? (
               <ParentAccountForm
                 key={formKey}
                 onSubmit={handleParentSubmit}
+                loading={loading}
+                errors={errors}
+              />
+            ) : (
+              <SupervisorAccountForm
+                key={formKey}
+                onSubmit={handleSupervisorSubmit}
                 loading={loading}
                 errors={errors}
               />
@@ -470,7 +665,9 @@ const CreateAccountPage: React.FC = () => {
         onClose={() => {
           setShowSuccessModal(false);
           setSuccessData(null);
+          setSuccessAccountType(null);
           setCopiedField(null);
+          setPhotoUploadError(null);
         }}
         title=""
         size="md"
@@ -495,13 +692,18 @@ const CreateAccountPage: React.FC = () => {
 
           {/* Title */}
           <h3 className="text-2xl font-bold text-gray-800 mb-2">
-            {activeAccountType === "parent" 
-              ? "Parent Account Created Successfully!" 
-              : "Driver Account Created Successfully!"}
+            {successTitleMap[successTypeForModal]}
           </h3>
           <p className="text-gray-600 mb-6">
-            Please provide the login credentials to the {activeAccountType === "parent" ? "parent" : "driver"}
+            Please provide the login credentials to the {successRecipientMap[successTypeForModal]}
           </p>
+
+          {/* Photo upload warning (for supervisor only) */}
+          {successTypeForModal === "supervisor" && photoUploadError && (
+            <div className="mb-4 p-3 rounded-xl bg-yellow-50 border border-yellow-300 text-sm text-yellow-800 text-left">
+              {photoUploadError}
+            </div>
+          )}
 
           {/* Credentials Box */}
           <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl p-6 mb-6 border-2 border-yellow-200">
@@ -575,6 +777,7 @@ const CreateAccountPage: React.FC = () => {
             onClick={() => {
               setShowSuccessModal(false);
               setSuccessData(null);
+              setSuccessAccountType(null);
               setCopiedField(null);
             }}
             className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-semibold py-3 px-6 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg"

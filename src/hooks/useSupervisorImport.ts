@@ -1,48 +1,25 @@
 import { useState, useCallback } from "react";
 import { isAxiosError } from "axios";
 import {
-  importDriversFromExcel,
-  ImportDriversResponse,
-  exportDriversToExcel,
-} from "@/services/api/drivers";
-import { downloadTemplate } from "@/services/api/file";
-import { downloadDriverTemplate } from "@/utils/excelTemplate";
+  importSupervisorsFromExcel,
+  ImportSupervisorsResponse,
+  exportSupervisorsToExcel,
+} from "@/services/api/supervisors";
+import { downloadSupervisorTemplate } from "@/utils/excelTemplate";
 
-export const useDriverImport = () => {
+export const useSupervisorImport = () => {
   const [importLoading, setImportLoading] = useState(false);
   const [importResult, setImportResult] =
-    useState<ImportDriversResponse | null>(null);
+    useState<ImportSupervisorsResponse | null>(null);
 
   const clearImportResult = useCallback(() => setImportResult(null), []);
-
-  // Test function to validate import result logic
-  const testImportResultLogic = useCallback(
-    (testResult: ImportDriversResponse) => {
-      const successCount = testResult?.successUsers?.length || 0;
-      const failedCount = testResult?.failedUsers?.length || 0;
-      const totalProcessed = testResult?.totalProcessed || 0;
-
-      if (totalProcessed === 0) {
-        return "⚠️ No data was processed. Please check your Excel file format.";
-      } else if (successCount > 0 && failedCount === 0) {
-        return `✅ Import successful! ${successCount} drivers created.`;
-      } else if (successCount > 0 && failedCount > 0) {
-        return `⚠️ Partial success: ${successCount} created, ${failedCount} failed.`;
-      } else if (successCount === 0 && failedCount > 0) {
-        return `❌ Import failed: ${failedCount} errors occurred.`;
-      } else {
-        return "⚠️ Import completed but no results to show.";
-      }
-    },
-    []
-  );
 
   const handleUploadFiles = useCallback(async (files: File[]) => {
     if (!files || !Array.isArray(files) || files.length === 0) return;
     const file = files[0];
 
     if (!file.name.toLowerCase().endsWith(".xlsx")) {
-      alert("Please select an .xlsx file for driver import");
+      alert("Please select an .xlsx file for supervisor import");
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
@@ -53,7 +30,7 @@ export const useDriverImport = () => {
     setImportLoading(true);
     setImportResult(null);
     try {
-      const result = await importDriversFromExcel(file);
+      const result = await importSupervisorsFromExcel(file);
       setImportResult(result);
 
       const successCount = result?.successUsers?.length || 0;
@@ -63,7 +40,7 @@ export const useDriverImport = () => {
       if (totalProcessed === 0) {
         alert("⚠️ No data was processed. Please check your Excel file format.");
       } else if (successCount > 0 && failedCount === 0) {
-        alert(`✅ Import successful! ${successCount} drivers created.`);
+        alert(`✅ Import successful! ${successCount} supervisors created.`);
       } else if (successCount > 0 && failedCount > 0) {
         alert(
           `⚠️ Partial success: ${successCount} created, ${failedCount} failed.`
@@ -74,7 +51,7 @@ export const useDriverImport = () => {
         alert("⚠️ Import completed but no results to show.");
       }
     } catch (err: unknown) {
-      console.error("Import error:", err);
+      console.error("Supervisor import error:", err);
       let errorMessage = "Import failed";
       if (isAxiosError(err)) {
         const data = err.response?.data as { message?: string } | undefined;
@@ -90,16 +67,9 @@ export const useDriverImport = () => {
 
   const handleDownloadTemplate = useCallback(async () => {
     try {
-      await downloadTemplate("driver");
+      downloadSupervisorTemplate();
     } catch (e: unknown) {
-      console.error("Template download error:", e);
-      if (isAxiosError(e) && e.response?.status === 404) {
-        console.warn(
-          "Driver template not found on server. Falling back to local template."
-        );
-        downloadDriverTemplate();
-        return;
-      }
+      console.error("Supervisor template download error:", e);
       let message: unknown = "Failed to download template";
       if (isAxiosError(e)) {
         message = e.response?.data ?? e.message ?? message;
@@ -110,21 +80,21 @@ export const useDriverImport = () => {
     }
   }, []);
 
-  const handleExportDrivers = useCallback(async () => {
+  const handleExportSupervisors = useCallback(async () => {
     try {
-      const blob = await exportDriversToExcel();
+      const blob = await exportSupervisorsToExcel();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
-      const today = new Date().toISOString().slice(0, 10);
       a.href = url;
-      a.download = `drivers_${today}.xlsx`;
+      const today = new Date().toISOString().slice(0, 10);
+      a.download = `supervisors_${today}.xlsx`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (e: unknown) {
-      console.error("Driver export error:", e);
-      let message: unknown = "Failed to export drivers";
+      console.error("Supervisor export error:", e);
+      let message: unknown = "Failed to export supervisors";
       if (isAxiosError(e)) {
         message = e.response?.data ?? e.message ?? message;
       } else if (e instanceof Error) {
@@ -139,8 +109,9 @@ export const useDriverImport = () => {
     importResult,
     handleUploadFiles,
     handleDownloadTemplate,
-    handleExportDrivers,
+    handleExportSupervisors,
     clearImportResult,
-    testImportResultLogic, // Export for testing
   };
 };
+
+
