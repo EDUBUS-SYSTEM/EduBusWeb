@@ -17,14 +17,27 @@ import {
 } from "react-icons/fa";
 import Pagination from "@/components/ui/Pagination";
 import {
-  parentLeaveReportService,
   ParentLeaveReportDetail,
   ParentLeaveReportSummary,
   ParentLeaveStatus,
 } from "@/services/parentLeaveReportService";
-import { studentService } from "@/services/studentService/studentService.api";
-
-type DateRangeOption = "today" | "thisWeek" | "thisMonth" | "all";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  approveParentLeaveReport,
+  closeReport,
+  DateRangeOption,
+  fetchParentLeaveReportDetail,
+  fetchParentLeaveReports,
+  fetchStudentNamesByIds,
+  openReport,
+  PAGE_SIZE,
+  rejectParentLeaveReport,
+  selectParentLeaveReportsState,
+  setCurrentPage,
+  setDateRange,
+  setSearchText,
+  setStatusFilter,
+} from "@/store/slices/parentLeaveReportsSlice";
 
 const DATE_RANGE_OPTIONS: Array<{ label: string; value: DateRangeOption }> = [
   { label: "Today", value: "today" },
@@ -40,72 +53,46 @@ const STATUS_BADGE_STYLES: Record<ParentLeaveStatus, string> = {
 };
 
 const TABLE_COLUMN_CLASSES = {
-  student: "w-[28%]",
-  reason: "w-[28%]",
-  dateRange: "w-[16%]",
-  requested: "w-[16%]",
-  status: "w-[8%]",
-  actions: "w-[12%]",
+  student: "w-[240px] min-w-[220px]",
+  parent: "w-[220px] min-w-[200px]",
+  reason: "w-[120px] min-w-[120px] max-w-[120px]",
+  dateRange: "w-[160px]",
+  requested: "w-[160px]",
+  status: "w-[120px]",
+  actions: "w-[110px]",
 };
 
-const PAGE_SIZE = 6;
 const APPROVAL_NOTE = "Attendance updated.";
 const REJECTION_REASON = "Please attach additional verification.";
 
 export default function ParentLeaveReportsView() {
-  const [reports, setReports] = useState<ParentLeaveReportSummary[]>([]);
-  const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalItems: 0 });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState<ParentLeaveStatus | "">("");
-  const [dateRange, setDateRange] = useState<DateRangeOption>("thisWeek");
+  const dispatch = useAppDispatch();
   const [showFilters, setShowFilters] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const {
+    reports,
+    pagination,
+    filters,
+    loading,
+    error,
+    selectedReport,
+    detailLoading,
+    detailError,
+    actionLoading,
+    studentNameLookup,
+  } = useAppSelector(selectParentLeaveReportsState);
 
-  const [selectedReport, setSelectedReport] = useState<ParentLeaveReportDetail | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const [detailError, setDetailError] = useState<string | null>(null);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [studentNameLookup, setStudentNameLookup] = useState<Record<string, string>>({});
-
-  const { startDateParam, endDateParam } = useMemo(() => getDateRangeBoundaries(dateRange), [dateRange]);
   const totalPages = Math.max(1, pagination.totalPages || 1);
   const totalItems = pagination.totalItems || 0;
-
-  const fetchReports = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await parentLeaveReportService.listReports({
-        search: searchText.trim() || undefined,
-        status: statusFilter || undefined,
-        startDate: startDateParam,
-        endDate: endDateParam,
-        page: currentPage,
-        perPage: PAGE_SIZE,
-        sort: "Newest",
-      });
-
-      setReports(response.items);
-      setPagination(response.pagination);
-    } catch (err) {
-      console.error("Failed to load leave reports", err);
-      setError("Unable to load leave reports. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, [searchText, statusFilter, startDateParam, endDateParam, currentPage]);
+  const statusFilterId = "parent-leave-status";
+  const dateRangeLabelId = "parent-leave-date-range";
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchReports();
-    }, searchText ? 300 : 0);
+      dispatch(fetchParentLeaveReports());
+    }, filters.searchText ? 300 : 0);
 
     return () => clearTimeout(timeoutId);
-  }, [searchText, fetchReports]);
+  }, [dispatch, filters.searchText, filters.statusFilter, filters.dateRange, pagination.currentPage]);
 
   const resolveStudentName = useCallback(
     (report: { studentId: string; studentName: string }) => {
@@ -114,7 +101,7 @@ export default function ParentLeaveReportsView() {
         return normalized;
       }
 
-      const cached = studentNameLookup[report.studentId];
+      const cached = report.studentId ? studentNameLookup[report.studentId] : undefined;
       if (cached) {
         return cached;
       }
@@ -134,83 +121,23 @@ export default function ParentLeaveReportsView() {
       return;
     }
 
-    let cancelled = false;
-
-    const fetchStudentNames = async () => {
-      try {
-        const results = await Promise.all(
-          missingIds.map(async (id) => {
-            try {
-              const student = await studentService.getById(id);
-              const fullName = buildFullName(student.firstName, student.lastName);
-              return fullName ? { id, name: fullName } : null;
-            } catch (error) {
-              console.error(`Failed to fetch student ${id}`, error);
-              return null;
-            }
-          }),
-        );
-
-        if (cancelled) {
-          return;
-        }
-
-        setStudentNameLookup((prev) => {
-          const next = { ...prev };
-          results.forEach((result) => {
-            if (result) {
-              next[result.id] = result.name;
-            }
-          });
-          return next;
-        });
-      } catch (error) {
-        console.error("Failed to load student names", error);
-      }
-    };
-
-    fetchStudentNames();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [reports, studentNameLookup]);
+    dispatch(fetchStudentNamesByIds(missingIds));
+  }, [dispatch, reports, studentNameLookup]);
 
   const handlePageChange = (page: number) => {
     const nextPage = Math.min(Math.max(page, 1), totalPages);
-    if (nextPage !== currentPage) {
-      setCurrentPage(nextPage);
+    if (nextPage !== pagination.currentPage) {
+      dispatch(setCurrentPage(nextPage));
     }
   };
 
-  const handleOpenDetails = async (report: ParentLeaveReportSummary) => {
-    setSelectedReport({
-      ...report,
-      studentName: resolveStudentName(report),
-      parentId: "",
-      notes: null,
-      reviewedAt: report.updatedAt ?? null,
-      reviewedBy: null,
-    });
-
-    setDetailLoading(true);
-    setDetailError(null);
-
-    try {
-      const detail = await parentLeaveReportService.getReportById(report.id);
-      setSelectedReport(detail);
-    } catch (err) {
-      console.error("Failed to load leave report detail", err);
-      setDetailError("Unable to load request details. Please try again.");
-    } finally {
-      setDetailLoading(false);
-    }
+  const handleOpenDetails = (report: ParentLeaveReportSummary) => {
+    dispatch(openReport({ ...report, studentName: resolveStudentName(report) }));
+    dispatch(fetchParentLeaveReportDetail(report.id));
   };
 
   const closeModal = () => {
-    setSelectedReport(null);
-    setDetailError(null);
-    setDetailLoading(false);
+    dispatch(closeReport());
   };
 
   const selectedStudentDisplayName = useMemo(
@@ -219,31 +146,167 @@ export default function ParentLeaveReportsView() {
   );
 
   const handleApprove = async (reportId: string) => {
-    setActionLoading(true);
-    try {
-      const updated = await parentLeaveReportService.approveReport(reportId, { notes: APPROVAL_NOTE });
-      setSelectedReport(updated);
-      await fetchReports();
-    } catch (err) {
-      console.error("approveReport", err);
-      alert("Failed to approve request, please try again.");
-    } finally {
-      setActionLoading(false);
+    const result = await dispatch(approveParentLeaveReport({ reportId, notes: APPROVAL_NOTE }));
+    if (approveParentLeaveReport.rejected.match(result)) {
+      alert(result.payload ?? "Failed to approve request, please try again.");
+      return false;
     }
+
+    return true;
   };
 
-  const handleReject = async (reportId: string) => {
-    setActionLoading(true);
-    try {
-      const updated = await parentLeaveReportService.rejectReport(reportId, { reason: REJECTION_REASON });
-      setSelectedReport(updated);
-      await fetchReports();
-    } catch (err) {
-      console.error("rejectReport", err);
-      alert("Failed to reject request, please try again.");
-    } finally {
-      setActionLoading(false);
+  const handleReject = async (reportId: string, reason?: string) => {
+    const result = await dispatch(
+      rejectParentLeaveReport({ reportId, reason: reason?.trim() || REJECTION_REASON }),
+    );
+    if (rejectParentLeaveReport.rejected.match(result)) {
+      alert(result.payload ?? "Failed to reject request, please try again.");
+      return false;
     }
+
+    return true;
+  };
+
+  const renderTableContent = () => {
+    if (loading) {
+      return (
+        <div className="flex h-64 items-center justify-center">
+          <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-[#FAD23C]" />
+        </div>
+      );
+    }
+
+    if (error) {
+      return <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>;
+    }
+
+    return (
+      <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-lg">
+        {reports.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <FaExclamationTriangle className="mb-4 h-10 w-10 text-gray-300" />
+            <p className="text-lg font-medium text-gray-900">No leave reports found</p>
+            <p className="text-sm text-gray-500">Try adjusting your filters.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full table-fixed divide-y divide-gray-100 text-sm">
+              <colgroup>
+                <col className={TABLE_COLUMN_CLASSES.student} />
+                <col className={TABLE_COLUMN_CLASSES.parent} />
+                <col className={TABLE_COLUMN_CLASSES.reason} />
+                <col className={TABLE_COLUMN_CLASSES.dateRange} />
+                <col className={TABLE_COLUMN_CLASSES.requested} />
+                <col className={TABLE_COLUMN_CLASSES.status} />
+                <col className={TABLE_COLUMN_CLASSES.actions} />
+              </colgroup>
+              <thead className="bg-[#FEFCE8] text-left text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                <tr>
+                  <th className={`${TABLE_COLUMN_CLASSES.student} px-6 py-4`}>Student</th>
+                  <th className={`${TABLE_COLUMN_CLASSES.parent} px-6 py-4`}>Parent</th>
+                  <th className={`${TABLE_COLUMN_CLASSES.reason} px-6 py-4`}>Parent reason</th>
+                  <th className={`${TABLE_COLUMN_CLASSES.dateRange} px-6 py-4`}>Date range</th>
+                  <th className={`${TABLE_COLUMN_CLASSES.requested} px-6 py-4`}>Requested at</th>
+                  <th className={`${TABLE_COLUMN_CLASSES.status} px-6 py-4`}>Status</th>
+                  <th className={`${TABLE_COLUMN_CLASSES.actions} px-6 py-4 text-right`}>Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 bg-white text-[#463B3B]">
+                {reports.map((report) => {
+                  const totalDays = calculateTotalDays(report.startDate, report.endDate);
+                  const studentDisplayName = resolveStudentName(report);
+                  const parentContactChips = buildParentContactChips(report);
+                  return (
+                    <tr key={report.id} className="hover:bg-gray-50">
+                      <td className={`${TABLE_COLUMN_CLASSES.student} px-6 py-4 align-top`}>
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FAD23C] text-[#463B3B]">
+                            <FaUser />
+                          </div>
+                          <div>
+                            <p className="font-semibold">{studentDisplayName}</p>
+                            <p className="text-xs text-gray-500">Requested {formatDate(report.createdAt)}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className={`${TABLE_COLUMN_CLASSES.parent} px-6 py-4 align-top`}>
+                        {parentContactChips.length > 0 ? (
+                          <div className="flex flex-col gap-1 text-[12px] text-gray-600">
+                            {parentContactChips.map((chip) => (
+                              <span
+                                key={`${report.id}-${chip.type}`}
+                                className="inline-flex items-center gap-2 text-xs text-gray-600"
+                              >
+                                {chip.icon}
+                                {chip.href ? (
+                                  <a
+                                    href={chip.href}
+                                    className="block truncate text-xs text-[#463B3B] underline-offset-2 hover:underline"
+                                  >
+                                    {chip.label}
+                                  </a>
+                                ) : (
+                                  <span className="block truncate">{chip.label}</span>
+                                )}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-[11px] text-gray-400">No parent information</p>
+                        )}
+                      </td>
+                      <td className={`${TABLE_COLUMN_CLASSES.reason} px-6 py-4 align-top overflow-hidden`}>
+                        <p className="line-clamp-3 text-sm leading-relaxed text-gray-700 break-words">
+                          {report.reason?.trim() || "No specific reason provided."}
+                        </p>
+                        {report.reason && report.reason.trim().length > 160 && (
+                          <button
+                            onClick={() => handleOpenDetails(report)}
+                            className="mt-2 text-xs font-semibold text-[#463B3B] underline-offset-2 hover:underline"
+                          >
+                            View details
+                          </button>
+                        )}
+                      </td>
+                      <td className={`${TABLE_COLUMN_CLASSES.dateRange} px-6 py-4 align-top`}>
+                        <p className="font-medium">
+                          {formatDate(report.startDate)} - {formatDate(report.endDate)}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {totalDays} day{totalDays > 1 ? "s" : ""}
+                        </p>
+                      </td>
+                      <td className={`${TABLE_COLUMN_CLASSES.requested} px-6 py-4 align-top`}>
+                        <p className="font-medium">{formatDateTime(report.createdAt)}</p>
+                        {report.updatedAt && (
+                          <p className="text-xs text-gray-500">Updated {formatDateTime(report.updatedAt)}</p>
+                        )}
+                      </td>
+                      <td className={`${TABLE_COLUMN_CLASSES.status} px-6 py-4 align-top`}>
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${STATUS_BADGE_STYLES[report.status]}`}
+                        >
+                          {report.status}
+                        </span>
+                      </td>
+                      <td className={`${TABLE_COLUMN_CLASSES.actions} px-6 py-4 text-right align-top`}>
+                        <button
+                          onClick={() => handleOpenDetails(report)}
+                          className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 px-4 py-2 text-xs font-semibold text-[#463B3B] transition hover:border-[#463B3B] hover:bg-[#FDF4FF]"
+                        >
+                          <FaSearch />
+                          Details
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -256,10 +319,9 @@ export default function ParentLeaveReportsView() {
               <input
                 type="text"
                 placeholder="Search by student name..."
-                value={searchText}
+                value={filters.searchText}
                 onChange={(e) => {
-                  setSearchText(e.target.value);
-                  setCurrentPage(1);
+                  dispatch(setSearchText(e.target.value));
                 }}
                 className="w-full rounded-2xl border border-gray-200 px-10 py-2.5 text-sm focus:border-transparent focus:ring-2 focus:ring-[#FAD23C]"
               />
@@ -277,12 +339,14 @@ export default function ParentLeaveReportsView() {
         {showFilters && (
           <div className="mt-4 grid gap-4 border-t border-gray-100 pt-4 md:grid-cols-2 lg:grid-cols-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-600">Status</label>
+              <label htmlFor={statusFilterId} className="mb-1 block text-xs font-medium text-gray-600">
+                Status
+              </label>
               <select
-                value={statusFilter}
+                id={statusFilterId}
+                value={filters.statusFilter}
                 onChange={(e) => {
-                  setStatusFilter(e.target.value as ParentLeaveStatus | "");
-                  setCurrentPage(1);
+                  dispatch(setStatusFilter(e.target.value as ParentLeaveStatus | ""));
                 }}
                 className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-[#FAD23C]"
               >
@@ -293,18 +357,23 @@ export default function ParentLeaveReportsView() {
               </select>
             </div>
 
-            <div className="md:col-span-2">
-              <label className="mb-1 block text-xs font-medium text-gray-600">Date range</label>
+            <fieldset
+              className="md:col-span-2 border-0 p-0"
+              aria-labelledby={dateRangeLabelId}
+              data-fieldset="date-range"
+            >
+              <legend id={dateRangeLabelId} className="mb-1 block text-xs font-medium text-gray-600">
+                Date range
+              </legend>
               <div className="flex flex-wrap gap-2">
                 {DATE_RANGE_OPTIONS.map((option) => (
                   <button
                     key={option.value}
                     onClick={() => {
-                      setDateRange(option.value);
-                      setCurrentPage(1);
+                      dispatch(setDateRange(option.value));
                     }}
                     className={`rounded-2xl px-4 py-2 text-sm font-medium ${
-                      dateRange === option.value
+                      filters.dateRange === option.value
                         ? "bg-[#463B3B] text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
@@ -313,130 +382,16 @@ export default function ParentLeaveReportsView() {
                   </button>
                 ))}
               </div>
-            </div>
+            </fieldset>
           </div>
         )}
       </div>
 
-      {loading ? (
-        <div className="flex h-64 items-center justify-center">
-          <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-[#FAD23C]" />
-        </div>
-      ) : error ? (
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
-      ) : (
-        <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-lg">
-          {reports.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <FaExclamationTriangle className="mb-4 h-10 w-10 text-gray-300" />
-              <p className="text-lg font-medium text-gray-900">No leave reports found</p>
-              <p className="text-sm text-gray-500">Try adjusting your filters.</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full table-fixed divide-y divide-gray-100 text-sm">
-                <thead className="bg-[#FEFCE8] text-left text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
-                  <tr>
-                    <th className={`${TABLE_COLUMN_CLASSES.student} px-6 py-4`}>Student</th>
-                    <th className={`${TABLE_COLUMN_CLASSES.reason} px-6 py-4`}>Parent reason</th>
-                    <th className={`${TABLE_COLUMN_CLASSES.dateRange} px-6 py-4`}>Date range</th>
-                    <th className={`${TABLE_COLUMN_CLASSES.requested} px-6 py-4`}>Requested at</th>
-                    <th className={`${TABLE_COLUMN_CLASSES.status} px-6 py-4`}>Status</th>
-                    <th className={`${TABLE_COLUMN_CLASSES.actions} px-6 py-4 text-right`}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 bg-white text-[#463B3B]">
-                  {reports.map((report) => {
-                    const totalDays = calculateTotalDays(report.startDate, report.endDate);
-                    const studentDisplayName = resolveStudentName(report);
-                    const parentContactChips = buildParentContactChips(report);
-                    return (
-                      <tr key={report.id} className="hover:bg-gray-50">
-                        <td className={`${TABLE_COLUMN_CLASSES.student} px-6 py-4 align-top`}>
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FAD23C] text-[#463B3B]">
-                              <FaUser />
-                            </div>
-                            <div>
-                              <p className="font-semibold">{studentDisplayName}</p>
-                              <p className="text-xs text-gray-500">
-                                Requested {formatDate(report.createdAt)}
-                              </p>
-                              {parentContactChips.length > 0 ? (
-                                <div className="mt-1 flex flex-wrap gap-3 text-[11px] text-gray-500">
-                                  {parentContactChips.map((chip) => (
-                                    <span
-                                      key={`${report.id}-${chip.type}`}
-                                      className="inline-flex items-center gap-1 text-[11px]"
-                                    >
-                                      {chip.icon}
-                                      {chip.href ? (
-                                        <a
-                                          href={chip.href}
-                                          className="underline-offset-2 hover:text-[#463B3B] hover:underline"
-                                        >
-                                          {chip.label}
-                                        </a>
-                                      ) : (
-                                        chip.label
-                                      )}
-                                    </span>
-                                  ))}
-                                </div>
-                              ) : (
-                                <p className="text-[11px] text-gray-400">No parent information available</p>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className={`${TABLE_COLUMN_CLASSES.reason} px-6 py-4 align-top`}>
-                          <p className="text-sm text-gray-700 line-clamp-3">
-                            {report.reason || "No specific reason provided."}
-                          </p>
-                        </td>
-                        <td className={`${TABLE_COLUMN_CLASSES.dateRange} px-6 py-4 align-top`}>
-                          <p className="font-medium">
-                            {formatDate(report.startDate)} - {formatDate(report.endDate)}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {totalDays} day{totalDays > 1 ? "s" : ""}
-                          </p>
-                        </td>
-                        <td className={`${TABLE_COLUMN_CLASSES.requested} px-6 py-4 align-top`}>
-                          <p className="font-medium">{formatDateTime(report.createdAt)}</p>
-                          {report.updatedAt && (
-                            <p className="text-xs text-gray-500">Updated {formatDateTime(report.updatedAt)}</p>
-                          )}
-                        </td>
-                        <td className={`${TABLE_COLUMN_CLASSES.status} px-6 py-4 align-top`}>
-                          <span
-                            className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${STATUS_BADGE_STYLES[report.status]}`}
-                          >
-                            {report.status}
-                          </span>
-                        </td>
-                        <td className={`${TABLE_COLUMN_CLASSES.actions} px-6 py-4 text-right align-top`}>
-                          <button
-                            onClick={() => handleOpenDetails(report)}
-                            className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 px-4 py-2 text-xs font-semibold text-[#463B3B] transition hover:border-[#463B3B] hover:bg-[#FDF4FF]"
-                          >
-                            <FaSearch />
-                            Details
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
+      {renderTableContent()}
 
       {totalItems > PAGE_SIZE && (
         <Pagination
-          currentPage={currentPage}
+          currentPage={pagination.currentPage}
           totalPages={totalPages}
           totalItems={totalItems}
           itemsPerPage={PAGE_SIZE}
@@ -470,20 +425,44 @@ function LeaveReportDetailModal({
   loading,
   detailLoading,
   detailError,
-}: {
+}: Readonly<{
   report: ParentLeaveReportDetail;
   studentDisplayName: string;
   onClose: () => void;
-  onApprove: (id: string) => Promise<void>;
-  onReject: (id: string) => Promise<void>;
+  onApprove: (id: string) => Promise<boolean>;
+  onReject: (id: string, reason?: string) => Promise<boolean>;
   loading: boolean;
   detailLoading: boolean;
   detailError: string | null;
-}) {
+}>) {
   const totalDays = calculateTotalDays(report.startDate, report.endDate);
   const parentContactSummary = buildParentContactSummary(report);
   const hasEmail = Boolean(report.parentEmail?.trim());
   const hasPhone = Boolean(report.parentPhoneNumber?.trim());
+  const [pendingAction, setPendingAction] = useState<"approve" | "reject" | null>(null);
+  const [rejectReasonInput, setRejectReasonInput] = useState("");
+  const studentNameForAction = studentDisplayName || report.studentName || "Student";
+
+  const closeActionDialog = () => {
+    setPendingAction(null);
+    setRejectReasonInput("");
+  };
+
+  const handleApproveConfirm = async () => {
+    if (loading) return;
+    const ok = await onApprove(report.id);
+    if (ok) {
+      closeActionDialog();
+    }
+  };
+
+  const handleRejectConfirm = async () => {
+    if (loading) return;
+    const ok = await onReject(report.id, rejectReasonInput.trim() || undefined);
+    if (ok) {
+      closeActionDialog();
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
@@ -650,7 +629,7 @@ function LeaveReportDetailModal({
                 </div>
                 <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:justify-end">
                   <button
-                    onClick={() => onReject(report.id)}
+                    onClick={() => setPendingAction("reject")}
                     disabled={loading}
                     className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
@@ -658,7 +637,7 @@ function LeaveReportDetailModal({
                     Reject
                   </button>
                   <button
-                    onClick={() => onApprove(report.id)}
+                    onClick={() => setPendingAction("approve")}
                     disabled={loading}
                     className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-[#22C55E] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#16A34A] disabled:cursor-not-allowed disabled:opacity-50"
                   >
@@ -671,19 +650,89 @@ function LeaveReportDetailModal({
           </div>
         </div>
       </div>
+      {pendingAction && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-3xl border border-gray-100 bg-white p-6 shadow-2xl">
+            <div className="mb-4 flex items-start justify-between">
+              <div>
+                <p className="text-base font-semibold text-[#463B3B]">
+                  {pendingAction === "approve" ? "Confirm approval" : "Reject leave request"}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {pendingAction === "approve"
+                    ? "Approve this absence and notify the parent."
+                    : "Optionally share a reason with the parent when rejecting."}
+                </p>
+              </div>
+              <button
+                onClick={closeActionDialog}
+                className="rounded-full border border-gray-200 p-2 text-gray-500 hover:bg-gray-50"
+                aria-label="Close confirmation"
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-gray-100 bg-[#FFFBEB] p-4 text-sm text-[#463B3B]">
+                <p className="font-semibold">{studentNameForAction}</p>
+                <p className="text-xs text-gray-500">
+                  {formatDate(report.startDate)} - {formatDate(report.endDate)} • {totalDays} day
+                  {totalDays > 1 ? "s" : ""}
+                </p>
+              </div>
+
+              {pendingAction === "approve" && (
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-800">
+                  <p className="font-semibold">Confirmation</p>
+                  <p className="mt-1 text-xs text-emerald-900">
+                    This request will move to <span className="font-semibold">Approved</span> and attendance
+                    will be updated automatically.
+                  </p>
+                </div>
+              )}
+
+              {pendingAction === "reject" && (
+                <div className="space-y-2">
+                  <label htmlFor="reject-reason" className="text-xs font-semibold uppercase text-gray-500">
+                    Reason (optional)
+                  </label>
+                  <textarea
+                    id="reject-reason"
+                    rows={3}
+                    value={rejectReasonInput}
+                    onChange={(event) => setRejectReasonInput(event.target.value)}
+                    placeholder="E.g. Need additional documents"
+                    className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm text-[#463B3B] placeholder:text-gray-400 focus:border-transparent focus:ring-2 focus:ring-[#FAD23C]"
+                  />
+                  <p className="text-xs text-gray-500">Leaving this empty will use the default note.</p>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <button
+                onClick={closeActionDialog}
+                className="inline-flex flex-1 items-center justify-center rounded-2xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={pendingAction === "approve" ? handleApproveConfirm : handleRejectConfirm}
+                disabled={loading}
+                className={`inline-flex flex-1 items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 ${
+                  pendingAction === "approve" ? "bg-[#22C55E] hover:bg-[#16A34A]" : "bg-red-500 hover:bg-red-600"
+                }`}
+              >
+                {loading && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/60 border-t-transparent" />}
+                {pendingAction === "approve" ? "Confirm approval" : "Confirm rejection"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
-
-function buildFullName(first?: string, last?: string, fallback = "") {
-  const normalizedFirst = first?.trim() ?? "";
-  const normalizedLast = last?.trim() ?? "";
-
-  if (normalizedFirst && normalizedLast) {
-    return `${normalizedFirst} ${normalizedLast}`;
-  }
-
-  return normalizedFirst || normalizedLast || fallback;
 }
 
 function buildParentContactSummary(report: {
@@ -777,51 +826,5 @@ function calculateTotalDays(start?: string, end?: string) {
   const diff = endDate.getTime() - startDate.getTime();
   const days = Math.floor(diff / 86_400_000) + 1;
   return Math.max(days, 1);
-}
-
-function getDateRangeBoundaries(range: DateRangeOption) {
-  const now = new Date();
-  const startOfDay = (date: Date) => {
-    const result = new Date(date);
-    result.setHours(0, 0, 0, 0);
-    return result;
-  };
-
-  const endOfDay = (date: Date) => {
-    const result = new Date(date);
-    result.setHours(23, 59, 59, 999);
-    return result;
-  };
-
-  if (range === "today") {
-    return {
-      startDateParam: startOfDay(now).toISOString(),
-      endDateParam: endOfDay(now).toISOString(),
-    };
-  }
-
-  if (range === "thisWeek") {
-    const monday = new Date(now);
-    const day = now.getDay();
-    const diff = (day + 6) % 7;
-    monday.setDate(now.getDate() - diff);
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    return {
-      startDateParam: startOfDay(monday).toISOString(),
-      endDateParam: endOfDay(sunday).toISOString(),
-    };
-  }
-
-  if (range === "thisMonth") {
-    const first = new Date(now.getFullYear(), now.getMonth(), 1);
-    const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    return {
-      startDateParam: startOfDay(first).toISOString(),
-      endDateParam: endOfDay(last).toISOString(),
-    };
-  }
-
-  return { startDateParam: undefined, endDateParam: undefined };
 }
 
