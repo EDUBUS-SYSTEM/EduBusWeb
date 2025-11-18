@@ -288,7 +288,12 @@ class VietMapService {
   }
 
   // Route API v1.1 - Calculate route between points
-  async getRoute(origin: { lat: number; lng: number }, destination: { lat: number; lng: number }, vehicle: string = 'car'): Promise<VietMapRouteResult> {
+  async getRoute(
+    origin: { lat: number; lng: number },
+    destination: { lat: number; lng: number },
+    vehicle: string = 'car',
+    signal?: AbortSignal
+  ): Promise<VietMapRouteResult> {
     console.log('VietMap getRoute called with:', { origin, destination, vehicle });
     
     if (!this.apiKey) {
@@ -298,38 +303,48 @@ class VietMapService {
     
     console.log('API Key available:', this.apiKey.substring(0, 10) + '...');
 
-    // Build URL with multiple point parameters
-    const baseUrl = 'https://maps.vietmap.vn/api/route';
-    const params = new URLSearchParams({
-      'api-version': '1.1',
-      apikey: this.apiKey,
-      points_encoded: 'true',
-      vehicle: vehicle
-    });
-    
-    // Add multiple point parameters
-    params.append('point', `${origin.lat},${origin.lng}`);
-    params.append('point', `${destination.lat},${destination.lng}`);
+    try {
+      // Build URL with multiple point parameters
+      const baseUrl = 'https://maps.vietmap.vn/api/route';
+      const params = new URLSearchParams({
+        'api-version': '1.1',
+        apikey: this.apiKey,
+        points_encoded: 'true',
+        vehicle: vehicle
+      });
+      
+      // Add multiple point parameters
+      params.append('point', `${origin.lat},${origin.lng}`);
+      params.append('point', `${destination.lat},${destination.lng}`);
 
-    const url = `${baseUrl}?${params}`;
-    console.log('VietMap Route API URL:', url);
-    
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      console.error('VietMap Route API error:', response.status, response.statusText);
-      throw new Error(`Route API error: ${response.status}`);
+      const url = `${baseUrl}?${params}`;
+      console.log('VietMap Route API URL:', url);
+      
+      const response = await fetch(url, { signal });
+      
+      if (!response.ok) {
+        console.error('VietMap Route API error:', response.status, response.statusText);
+        throw new Error(`Route API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('VietMap Route API Response:', data);
+      
+      if (data.code !== 'OK') {
+        console.error('VietMap Route API error:', data.messages || 'Unknown error');
+        throw new Error(`Route API error: ${data.messages || 'Unknown error'}`);
+      }
+
+      return data;
+    } catch (error) {
+      // Silently handle aborted requests so they don't spam the console
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.warn('VietMap Route request was aborted');
+        return { paths: [] };
+      }
+
+      throw error;
     }
-
-    const data = await response.json();
-    console.log('VietMap Route API Response:', data);
-    
-    if (data.code !== 'OK') {
-      console.error('VietMap Route API error:', data.messages || 'Unknown error');
-      throw new Error(`Route API error: ${data.messages || 'Unknown error'}`);
-    }
-
-    return data;
   }
 
   // Reverse Geocoding API v3 - Convert coordinates to address

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLiveTripMonitoring } from '@/hooks/useLiveTripMonitoring';
 import { useAppDispatch } from '@/store/hooks';
 import { toggleTripSelection, selectAllTrips, deselectAllTrips } from '@/store/slices/liveTripsSlice';
@@ -9,6 +9,7 @@ import LiveVehicleMapModal from './LiveVehicleMapModal';
 import TripDetails from './TripDetails';
 import { TripDto, TripStopDto, ParentAttendanceDto } from '@/types';
 import { tripService } from '@/services/tripService';
+import { schoolService } from '@/services/schoolService/schoolService.api';
 
 export default function LiveTripMonitoring() {
   const dispatch = useAppDispatch();
@@ -28,6 +29,33 @@ export default function LiveTripMonitoring() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<TripDto | null>(null);
   const [loadingTripDetails, setLoadingTripDetails] = useState(false);
+  const [schoolLocation, setSchoolLocation] = useState<{ lat: number; lng: number } | undefined>(undefined);
+
+  // Load school location for map center and school marker
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSchoolLocation = async () => {
+      try {
+        const school = await schoolService.getForAdmin();
+        if (school.latitude && school.longitude && isMounted) {
+          setSchoolLocation({
+            lat: school.latitude,
+            lng: school.longitude,
+          });
+        }
+      } catch (error) {
+        console.error('Error loading school location for live map:', error);
+        // Nếu lỗi thì map sẽ tự dùng default location trong LiveVehicleMap
+      }
+    };
+
+    loadSchoolLocation();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // ✅ Use Redux actions for trip selection
   const handleTripToggle = (tripId: string) => {
@@ -301,6 +329,7 @@ export default function LiveTripMonitoring() {
         onTripToggle={handleTripToggle} // ✅ Pass Redux action
         onSelectAllTrips={handleSelectAllTrips} // ✅ Pass Redux action
         onDeselectAllTrips={handleDeselectAllTrips} // ✅ Pass Redux action
+        schoolLocation={schoolLocation}
       />
 
       {/* Trip Details Modal */}
