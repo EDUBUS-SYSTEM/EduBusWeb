@@ -16,6 +16,7 @@ interface LiveVehicleMapModalProps {
   onTripToggle: (tripId: string) => void;
   onSelectAllTrips: () => void;
   onDeselectAllTrips: () => void;
+  schoolLocation?: { lat: number; lng: number };
 }
 
 // Helper function (same as in LiveVehicleMap)
@@ -47,7 +48,8 @@ const LiveVehicleMapModal: React.FC<LiveVehicleMapModalProps> = ({
   selectedTripIds,
   onTripToggle,
   onSelectAllTrips,
-  onDeselectAllTrips
+  onDeselectAllTrips,
+  schoolLocation
 }) => {
   // ✅ Added: State to track which trip to focus on
   const [focusTripId, setFocusTripId] = React.useState<string | null>(null);
@@ -89,6 +91,7 @@ const LiveVehicleMapModal: React.FC<LiveVehicleMapModalProps> = ({
               focusTripId={focusTripId} // ✅ Pass focus trip ID
               className="w-full h-full"
               showControls={true}
+              schoolLocation={schoolLocation}
             />
           </div>
 

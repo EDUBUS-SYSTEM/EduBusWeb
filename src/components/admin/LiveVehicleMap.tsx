@@ -1,7 +1,7 @@
 // EduBusWeb/src/components/admin/LiveVehicleMap.tsx
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import vietmapgl from '@vietmap/vietmap-gl-js/dist/vietmap-gl.js';
 import { TripDto, TripStopDto } from '@/types';
 import { LocationUpdateData } from '@/store/slices/liveTripsSlice';
@@ -15,9 +15,11 @@ interface LiveVehicleMapProps {
   className?: string;
   showControls?: boolean;
   focusTripId?: string | null; // ✅ Added: Trip ID to focus on
+  schoolLocation?: { lat: number; lng: number }; // ✅ Dynamic school location from API
 }
 
-const SCHOOL_LOCATION = {
+// Default fallback school location (HCMC)
+const DEFAULT_SCHOOL_LOCATION = {
   lat: 10.8412,
   lng: 106.8098
 };
@@ -81,7 +83,10 @@ const decodePolyline = (encoded: string): number[][] => {
 };
 
 // Get route coordinates for a trip (School → Stops → School)
-const getTripRouteCoordinates = async (trip: TripDto): Promise<number[][]> => {
+const getTripRouteCoordinates = async (
+  trip: TripDto,
+  schoolLocation: { lat: number; lng: number }
+): Promise<number[][]> => {
   try {
     if (!trip.stops || trip.stops.length === 0) {
       console.log(`[getTripRouteCoordinates] Trip ${trip.id} has no stops`);
@@ -104,7 +109,7 @@ const getTripRouteCoordinates = async (trip: TripDto): Promise<number[][]> => {
     }
 
     const allCoordinates: number[][] = [];
-    let currentPoint = SCHOOL_LOCATION;
+    let currentPoint = schoolLocation;
 
     // Route from school to first stop
     const firstStop = stopsWithLocation[0];
@@ -152,7 +157,7 @@ const getTripRouteCoordinates = async (trip: TripDto): Promise<number[][]> => {
       console.log(`[getTripRouteCoordinates] Getting route: Last stop → School`);
       const routeResult = await vietmapService.getRoute(
         { lat: lastStop.location.latitude, lng: lastStop.location.longitude },
-        SCHOOL_LOCATION,
+        schoolLocation,
         'car'
       );
       
@@ -176,11 +181,11 @@ const getTripRouteCoordinates = async (trip: TripDto): Promise<number[][]> => {
     );
     
     const coordinates = [
-      [SCHOOL_LOCATION.lng, SCHOOL_LOCATION.lat],
+      [schoolLocation.lng, schoolLocation.lat],
       ...stopsWithLocation.map(stop => 
         stop.location ? [stop.location.longitude, stop.location.latitude] : null
       ).filter((coord): coord is number[] => coord !== null),
-      [SCHOOL_LOCATION.lng, SCHOOL_LOCATION.lat]
+      [schoolLocation.lng, schoolLocation.lat]
     ];
     console.log(`[getTripRouteCoordinates] Using fallback straight-line route with ${coordinates.length} points`);
     return coordinates;
@@ -215,7 +220,8 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
   selectedTripIds = [],
   className = "w-full h-full",
   showControls = true,
-  focusTripId
+  focusTripId,
+  schoolLocation
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<vietmapgl.Map | null>(null);
@@ -226,6 +232,12 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
   const sourcesRef = useRef<string[]>([]);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [error, setError] = useState('');
+
+  // ✅ Use API-provided school location when available
+  const effectiveSchoolLocation = useMemo(
+    () => schoolLocation || DEFAULT_SCHOOL_LOCATION,
+    [schoolLocation]
+  );
   
   // ✅ Track which vehicle we're following (only when focused)
   const followingVehicleRef = useRef<string | null>(null);
@@ -257,8 +269,9 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
       lat = trip.stops[0].location.latitude;
       lng = trip.stops[0].location.longitude;
     } else {
-      lat = SCHOOL_LOCATION.lat;
-      lng = SCHOOL_LOCATION.lng;
+      // Fallback to school location from API (or default)
+      lat = effectiveSchoolLocation.lat;
+      lng = effectiveSchoolLocation.lng;
     }
 
     // Focus map on vehicle with smooth animation
@@ -532,7 +545,7 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
       // Add route polyline
       try {
         console.log(`[addRoutePolylines] Getting route coordinates for trip ${trip.id}...`);
-        const coordinates = await getTripRouteCoordinates(trip);
+        const coordinates = await getTripRouteCoordinates(trip, effectiveSchoolLocation);
         console.log(`[addRoutePolylines] Got ${coordinates.length} coordinates for trip ${trip.id}`);
         
         if (coordinates.length === 0) {
@@ -624,8 +637,8 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
         lng = trip.stops[0].location.longitude;
       } else {
         // Fallback to school location
-        lat = SCHOOL_LOCATION.lat;
-        lng = SCHOOL_LOCATION.lng;
+        lat = effectiveSchoolLocation.lat;
+        lng = effectiveSchoolLocation.lng;
       }
 
       const color = getVehicleColor(trip.id);
@@ -700,7 +713,7 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
     if (tripsToShow.length > 0 && vehicleMarkersRef.current.size > 0) {
       try {
         const bounds = new vietmapgl.LngLatBounds();
-        bounds.extend([SCHOOL_LOCATION.lng, SCHOOL_LOCATION.lat]);
+        bounds.extend([effectiveSchoolLocation.lng, effectiveSchoolLocation.lat]);
         
         vehicleMarkersRef.current.forEach((marker) => {
           const lngLat = marker.getLngLat();
@@ -742,7 +755,7 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
         const map = new vietmapgl.Map({
           container: mapRef.current,
           style: `https://maps.vietmap.vn/maps/styles/tm/style.json?apikey=${apiKey}`,
-          center: [SCHOOL_LOCATION.lng, SCHOOL_LOCATION.lat],
+          center: [effectiveSchoolLocation.lng, effectiveSchoolLocation.lat],
           zoom: 12
         });
 
@@ -774,7 +787,7 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
           element: schoolEl,
           anchor: 'center'
         })
-          .setLngLat([SCHOOL_LOCATION.lng, SCHOOL_LOCATION.lat])
+          .setLngLat([effectiveSchoolLocation.lng, effectiveSchoolLocation.lat])
           .addTo(map);
 
         const schoolPopup = new vietmapgl.Popup({ offset: 25 })

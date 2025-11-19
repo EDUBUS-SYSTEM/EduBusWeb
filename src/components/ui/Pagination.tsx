@@ -63,37 +63,49 @@ const Pagination: React.FC<PaginationProps> = ({
   const endIndex = itemsPerPage && totalItems ? Math.min(currentPage * itemsPerPage, totalItems) : 0;
 
   return (
-    <div className={`w-full flex flex-col items-center justify-center space-y-3 ${className}`}>
-      {showInfo && totalItems !== undefined && itemsPerPage !== undefined && (
-        <div className="text-sm text-gray-600 text-center">
-          Showing <span className="font-semibold">{startIndex}-{endIndex}</span> of <span className="font-semibold">{totalItems}</span> results
-        </div>
-      )}
+    <div
+      className={`w-full flex flex-col items-center justify-center space-y-3 ${className}`}
+    >
+      {showInfo &&
+        totalItems !== undefined &&
+        itemsPerPage !== undefined && (
+          <div className="text-sm text-gray-600 text-center">
+            Showing{" "}
+            <span className="font-semibold">
+              {startIndex}-{endIndex}
+            </span>{" "}
+            of{" "}
+            <span className="font-semibold">{totalItems}</span> results
+          </div>
+        )}
 
-      <div className="flex items-center justify-center space-x-2">
+      <div className="flex items-center justify-center space-x-3 rounded-full bg-[#FFFEF0] px-6 py-3 shadow-sm">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="p-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-200"
           aria-label="Previous page"
         >
           <FaChevronLeft className="h-4 w-4" />
         </button>
 
-        <div className="flex space-x-1">
+        <div className="flex space-x-2">
           {getPageNumbers().map((pageNumber, index) =>
             pageNumber === "..." ? (
-              <span key={index} className="px-3 py-2 text-gray-700">
+              <span
+                key={index}
+                className="flex h-10 w-10 items-center justify-center rounded-full text-gray-500"
+              >
                 ...
               </span>
             ) : (
               <button
                 key={index}
                 onClick={() => onPageChange(pageNumber as number)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition-colors duration-200 ${
                   currentPage === pageNumber
-                    ? "bg-[#fad23c] text-[#463B3B]"
-                    : "text-gray-700 hover:bg-gray-100"
+                    ? "bg-[#FAD23C] text-[#463B3B]"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 {pageNumber}
@@ -105,7 +117,7 @@ const Pagination: React.FC<PaginationProps> = ({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="p-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-200"
           aria-label="Next page"
         >
           <FaChevronRight className="h-4 w-4" />
