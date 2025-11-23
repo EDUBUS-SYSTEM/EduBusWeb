@@ -69,8 +69,9 @@ const DeadlinesTab: React.FC = () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
       
       toast.success('Deadlines saved successfully!');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to save deadlines');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save deadlines';
+      toast.error(errorMessage);
     } finally {
       setIsSaving(false);
     }

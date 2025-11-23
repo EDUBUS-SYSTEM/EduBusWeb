@@ -21,8 +21,9 @@ const PickupPointsTab: React.FC = () => {
       setIsLoading(true);
       const data = await pickupPointService.getPickupPointsWithStudentStatus();
       setPickupPoints(data);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to fetch pickup points');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch pickup points';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

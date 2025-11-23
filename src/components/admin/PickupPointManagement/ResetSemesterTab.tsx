@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { FaSyncAlt, FaSearch, FaCheckCircle, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
-import { pickupPointService, GetPickupPointsBySemesterRequest, ResetPickupPointBySemesterRequest, AvailableSemesterDto } from '@/services/pickupPointService';
+import { pickupPointService, GetPickupPointsBySemesterRequest, ResetPickupPointBySemesterRequest, AvailableSemesterDto, GetPickupPointsBySemesterResponse, ResetPickupPointBySemesterResponse, PickupPointWithStudentsDto, StudentUpdateFailure } from '@/services/pickupPointService';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -18,10 +18,10 @@ const ResetSemesterTab: React.FC = () => {
     semesterEndDate: '',
     semesterName: '',
   });
-  const [previewData, setPreviewData] = useState<any>(null);
+  const [previewData, setPreviewData] = useState<GetPickupPointsBySemesterResponse | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
-  const [resetResult, setResetResult] = useState<any>(null);
+  const [resetResult, setResetResult] = useState<ResetPickupPointBySemesterResponse | null>(null);
 
   // Load available semesters on component mount
   useEffect(() => {
@@ -33,8 +33,9 @@ const ResetSemesterTab: React.FC = () => {
       setIsLoadingSemesters(true);
       const response = await pickupPointService.getAvailableSemesters();
       setAvailableSemesters(response.semesters);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to load available semesters');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load available semesters';
+      toast.error(errorMessage);
     } finally {
       setIsLoadingSemesters(false);
     }
@@ -88,8 +89,9 @@ const ResetSemesterTab: React.FC = () => {
       const data = await pickupPointService.getPickupPointsBySemester(formData);
       setPreviewData(data);
       toast.success(`Found ${data.totalPickupPoints} pickup points with ${data.totalStudents} students`);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to fetch preview data');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch preview data';
+      toast.error(errorMessage);
       setPreviewData(null);
     } finally {
       setIsLoadingPreview(false);
@@ -122,8 +124,9 @@ const ResetSemesterTab: React.FC = () => {
       
       // Clear preview after successful reset
       setPreviewData(null);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to reset pickup points');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to reset pickup points';
+      toast.error(errorMessage);
     } finally {
       setIsResetting(false);
     }
@@ -292,7 +295,7 @@ const ResetSemesterTab: React.FC = () => {
           <div className="mt-4">
             <p className="text-sm font-medium text-gray-700 mb-2">Pickup Points Summary:</p>
             <div className="max-h-60 overflow-y-auto space-y-2">
-              {previewData.pickupPoints.map((pp: any) => (
+              {previewData.pickupPoints.map((pp: PickupPointWithStudentsDto) => (
                 <div key={pp.pickupPointId} className="bg-white rounded p-3 text-sm">
                   <p className="font-semibold">{pp.description || 'No description'}</p>
                   <p className="text-gray-600 text-xs">{pp.location}</p>
@@ -352,7 +355,7 @@ const ResetSemesterTab: React.FC = () => {
                 Failed Updates ({resetResult.failedStudentIds.length})
               </p>
               <div className="max-h-40 overflow-y-auto space-y-1">
-                {resetResult.failedStudentIds.map((failure: any, index: number) => (
+                {resetResult.failedStudentIds.map((failure: StudentUpdateFailure, index: number) => (
                   <div key={index} className="text-sm text-yellow-800">
                     <span className="font-mono">{failure.studentId.substring(0, 8)}...</span>: {failure.reason}
                   </div>
