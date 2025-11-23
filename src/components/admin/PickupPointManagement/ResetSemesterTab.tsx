@@ -6,6 +6,7 @@ import { FaSyncAlt, FaSearch, FaCheckCircle, FaExclamationTriangle, FaSpinner } 
 import { pickupPointService, GetPickupPointsBySemesterRequest, ResetPickupPointBySemesterRequest, AvailableSemesterDto, GetPickupPointsBySemesterResponse, ResetPickupPointBySemesterResponse, PickupPointWithStudentsDto, StudentUpdateFailure } from '@/services/pickupPointService';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Pagination from '@/components/ui/Pagination';
 
 const ResetSemesterTab: React.FC = () => {
   const [availableSemesters, setAvailableSemesters] = useState<AvailableSemesterDto[]>([]);
@@ -22,6 +23,10 @@ const ResetSemesterTab: React.FC = () => {
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [resetResult, setResetResult] = useState<ResetPickupPointBySemesterResponse | null>(null);
+  
+  // Pagination for preview list
+  const [previewPage, setPreviewPage] = useState(1);
+  const [previewItemsPerPage] = useState(10);
 
   // Load available semesters on component mount
   useEffect(() => {
@@ -76,6 +81,7 @@ const ResetSemesterTab: React.FC = () => {
     // Clear preview and result when semester changes
     setPreviewData(null);
     setResetResult(null);
+    setPreviewPage(1);
   };
 
   const handlePreview = async () => {
@@ -88,6 +94,7 @@ const ResetSemesterTab: React.FC = () => {
       setIsLoadingPreview(true);
       const data = await pickupPointService.getPickupPointsBySemester(formData);
       setPreviewData(data);
+      setPreviewPage(1); // Reset to first page when new preview loads
       toast.success(`Found ${data.totalPickupPoints} pickup points with ${data.totalStudents} students`);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to fetch preview data';
@@ -124,6 +131,7 @@ const ResetSemesterTab: React.FC = () => {
       
       // Clear preview after successful reset
       setPreviewData(null);
+      setPreviewPage(1);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to reset pickup points';
       toast.error(errorMessage);
@@ -133,25 +141,18 @@ const ResetSemesterTab: React.FC = () => {
   };
 
   return (
-    <div>
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold text-[#463B3B] mb-2">Reset Pickup Points by Semester</h2>
-        <p className="text-gray-600">
-          Reset student pickup points based on semester records. Preview the data before resetting.
-        </p>
-      </div>
-
+    <div className="max-w-4xl mx-auto">
       {/* Form */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
+        <div className="flex items-end gap-3">
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Select Semester <span className="text-red-500">*</span>
             </label>
             {isLoadingSemesters ? (
-              <div className="w-full px-4 py-2 border border-gray-300 rounded-lg flex items-center gap-2">
+              <div className="w-full px-3 py-2 border border-gray-300 rounded-lg flex items-center gap-2 text-sm">
                 <FaSpinner className="animate-spin" />
-                <span className="text-gray-500">Loading semesters...</span>
+                <span className="text-gray-500">Loading...</span>
               </div>
             ) : (
               <select
@@ -162,7 +163,7 @@ const ResetSemesterTab: React.FC = () => {
                   );
                   handleSemesterSelect(semester || null);
                 }}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
               >
                 <option value="">-- Select a semester --</option>
                 {availableSemesters.map((semester) => (
@@ -176,187 +177,142 @@ const ResetSemesterTab: React.FC = () => {
               </select>
             )}
             {availableSemesters.length === 0 && !isLoadingSemesters && (
-              <p className="text-sm text-gray-500 mt-1">No semesters found. Please ensure there are pickup point assignments in the database.</p>
+              <p className="text-xs text-gray-500 mt-1">No semesters found.</p>
             )}
           </div>
-
-          {/* Display selected semester details (read-only) */}
-          {selectedSemesterId && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Semester Code
-                </label>
-                <input
-                  type="text"
-                  value={formData.semesterCode}
-                  readOnly
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Academic Year
-                </label>
-                <input
-                  type="text"
-                  value={formData.academicYear}
-                  readOnly
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Semester Start Date
-                </label>
-                <input
-                  type="date"
-                  value={formData.semesterStartDate}
-                  readOnly
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Semester End Date
-                </label>
-                <input
-                  type="date"
-                  value={formData.semesterEndDate}
-                  readOnly
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
-                />
-              </div>
-
-              {formData.semesterName && (
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Semester Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.semesterName}
-                    readOnly
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
-                  />
-                </div>
-              )}
-            </>
-          )}
+          <button
+            onClick={handlePreview}
+            disabled={isLoadingPreview || !selectedSemesterId}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+          >
+            {isLoadingPreview ? (
+              <>
+                <FaSpinner className="animate-spin" />
+                Loading...
+              </>
+            ) : (
+              <>
+                <FaSearch />
+                Preview
+              </>
+            )}
+          </button>
         </div>
-
-        <button
-          onClick={handlePreview}
-          disabled={isLoadingPreview}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isLoadingPreview ? (
-            <>
-              <FaSpinner className="animate-spin" />
-              Loading...
-            </>
-          ) : (
-            <>
-              <FaSearch />
-              Preview Data
-            </>
-          )}
-        </button>
       </div>
 
       {/* Preview Section */}
       {previewData && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
-          <h3 className="text-lg font-semibold text-[#463B3B] mb-4 flex items-center gap-2">
-            <FaCheckCircle className="text-blue-600" />
-            Preview Results
-          </h3>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-base font-semibold text-[#463B3B] flex items-center gap-2">
+              <FaCheckCircle className="text-blue-600" />
+              Preview: {previewData.semesterCode} {previewData.academicYear}
+            </h3>
+            <button
+              onClick={handleReset}
+              disabled={isResetting}
+              className="px-4 py-2 bg-[#fad23c] text-[#463B3B] rounded-lg hover:bg-[#FFF085] transition-colors font-medium text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isResetting ? (
+                <>
+                  <FaSpinner className="animate-spin" />
+                  Resetting...
+                </>
+              ) : (
+                <>
+                  <FaSyncAlt />
+                  Reset
+                </>
+              )}
+            </button>
+          </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div className="bg-white rounded-lg p-4">
-              <p className="text-sm text-gray-600">Total Pickup Points</p>
-              <p className="text-2xl font-bold text-[#463B3B]">{previewData.totalPickupPoints}</p>
+          <div className="grid grid-cols-3 gap-3 mb-3">
+            <div className="bg-white rounded-lg p-3">
+              <p className="text-xs text-gray-600 mb-1">Pickup Points</p>
+              <p className="text-xl font-bold text-[#463B3B]">{previewData.totalPickupPoints}</p>
             </div>
-            <div className="bg-white rounded-lg p-4">
-              <p className="text-sm text-gray-600">Total Students</p>
-              <p className="text-2xl font-bold text-[#463B3B]">{previewData.totalStudents}</p>
+            <div className="bg-white rounded-lg p-3">
+              <p className="text-xs text-gray-600 mb-1">Students</p>
+              <p className="text-xl font-bold text-[#463B3B]">{previewData.totalStudents}</p>
             </div>
-            <div className="bg-white rounded-lg p-4">
-              <p className="text-sm text-gray-600">Semester</p>
-              <p className="text-lg font-semibold text-[#463B3B]">
-                {previewData.semesterCode} {previewData.academicYear}
+            <div className="bg-white rounded-lg p-3">
+              <p className="text-xs text-gray-600 mb-1">List Items</p>
+              <p className="text-xl font-bold text-[#463B3B]">{previewData.pickupPoints.length}</p>
+            </div>
+          </div>
+
+          {previewData.pickupPoints.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-gray-700 mb-2">
+                Pickup Points ({previewData.pickupPoints.length}):
               </p>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <p className="text-sm font-medium text-gray-700 mb-2">Pickup Points Summary:</p>
-            <div className="max-h-60 overflow-y-auto space-y-2">
-              {previewData.pickupPoints.map((pp: PickupPointWithStudentsDto) => (
-                <div key={pp.pickupPointId} className="bg-white rounded p-3 text-sm">
-                  <p className="font-semibold">{pp.description || 'No description'}</p>
-                  <p className="text-gray-600 text-xs">{pp.location}</p>
-                  <p className="text-gray-600 mt-1">{pp.studentCount} student(s)</p>
+              <div className="max-h-48 overflow-y-auto space-y-1.5 mb-3">
+                {previewData.pickupPoints
+                  .slice((previewPage - 1) * previewItemsPerPage, previewPage * previewItemsPerPage)
+                  .map((pp: PickupPointWithStudentsDto) => (
+                  <div key={pp.pickupPointId} className="bg-white rounded p-2 text-xs border border-gray-200">
+                    <p className="font-medium text-[#463B3B]">{pp.description || 'No description'}</p>
+                    <p className="text-gray-500 text-xs truncate">{pp.location}</p>
+                    <p className="text-gray-600 mt-0.5">{pp.studentCount} student(s)</p>
+                  </div>
+                ))}
+              </div>
+              {previewData.pickupPoints.length > previewItemsPerPage && (
+                <div className="bg-gray-50 px-3 py-2 rounded border border-gray-200">
+                  <Pagination
+                    currentPage={previewPage}
+                    totalPages={Math.ceil(previewData.pickupPoints.length / previewItemsPerPage)}
+                    onPageChange={(newPage) => {
+                      setPreviewPage(newPage);
+                      const previewContainer = document.querySelector('.max-h-48');
+                      if (previewContainer) {
+                        previewContainer.scrollTop = 0;
+                      }
+                    }}
+                    totalItems={previewData.pickupPoints.length}
+                    itemsPerPage={previewItemsPerPage}
+                    showInfo={true}
+                  />
                 </div>
-              ))}
+              )}
             </div>
-          </div>
-
-          <button
-            onClick={handleReset}
-            disabled={isResetting}
-            className="mt-4 px-6 py-3 bg-[#fad23c] text-[#463B3B] rounded-lg hover:bg-[#FFF085] transition-colors font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isResetting ? (
-              <>
-                <FaSpinner className="animate-spin" />
-                Resetting...
-              </>
-            ) : (
-              <>
-                <FaSyncAlt />
-                Reset Pickup Points
-              </>
-            )}
-          </button>
+          )}
         </div>
       )}
 
       {/* Reset Result */}
       {resetResult && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-[#463B3B] mb-4 flex items-center gap-2">
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <h3 className="text-base font-semibold text-[#463B3B] mb-3 flex items-center gap-2">
             <FaCheckCircle className="text-green-600" />
             Reset Completed
           </h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div className="bg-white rounded-lg p-4">
-              <p className="text-sm text-gray-600">Records Found</p>
-              <p className="text-2xl font-bold text-[#463B3B]">{resetResult.totalRecordsFound}</p>
+          <div className="grid grid-cols-3 gap-3 mb-3">
+            <div className="bg-white rounded-lg p-3">
+              <p className="text-xs text-gray-600 mb-1">Found</p>
+              <p className="text-xl font-bold text-[#463B3B]">{resetResult.totalRecordsFound}</p>
             </div>
-            <div className="bg-white rounded-lg p-4">
-              <p className="text-sm text-gray-600">Students Updated</p>
-              <p className="text-2xl font-bold text-green-600">{resetResult.studentsUpdated}</p>
+            <div className="bg-white rounded-lg p-3">
+              <p className="text-xs text-gray-600 mb-1">Updated</p>
+              <p className="text-xl font-bold text-green-600">{resetResult.studentsUpdated}</p>
             </div>
-            <div className="bg-white rounded-lg p-4">
-              <p className="text-sm text-gray-600">Students Failed</p>
-              <p className="text-2xl font-bold text-red-600">{resetResult.studentsFailed}</p>
+            <div className="bg-white rounded-lg p-3">
+              <p className="text-xs text-gray-600 mb-1">Failed</p>
+              <p className="text-xl font-bold text-red-600">{resetResult.studentsFailed}</p>
             </div>
           </div>
 
           {resetResult.failedStudentIds && resetResult.failedStudentIds.length > 0 && (
-            <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="font-semibold text-yellow-800 mb-2 flex items-center gap-2">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3">
+              <p className="font-medium text-yellow-800 mb-2 text-sm flex items-center gap-2">
                 <FaExclamationTriangle />
-                Failed Updates ({resetResult.failedStudentIds.length})
+                Failed ({resetResult.failedStudentIds.length})
               </p>
-              <div className="max-h-40 overflow-y-auto space-y-1">
+              <div className="max-h-32 overflow-y-auto space-y-1">
                 {resetResult.failedStudentIds.map((failure: StudentUpdateFailure, index: number) => (
-                  <div key={index} className="text-sm text-yellow-800">
+                  <div key={index} className="text-xs text-yellow-800">
                     <span className="font-mono">{failure.studentId.substring(0, 8)}...</span>: {failure.reason}
                   </div>
                 ))}
@@ -364,7 +320,7 @@ const ResetSemesterTab: React.FC = () => {
             </div>
           )}
 
-          <p className="mt-4 text-sm text-gray-700">{resetResult.message}</p>
+          <p className="text-xs text-gray-700">{resetResult.message}</p>
         </div>
       )}
 

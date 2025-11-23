@@ -61,7 +61,7 @@ export default function Sidebar() {
     { href: "/admin/routes", label: "Route Management", icon: <FaRoute /> },
     { href: "/admin/unit-price", label: "Unit Price Management", icon: <FaDollarSign /> },
     { href: "/admin/parent-transactions", label: "Parent Transactions", icon: <FaReceipt /> },
-    { href: "/admin/pickup-point-management", label: "Pickup Point Management", icon: <FaMapMarkerAlt /> },
+    { href: "/admin/pickup-point-management", label: "Pickup Points", icon: <FaMapMarkerAlt /> },
     { href: "/admin/school", label: "School Management", icon: <FaSchool /> },
   ];
 
