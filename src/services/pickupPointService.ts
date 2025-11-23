@@ -126,6 +126,112 @@ export interface PickupPointsResponse {
 	totalCount: number;
 }
 
+// Semester reset interfaces
+export interface GetPickupPointsBySemesterRequest {
+	semesterCode: string;
+	academicYear: string;
+	semesterStartDate: string; // ISO date string
+	semesterEndDate: string; // ISO date string
+	semesterName?: string;
+}
+
+export interface StudentAssignmentDto {
+	studentId: string;
+	firstName: string;
+	lastName: string;
+	parentId?: string;
+	parentEmail?: string;
+	assignedAt: string;
+	changeReason?: string;
+	changedBy?: string;
+}
+
+export interface PickupPointWithStudentsDto {
+	pickupPointId: string;
+	description: string;
+	location: string;
+	latitude: number;
+	longitude: number;
+	createdAt: string;
+	updatedAt?: string;
+	students: StudentAssignmentDto[];
+	studentCount: number;
+}
+
+export interface GetPickupPointsBySemesterResponse {
+	semesterCode: string;
+	academicYear: string;
+	semesterStartDate: string;
+	semesterEndDate: string;
+	semesterName?: string;
+	pickupPoints: PickupPointWithStudentsDto[];
+	totalPickupPoints: number;
+	totalStudents: number;
+}
+
+export interface ResetPickupPointBySemesterRequest {
+	semesterCode: string;
+	academicYear: string;
+	semesterStartDate: string; // ISO date string
+	semesterEndDate: string; // ISO date string
+	semesterName?: string;
+}
+
+export interface StudentUpdateFailure {
+	studentId: string;
+	reason: string;
+}
+
+export interface ResetPickupPointBySemesterResponse {
+	semesterCode: string;
+	academicYear: string;
+	semesterStartDate: string;
+	semesterEndDate: string;
+	totalRecordsFound: number;
+	studentsUpdated: number;
+	studentsFailed: number;
+	updatedStudentIds: string[];
+	failedStudentIds: StudentUpdateFailure[];
+	message: string;
+}
+
+export interface AvailableSemesterDto {
+	semesterCode: string;
+	academicYear: string;
+	semesterStartDate: string;
+	semesterEndDate: string;
+	semesterName?: string;
+	studentCount: number;
+	displayLabel: string;
+}
+
+export interface GetAvailableSemestersResponse {
+	semesters: AvailableSemesterDto[];
+	totalCount: number;
+}
+
+export interface PickupPointWithStudentStatusDto {
+	id: string; // Backend uses 'Id' not 'pickupPointId'
+	description: string;
+	location: string;
+	latitude?: number | null;
+	longitude?: number | null;
+	totalStudents: number;
+	activeStudents: number;
+	pendingStudents: number;
+	inactiveStudents: number;
+	createdAt: string;
+	updatedAt?: string | null;
+	assignedStudentCount?: number; // Legacy field from backend
+	assignedStudents?: Array<{
+		id: string;
+		firstName: string;
+		lastName: string;
+		status: number;
+		pickupPointAssignedAt?: string | null;
+	}>;
+}
+
 export const pickupPointService = {
 	// Public endpoints
 	registerParent: (data: ParentRegistrationRequestDto) =>
@@ -175,4 +281,12 @@ export const pickupPointService = {
 		apiService.post(`/PickupPoint/requests/${requestId}/reject`, data),
 	getUnassignedPickupPoints: () =>
 		apiService.get<PickupPointsResponse>('/PickupPoint/unassigned'),
+	getPickupPointsWithStudentStatus: () =>
+		apiService.get<PickupPointWithStudentStatusDto[]>('/PickupPoint/with-student-status'),
+	getPickupPointsBySemester: (data: GetPickupPointsBySemesterRequest) =>
+		apiService.post<GetPickupPointsBySemesterResponse>('/PickupPoint/admin/get-by-semester', data),
+	resetPickupPointBySemester: (data: ResetPickupPointBySemesterRequest) =>
+		apiService.post<ResetPickupPointBySemesterResponse>('/PickupPoint/admin/reset-by-semester', data),
+	getAvailableSemesters: () =>
+		apiService.get<GetAvailableSemestersResponse>('/PickupPoint/admin/available-semesters'),
 };
