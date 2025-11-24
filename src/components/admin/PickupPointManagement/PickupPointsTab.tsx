@@ -120,9 +120,6 @@ const PickupPointsTab: React.FC = () => {
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status Breakdown
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Created
-                    </th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
                     </th>
@@ -172,9 +169,6 @@ const PickupPointsTab: React.FC = () => {
                             <span className="font-medium">{pp.inactiveStudents}</span>
                           </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {formatDate(pp.createdAt)}
                       </td>
                       <td className="px-6 py-4 text-center">
                         <button

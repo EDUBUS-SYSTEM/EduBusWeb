@@ -29,7 +29,7 @@ const DeadlinesTab: React.FC = () => {
   const [perPage] = useState(20);
   
   // Filters
-  const [filterSemester, setFilterSemester] = useState<string>('');
+  const [filterAcademicYear, setFilterAcademicYear] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<boolean | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -83,9 +83,11 @@ const DeadlinesTab: React.FC = () => {
         perPage,
       };
       
-      if (filterSemester) params.semesterCode = filterSemester;
+      const trimmedSearch = searchTerm.trim();
+      const academicYearQuery = trimmedSearch || filterAcademicYear;
+
+      if (academicYearQuery) params.academicYear = academicYearQuery;
       if (filterStatus !== null) params.isActive = filterStatus;
-      if (searchTerm) params.search = searchTerm;
       
       const result = await enrollmentSemesterSettingsService.getEnrollmentSemesterSettings(params);
       setDeadlines(result.items);
@@ -105,8 +107,10 @@ const DeadlinesTab: React.FC = () => {
       const calendars = await academicCalendarService.getActiveAcademicCalendars();
       setAcademicCalendars(calendars);
       if (calendars.length > 0) {
-        setSelectedCalendar(calendars[0]);
-        setAvailableSemesters(calendars[0].semesters || []);
+        const calendarWithSlots =
+          calendars.find(cal => filterEligibleSemesters(cal, deadlines).length > 0) || calendars[0];
+        setSelectedCalendar(calendarWithSlots);
+        setAvailableSemesters(filterEligibleSemesters(calendarWithSlots, deadlines));
       }
     } catch (error) {
       console.error('Failed to load academic calendars:', error);
@@ -115,11 +119,16 @@ const DeadlinesTab: React.FC = () => {
 
   useEffect(() => {
     loadDeadlines();
-  }, [page, filterSemester, filterStatus, searchTerm]);
+  }, [page, filterAcademicYear, filterStatus, searchTerm]);
 
-  useEffect(() => {
-    loadAcademicCalendars();
-  }, []);
+useEffect(() => {
+  loadAcademicCalendars();
+}, []);
+
+useEffect(() => {
+  if (!selectedCalendar) return;
+  setAvailableSemesters(filterEligibleSemesters(selectedCalendar, deadlines));
+}, [selectedCalendar, deadlines]);
 
   // Check if form is valid (for button disable state)
   // This checks basic required fields, full validation happens on submit
@@ -134,12 +143,15 @@ const DeadlinesTab: React.FC = () => {
     // If required fields are filled, check if there are any errors
     if (hasRequiredFields) {
       // Quick validation check without setting errors
-      const startDate = new Date(createForm.registrationStartDate);
-      const endDate = new Date(createForm.registrationEndDate);
-      const semesterStart = createForm.semesterStartDate ? new Date(createForm.semesterStartDate) : null;
+      const startDate = parseDateString(createForm.registrationStartDate);
+      const endDate = parseDateString(createForm.registrationEndDate);
+      const semesterStart = parseDateString(createForm.semesterStartDate);
+      const today = parseDateString(getTodayInputDate());
+      if (!startDate || !endDate || !today) return false;
       
       // Check date relationships
       // Both dates must be BEFORE semester start date
+      if (startDate < today) return false;
       if (endDate <= startDate) return false;
       if (semesterStart && startDate >= semesterStart) return false;
       if (semesterStart && endDate >= semesterStart) return false;
@@ -171,11 +183,19 @@ const DeadlinesTab: React.FC = () => {
     // Must be BEFORE semester start date (this is deadline for registration BEFORE semester begins)
     if (!createForm.registrationStartDate) {
       errors.registrationStartDate = 'Registration start date is required';
-    } else if (createForm.semesterStartDate) {
-      const startDate = new Date(createForm.registrationStartDate);
-      const semesterStart = new Date(createForm.semesterStartDate);
-      if (startDate >= semesterStart) {
-        errors.registrationStartDate = 'Registration start date must be before semester start date';
+    } else {
+      const startDate = parseDateString(createForm.registrationStartDate);
+      const today = parseDateString(getTodayInputDate());
+      const semesterStart = parseDateString(createForm.semesterStartDate);
+      if (!startDate || !today) {
+        errors.registrationStartDate = 'Registration start date is invalid';
+      } else {
+        if (startDate < today) {
+          errors.registrationStartDate = 'Registration start date cannot be in the past';
+        }
+        if (semesterStart && startDate >= semesterStart) {
+          errors.registrationStartDate = 'Registration start date must be before semester start date';
+        }
       }
     }
 
@@ -184,17 +204,16 @@ const DeadlinesTab: React.FC = () => {
     if (!createForm.registrationEndDate) {
       errors.registrationEndDate = 'Registration end date is required';
     } else {
-      if (createForm.registrationStartDate) {
-        const startDate = new Date(createForm.registrationStartDate);
-        const endDate = new Date(createForm.registrationEndDate);
-        if (endDate <= startDate) {
+      const startDate = parseDateString(createForm.registrationStartDate);
+      const endDate = parseDateString(createForm.registrationEndDate);
+      const semesterStart = parseDateString(createForm.semesterStartDate);
+      if (!endDate) {
+        errors.registrationEndDate = 'Registration end date is invalid';
+      } else {
+        if (startDate && endDate <= startDate) {
           errors.registrationEndDate = 'End date must be after start date';
         }
-      }
-      if (createForm.semesterStartDate) {
-        const endDate = new Date(createForm.registrationEndDate);
-        const semesterStart = new Date(createForm.semesterStartDate);
-        if (endDate >= semesterStart) {
+        if (semesterStart && endDate >= semesterStart) {
           errors.registrationEndDate = 'Registration end date must be before semester start date';
         }
       }
@@ -233,7 +252,7 @@ const DeadlinesTab: React.FC = () => {
     try {
       const calendar = await academicCalendarService.getAcademicCalendarByYear(academicYear);
       setSelectedCalendar(calendar);
-      setAvailableSemesters(calendar.semesters || []);
+      setAvailableSemesters(filterEligibleSemesters(calendar, deadlines));
       // Clear academic calendar error when selected
       setCreateFormErrors(prev => ({ ...prev, academicCalendar: undefined }));
       // Reset semester selection when calendar changes
@@ -281,10 +300,20 @@ const DeadlinesTab: React.FC = () => {
       return;
     }
 
-    const startDate = new Date(registrationStartDate);
-    const endDate = new Date(registrationEndDate);
-    const semesterStart = new Date(selectedDeadline.semesterStartDate);
+    const startDate = parseDateString(registrationStartDate);
+    const endDate = parseDateString(registrationEndDate);
+    const semesterStart = parseDateString(selectedDeadline.semesterStartDate);
+    const today = parseDateString(getTodayInputDate());
 
+    if (!startDate || !endDate || !semesterStart || !today) {
+      toast.error('One or more dates are invalid');
+      return;
+    }
+
+    if (startDate < today) {
+      toast.error('Registration start date cannot be in the past');
+      return;
+    }
     if (endDate <= startDate) {
       toast.error('Registration end date must be after the start date');
       return;
@@ -367,33 +396,86 @@ const DeadlinesTab: React.FC = () => {
     setCreateFormErrors({});
   };
 
-  // Get unique semester codes for filter
-  const uniqueSemesterCodes = Array.from(new Set(deadlines.map(d => d.semesterCode)));
-
-  // Format date for input
-  function formatDateForInput(dateString: string): string {
-    if (!dateString) return '';
+// Date helpers to avoid timezone shifts when dealing with date-only values
+function parseDateString(dateString: string): Date | null {
+  if (!dateString) return null;
+  if (dateString.includes('T')) {
     const date = new Date(dateString);
-    return date.toISOString().split('T')[0];
+    if (Number.isNaN(date.getTime())) return null;
+    return date;
   }
+  const [yearStr, monthStr, dayStr] = dateString.split('-');
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  const day = Number(dayStr);
+  if ([year, month, day].some(num => Number.isNaN(num))) return null;
+  return new Date(year, month - 1, day);
+}
 
-  function getDayBefore(dateString: string): string {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    date.setDate(date.getDate() - 1);
-    return date.toISOString().split('T')[0];
-  }
+function filterUpcomingSemesters(semesters: AcademicSemester[]): AcademicSemester[] {
+  const today = parseDateString(getTodayInputDate());
+  if (!today) return [];
+  today.setHours(0, 0, 0, 0);
 
-  // Format date for display
-  function formatDateForDisplay(dateString: string): string {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  }
+  return semesters.filter(semester => {
+    const startDate = parseDateString(semester.startDate);
+    if (!startDate) return false;
+    startDate.setHours(0, 0, 0, 0);
+    return startDate > today;
+  });
+}
+
+function filterEligibleSemesters(
+  calendar: AcademicCalendar | null,
+  existingDeadlines: EnrollmentSemesterSettingsDto[]
+): AcademicSemester[] {
+  if (!calendar) return [];
+
+  const upcomingSemesters = filterUpcomingSemesters(calendar.semesters || []);
+  const existingCodes = new Set(
+    existingDeadlines
+      .filter(deadline => deadline.academicYear === calendar.academicYear)
+      .map(deadline => deadline.semesterCode)
+  );
+
+  return upcomingSemesters.filter(semester => !existingCodes.has(semester.code));
+}
+
+function formatDateValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// Format date for input
+function formatDateForInput(dateString: string): string {
+  const date = parseDateString(dateString);
+  if (!date) return '';
+  return formatDateValue(date);
+}
+
+function getDayBefore(dateString: string): string {
+  const date = parseDateString(dateString);
+  if (!date) return '';
+  date.setDate(date.getDate() - 1);
+  return formatDateValue(date);
+}
+
+function getTodayInputDate(): string {
+  return formatDateValue(new Date());
+}
+
+// Format date for display
+function formatDateForDisplay(dateString: string): string {
+  const date = parseDateString(dateString);
+  if (!date) return '';
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
 
   return (
     <div>
@@ -422,13 +504,13 @@ const DeadlinesTab: React.FC = () => {
           <FaFilter className="text-[#fad23c]" />
           <h3 className="font-semibold text-[#463B3B]">Filters</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* Search */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+          {/* Search by academic year */}
           <div className="relative">
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Search..."
+              placeholder="Search by academic year..."
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -438,18 +520,20 @@ const DeadlinesTab: React.FC = () => {
             />
           </div>
 
-          {/* Semester Filter */}
+          {/* Academic Year Filter */}
           <select
-            value={filterSemester}
+            value={filterAcademicYear}
             onChange={(e) => {
-              setFilterSemester(e.target.value);
+              setFilterAcademicYear(e.target.value);
               setPage(1);
             }}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
           >
-            <option value="">All Semesters</option>
-            {uniqueSemesterCodes.map(code => (
-              <option key={code} value={code}>{code}</option>
+            <option value="">All Academic Years</option>
+            {academicCalendars.map(calendar => (
+              <option key={calendar.id} value={calendar.academicYear}>
+                {calendar.academicYear}
+              </option>
             ))}
           </select>
 
@@ -469,10 +553,10 @@ const DeadlinesTab: React.FC = () => {
           </select>
 
           {/* Clear Filters */}
-          {(filterSemester || filterStatus !== null || searchTerm) && (
+          {(filterAcademicYear || filterStatus !== null || searchTerm) && (
             <button
               onClick={() => {
-                setFilterSemester('');
+                setFilterAcademicYear('');
                 setFilterStatus(null);
                 setSearchTerm('');
                 setPage(1);
@@ -677,37 +761,26 @@ const DeadlinesTab: React.FC = () => {
                       registrationStartDate: undefined,
                       registrationEndDate: undefined // Also clear end date error as relationship may change
                     }));
-                    // Validate against semester start date
-                    if (newStartDate && createForm.semesterStartDate) {
-                      const startDate = new Date(newStartDate);
-                      const semesterStart = new Date(createForm.semesterStartDate);
-                      if (startDate >= semesterStart) {
-                        setCreateFormErrors(prev => ({ 
-                          ...prev, 
-                          registrationStartDate: 'Registration start date must be before semester start date'
-                        }));
-                      }
+                    const startDate = parseDateString(newStartDate);
+                    const semesterStart = parseDateString(createForm.semesterStartDate);
+                    const currentEndDate = parseDateString(createForm.registrationEndDate);
+                    if (startDate && semesterStart && startDate >= semesterStart) {
+                      setCreateFormErrors(prev => ({ 
+                        ...prev, 
+                        registrationStartDate: 'Registration start date must be before semester start date'
+                      }));
                     }
-                    // If end date exists, validate it against new start date
-                    if (createForm.registrationEndDate && newStartDate) {
-                      const endDate = new Date(createForm.registrationEndDate);
-                      const startDate = new Date(newStartDate);
-                      if (endDate <= startDate) {
-                        setCreateFormErrors(prev => ({ 
-                          ...prev, 
-                          registrationEndDate: 'End date must be after start date'
-                        }));
-                      }
-                      // Also validate end date against semester start
-                      if (createForm.semesterStartDate) {
-                        const semesterStart = new Date(createForm.semesterStartDate);
-                        if (endDate >= semesterStart) {
-                          setCreateFormErrors(prev => ({ 
-                            ...prev, 
-                            registrationEndDate: 'Registration end date must be before semester start date'
-                          }));
-                        }
-                      }
+                    if (startDate && currentEndDate && currentEndDate <= startDate) {
+                      setCreateFormErrors(prev => ({ 
+                        ...prev, 
+                        registrationEndDate: 'End date must be after start date'
+                      }));
+                    }
+                    if (currentEndDate && semesterStart && currentEndDate >= semesterStart) {
+                      setCreateFormErrors(prev => ({ 
+                        ...prev, 
+                        registrationEndDate: 'Registration end date must be before semester start date'
+                      }));
                     }
                   }}
                   onBlur={() => {
@@ -716,12 +789,8 @@ const DeadlinesTab: React.FC = () => {
                       validateCreateForm();
                     }
                   }}
-                  max={createForm.semesterStartDate ? (() => {
-                    // Set max to one day before semester start
-                    const semesterStart = new Date(createForm.semesterStartDate);
-                    semesterStart.setDate(semesterStart.getDate() - 1);
-                    return semesterStart.toISOString().split('T')[0];
-                  })() : undefined}
+                  min={getTodayInputDate()}
+                  max={createForm.semesterStartDate ? getDayBefore(createForm.semesterStartDate) : undefined}
                   className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent ${
                     createFormErrors.registrationStartDate 
                       ? 'border-red-500 focus:ring-red-500' 
@@ -754,27 +823,20 @@ const DeadlinesTab: React.FC = () => {
                     setCreateForm(prev => ({ ...prev, registrationEndDate: newEndDate }));
                     // Clear error when user starts typing
                     setCreateFormErrors(prev => ({ ...prev, registrationEndDate: undefined }));
-                    // Validate immediately if start date exists
-                    if (createForm.registrationStartDate && newEndDate) {
-                      const startDate = new Date(createForm.registrationStartDate);
-                      const endDate = new Date(newEndDate);
-                      if (endDate <= startDate) {
-                        setCreateFormErrors(prev => ({ 
-                          ...prev, 
-                          registrationEndDate: 'End date must be after start date'
-                        }));
-                      }
+                    const startDate = parseDateString(createForm.registrationStartDate);
+                    const endDate = parseDateString(newEndDate);
+                    const semesterStart = parseDateString(createForm.semesterStartDate);
+                    if (startDate && endDate && endDate <= startDate) {
+                      setCreateFormErrors(prev => ({ 
+                        ...prev, 
+                        registrationEndDate: 'End date must be after start date'
+                      }));
                     }
-                    // Validate against semester start date
-                    if (newEndDate && createForm.semesterStartDate) {
-                      const endDate = new Date(newEndDate);
-                      const semesterStart = new Date(createForm.semesterStartDate);
-                      if (endDate >= semesterStart) {
-                        setCreateFormErrors(prev => ({ 
-                          ...prev, 
-                          registrationEndDate: 'Registration end date must be before semester start date'
-                        }));
-                      }
+                    if (endDate && semesterStart && endDate >= semesterStart) {
+                      setCreateFormErrors(prev => ({ 
+                        ...prev, 
+                        registrationEndDate: 'Registration end date must be before semester start date'
+                      }));
                     }
                   }}
                   onBlur={() => {
@@ -784,12 +846,7 @@ const DeadlinesTab: React.FC = () => {
                     }
                   }}
                   min={createForm.registrationStartDate}
-                  max={createForm.semesterStartDate ? (() => {
-                    // Set max to one day before semester start
-                    const semesterStart = new Date(createForm.semesterStartDate);
-                    semesterStart.setDate(semesterStart.getDate() - 1);
-                    return semesterStart.toISOString().split('T')[0];
-                  })() : undefined}
+                  max={createForm.semesterStartDate ? getDayBefore(createForm.semesterStartDate) : undefined}
                   className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent ${
                     createFormErrors.registrationEndDate 
                       ? 'border-red-500 focus:ring-red-500' 
@@ -923,7 +980,8 @@ const DeadlinesTab: React.FC = () => {
                   type="date"
                   value={updateForm.registrationStartDate}
                   onChange={(e) => setUpdateForm(prev => ({ ...prev, registrationStartDate: e.target.value }))}
-                  max={getDayBefore(selectedDeadline.semesterStartDate) || undefined}
+                   min={getTodayInputDate()}
+                   max={getDayBefore(selectedDeadline.semesterStartDate) || undefined}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
                 />
               </div>
