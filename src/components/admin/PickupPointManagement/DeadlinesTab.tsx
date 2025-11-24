@@ -274,7 +274,32 @@ const DeadlinesTab: React.FC = () => {
   // Update deadline
   const handleUpdate = async () => {
     if (!selectedDeadline) return;
-    
+    const { registrationStartDate, registrationEndDate } = updateForm;
+
+    if (!registrationStartDate || !registrationEndDate) {
+      toast.error('Registration dates are required');
+      return;
+    }
+
+    const startDate = new Date(registrationStartDate);
+    const endDate = new Date(registrationEndDate);
+    const semesterStart = new Date(selectedDeadline.semesterStartDate);
+
+    if (endDate <= startDate) {
+      toast.error('Registration end date must be after the start date');
+      return;
+    }
+
+    if (startDate >= semesterStart) {
+      toast.error('Registration start date must be before the semester start date');
+      return;
+    }
+
+    if (endDate >= semesterStart) {
+      toast.error('Registration end date must be before the semester start date');
+      return;
+    }
+
     try {
       await enrollmentSemesterSettingsService.updateEnrollmentSemesterSetting(
         selectedDeadline.id,
@@ -349,6 +374,13 @@ const DeadlinesTab: React.FC = () => {
   function formatDateForInput(dateString: string): string {
     if (!dateString) return '';
     const date = new Date(dateString);
+    return date.toISOString().split('T')[0];
+  }
+
+  function getDayBefore(dateString: string): string {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    date.setDate(date.getDate() - 1);
     return date.toISOString().split('T')[0];
   }
 
@@ -891,8 +923,7 @@ const DeadlinesTab: React.FC = () => {
                   type="date"
                   value={updateForm.registrationStartDate}
                   onChange={(e) => setUpdateForm(prev => ({ ...prev, registrationStartDate: e.target.value }))}
-                  min={formatDateForInput(selectedDeadline.semesterStartDate)}
-                  max={formatDateForInput(selectedDeadline.semesterEndDate)}
+                  max={getDayBefore(selectedDeadline.semesterStartDate) || undefined}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
                 />
               </div>
@@ -906,8 +937,8 @@ const DeadlinesTab: React.FC = () => {
                   type="date"
                   value={updateForm.registrationEndDate}
                   onChange={(e) => setUpdateForm(prev => ({ ...prev, registrationEndDate: e.target.value }))}
-                  min={updateForm.registrationStartDate || formatDateForInput(selectedDeadline.semesterStartDate)}
-                  max={formatDateForInput(selectedDeadline.semesterEndDate)}
+                  min={updateForm.registrationStartDate || undefined}
+                  max={getDayBefore(selectedDeadline.semesterStartDate) || undefined}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
                 />
               </div>
