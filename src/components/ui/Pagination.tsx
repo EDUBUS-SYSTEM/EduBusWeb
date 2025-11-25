@@ -64,64 +64,66 @@ const Pagination: React.FC<PaginationProps> = ({
 
   return (
     <div
-      className={`w-full flex flex-col items-center justify-center space-y-3 ${className}`}
+      className={`w-full flex items-center ${showInfo && totalItems !== undefined && itemsPerPage !== undefined ? 'justify-between' : 'justify-center'} ${className}`}
     >
       {showInfo &&
         totalItems !== undefined &&
         itemsPerPage !== undefined && (
-          <div className="text-sm text-gray-600 text-center">
+          <div className="text-sm text-gray-700 font-medium">
             Showing{" "}
             <span className="font-semibold">
-              {startIndex}-{endIndex}
+              {startIndex} to {endIndex}
             </span>{" "}
             of{" "}
-            <span className="font-semibold">{totalItems}</span> results
+            <span className="font-semibold">{totalItems}</span> entries
           </div>
         )}
 
-      <div className="flex items-center justify-center space-x-3 rounded-full bg-[#FFFEF0] px-6 py-3 shadow-sm">
-        <button
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-200"
-          aria-label="Previous page"
-        >
-          <FaChevronLeft className="h-4 w-4" />
-        </button>
+      <div className={`flex items-center justify-center ${showInfo && totalItems !== undefined && itemsPerPage !== undefined ? 'flex-1' : ''}`}>
+        <div className="flex items-center justify-center space-x-2 rounded-lg bg-gray-100 border border-gray-300 px-4 py-2.5">
+          <button
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            aria-label="Previous page"
+          >
+            <FaChevronLeft className="h-3.5 w-3.5" />
+          </button>
 
-        <div className="flex space-x-2">
-          {getPageNumbers().map((pageNumber, index) =>
-            pageNumber === "..." ? (
-              <span
-                key={index}
-                className="flex h-10 w-10 items-center justify-center rounded-full text-gray-500"
-              >
-                ...
-              </span>
-            ) : (
-              <button
-                key={index}
-                onClick={() => onPageChange(pageNumber as number)}
-                className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition-colors duration-200 ${
-                  currentPage === pageNumber
-                    ? "bg-[#FAD23C] text-[#463B3B]"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                {pageNumber}
-              </button>
-            )
-          )}
+          <div className="flex items-center space-x-2">
+            {getPageNumbers().map((pageNumber, index) =>
+              pageNumber === "..." ? (
+                <span
+                  key={index}
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-gray-500 text-sm"
+                >
+                  ...
+                </span>
+              ) : (
+                <button
+                  key={index}
+                  onClick={() => onPageChange(pageNumber as number)}
+                  className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition-colors duration-200 ${
+                    currentPage === pageNumber
+                      ? "bg-[#FAD23C] text-gray-800 shadow-sm"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                >
+                  {pageNumber}
+                </button>
+              )
+            )}
+          </div>
+
+          <button
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            aria-label="Next page"
+          >
+            <FaChevronRight className="h-3.5 w-3.5" />
+          </button>
         </div>
-
-        <button
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-200"
-          aria-label="Next page"
-        >
-          <FaChevronRight className="h-4 w-4" />
-        </button>
       </div>
     </div>
   );
