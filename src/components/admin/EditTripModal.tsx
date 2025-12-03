@@ -15,20 +15,19 @@ interface EditTripModalProps {
   trip: TripDto | null;
 }
 
-function toLocalDatetimeInput(iso?: string): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-
-  const pad = (n: number) => n.toString().padStart(2, '0');
-
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+// Extract YYYY-MM-DD from an ISO string without timezone conversion
+function extractDate(iso?: string): string {
+  if (!iso) return "";
+  return iso.split("T")[0] || "";
 }
 
-function toLocalTimeInput(iso?: string): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  const pad = (n: number) => n.toString().padStart(2, '0');
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+// Extract HH:mm from an ISO string without timezone conversion
+function extractTime(iso?: string): string {
+  if (!iso) return "";
+  // Expecting format YYYY-MM-DDTHH:mm[:ss]
+  const timePart = iso.split("T")[1];
+  if (!timePart) return "";
+  return timePart.slice(0, 5);
 }
 
 export default function EditTripModal({
@@ -59,11 +58,12 @@ export default function EditTripModal({
       setFormData({
         id: trip.id,
         routeId: trip.routeId,
-        serviceDate: toLocalDatetimeInput(trip.serviceDate).split('T')[0],
-        plannedStartAt: toLocalTimeInput(trip.plannedStartAt),
-        plannedEndAt: toLocalTimeInput(trip.plannedEndAt),
-        startTime: toLocalTimeInput(trip.startTime) || undefined,
-        endTime: toLocalTimeInput(trip.endTime) || undefined,
+        // Keep raw ISO strings but derive date/time for inputs separately
+        serviceDate: extractDate(trip.serviceDate),
+        plannedStartAt: trip.plannedStartAt,
+        plannedEndAt: trip.plannedEndAt,
+        startTime: trip.startTime,
+        endTime: trip.endTime,
         status: trip.status,
         vehicleId: trip.vehicleId,
         driverVehicleId: trip.driverVehicleId,
@@ -167,14 +167,18 @@ export default function EditTripModal({
       const [startHours, startMinutes] = schedule.startTime.split(':').map(Number);
       const [endHours, endMinutes] = schedule.endTime.split(':').map(Number);
       
-      // Format as HH:mm for time input
+      // Format as HH:mm strings
       const startTimeStr = `${String(startHours).padStart(2, '0')}:${String(startMinutes).padStart(2, '0')}`;
       const endTimeStr = `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
+      // Combine with current service date for ISO-like storage
+      const serviceDate = formData.serviceDate || extractDate(trip?.serviceDate);
+      const plannedStartAtIso = serviceDate ? `${serviceDate}T${startTimeStr}` : formData.plannedStartAt;
+      const plannedEndAtIso = serviceDate ? `${serviceDate}T${endTimeStr}` : formData.plannedEndAt;
       
       setFormData({
         ...formData,
-        plannedStartAt: startTimeStr,
-        plannedEndAt: endTimeStr,
+        plannedStartAt: plannedStartAtIso,
+        plannedEndAt: plannedEndAtIso,
         scheduleSnapshot: {
           scheduleId: schedule.id,
           name: schedule.name,
@@ -306,8 +310,16 @@ export default function EditTripModal({
             <input
               type="time"
               lang="en-US"
-              value={formData.plannedStartAt}
-              onChange={(e) => setFormData({ ...formData, plannedStartAt: e.target.value })}
+              value={formData.plannedStartAt ? extractTime(formData.plannedStartAt) : ''}
+              onChange={(e) => {
+                const time = e.target.value;
+                if (formData.serviceDate && time) {
+                  const dateTime = `${formData.serviceDate}T${time}`;
+                  setFormData({ ...formData, plannedStartAt: dateTime });
+                } else {
+                  setFormData({ ...formData, plannedStartAt: '' });
+                }
+              }}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent ${errors.plannedStartAt ? 'border-red-500' : 'border-gray-300'
                 }`}
             />
@@ -324,8 +336,16 @@ export default function EditTripModal({
             <input
               type="time"
               lang="en-US"
-              value={formData.plannedEndAt}
-              onChange={(e) => setFormData({ ...formData, plannedEndAt: e.target.value })}
+              value={formData.plannedEndAt ? extractTime(formData.plannedEndAt) : ''}
+              onChange={(e) => {
+                const time = e.target.value;
+                if (formData.serviceDate && time) {
+                  const dateTime = `${formData.serviceDate}T${time}`;
+                  setFormData({ ...formData, plannedEndAt: dateTime });
+                } else {
+                  setFormData({ ...formData, plannedEndAt: '' });
+                }
+              }}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent ${errors.plannedEndAt ? 'border-red-500' : 'border-gray-300'
                 }`}
             />

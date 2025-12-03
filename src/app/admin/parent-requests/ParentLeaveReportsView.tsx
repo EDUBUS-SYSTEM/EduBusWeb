@@ -53,13 +53,12 @@ const STATUS_BADGE_STYLES: Record<ParentLeaveStatus, string> = {
 };
 
 const TABLE_COLUMN_CLASSES = {
-  student: "w-[240px] min-w-[220px]",
-  parent: "w-[220px] min-w-[200px]",
-  reason: "w-[120px] min-w-[120px] max-w-[120px]",
-  dateRange: "w-[160px]",
-  requested: "w-[160px]",
-  status: "w-[120px]",
-  actions: "w-[110px]",
+  student: "w-[20%]",
+  parent: "w-[20%]",
+  reason: "w-[20%]",
+  dateRange: "w-[18%]",
+  status: "w-[12%]",
+  actions: "w-[10%]",
 };
 
 const APPROVAL_NOTE = "Attendance updated.";
@@ -196,7 +195,6 @@ export default function ParentLeaveReportsView() {
                 <col className={TABLE_COLUMN_CLASSES.parent} />
                 <col className={TABLE_COLUMN_CLASSES.reason} />
                 <col className={TABLE_COLUMN_CLASSES.dateRange} />
-                <col className={TABLE_COLUMN_CLASSES.requested} />
                 <col className={TABLE_COLUMN_CLASSES.status} />
                 <col className={TABLE_COLUMN_CLASSES.actions} />
               </colgroup>
@@ -206,7 +204,6 @@ export default function ParentLeaveReportsView() {
                   <th className={`${TABLE_COLUMN_CLASSES.parent} px-6 py-4`}>Parent</th>
                   <th className={`${TABLE_COLUMN_CLASSES.reason} px-6 py-4`}>Parent reason</th>
                   <th className={`${TABLE_COLUMN_CLASSES.dateRange} px-6 py-4`}>Date range</th>
-                  <th className={`${TABLE_COLUMN_CLASSES.requested} px-6 py-4`}>Requested at</th>
                   <th className={`${TABLE_COLUMN_CLASSES.status} px-6 py-4`}>Status</th>
                   <th className={`${TABLE_COLUMN_CLASSES.actions} px-6 py-4 text-right`}>Actions</th>
                 </tr>
@@ -255,18 +252,10 @@ export default function ParentLeaveReportsView() {
                           <p className="text-[11px] text-gray-400">No parent information</p>
                         )}
                       </td>
-                      <td className={`${TABLE_COLUMN_CLASSES.reason} px-6 py-4 align-top overflow-hidden`}>
-                        <p className="line-clamp-3 text-sm leading-relaxed text-gray-700 break-words">
+                      <td className={`${TABLE_COLUMN_CLASSES.reason} px-6 py-4 align-top`}>
+                        <p className="line-clamp-2 text-sm leading-relaxed text-gray-700">
                           {report.reason?.trim() || "No specific reason provided."}
                         </p>
-                        {report.reason && report.reason.trim().length > 160 && (
-                          <button
-                            onClick={() => handleOpenDetails(report)}
-                            className="mt-2 text-xs font-semibold text-[#463B3B] underline-offset-2 hover:underline"
-                          >
-                            View details
-                          </button>
-                        )}
                       </td>
                       <td className={`${TABLE_COLUMN_CLASSES.dateRange} px-6 py-4 align-top`}>
                         <p className="font-medium">
@@ -276,12 +265,7 @@ export default function ParentLeaveReportsView() {
                           {totalDays} day{totalDays > 1 ? "s" : ""}
                         </p>
                       </td>
-                      <td className={`${TABLE_COLUMN_CLASSES.requested} px-6 py-4 align-top`}>
-                        <p className="font-medium">{formatDateTime(report.createdAt)}</p>
-                        {report.updatedAt && (
-                          <p className="text-xs text-gray-500">Updated {formatDateTime(report.updatedAt)}</p>
-                        )}
-                      </td>
+
                       <td className={`${TABLE_COLUMN_CLASSES.status} px-6 py-4 align-top`}>
                         <span
                           className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${STATUS_BADGE_STYLES[report.status]}`}
@@ -372,11 +356,10 @@ export default function ParentLeaveReportsView() {
                     onClick={() => {
                       dispatch(setDateRange(option.value));
                     }}
-                    className={`rounded-2xl px-4 py-2 text-sm font-medium ${
-                      filters.dateRange === option.value
-                        ? "bg-[#463B3B] text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
+                    className={`rounded-2xl px-4 py-2 text-sm font-medium ${filters.dateRange === option.value
+                      ? "bg-[#463B3B] text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
                   >
                     {option.label}
                   </button>
@@ -562,7 +545,7 @@ function LeaveReportDetailModal({
                   <p className="text-sm font-semibold text-[#463B3B]">
                     {report.parentName?.trim() || "No parent name provided"}
                   </p>
-                  {report.parentId && <p className="text-xs text-gray-400">ID: {report.parentId}</p>}
+
                 </div>
               </div>
               <div className="mt-4 space-y-4 text-sm">
@@ -720,9 +703,8 @@ function LeaveReportDetailModal({
               <button
                 onClick={pendingAction === "approve" ? handleApproveConfirm : handleRejectConfirm}
                 disabled={loading}
-                className={`inline-flex flex-1 items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 ${
-                  pendingAction === "approve" ? "bg-[#22C55E] hover:bg-[#16A34A]" : "bg-red-500 hover:bg-red-600"
-                }`}
+                className={`inline-flex flex-1 items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 ${pendingAction === "approve" ? "bg-[#22C55E] hover:bg-[#16A34A]" : "bg-red-500 hover:bg-red-600"
+                  }`}
               >
                 {loading && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/60 border-t-transparent" />}
                 {pendingAction === "approve" ? "Confirm approval" : "Confirm rejection"}

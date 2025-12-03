@@ -103,10 +103,16 @@ export default function ExceptionModal({
       ]);
 
       // Build full UpdateScheduleDto using existing schedule fields
+      // Convert exceptions Date[] to ISO string[] for backend
+      const exceptionsAsStrings = updatedExceptions.map((ex: Date | string) =>
+        typeof ex === 'string' ? ex : new Date(ex).toISOString()
+      );
+
       await scheduleService.updateSchedule(schedule.id, {
         id: schedule.id,
         name: schedule.name,
         scheduleType: schedule.scheduleType,
+        tripType: schedule.tripType ?? 0,
         startTime: schedule.startTime,
         endTime: schedule.endTime,
         rRule: schedule.rRule,
@@ -116,7 +122,7 @@ export default function ExceptionModal({
         effectiveTo: schedule.effectiveTo
           ? new Date(schedule.effectiveTo).toISOString()
           : undefined,
-        exceptions: updatedExceptions,
+        exceptions: exceptionsAsStrings,
         isActive: schedule.isActive,
         timeOverrides: schedule.timeOverrides || [],
         updatedAt: schedule.updatedAt, // Send current timestamp for optimistic locking
@@ -194,7 +200,10 @@ export default function ExceptionModal({
         effectiveTo: schedule.effectiveTo
           ? new Date(schedule.effectiveTo).toISOString()
           : undefined,
-        exceptions: updatedExceptions,
+        exceptions: updatedExceptions.map((ex: Date | string) =>
+          typeof ex === 'string' ? ex : new Date(ex).toISOString()
+        ),
+        tripType: schedule.tripType ?? 0,
         isActive: schedule.isActive,
         timeOverrides: schedule.timeOverrides || [],
         updatedAt: schedule.updatedAt, // Send current timestamp for optimistic locking
@@ -266,7 +275,10 @@ export default function ExceptionModal({
           effectiveTo: schedule.effectiveTo
             ? new Date(schedule.effectiveTo).toISOString()
             : undefined,
-          exceptions: updatedExceptions,
+          exceptions: updatedExceptions.map((ex: Date | string) =>
+            typeof ex === 'string' ? ex : new Date(ex).toISOString()
+          ),
+          tripType: schedule.tripType ?? 0,
           isActive: schedule.isActive,
           timeOverrides: schedule.timeOverrides || [],
           updatedAt: schedule.updatedAt, // Send current timestamp for optimistic locking
@@ -282,6 +294,7 @@ export default function ExceptionModal({
           id: schedule.id,
           name: schedule.name,
           scheduleType: schedule.scheduleType,
+          tripType: schedule.tripType ?? 0,
           startTime: schedule.startTime,
           endTime: schedule.endTime,
           rRule: schedule.rRule,
@@ -291,7 +304,9 @@ export default function ExceptionModal({
           effectiveTo: schedule.effectiveTo
             ? new Date(schedule.effectiveTo).toISOString()
             : undefined,
-          exceptions: updatedExceptions,
+          exceptions: updatedExceptions.map((ex: Date | string) =>
+            typeof ex === 'string' ? ex : new Date(ex).toISOString()
+          ),
           isActive: schedule.isActive,
           timeOverrides: schedule.timeOverrides || [],
           updatedAt: schedule.updatedAt, // Send current timestamp for optimistic locking

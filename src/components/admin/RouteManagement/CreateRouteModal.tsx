@@ -13,6 +13,25 @@ interface CreateRouteModalProps {
   onRouteCreated: (newRoute: RouteDto) => void; // Updated to pass the created route
 }
 
+const extractVehiclesFromResponse = (response: unknown): VehicleDto[] => {
+  if (!response) {
+    return [];
+  }
+
+  const typedResponse = response as { vehicles?: VehicleDto[]; data?: VehicleDto[] };
+  if (Array.isArray(typedResponse.vehicles) && typedResponse.vehicles.length > 0) {
+    return typedResponse.vehicles;
+  }
+  if (Array.isArray(typedResponse.data) && typedResponse.data.length > 0) {
+    return typedResponse.data;
+  }
+  if (Array.isArray(response)) {
+    return response as VehicleDto[];
+  }
+
+  return [];
+};
+
 const CreateRouteModal: React.FC<CreateRouteModalProps> = ({ isOpen, onClose, onRouteCreated }) => {
   const [routeName, setRouteName] = useState('');
   const [selectedVehicleId, setSelectedVehicleId] = useState('');
@@ -29,7 +48,8 @@ const CreateRouteModal: React.FC<CreateRouteModalProps> = ({ isOpen, onClose, on
   const fetchVehicles = async () => {
     try {
       const response = await vehicleService.getUnassignedVehicles();
-      setVehicles(response.data || []);
+      const normalizedVehicles = extractVehiclesFromResponse(response);
+      setVehicles(normalizedVehicles);
     } catch (error) {
       console.error('Failed to fetch vehicles:', error);
       toast.error('Failed to load vehicles');

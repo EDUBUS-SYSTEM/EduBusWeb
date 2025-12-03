@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Search, Edit, Trash2, CheckCircle, Info } from "lucide-react";
 import Card from "@/components/ui/Card";
-import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import Pagination from "@/components/ui/Pagination";
 import driverVehicleService from "@/services/driverVehicleService";
@@ -13,6 +12,9 @@ import {
   ReplacementMatchDto 
 } from "@/services/api/driverLeaveRequests";
 import { AssignmentTableRow, DriverVehicleStatus } from "@/types/driverVehicle";
+import { getAllSupervisors, SupervisorResponse } from "@/services/api/supervisors";
+import { apiService } from "@/lib/api";
+
 const PER_PAGE = 5;
 
 // Success Toast Component
@@ -78,7 +80,7 @@ const localDateToUTCEnd = (localDate: string): string => {
 function StatusBadge({ status }: { status: DriverVehicleStatus }) {
   return (
     <span
-      className={`px-2 py-1 text-xs rounded-full ${
+      className={`px-3 py-1 rounded-full text-sm font-medium ${
         status === "Assigned"
           ? "bg-green-100 text-green-800"
           : "bg-gray-100 text-gray-800"
@@ -89,8 +91,23 @@ function StatusBadge({ status }: { status: DriverVehicleStatus }) {
   );
 }
 
+type SupervisorAssignmentRow = {
+  id: string;
+  supervisorId: string;
+  supervisorName: string;
+  supervisorEmail?: string;
+  supervisorPhone?: string;
+  vehicleId: string;
+  licensePlate: string;
+  startTime: string;
+  endTime?: string;
+  isActive: boolean;
+};
+
 export default function DriverVehicleListClient() {
+  const [tab, setTab] = useState<"driver" | "supervisor">("driver");
   const [allAssignments, setAllAssignments] = useState<AssignmentTableRow[]>([]);
+  const [supervisorAssignments, setSupervisorAssignments] = useState<SupervisorAssignmentRow[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Filters
@@ -103,6 +120,9 @@ export default function DriverVehicleListClient() {
   // Pagination
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  // Supervisor loading
+  const [supervisorLoading, setSupervisorLoading] = useState(false);
 
   // Modals
   const [showUpdateModal, setShowUpdateModal] = useState<string | null>(null);
@@ -170,6 +190,75 @@ export default function DriverVehicleListClient() {
     fetchAssignments();
   }, [fetchAssignments]);
 
+  const fetchSupervisorAssignments = useCallback(async () => {
+    try {
+      setSupervisorLoading(true);
+      const supervisors: SupervisorResponse[] = await getAllSupervisors();
+      const rows: SupervisorAssignmentRow[] = [];
+
+      await Promise.all(
+        supervisors.map(async (s) => {
+          try {
+            const res = await apiService.get<{
+              data?: { 
+                data?: Array<{ data?: Partial<SupervisorAssignmentRow> } & Partial<SupervisorAssignmentRow>>; 
+                Data?: Array<{ data?: Partial<SupervisorAssignmentRow> } & Partial<SupervisorAssignmentRow>>;
+              };
+              Data?: { 
+                Data?: Array<{ data?: Partial<SupervisorAssignmentRow> } & Partial<SupervisorAssignmentRow>>;
+              };
+            }>(
+              `/SupervisorVehicle/supervisor/${s.id}/assignments`,
+              {
+                isActive: true,
+                page: 1,
+                perPage: 100,
+              }
+            );
+
+            const list: Array<{ data?: Partial<SupervisorAssignmentRow> } & Partial<SupervisorAssignmentRow> & { id?: string; supervisorId?: string; supervisorName?: string; supervisorEmail?: string; supervisorPhone?: string; vehicleId?: string; vehiclePlate?: string; startTimeUtc?: string; endTimeUtc?: string; isActive?: boolean }> =
+              res?.data?.data ??
+              res?.data?.Data ??
+              res?.Data?.Data ??
+              [];
+
+            list.forEach((item) => {
+              const dto = (item.data ?? item) as { id?: string; supervisorId?: string; supervisorName?: string; supervisorEmail?: string; supervisorPhone?: string; vehicleId?: string; vehiclePlate?: string; startTimeUtc?: string; endTimeUtc?: string; isActive?: boolean };
+
+              rows.push({
+                id: dto.id ?? '',
+                supervisorId: dto.supervisorId ?? '',
+                supervisorName: dto.supervisorName ?? '',
+                supervisorEmail: dto.supervisorEmail,
+                supervisorPhone: dto.supervisorPhone,
+                vehicleId: dto.vehicleId ?? '',
+                licensePlate: dto.vehiclePlate ?? '',
+                startTime: dto.startTimeUtc ?? '',
+                endTime: dto.endTimeUtc,
+                isActive: dto.isActive ?? true,
+              });
+            });
+          } catch (err) {
+            console.error("Error fetching supervisor assignments for", s.id, err);
+          }
+        })
+      );
+
+      setSupervisorAssignments(rows);
+    } catch (error) {
+      console.error("Error fetching supervisor assignments:", error);
+      setSupervisorAssignments([]);
+    } finally {
+      setSupervisorLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (tab === "supervisor") {
+      fetchSupervisorAssignments();
+    }
+  }, [tab, fetchSupervisorAssignments]);
+
   // Fetch replacement matches when component mounts
   useEffect(() => {
     const fetchReplacementMatches = async () => {
@@ -203,7 +292,7 @@ export default function DriverVehicleListClient() {
     });
   }, [replacementMatches]);
 
-  // Client-side filtering
+  // Client-side filtering - driver
   const filteredAssignments = useMemo(() => {
     let filtered = allAssignments;
 
@@ -249,13 +338,52 @@ export default function DriverVehicleListClient() {
     return filtered;
   }, [allAssignments, statusFilter, debouncedSearch, sortBy, sortOrder]);
 
+  // Client-side filtering - supervisor
+  const filteredSupervisorAssignments = useMemo(() => {
+    let filtered = supervisorAssignments;
+
+    if (debouncedSearch) {
+      const searchLower = debouncedSearch.toLowerCase();
+      filtered = filtered.filter(
+        (a) =>
+          a.supervisorName.toLowerCase().includes(searchLower) ||
+          a.licensePlate.toLowerCase().includes(searchLower) ||
+          a.supervisorEmail?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    filtered = [...filtered].sort((a, b) => {
+      let comparison = 0;
+      switch (sortBy) {
+        case "driverName":
+          comparison = a.supervisorName.localeCompare(b.supervisorName);
+          break;
+        case "licensePlate":
+          comparison = a.licensePlate.localeCompare(b.licensePlate);
+          break;
+        case "startTime":
+          comparison =
+            new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
+          break;
+        default:
+          comparison = 0;
+      }
+      return sortOrder === "asc" ? comparison : -comparison;
+    });
+
+    return filtered;
+  }, [supervisorAssignments, debouncedSearch, sortBy, sortOrder]);
+
   // Pagination
-  const totalItems = filteredAssignments.length;
+  const baseItems = tab === "driver" 
+    ? (filteredAssignments as Array<AssignmentTableRow | SupervisorAssignmentRow>)
+    : (filteredSupervisorAssignments as Array<AssignmentTableRow | SupervisorAssignmentRow>);
+  const totalItems = baseItems.length;
   const totalPagesCount = Math.max(1, Math.ceil(totalItems / PER_PAGE));
   const paginatedAssignments = useMemo(() => {
     const start = (page - 1) * PER_PAGE;
-    return filteredAssignments.slice(start, start + PER_PAGE);
-  }, [filteredAssignments, page]);
+    return baseItems.slice(start, start + PER_PAGE);
+  }, [baseItems, page]);
 
   useEffect(() => {
     setTotalPages(totalPagesCount);
@@ -293,77 +421,97 @@ export default function DriverVehicleListClient() {
 
   return (
     <div className="w-full">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">
-        Driver-Vehicle Assignments
+      <h1 className="text-3xl font-bold text-[#463B3B] mb-2">
+        Driver/Supervisor Assignments
       </h1>
+      <p className="text-[#6B7280] mb-8">
+        Manage driver and supervisor vehicle assignments in one place.
+      </p>
+
+      {/* Tabs */}
+      <div className="inline-flex rounded-full border border-gray-200 bg-white p-1 shadow-sm mb-6">
+        <button
+          type="button"
+          onClick={() => setTab("driver")}
+          className={`px-4 py-2 text-sm font-semibold rounded-full transition ${
+            tab === "driver" 
+              ? "bg-[#463B3B] text-white" 
+              : "text-[#463B3B] hover:bg-gray-100"
+          }`}
+        >
+          Driver Assignments
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("supervisor")}
+          className={`px-4 py-2 text-sm font-semibold rounded-full transition ${
+            tab === "supervisor" 
+              ? "bg-[#463B3B] text-white" 
+              : "text-[#463B3B] hover:bg-gray-100"
+          }`}
+        >
+          Supervisor Assignments
+        </button>
+      </div>
 
       {/* Filters */}
-      <div className="flex gap-4 mb-6">
-        <div className="flex-1">
-          <Input
-            placeholder="Search by driver name, vehicle..."
-            value={searchTerm}
-            leftIcon={<Search className="w-5 h-5" />}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <div className="w-48">
-          <Select
-            value={statusFilter}
-            options={[
-              { value: "all", label: "All Status" },
-              { value: "Assigned", label: "Assigned" },
-              { value: "Unassigned", label: "Unassigned" },
-            ]}
-            onChange={(val) => {
-              setStatusFilter(val);
-              setPage(1);
-            }}
-          />
-        </div>
-        <div className="w-40">
-          <Select
-            value={sortBy}
-            options={[
-              { value: "startTime", label: "Start Time" },
-              { value: "driverName", label: "Driver" },
-              { value: "licensePlate", label: "Vehicle" },
-              { value: "status", label: "Status" },
-            ]}
-            onChange={setSortBy}
-          />
-        </div>
-        <div className="w-32">
-          <Select
-            value={sortOrder}
-            options={[
-              { value: "desc", label: "Desc" },
-              { value: "asc", label: "Asc" },
-            ]}
-            onChange={(val) => setSortOrder(val as "asc" | "desc")}
-          />
+      <div className="sticky top-16 z-40 bg-white rounded-2xl shadow-lg p-4 border border-gray-100 mb-6">
+        <div className="flex flex-col lg:flex-row gap-3 items-stretch">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search by driver name, vehicle..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full h-full pl-9 pr-3 py-2 text-xs border border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-200"
+              autoComplete="off"
+            />
+          </div>
+          <div className="w-36">
+            <Select
+              value={statusFilter}
+              options={
+                tab === "driver"
+                  ? [
+                      { value: "all", label: "All Status" },
+                      { value: "Assigned", label: "Assigned" },
+                      { value: "Unassigned", label: "Unassigned" },
+                    ]
+                  : [
+                      { value: "all", label: "All Status" },
+                      { value: "Assigned", label: "Active" },
+                    ]
+              }
+              onChange={(val) => {
+                setStatusFilter(val);
+                setPage(1);
+              }}
+              className="py-2 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-[#fad23c] focus:border-transparent text-xs"
+            />
+          </div>
         </div>
       </div>
 
       {/* Table */}
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden bg-white rounded-2xl shadow-lg border border-gray-100">
         <div className="overflow-x-auto">
           <table className="min-w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-[#FEFCE8] border-b border-gray-200">
               <tr>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B] cursor-pointer hover:bg-[#FFF085] transition-colors"
                   onClick={() => handleSort("driverName")}
                 >
                   <div className="flex items-center gap-2">
-                    Driver
+                    {tab === "driver" ? "Driver" : "Supervisor"}
                     {sortBy === "driverName" && (
                       <span>{sortOrder === "asc" ? "↑" : "↓"}</span>
                     )}
                   </div>
                 </th>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B] cursor-pointer hover:bg-[#FFF085] transition-colors"
                   onClick={() => handleSort("licensePlate")}
                 >
                   <div className="flex items-center gap-2">
@@ -374,7 +522,7 @@ export default function DriverVehicleListClient() {
                   </div>
                 </th>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B] cursor-pointer hover:bg-[#FFF085] transition-colors"
                   onClick={() => handleSort("startTime")}
                 >
                   <div className="flex items-center gap-2">
@@ -384,11 +532,11 @@ export default function DriverVehicleListClient() {
                     )}
                   </div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">
                   End Date
                 </th>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B] cursor-pointer hover:bg-[#FFF085] transition-colors"
                   onClick={() => handleSort("status")}
                 >
                   <div className="flex items-center gap-2">
@@ -398,96 +546,138 @@ export default function DriverVehicleListClient() {
                     )}
                   </div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                  Primary
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                  Actions
-                </th>
+                {tab === "driver" && (
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">
+                    Primary
+                  </th>
+                )}
+                {tab === "driver" && (
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">
+                    Actions
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {loading ? (
+              {loading && tab === "driver" ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                     Loading assignments...
                   </td>
                 </tr>
+              ) : supervisorLoading && tab === "supervisor" ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                    Loading supervisor assignments...
+                  </td>
+                </tr>
               ) : paginatedAssignments.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={tab === "driver" ? 7 : 5} className="px-6 py-8 text-center text-gray-500">
                     No assignments found
                     {searchTerm && ` matching "${searchTerm}"`}
                   </td>
                 </tr>
               ) : (
-                paginatedAssignments.map((assignment) => (
-                  <tr key={assignment.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {assignment.driverName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {assignment.licensePlate}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {formatUTCToLocalDate(assignment.startTime)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {assignment.endTime
-                        ? formatUTCToLocalDate(assignment.endTime)
-                        : "Ongoing"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <StatusBadge status={assignment.status} />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <div className="flex items-center justify-center">
-                        {assignment.isPrimaryDriver ? (
-                          <CheckCircle className="w-5 h-5 text-green-600" />
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <div className="flex items-center gap-2">
-                        {/* Info button - always occupy space to prevent layout shift */}
-                        {hasActiveReplacement(assignment) ? (
-                          <button
-                            onClick={() => fetchReplacementInfo(assignment.driverId)}
-                            className="p-2 text-amber-600 hover:bg-amber-50 rounded"
-                            title="Replacement Info"
-                          >
-                            <Info className="w-4 h-4" />
-                          </button>
-                        ) : (
-                          <div className="w-8 h-8" /> // Empty space to maintain layout
-                        )}
-                        <button
-                          onClick={() => {
-                            setSelectedAssignment(assignment);
-                            setShowUpdateModal(assignment.id);
-                            setUpdateError("");
-                          }}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded"
-                          title="Edit"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedAssignment(assignment);
-                            setShowDeleteModal(assignment.id);
-                          }}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                tab === "driver"
+                  ? paginatedAssignments.map((assignment) => {
+                      const driverAssignment = assignment as AssignmentTableRow;
+                      return (
+                      <tr key={driverAssignment.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {driverAssignment.driverName}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {driverAssignment.licensePlate}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {formatUTCToLocalDate(driverAssignment.startTime)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {driverAssignment.endTime
+                            ? formatUTCToLocalDate(driverAssignment.endTime)
+                            : "Ongoing"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <StatusBadge status={driverAssignment.status} />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <div className="flex items-center justify-center">
+                            {driverAssignment.isPrimaryDriver ? (
+                              <CheckCircle className="w-5 h-5 text-green-600" />
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <div className="flex items-center gap-2">
+                            {/* Info button - always occupy space to prevent layout shift */}
+                            {hasActiveReplacement(driverAssignment) ? (
+                              <button
+                                onClick={() =>
+                                  fetchReplacementInfo(driverAssignment.driverId)
+                                }
+                                className="p-2 text-[#fad23c] hover:bg-[#FFF085] rounded transition-colors duration-200"
+                                title="Replacement Info"
+                              >
+                                <Info className="w-4 h-4" />
+                              </button>
+                            ) : (
+                              <div className="w-8 h-8" /> // Empty space to maintain layout
+                            )}
+                            <button
+                              onClick={() => {
+                                setSelectedAssignment(driverAssignment);
+                                setShowUpdateModal(driverAssignment.id);
+                                setUpdateError("");
+                              }}
+                              className="p-2 text-[#463B3B] hover:text-[#fad23c] transition-colors duration-200"
+                              title="Edit"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedAssignment(driverAssignment);
+                                setShowDeleteModal(driverAssignment.id);
+                              }}
+                              className="p-2 text-[#463B3B] hover:text-red-600 transition-colors duration-200"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      );
+                    })
+                  : paginatedAssignments.map((assignment) => {
+                      const supervisorAssignment = assignment as SupervisorAssignmentRow;
+                      return (
+                      <tr key={supervisorAssignment.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {supervisorAssignment.supervisorName}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {supervisorAssignment.licensePlate}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {formatUTCToLocalDate(supervisorAssignment.startTime)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {supervisorAssignment.endTime
+                            ? formatUTCToLocalDate(supervisorAssignment.endTime)
+                            : "Ongoing"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <span className="text-xs text-gray-400">
+                            Managed in Vehicle page
+                          </span>
+                        </td>
+                      </tr>
+                      );
+                    })
               )}
             </tbody>
           </table>
@@ -507,7 +697,7 @@ export default function DriverVehicleListClient() {
 
       {/* Results Info */}
       {!loading && totalItems > 0 && (
-        <div className="mt-4 text-center text-sm text-gray-600">
+        <div className="mt-4 text-center text-sm text-[#6B7280]">
           Showing {((page - 1) * PER_PAGE) + 1} to{" "}
           {Math.min(page * PER_PAGE, totalItems)} of {totalItems} assignments
         </div>
@@ -516,8 +706,8 @@ export default function DriverVehicleListClient() {
       {/* Update Modal */}
       {showUpdateModal && selectedAssignment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-4">Update Assignment</h3>
+          <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <h3 className="text-lg font-semibold text-[#463B3B] mb-4">Update Assignment</h3>
             <p className="text-sm text-gray-600 mb-4">
               Driver: <strong>{selectedAssignment.driverName}</strong> - Vehicle: <strong>{selectedAssignment.licensePlate}</strong>
             </p>
@@ -537,7 +727,7 @@ export default function DriverVehicleListClient() {
                 <input
                   id="update-start-date"
                   type="date"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
                   defaultValue={selectedAssignment.startTime ? formatDateLocal(new Date(selectedAssignment.startTime)) : ''}
                   min={(() => {
                     const tomorrow = new Date();
@@ -554,7 +744,7 @@ export default function DriverVehicleListClient() {
                 <input
                   id="update-end-date"
                   type="date"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
                   defaultValue={selectedAssignment.endTime ? formatDateLocal(new Date(selectedAssignment.endTime)) : ''}
                   min={(() => {
                     const tomorrow = new Date();
@@ -574,7 +764,7 @@ export default function DriverVehicleListClient() {
                   setSelectedAssignment(null);
                   setUpdateError("");
                 }} 
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
               >
                 Cancel
               </button>
@@ -606,7 +796,7 @@ export default function DriverVehicleListClient() {
                     setUpdateError(error instanceof Error ? error.message : "Unknown error");
                   }
                 }} 
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="px-4 py-2 bg-[#fad23c] text-[#463B3B] rounded-lg hover:bg-[#FFF085] transition-colors duration-200 font-medium"
               >
                 Update
               </button>
@@ -618,8 +808,8 @@ export default function DriverVehicleListClient() {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && selectedAssignment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Delete Assignment</h3>
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+            <h3 className="text-lg font-semibold text-[#463B3B] mb-4">Delete Assignment</h3>
             <p className="text-gray-600 mb-6">
               Are you sure you want to delete this assignment for <strong>{selectedAssignment.driverName}</strong> on vehicle <strong>{selectedAssignment.licensePlate}</strong>?
               This action cannot be undone.
@@ -630,7 +820,7 @@ export default function DriverVehicleListClient() {
                   setShowDeleteModal(null);
                   setSelectedAssignment(null);
                 }}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
               >
                 Cancel
               </button>
@@ -649,7 +839,7 @@ export default function DriverVehicleListClient() {
                     alert("Failed to delete assignment: " + (error instanceof Error ? error.message : "Unknown error"));
                   }
                 }}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
               >
                 Delete
               </button>
@@ -661,9 +851,9 @@ export default function DriverVehicleListClient() {
       {/* Replacement Info Modal */}
       {showReplacementModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Replacement Information</h3>
+              <h3 className="text-lg font-semibold text-[#463B3B]">Replacement Information</h3>
               <button
                 onClick={() => {
                   setShowReplacementModal(false);
@@ -679,17 +869,17 @@ export default function DriverVehicleListClient() {
 
             {loadingReplacement ? (
               <div className="py-12 text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
-                <p className="mt-4 text-gray-600">Loading replacement information...</p>
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-[#fad23c] border-t-transparent"></div>
+                <p className="mt-4 text-[#6B7280]">Loading replacement information...</p>
               </div>
             ) : replacementInfo ? (
               <div className="space-y-4">
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div className="bg-[#FFF085] border border-[#fad23c] rounded-xl p-4">
                   <div className="flex items-start gap-3">
-                    <Info className="w-5 h-5 text-amber-600 mt-0.5" />
+                    <Info className="w-5 h-5 text-[#463B3B] mt-0.5" />
                     <div>
-                      <p className="font-medium text-amber-900">This driver is currently on leave with a replacement</p>
-                      <p className="text-sm text-amber-700 mt-1">Someone is temporarily replacing this driver</p>
+                      <p className="font-medium text-[#463B3B]">This driver is currently on leave with a replacement</p>
+                      <p className="text-sm text-[#463B3B] mt-1 opacity-80">Someone is temporarily replacing this driver</p>
                     </div>
                   </div>
                 </div>
@@ -704,10 +894,10 @@ export default function DriverVehicleListClient() {
                     )}
                   </div>
 
-                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                    <label className="text-xs font-medium text-blue-700 uppercase tracking-wide">Replacement Driver</label>
+                  <div className="bg-[#FFF085] rounded-xl p-4 border border-[#fad23c]">
+                    <label className="text-xs font-medium text-[#463B3B] uppercase tracking-wide">Replacement Driver</label>
                     {replacementInfo.suggestedReplacementDriverName ? (
-                      <p className="mt-1 text-sm font-semibold text-blue-900">{replacementInfo.suggestedReplacementDriverName}</p>
+                      <p className="mt-1 text-sm font-semibold text-[#463B3B]">{replacementInfo.suggestedReplacementDriverName}</p>
                     ) : (
                       <p className="mt-1 text-sm text-gray-500">Not assigned</p>
                     )}
@@ -766,7 +956,7 @@ export default function DriverVehicleListClient() {
                   setShowReplacementModal(false);
                   setReplacementInfo(null);
                 }}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
               >
                 Close
               </button>

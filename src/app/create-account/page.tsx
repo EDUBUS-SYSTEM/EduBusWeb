@@ -219,7 +219,7 @@ const CreateAccountPage: React.FC = () => {
           }
           alert(
             (typeof message === "string" ? message : JSON.stringify(message)) +
-              "\nDriver has already been saved to the database."
+            "\nDriver has already been saved to the database."
           );
         }
       }
@@ -297,9 +297,9 @@ const CreateAccountPage: React.FC = () => {
       console.log("Setup data:", setupPayload);
 
       // Check if we have setup data (students and pickup point)
-      const hasSetupData = setupPayload.studentIds.length > 0 && 
-                          setupPayload.pickupPoint !== null && 
-                          setupPayload.feeCalculation !== null;
+      const hasSetupData = setupPayload.studentIds.length > 0 &&
+        setupPayload.pickupPoint !== null &&
+        setupPayload.feeCalculation !== null;
 
       let result;
       try {
@@ -576,13 +576,35 @@ const CreateAccountPage: React.FC = () => {
                     isDriverActive
                       ? handleDriverDownloadTemplate
                       : isParentActive
-                      ? handleParentDownloadTemplate
-                      : handleSupervisorDownloadTemplate
+                        ? handleParentDownloadTemplate
+                        : handleSupervisorDownloadTemplate
                   }
                   showDownloadTemplate={true}
                   accept=".xlsx"
                   multiple={false}
                 />
+                {isDriverActive && (
+                  <button
+                    onClick={handleExportDrivers}
+                    className="flex items-center space-x-2 px-4 py-2 rounded-lg
+                               bg-emerald-50 text-emerald-600 hover:bg-emerald-100
+                               transition-all duration-300 border border-emerald-200
+                               hover:border-emerald-300 text-sm font-medium"
+                  >
+                    <span>Export drivers</span>
+                  </button>
+                )}
+                {isParentActive && (
+                  <button
+                    onClick={handleExportParents}
+                    className="flex items-center space-x-2 px-4 py-2 rounded-lg
+                               bg-emerald-50 text-emerald-600 hover:bg-emerald-100
+                               transition-all duration-300 border border-emerald-200
+                               hover:border-emerald-300 text-sm font-medium"
+                  >
+                    <span>Export parents</span>
+                  </button>
+                )}
                 {isSupervisorActive && (
                   <button
                     onClick={handleExportSupervisors}
@@ -727,11 +749,10 @@ const CreateAccountPage: React.FC = () => {
                         setTimeout(() => setCopiedField(null), 2000);
                       }
                     }}
-                    className={`px-4 py-3 rounded-lg transition-all duration-200 font-semibold text-sm min-w-[80px] ${
-                      copiedField === "email"
+                    className={`px-4 py-3 rounded-lg transition-all duration-200 font-semibold text-sm min-w-[80px] ${copiedField === "email"
                         ? "bg-green-500 text-white"
                         : "bg-yellow-400 hover:bg-yellow-500 text-gray-800"
-                    }`}
+                      }`}
                     title="Copy email"
                   >
                     {copiedField === "email" ? "Copied!" : "Copy"}
@@ -758,11 +779,10 @@ const CreateAccountPage: React.FC = () => {
                         setTimeout(() => setCopiedField(null), 2000);
                       }
                     }}
-                    className={`px-4 py-3 rounded-lg transition-all duration-200 font-semibold text-sm min-w-[80px] ${
-                      copiedField === "password"
+                    className={`px-4 py-3 rounded-lg transition-all duration-200 font-semibold text-sm min-w-[80px] ${copiedField === "password"
                         ? "bg-green-500 text-white"
                         : "bg-yellow-400 hover:bg-yellow-500 text-gray-800"
-                    }`}
+                      }`}
                     title="Copy password"
                   >
                     {copiedField === "password" ? "Copied!" : "Copy"}

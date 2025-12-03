@@ -227,6 +227,12 @@ export interface BasicSuccessResponse {
 }
 
 // Schedule and Calendar types based on backend models
+export enum TripType {
+  Unknown = 0,
+  Departure = 1,
+  Return = 2,
+}
+
 export interface Schedule {
   id: string;
   name: string;
@@ -239,6 +245,7 @@ export interface Schedule {
   effectiveTo?: string;
   exceptions: Date[]; // Changed from string[] to Date[] to match backend
   scheduleType: string;
+  tripType: TripType; // Added to match backend
   isActive: boolean;
   timeOverrides: ScheduleTimeOverride[]; // Added to match backend
   createdAt: string;

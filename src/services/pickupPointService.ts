@@ -254,7 +254,7 @@ export const pickupPointService = {
 			}
 			return value;
 		});
-		
+
 		// Use fetch with custom serialization
 		const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/PickupPoint/submit-request`, {
 			method: 'POST',
@@ -263,15 +263,15 @@ export const pickupPointService = {
 			},
 			body: serializedData
 		});
-		
+
 		if (!response.ok) {
 			const errorData = await response.json();
 			throw new Error(errorData.detail || errorData.message || 'Failed to submit request');
 		}
-		
+
 		return response.json();
 	},
-	
+
 	// Admin endpoints
 	listRequests: (query?: PickupPointRequestListQuery) =>
 		apiService.get<PickupPointRequestDetailDto[]>('/PickupPoint/requests', query),

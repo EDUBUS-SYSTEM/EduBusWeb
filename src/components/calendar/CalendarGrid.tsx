@@ -545,13 +545,26 @@ export default function CalendarGrid({
                       </div>
 
                       {/* Status Badge */}
-                      <div className={`px-3 py-1.5 rounded-full text-xs font-semibold flex-shrink-0 ${
-                        trip.status === 'planned' ? 'bg-blue-100 text-blue-800' :
-                        trip.status === 'in-progress' ? 'bg-green-100 text-green-800' :
-                        trip.status === 'completed' ? 'bg-gray-100 text-gray-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {trip.status === 'in-progress' ? 'In Progress' : (trip.status ? trip.status.charAt(0).toUpperCase() + trip.status.slice(1) : 'Unknown')}
+                      <div
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold flex-shrink-0 ${
+                          trip.status === 'planned'
+                            ? 'bg-blue-100 text-blue-800'
+                            : trip.status === 'in-progress'
+                            ? 'bg-green-100 text-green-800'
+                            : trip.status === 'completed'
+                            ? 'bg-gray-100 text-gray-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {trip.status === 'planned'
+                          ? 'Scheduled'
+                          : trip.status === 'in-progress'
+                          ? 'In Progress'
+                          : trip.status === 'completed'
+                          ? 'Completed'
+                          : trip.status === 'cancelled'
+                          ? 'Cancelled'
+                          : 'Unknown'}
                       </div>
                     </div>
                   </div>

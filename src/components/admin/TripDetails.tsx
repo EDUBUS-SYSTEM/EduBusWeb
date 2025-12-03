@@ -330,22 +330,6 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
                             )}
                           </div>
 
-                          {/* Stop Times */}
-                          <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
-                            <div className="bg-white rounded px-3 py-2 border border-gray-200">
-                              <span className="text-gray-500 text-xs block mb-1">Planned Arrival</span>
-                              <span className="text-gray-800 font-medium">
-                                {formatTime(stop.plannedArrival)}
-                              </span>
-                            </div>
-                            <div className={`rounded px-3 py-2 border ${stop.actualArrival ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}>
-                              <span className="text-gray-500 text-xs block mb-1">Actual Arrival</span>
-                              <span className={`font-medium ${stop.actualArrival ? 'text-green-700' : 'text-gray-400'}`}>
-                                {stop.actualArrival ? formatTime(stop.actualArrival) : 'Not arrived'}
-                              </span>
-                            </div>
-                          </div>
-
                           {/* Students and Attendance */}
                           {stop.attendance && stop.attendance.length > 0 ? (
                             <div>

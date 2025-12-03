@@ -24,11 +24,11 @@ import {
 } from "@/services/userAccountService/userAccountService.type";
 
 // Memoized User Row Component
-const UserRow = memo(({ 
-  user, 
-  onLockClick, 
-  onUnlockClick 
-}: { 
+const UserRow = memo(({
+  user,
+  onLockClick,
+  onUnlockClick
+}: {
   user: UserAccount;
   onLockClick: (userId: string) => void;
   onUnlockClick: (userId: string) => void;
@@ -71,11 +71,10 @@ const UserRow = memo(({
             <div className="text-sm font-semibold text-gray-900">
               {user.firstName} {user.lastName}
             </div>
-            <div className="text-xs text-gray-500">ID: {user.id.slice(0, 8)}...</div>
           </div>
         </div>
       </td>
-      
+
       {/* Contact Details */}
       <td className="px-6 py-6">
         <div className="space-y-1">
@@ -83,7 +82,7 @@ const UserRow = memo(({
           <div className="text-sm text-gray-500">{user.phoneNumber}</div>
         </div>
       </td>
-      
+
       {/* Role & Status */}
       <td className="px-6 py-6">
         <div className="space-y-2">
@@ -108,7 +107,7 @@ const UserRow = memo(({
           )}
         </div>
       </td>
-      
+
       {/* Account Info */}
       <td className="px-6 py-6">
         <div className="text-sm text-gray-900">
@@ -120,7 +119,7 @@ const UserRow = memo(({
           </div>
         )}
       </td>
-      
+
       {/* Actions */}
       <td className="px-6 py-6">
         <div className="flex items-center gap-3">
@@ -151,7 +150,7 @@ UserRow.displayName = 'UserRow';
 export default function AccountManagement() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  
+
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sortBy, setSortBy] = useState<string>("firstName");
@@ -159,7 +158,7 @@ export default function AccountManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [roleFilter, setRoleFilter] = useState<string>("");
-  
+
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showLockModal, setShowLockModal] = useState(false);
@@ -288,7 +287,7 @@ export default function AccountManagement() {
       lockedUntil: lockedUntilUtc,
       reason: lockFormData.reason || "Locked by admin",
     };
-    
+
     lockMutation.mutate({ userId, request: req });
   };
 
@@ -421,7 +420,7 @@ export default function AccountManagement() {
                   className="pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 w-80"
                 />
               </div>
-              
+
               <select
                 value={statusFilter}
                 onChange={(e) => handleStatusFilterChange(e.target.value)}
@@ -431,7 +430,7 @@ export default function AccountManagement() {
                 <option value="isNotLocked">Active</option>
                 <option value="isLocked">Locked</option>
               </select>
-              
+
               <select
                 value={roleFilter}
                 onChange={(e) => handleRoleFilterChange(e.target.value)}
@@ -444,16 +443,15 @@ export default function AccountManagement() {
                 <option value="supervisor">Supervisor</option>
               </select>
             </div>
-            
+
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-gray-700">Sort by:</span>
               <button
                 onClick={() => handleSort("firstName")}
-                className={`px-4 py-2 text-sm rounded-xl border transition-all duration-300 flex items-center gap-2 ${
-                  sortBy === "firstName"
+                className={`px-4 py-2 text-sm rounded-xl border transition-all duration-300 flex items-center gap-2 ${sortBy === "firstName"
                     ? "bg-[#fad23c] border-[#fad23c] text-[#463B3B] shadow-md"
                     : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 Name
                 {sortBy === "firstName" && (
@@ -464,11 +462,10 @@ export default function AccountManagement() {
               </button>
               <button
                 onClick={() => handleSort("createdAt")}
-                className={`px-4 py-2 text-sm rounded-xl border transition-all duration-300 flex items-center gap-2 ${
-                  sortBy === "createdAt"
+                className={`px-4 py-2 text-sm rounded-xl border transition-all duration-300 flex items-center gap-2 ${sortBy === "createdAt"
                     ? "bg-[#fad23c] border-[#fad23c] text-[#463B3B] shadow-md"
                     : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 Created Date
                 {sortBy === "createdAt" && (
@@ -583,9 +580,8 @@ export default function AccountManagement() {
                     onChange={(e) =>
                       handleLockFormChange("lockedUntil", e.target.value)
                     }
-                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent transition-all duration-200 ${
-                      lockValidationError ? "border-red-300 bg-red-50" : "border-gray-300"
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent transition-all duration-200 ${lockValidationError ? "border-red-300 bg-red-50" : "border-gray-300"
+                      }`}
                   />
                   {lockValidationError && (
                     <p className="text-sm text-red-600 mt-2 font-medium">
@@ -610,9 +606,8 @@ export default function AccountManagement() {
                     }
                     placeholder="Enter reason for locking this user account..."
                     maxLength={300}
-                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent transition-all duration-200 ${
-                      reasonValidationError ? "border-red-300 bg-red-50" : "border-gray-300"
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent transition-all duration-200 ${reasonValidationError ? "border-red-300 bg-red-50" : "border-gray-300"
+                      }`}
                     rows={4}
                   />
                   {reasonValidationError && (
@@ -643,11 +638,10 @@ export default function AccountManagement() {
                   disabled={
                     lockValidationError !== null || reasonValidationError !== null || !selectedUserId
                   }
-                  className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
-                    lockValidationError || reasonValidationError || !selectedUserId
+                  className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${lockValidationError || reasonValidationError || !selectedUserId
                       ? "bg-gray-400 text-gray-200 cursor-not-allowed"
                       : "bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 shadow-lg hover:shadow-xl"
-                  }`}
+                    }`}
                 >
                   Lock User
                 </button>

@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosRequestConfig } from "axios";
 
 // Configure base URL for API
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
@@ -48,7 +48,7 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401 && !url.includes("/auth/login") && !url.includes("localhost:5000")) {
       // Handle when token expires
       localStorage.removeItem("token");
-      window.location.href = "/";
+      globalThis.location.href = "/";
     }
     return Promise.reject(error);
   }
@@ -80,32 +80,51 @@ export const testApiConnection = async (): Promise<string> => {
 // Helper functions for API calls
 export const apiService = {
   // GET request
-  get: async <T>(url: string, params?: Record<string, unknown>): Promise<T> => {
-    const response = await apiClient.get(url, { params });
+  get: async <T>(
+    url: string,
+    params?: Record<string, unknown>,
+    config?: AxiosRequestConfig
+  ): Promise<T> => {
+    const response = await apiClient.get(url, {
+      params,
+      ...config,
+    });
     return response.data;
   },
 
   // POST request
-  post: async <T>(url: string, data?: unknown): Promise<T> => {
-    const response = await apiClient.post(url, data);
+  post: async <T>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig
+  ): Promise<T> => {
+    const response = await apiClient.post(url, data, config);
     return response.data;
   },
 
   // PUT request
-  put: async <T>(url: string, data?: unknown): Promise<T> => {
-    const response = await apiClient.put(url, data);
+  put: async <T>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig
+  ): Promise<T> => {
+    const response = await apiClient.put(url, data, config);
     return response.data;
   },
 
   // DELETE request
-  delete: async <T>(url: string): Promise<T> => {
-    const response = await apiClient.delete(url);
+  delete: async <T>(url: string, config?: AxiosRequestConfig): Promise<T> => {
+    const response = await apiClient.delete(url, config);
     return response.data;
   },
 
   // PATCH request
-  patch: async <T>(url: string, data?: unknown): Promise<T> => {
-    const response = await apiClient.patch(url, data);
+  patch: async <T>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig
+  ): Promise<T> => {
+    const response = await apiClient.patch(url, data, config);
     return response.data;
   },
 };

@@ -13,7 +13,7 @@ import {
   CreateScheduleDto,
 } from "@/services/api/scheduleService";
 import { academicCalendarService } from "@/services/api/academicCalendarService";
-import { AcademicSemester } from "@/types";
+import { AcademicSemester, TripType } from "@/types";
 import RRuleBuilder from "@/components/admin/RRuleBuilder";
 import TimeSlotSelector from "@/components/admin/TimeSlotSelector";
 
@@ -29,6 +29,7 @@ export default function CreateScheduleModal({
   const [formData, setFormData] = useState({
     name: "",
     scheduleType: "school_day",
+    tripType: TripType.Departure,
     startTime: "",
     endTime: "",
     academicYear: "",
@@ -102,6 +103,19 @@ export default function CreateScheduleModal({
       value: "special",
       label: "Special",
       description: "Schedule for other special events",
+    },
+  ];
+
+  const tripTypes = [
+    {
+      value: TripType.Departure,
+      label: "Departure",
+      description: "Trip from pickup points to school",
+    },
+    {
+      value: TripType.Return,
+      label: "Return",
+      description: "Trip from school back to pickup points",
     },
   ];
 
@@ -278,6 +292,8 @@ export default function CreateScheduleModal({
       newErrors.endTime = "End time must be after start time";
     }
 
+    // Trip type validation removed - Unknown option no longer available
+
     // Validate effective dates only if no academic year
     if (!formData.academicYear) {
       if (!formData.effectiveFrom) {
@@ -320,38 +336,80 @@ export default function CreateScheduleModal({
     setSubmitError("");
 
     try {
-      // Simple data preparation without complex sanitization
+      // Convert date strings to ISO format for backend DateTime
+      // Parse date as local date first, then convert to UTC to avoid timezone shift
+      const effectiveFromDate = formData.effectiveFrom
+        ? (() => {
+          // Parse as local date (YYYY-MM-DD format)
+          const [year, month, day] = formData.effectiveFrom.split('-').map(Number);
+          console.log(`Parsing effectiveFrom: ${formData.effectiveFrom} -> year=${year}, month=${month}, day=${day}`);
+          // Use UTC noon (12:00) instead of midnight to avoid timezone conversion issues
+          // This ensures the date part stays correct even if backend converts to local timezone
+          const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
+          const isoString = date.toISOString();
+          console.log(`Created UTC date: ${isoString}, UTC date part: ${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`);
+          return isoString;
+        })()
+        : new Date().toISOString();
+
+      const effectiveToDate = formData.effectiveTo
+        ? (() => {
+          // Parse as local date (YYYY-MM-DD format)
+          const [year, month, day] = formData.effectiveTo.split('-').map(Number);
+          // Use UTC noon (12:00) for consistency - backend will extract date part correctly
+          const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
+          return date.toISOString();
+        })()
+        : undefined;
+
+      // TripType should be sent as number (enum value)
+      // 0 = Unknown, 1 = Departure, 2 = Return
+      const tripTypeValue = formData.tripType; // Already a number from enum
+
+      // Prepare CreateScheduleDto matching backend CreateScheduleDto
       const createScheduleDto: CreateScheduleDto = {
         name: formData.name.trim(),
         scheduleType: formData.scheduleType,
+        tripType: tripTypeValue, // Number enum: 0, 1, or 2
         startTime: formData.startTime,
         endTime: formData.endTime,
         rRule: formData.rRule,
         timezone: "UTC",
         academicYear: formData.academicYear,
         semesterCode: formData.semesterCode || undefined,
-        effectiveFrom: formData.effectiveFrom,
-        effectiveTo: formData.effectiveTo || undefined,
-        exceptions: [],
+        effectiveFrom: effectiveFromDate, // ISO string for DateTime
+        effectiveTo: effectiveToDate, // ISO string for DateTime?
+        exceptions: [], // Empty array of ISO date strings
         isActive: formData.isActive,
       };
 
+      console.log("Submitting schedule:", JSON.stringify(createScheduleDto, null, 2));
       await scheduleService.createSchedule(createScheduleDto);
       setHasUnsavedChanges(false); // Reset unsaved changes flag
       onSuccess();
     } catch (error: unknown) {
       console.error("Error creating schedule:", error);
 
-      // Simple error handling
+      // Enhanced error handling
       let errorMessage = "Failed to create schedule. Please try again.";
 
       if (error && typeof error === "object" && "response" in error) {
         const axiosError = error as {
-          response?: { data?: { message?: string } };
+          response?: {
+            data?: {
+              message?: string;
+              errors?: Record<string, string[]>;
+            };
+            status?: number;
+          };
         };
         if (axiosError.response?.data?.message) {
           errorMessage = axiosError.response.data.message;
+        } else if (axiosError.response?.data?.errors) {
+          const errorMessages = Object.values(axiosError.response.data.errors).flat();
+          errorMessage = errorMessages.join(", ") || errorMessage;
         }
+        console.error("Backend error details:", axiosError.response?.data);
       } else if (error && typeof error === "object" && "message" in error) {
         errorMessage = (error as { message: string }).message;
       }
@@ -362,7 +420,7 @@ export default function CreateScheduleModal({
     }
   };
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const handleInputChange = (field: string, value: string | boolean | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
     // Clear error when user starts typing
@@ -410,9 +468,8 @@ export default function CreateScheduleModal({
                 type="text"
                 value={formData.name}
                 onChange={(e) => handleInputChange("name", e.target.value)}
-                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
-                  errors.name ? "border-red-300 bg-red-50" : "border-gray-200"
-                }`}
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${errors.name ? "border-red-300 bg-red-50" : "border-gray-200"
+                  }`}
                 placeholder="Enter schedule name"
               />
               {errors.name && (
@@ -448,6 +505,42 @@ export default function CreateScheduleModal({
               </p>
             </div>
 
+            {/* Trip Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <FaTag className="inline w-4 h-4 mr-2" />
+                Trip Type *
+              </label>
+              <select
+                value={formData.tripType}
+                onChange={(e) =>
+                  handleInputChange("tripType", Number(e.target.value))
+                }
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${errors.tripType
+                    ? "border-red-300 bg-red-50"
+                    : "border-gray-200"
+                  }`}
+              >
+                {tripTypes.map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-sm text-gray-500">
+                {
+                  tripTypes.find(
+                    (type) => type.value === formData.tripType
+                  )?.description
+                }
+              </p>
+              {errors.tripType && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.tripType}
+                </p>
+              )}
+            </div>
+
             {/* Academic Year */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -459,11 +552,10 @@ export default function CreateScheduleModal({
                 onChange={(e) =>
                   handleInputChange("academicYear", e.target.value)
                 }
-                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
-                  errors.academicYear
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${errors.academicYear
                     ? "border-red-300 bg-red-50"
                     : "border-gray-200"
-                }`}
+                  }`}
                 disabled={loadingAcademicYears}
               >
                 <option value="">
@@ -549,13 +641,12 @@ export default function CreateScheduleModal({
                     handleInputChange("effectiveFrom", e.target.value)
                   }
                   disabled={!!formData.academicYear}
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
-                    errors.effectiveFrom
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${errors.effectiveFrom
                       ? "border-red-300 bg-red-50"
                       : formData.academicYear
                         ? "border-gray-200 bg-gray-50"
                         : "border-gray-200"
-                  }`}
+                    }`}
                 />
                 {errors.effectiveFrom && (
                   <p className="mt-1 text-sm text-red-600">
@@ -588,13 +679,12 @@ export default function CreateScheduleModal({
                     handleInputChange("effectiveTo", e.target.value)
                   }
                   disabled={!!formData.academicYear}
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
-                    errors.effectiveTo
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${errors.effectiveTo
                       ? "border-red-300 bg-red-50"
                       : formData.academicYear
                         ? "border-gray-200 bg-gray-50"
                         : "border-gray-200"
-                  }`}
+                    }`}
                 />
                 {errors.effectiveTo && (
                   <p className="mt-1 text-sm text-red-600">

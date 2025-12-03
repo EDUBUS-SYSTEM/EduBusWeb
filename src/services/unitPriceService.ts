@@ -29,9 +29,10 @@ export const unitPriceService = {
   deleteUnitPrice: (id: string) =>
     apiService.delete(`/UnitPrice/${id}`),
   
+  // Status toggles use PUT to match backend controller
   activateUnitPrice: (id: string) =>
-    apiService.post(`/UnitPrice/${id}/activate`),
+    apiService.put(`/UnitPrice/${id}/activate`),
   
   deactivateUnitPrice: (id: string) =>
-    apiService.post(`/UnitPrice/${id}/deactivate`),
+    apiService.put(`/UnitPrice/${id}/deactivate`),
 };
