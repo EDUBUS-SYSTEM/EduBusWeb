@@ -17,6 +17,36 @@ import { schoolService } from '@/services/schoolService/schoolService.api';
 import MiniRouteMap from './MiniRouteMap';
 import RouteScheduleModal from './RouteScheduleModal';
 
+const getGenerateRouteErrorMessage = (message?: string) => {
+  if (!message) {
+    return "Không thể tạo lộ trình. Vui lòng kiểm tra lại dữ liệu.";
+  }
+
+  const normalized = message.toLowerCase();
+
+  if (normalized.includes("no active students")) {
+    return "Không tìm thấy học sinh đang hoạt động có gán điểm đón. Hãy đảm bảo học sinh được kích hoạt và gán pickup point.";
+  }
+
+  if (normalized.includes("no pickup points")) {
+    return "Không tìm thấy điểm đón nào. Hãy nhập dữ liệu pickup point trước khi tạo lộ trình.";
+  }
+
+  if (normalized.includes("no available vehicles")) {
+    return "Không có xe hoạt động. Vui lòng kiểm tra bảng xe và đảm bảo xe có trạng thái Active.";
+  }
+
+  if (normalized.includes("insufficient vehicle capacity")) {
+    return "Sức chứa của đội xe không đủ so với số học sinh. Cần thêm xe hoặc tăng sức chứa.";
+  }
+
+  if (normalized.includes("largest pickup point")) {
+    return "Có điểm đón có số học sinh vượt sức chứa xe lớn nhất. Hãy điều chỉnh phân bổ học sinh.";
+  }
+
+  return message;
+};
+
 const RouteManagement: React.FC = () => {
   const [routes, setRoutes] = useState<RouteDto[]>([]);
   const [lobby, setLobby] = useState<PickupPointInfoDto[]>([]);
@@ -234,7 +264,7 @@ const RouteManagement: React.FC = () => {
         setHasSuggestions(true);
         toast.success(`Successfully generated ${response.totalRoutes} optimized routes!`);
       } else {
-        toast.error(response.message || 'Failed to generate routes');
+        toast.error(getGenerateRouteErrorMessage(response.message));
       }
     } catch (error: unknown) {
       console.error('Failed to generate routes:', error);
@@ -248,12 +278,12 @@ const RouteManagement: React.FC = () => {
         };
 
         if (axiosError.response?.data?.message) {
-          toast.error(axiosError.response.data.message);
+          toast.error(getGenerateRouteErrorMessage(axiosError.response.data.message));
         } else {
-          toast.error('Failed to generate routes. Please try again.');
+          toast.error('Không thể tạo lộ trình. Vui lòng thử lại.');
         }
       } else {
-        toast.error('Failed to generate routes. Please try again.');
+        toast.error('Không thể tạo lộ trình. Vui lòng thử lại.');
       }
     } finally {
       setIsGenerating(false);

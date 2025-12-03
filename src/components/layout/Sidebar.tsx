@@ -57,7 +57,7 @@ export default function Sidebar() {
       icon: <FaCalendarAlt />,
     },
     { href: "/admin/vehicle", label: "Vehicles", icon: <FaBus /> },
-    { href: "/admin/driver-vehicles", label: "Driver Assignments", icon: <FaUserCog /> },
+    { href: "/admin/driver-vehicles", label: "Driver/Supervisor Assignments", icon: <FaUserCog /> },
     { href: "/admin/routes", label: "Route Management", icon: <FaRoute /> },
     { href: "/admin/unit-price", label: "Unit Price Management", icon: <FaDollarSign /> },
     { href: "/admin/parent-transactions", label: "Parent Transactions", icon: <FaReceipt /> },

@@ -8,7 +8,7 @@ import axios from 'axios';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, isAuthenticated, loading: authLoading } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -17,13 +17,12 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Nếu đã đăng nhập (auth context đã load user) thì tự động chuyển vào dashboard
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if(token){
-      // Use replace instead of push to avoid back button issues
+    if (!authLoading && isAuthenticated) {
       router.replace("/admin/dashboard");
     }
-  }, [router]);
+  }, [authLoading, isAuthenticated, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -54,7 +53,7 @@ export default function AdminLoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setLoading(true);
@@ -69,7 +68,7 @@ export default function AdminLoginPage() {
         const status = error.response?.status;
 
         if (status === 401) {
-          errMsg = "Wrong email or password"; 
+          errMsg = "Wrong email or password";
         } else {
           errMsg = error.response?.data?.message || "Login failed. Please try again.";
         }
@@ -119,25 +118,25 @@ export default function AdminLoginPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
-                                 <input
-                   id="email"
-                   type="email"
-                   name="email"
-                   value={formData.email}
-                   onChange={handleChange}
-                   placeholder="Enter your email"
-                   style={{ backgroundColor: 'white' }}
-                   className={`
+                <input
+                  id="email"
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="Enter your email"
+                  style={{ backgroundColor: 'white' }}
+                  className={`
                      w-full pl-12 pr-4 py-3 rounded-3xl border-2 bg-white
                      transition-all duration-300 ease-in-out
                      focus:outline-none focus:ring-2 focus:ring-[#FDC700]
                      placeholder:text-[#99A1AF]
-                     ${errors.email 
-                       ? 'border-red-300 focus:border-red-500 focus:ring-red-200 text-red-900' 
-                       : 'border-[#FDC700] focus:border-[#FDC700] text-[#000000] hover:border-[#FDC700]'
-                     }
+                     ${errors.email
+                      ? 'border-red-300 focus:border-red-500 focus:ring-red-200 text-red-900'
+                      : 'border-[#FDC700] focus:border-[#FDC700] text-[#000000] hover:border-[#FDC700]'
+                    }
                    `}
-                 />
+                />
               </div>
               {errors.email && (
                 <p className="text-red-600 text-sm ml-2">{errors.email}</p>
@@ -168,8 +167,8 @@ export default function AdminLoginPage() {
                     transition-all duration-300 ease-in-out
                     focus:outline-none focus:ring-2 focus:ring-[#FDC700]
                     placeholder:text-[#99A1AF]
-                    ${errors.password 
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-200 text-red-900' 
+                    ${errors.password
+                      ? 'border-red-300 focus:border-red-500 focus:ring-red-200 text-red-900'
                       : 'border-[#FDC700] focus:border-[#FDC700] text-[#000000] hover:border-[#FDC700]'
                     }
                   `}
@@ -197,10 +196,10 @@ export default function AdminLoginPage() {
             </div>
 
             {/* Sign In Button */}
-                         <button
-               type="submit"
-               disabled={loading}
-               className="
+            <button
+              type="submit"
+              disabled={loading}
+              className="
                  w-full py-3 px-6 rounded-3xl
                  bg-[#FDC700]
                  text-white font-semibold text-xl
@@ -210,7 +209,7 @@ export default function AdminLoginPage() {
                  disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
                  shadow-lg hover:shadow-xl
                "
-             >
+            >
               {loading ? (
                 <div className="flex items-center justify-center">
                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

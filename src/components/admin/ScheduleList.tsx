@@ -48,6 +48,7 @@ export default function ScheduleList({
   const [deletingScheduleId, setDeletingScheduleId] = useState<string | null>(
     null
   );
+  const [showUpdateConfirmation, setShowUpdateConfirmation] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -356,11 +357,21 @@ export default function ScheduleList({
       return;
     }
 
+    // Show custom confirmation modal instead of browser confirm
+    setShowUpdateConfirmation(true);
+  };
+
+  const handleConfirmUpdate = async () => {
+    if (!selectedSchedule) return;
+
+    setShowUpdateConfirmation(false);
+
     try {
       const updateScheduleDto = {
         id: selectedSchedule.id || "", // Backend will convert string to Guid
         name: selectedSchedule.name.trim(), // Simple trim instead of sanitization
         scheduleType: selectedSchedule.scheduleType || "",
+        tripType: selectedSchedule.tripType ?? 0, // TripType enum number
         startTime: selectedSchedule.startTime || "",
         endTime: selectedSchedule.endTime || "",
         rRule: selectedSchedule.rRule || "", // Use actual RRule from schedule
@@ -373,8 +384,10 @@ export default function ScheduleList({
           ? new Date(selectedSchedule.effectiveTo).toISOString()
           : undefined,
         exceptions: selectedSchedule.exceptions
-          ? selectedSchedule.exceptions
-          : [], // Keep as Date[]
+          ? selectedSchedule.exceptions.map((ex: Date | string) =>
+            typeof ex === 'string' ? ex : new Date(ex).toISOString()
+          )
+          : [], // Convert Date[] to ISO string[]
         isActive:
           selectedSchedule.isActive !== undefined
             ? selectedSchedule.isActive
@@ -473,11 +486,10 @@ export default function ScheduleList({
                       {schedule.scheduleType}
                     </span>
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        schedule.isActive
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${schedule.isActive
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                        }`}
                     >
                       {schedule.isActive ? "Active" : "Inactive"}
                     </span>
@@ -543,11 +555,10 @@ export default function ScheduleList({
                   <button
                     onClick={() => handleDeleteSchedule(schedule.id)}
                     disabled={deletingScheduleId === schedule.id}
-                    className={`p-2 rounded-lg transition-colors duration-200 ${
-                      deletingScheduleId === schedule.id
-                        ? "text-gray-400 cursor-not-allowed"
-                        : "text-red-600 hover:bg-red-100"
-                    }`}
+                    className={`p-2 rounded-lg transition-colors duration-200 ${deletingScheduleId === schedule.id
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-red-600 hover:bg-red-100"
+                      }`}
                     title={
                       deletingScheduleId === schedule.id
                         ? "Deleting..."
@@ -614,11 +625,10 @@ export default function ScheduleList({
                       </p>
                     </div>
                     <span
-                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
-                        selectedSchedule.isActive
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
+                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${selectedSchedule.isActive
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                        }`}
                     >
                       <span
                         className={`w-2 h-2 rounded-full ${selectedSchedule.isActive ? "bg-green-500" : "bg-red-500"}`}
@@ -723,7 +733,7 @@ export default function ScheduleList({
                       {selectedSchedule.timeOverrides?.length || 0})
                     </label>
                     {!selectedSchedule.timeOverrides ||
-                    selectedSchedule.timeOverrides.length === 0 ? (
+                      selectedSchedule.timeOverrides.length === 0 ? (
                       <p className="text-gray-500 text-sm">No time overrides</p>
                     ) : (
                       <div className="space-y-1">
@@ -816,6 +826,26 @@ export default function ScheduleList({
                     <option value="Weekly">Weekly</option>
                     <option value="Monthly">Monthly</option>
                     <option value="Custom">Custom</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Trip Type
+                  </label>
+                  <select
+                    value={selectedSchedule.tripType ?? 1}
+                    onChange={(e) =>
+                      setSelectedSchedule({
+                        ...selectedSchedule,
+                        tripType: Number(e.target.value),
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
+                    required
+                  >
+                    <option value={1}>Departure</option>
+                    <option value={2}>Return</option>
                   </select>
                 </div>
 
@@ -1025,11 +1055,10 @@ export default function ScheduleList({
                             <div>
                               <p className="text-xs text-gray-500">Status</p>
                               <span
-                                className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                                  override.isCancelled
-                                    ? "bg-red-100 text-red-800"
-                                    : "bg-green-100 text-green-800"
-                                }`}
+                                className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${override.isCancelled
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-green-100 text-green-800"
+                                  }`}
                               >
                                 {override.isCancelled ? "Cancelled" : "Active"}
                               </span>
@@ -1125,6 +1154,54 @@ export default function ScheduleList({
           schedule={selectedSchedule}
           onSuccess={handleExceptionSuccess}
         />
+      )}
+
+      {/* Update Confirmation Modal */}
+      {showUpdateConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl">
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex items-start gap-4 mb-6">
+                <div className="flex-shrink-0 w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                  <FaExclamationTriangle className="w-6 h-6 text-yellow-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    Important Notice
+                  </h3>
+                  <div className="space-y-3 text-sm text-gray-600">
+                    <p className="leading-relaxed">
+                      <strong className="text-gray-800">These changes will only apply to trips generated after the update time.</strong>
+                    </p>
+                    <p className="leading-relaxed">
+                      Trips that have already been generated will retain the schedule information from before the update.
+                    </p>
+                    <p className="leading-relaxed">
+                      If you want to update information for already generated trips, please edit the specific trip!
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowUpdateConfirmation(false)}
+                  className="px-6 py-2.5 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmUpdate}
+                  className="px-6 py-2.5 bg-gradient-to-r from-[#fad23c] to-[#FDC700] text-[#463B3B] rounded-lg hover:from-[#FDC700] hover:to-[#D08700] transition-all duration-300 shadow-soft hover:shadow-soft-lg font-medium"
+                >
+                  Continue Update
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -10,32 +10,63 @@ import {
   UpdateVehicleRequest,
   DriverAssignmentRequest,
   DriverAssignmentResponse,
-  ApiListResponse,      
-  DriverInfoDto,  
+  ApiListResponse,
+  DriverInfoDto,
 } from '@/types/vehicle';
+
+export interface SupervisorAssignmentRequest {
+  supervisorId: string;
+  startTimeUtc: string;
+  endTimeUtc?: string;
+  assignmentReason?: string;
+}
+
+export interface SupervisorAssignmentDto {
+  id: string;
+  supervisorId: string;
+  supervisorName: string;
+  supervisorEmail: string;
+  supervisorPhone: string;
+  vehicleId: string;
+  vehiclePlate: string;
+  vehicleCapacity: number;
+  startTimeUtc: string;
+  endTimeUtc?: string;
+  status: string;
+  assignmentReason?: string;
+  assignedByAdminId: string;
+  assignedByAdminName?: string;
+}
+
+export interface SupervisorAssignmentResponse {
+  success: boolean;
+  data?: SupervisorAssignmentDto;
+  error?: string;
+  message?: string;
+}
 
 export class VehicleService {
   async getVehicles(filters: VehicleFilters): Promise<VehicleListResponse> {
-  const searchParams = new URLSearchParams();
-  
-  // Only add status if it's not "all"
-  if (filters.status && filters.status !== "all") {
-    searchParams.append('status', filters.status);
-  }
-  
-  if (filters.capacity)  searchParams.append('capacity', filters.capacity.toString());
-  if (filters.adminId)   searchParams.append('adminId', filters.adminId);
-  if (filters.search)    searchParams.append('search', filters.search);
-  
-  searchParams.append('page', (filters.page ?? 1).toString());
-  searchParams.append('perPage', (filters.perPage ?? 20).toString());
-  searchParams.append('sortBy', filters.sortBy ?? 'createdAt');
-  searchParams.append('sortOrder', filters.sortOrder ?? 'desc');
+    const searchParams = new URLSearchParams();
 
-  const url = `/vehicle?${searchParams.toString()}`;
-  
-  return apiService.get<VehicleListResponse>(url);
-}
+    // Only add status if it's not "all"
+    if (filters.status && filters.status !== "all") {
+      searchParams.append('status', filters.status);
+    }
+
+    if (filters.capacity) searchParams.append('capacity', filters.capacity.toString());
+    if (filters.adminId) searchParams.append('adminId', filters.adminId);
+    if (filters.search) searchParams.append('search', filters.search);
+
+    searchParams.append('page', (filters.page ?? 1).toString());
+    searchParams.append('perPage', (filters.perPage ?? 20).toString());
+    searchParams.append('sortBy', filters.sortBy ?? 'createdAt');
+    searchParams.append('sortOrder', filters.sortOrder ?? 'desc');
+
+    const url = `/vehicle?${searchParams.toString()}`;
+
+    return apiService.get<VehicleListResponse>(url);
+  }
 
 
   async createVehicle(vehicleData: CreateVehicleRequest): Promise<CreateVehicleResponse> {
@@ -43,23 +74,23 @@ export class VehicleService {
       return await apiService.post<CreateVehicleResponse>('/vehicle', vehicleData);
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { success?: boolean, error?: string, message?: string, errors?: unknown } } };
-      
+
       // Handle duplicate license plate error
       if (axiosError.response?.data?.error === 'LICENSE_PLATE_ALREADY_EXISTS') {
         throw new Error(axiosError.response.data.message || 'Vehicle with this license plate already exists.');
       }
-      
+
       // Handle validation errors
       if (axiosError.response?.data?.errors) {
         const validationErrors = axiosError.response.data.errors;
         throw new Error(JSON.stringify(validationErrors));
       }
-      
+
       // Handle other errors
       if (axiosError.response?.data?.message) {
         throw new Error(axiosError.response.data.message);
       }
-      
+
       throw error;
     }
   }
@@ -69,23 +100,23 @@ export class VehicleService {
       return await apiService.put<VehicleUpdateResponse>(`/vehicle/${vehicleId}`, vehicleData);
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { success?: boolean, error?: string, message?: string, errors?: unknown } } };
-      
+
       // Handle duplicate license plate error
       if (axiosError.response?.data?.error === 'LICENSE_PLATE_ALREADY_EXISTS') {
         throw new Error(axiosError.response.data.message || 'Vehicle with this license plate already exists.');
       }
-      
+
       // Handle validation errors
       if (axiosError.response?.data?.errors) {
         const validationErrors = axiosError.response.data.errors;
         throw new Error(JSON.stringify(validationErrors));
       }
-      
+
       // Handle other errors
       if (axiosError.response?.data?.message) {
         throw new Error(axiosError.response.data.message);
       }
-      
+
       throw error;
     }
   }
@@ -95,23 +126,23 @@ export class VehicleService {
       return await apiService.patch<VehicleUpdateResponse>(`/vehicle/${vehicleId}`, vehicleData);
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { success?: boolean, error?: string, message?: string, errors?: unknown } } };
-      
+
       // Handle duplicate license plate error
       if (axiosError.response?.data?.error === 'LICENSE_PLATE_ALREADY_EXISTS') {
         throw new Error(axiosError.response.data.message || 'Vehicle with this license plate already exists.');
       }
-      
+
       // Handle validation errors
       if (axiosError.response?.data?.errors) {
         const validationErrors = axiosError.response.data.errors;
         throw new Error(JSON.stringify(validationErrors));
       }
-      
+
       // Handle other errors
       if (axiosError.response?.data?.message) {
         throw new Error(axiosError.response.data.message);
       }
-      
+
       throw error;
     }
   }
@@ -141,6 +172,18 @@ export class VehicleService {
     }
   }
 
+  async assignSupervisor(vehicleId: string, request: SupervisorAssignmentRequest): Promise<SupervisorAssignmentResponse> {
+    try {
+      return await apiService.post<SupervisorAssignmentResponse>(`/VehicleAssignment/vehicle/${vehicleId}/supervisors`, request);
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { data?: { error?: string } } };
+      if (axiosError.response?.data?.error) {
+        throw new Error(axiosError.response.data.error);
+      }
+      throw error;
+    }
+  }
+
   async getVehicleById(vehicleId: string): Promise<VehicleGetResponse> {
     try {
       return await apiService.get<VehicleGetResponse>(`/vehicle/${vehicleId}`);
@@ -161,10 +204,31 @@ export class VehicleService {
       const q = new URLSearchParams();
       q.set('availableOnly', 'true');
       if (startTimeUtc) q.set('startTimeUtc', startTimeUtc);
-      if (endTimeUtc)   q.set('endTimeUtc', endTimeUtc);
+      if (endTimeUtc) q.set('endTimeUtc', endTimeUtc);
       const qs = `?${q.toString()}`;
       return await apiService.get<ApiListResponse<DriverInfoDto[]>>(
         `/DriverVehicle/vehicle/${vehicleId}/drivers${qs}`
+      );
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { data?: { error?: string } } };
+      if (axiosError.response?.data?.error) throw new Error(axiosError.response.data.error);
+      throw error;
+    }
+  }
+
+  async getVehicleAvailableSupervisors(
+    vehicleId: string,
+    startTimeUtc?: string,
+    endTimeUtc?: string
+  ): Promise<ApiListResponse<Array<{ id: string; supervisorId: string; supervisorName: string; vehicleId: string; startTimeUtc: string; endTimeUtc?: string; isActive: boolean }>>> {
+    try {
+      const q = new URLSearchParams();
+      q.set('availableOnly', 'true');
+      if (startTimeUtc) q.set('startTimeUtc', startTimeUtc);
+      if (endTimeUtc) q.set('endTimeUtc', endTimeUtc);
+      const qs = `?${q.toString()}`;
+      return await apiService.get<ApiListResponse<Array<{ id: string; supervisorId: string; supervisorName: string; vehicleId: string; startTimeUtc: string; endTimeUtc?: string; isActive: boolean }>>>(
+        `/VehicleAssignment/vehicle/${vehicleId}/supervisors${qs}`
       );
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { error?: string } } };

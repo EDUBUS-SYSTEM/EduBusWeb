@@ -25,9 +25,10 @@ export interface CreateScheduleDto {
   timezone: string;
   academicYear: string; // Added to match backend
   semesterCode?: string; // Optional semester code for semester-based schedules
-  effectiveFrom: string;
-  effectiveTo?: string;
-  exceptions: Date[]; // Changed from string[] to Date[] to match backend
+  effectiveFrom: string; // ISO string format for DateTime
+  effectiveTo?: string; // ISO string format for DateTime?
+  exceptions: string[]; // Array of ISO string dates for List<DateTime>
+  tripType: number; // TripType enum: 0=Unknown, 1=Departure, 2=Return
   isActive: boolean;
 }
 
@@ -41,9 +42,10 @@ export interface UpdateScheduleDto {
   timezone: string;
   academicYear: string; // Added to match backend
   semesterCode?: string; // Optional semester code for semester-based schedules
-  effectiveFrom: string;
-  effectiveTo?: string;
-  exceptions: Date[]; // Changed from string[] to Date[] to match backend
+  effectiveFrom: string; // ISO string format for DateTime
+  effectiveTo?: string; // ISO string format for DateTime?
+  exceptions: string[]; // Array of ISO string dates for List<DateTime>
+  tripType: number; // TripType enum: 0=Unknown, 1=Departure, 2=Return
   isActive: boolean;
   timeOverrides?: ScheduleTimeOverride[]; // Added to preserve overrides
   updatedAt?: string; // Added for optimistic locking
@@ -176,11 +178,15 @@ class ScheduleService {
 
   async createSchedule(schedule: CreateScheduleDto): Promise<Schedule> {
     try {
+      console.log("Creating schedule with payload:", JSON.stringify(schedule, null, 2));
       const response = await apiClient.post("/schedule", schedule);
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error creating schedule:", error);
-      throw new Error("Failed to create schedule. Please try again.");
+      const errorObj = error as { response?: { data?: { message?: string } }; message?: string };
+      console.error("Error response:", errorObj?.response?.data);
+      const errorMessage = errorObj?.response?.data?.message || errorObj?.message || "Failed to create schedule. Please try again.";
+      throw new Error(errorMessage);
     }
   }
 

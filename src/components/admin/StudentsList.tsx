@@ -11,7 +11,7 @@ import {
   FaFileExcel,
   FaDownload,
 } from "react-icons/fa";
-import { AddStudentModal, EditStudentModal, ViewStudentModal } from "./index";
+import { AddStudentModal, EditStudentModal, ViewStudentModal, DeactivateStudentModal, DeleteStudentModal } from "./index";
 import { studentService } from "@/services/studentService/studentService.api";
 import {
   StudentDto,
@@ -32,12 +32,17 @@ export default function StudentsList() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<StudentDto | null>(
     null
   );
+  const [studentToDeactivate, setStudentToDeactivate] = useState<{ id: string; name: string } | null>(null);
+  const [studentToDelete, setStudentToDelete] = useState<{ id: string; name: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -92,7 +97,7 @@ export default function StudentsList() {
     fetchStudents(statusFilter);
     setCurrentPage(1); // Reset to first page when filtering
   }, [statusFilter, fetchStudents]);
-  
+
   // Search (only one useEffect, null-safe)
   useEffect(() => {
     const term = (searchTerm || "").toLowerCase().trim();
@@ -129,7 +134,7 @@ export default function StudentsList() {
       // Sort by date
       const aDate = new Date(a.createdAt).getTime();
       const bDate = new Date(b.createdAt).getTime();
-      
+
       if (sortOrder === "asc") {
         return aDate - bDate;
       } else {
@@ -221,24 +226,25 @@ export default function StudentsList() {
     }
   };
 
-  const handleDeactivateStudent = async (id: string) => {
+  const handleDeactivateStudent = (id: string) => {
     const student = students.find((s) => s.id === id);
     const studentName = student
       ? `${student.firstName} ${student.lastName}`
       : "this student";
 
-    const reason = prompt(
-      `Please provide a reason for deactivating ${studentName}:`
-    );
-    if (!reason) {
-      alert("Deactivation reason is required");
-      return;
-    }
+    setStudentToDeactivate({ id, name: studentName });
+    setIsDeactivateModalOpen(true);
+  };
+
+  const handleConfirmDeactivate = async (reason: string) => {
+    if (!studentToDeactivate) return;
 
     try {
-      await studentService.deactivate(id, reason);
+      await studentService.deactivate(studentToDeactivate.id, reason);
       await fetchStudents(statusFilter);
       setSuccessMessage("Student deactivated successfully!");
+      setIsDeactivateModalOpen(false);
+      setStudentToDeactivate(null);
     } catch (err) {
       console.error("Error deactivating student:", err);
       setError("Failed to deactivate student");
@@ -256,25 +262,31 @@ export default function StudentsList() {
     }
   };
 
-  const handleDeleteStudent = async (id: string) => {
+  const handleDeleteStudent = (id: string) => {
     const student = students.find((s) => s.id === id);
     const studentName = student
       ? `${student.firstName} ${student.lastName}`
       : "this student";
 
-    if (
-      confirm(
-        `Are you sure you want to delete ${studentName}? This action cannot be undone.`
-      )
-    ) {
-      try {
-        await studentService.delete(id);
-        await fetchStudents(statusFilter);
-        setSuccessMessage("Student deleted successfully!");
-      } catch (err) {
-        console.error("Error deleting student:", err);
-        setError("Failed to delete student");
-      }
+    setStudentToDelete({ id, name: studentName });
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!studentToDelete) return;
+
+    setDeleting(true);
+    try {
+      await studentService.delete(studentToDelete.id);
+      await fetchStudents(statusFilter);
+      setSuccessMessage("Student deleted successfully!");
+      setIsDeleteModalOpen(false);
+      setStudentToDelete(null);
+    } catch (err) {
+      console.error("Error deleting student:", err);
+      setError("Failed to delete student");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -370,11 +382,10 @@ export default function StudentsList() {
           <button
             onClick={handleExportStudents}
             disabled={exporting}
-            className={`flex items-center justify-center ${
-              exporting
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-green-500 hover:bg-green-600"
-            } text-white w-10 h-10 rounded-full transition-colors duration-200 shadow-md hover:shadow-lg`}
+            className={`flex items-center justify-center ${exporting
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-green-500 hover:bg-green-600"
+              } text-white w-10 h-10 rounded-full transition-colors duration-200 shadow-md hover:shadow-lg`}
             title="Export to Excel"
           >
             {exporting ? (
@@ -399,11 +410,10 @@ export default function StudentsList() {
             <button
               onClick={handleImportClick}
               disabled={uploading}
-              className={`flex items-center justify-center ${
-                uploading
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-[#FAD23C] hover:bg-[#fad23c]/80"
-              } text-white w-10 h-10 rounded-full transition-colors duration-200 shadow-md hover:shadow-lg`}
+              className={`flex items-center justify-center ${uploading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-[#FAD23C] hover:bg-[#fad23c]/80"
+                } text-white w-10 h-10 rounded-full transition-colors duration-200 shadow-md hover:shadow-lg`}
               title="Import from Excel"
             >
               {uploading ? (
@@ -537,16 +547,14 @@ export default function StudentsList() {
             <option value={StudentStatus.Pending}>Pending</option>
             <option value={StudentStatus.Active}>Active</option>
             <option value={StudentStatus.Inactive}>Inactive</option>
-            <option value={StudentStatus.Deleted}>Deleted</option>
           </select>
 
           <button
             onClick={() => handleSort("firstName")}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-colors duration-200 ${
-              sortBy === "firstName"
-                ? "bg-blue-50 border-blue-300 text-blue-700"
-                : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-            }`}
+            className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-colors duration-200 ${sortBy === "firstName"
+              ? "bg-blue-50 border-blue-300 text-blue-700"
+              : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+              }`}
           >
             <FaSort className="w-4 h-4" />
             Name {sortBy === "firstName" && (sortOrder === "asc" ? "↑" : "↓")}
@@ -554,11 +562,10 @@ export default function StudentsList() {
 
           <button
             onClick={() => handleSort("createdAt")}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-colors duration-200 ${
-              sortBy === "createdAt"
-                ? "bg-blue-50 border-blue-300 text-blue-700"
-                : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-            }`}
+            className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-colors duration-200 ${sortBy === "createdAt"
+              ? "bg-blue-50 border-blue-300 text-blue-700"
+              : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+              }`}
           >
             <FaSort className="w-4 h-4" />
             Created Date{" "}
@@ -580,9 +587,6 @@ export default function StudentsList() {
               </th>
               <th className="text-left py-3 px-3 font-semibold text-gray-700">
                 Parent Email
-              </th>
-              <th className="text-left py-3 px-3 font-semibold text-gray-700">
-                Address
               </th>
               <th className="text-left py-3 px-3 font-semibold text-gray-700">
                 Status
@@ -612,14 +616,10 @@ export default function StudentsList() {
                 <td className="py-3 px-3 text-gray-600">
                   {student.parentEmail}
                 </td>
-                <td className="py-3 px-3 text-gray-600">
-                  {student.parentId ? "Available" : "Not available"}
-                </td>
                 <td className="py-3 px-3">
                   <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      getStatusInfo(student.status).className
-                    }`}
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusInfo(student.status).className
+                      }`}
                   >
                     {getStatusInfo(student.status).text}
                   </span>
@@ -677,14 +677,14 @@ export default function StudentsList() {
 
                     {(student.status === StudentStatus.Inactive ||
                       student.status === StudentStatus.Deleted) && (
-                      <button
-                        onClick={() => handleRestoreStudent(student.id)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
-                        title="Restore Student"
-                      >
-                        ↻
-                      </button>
-                    )}
+                        <button
+                          onClick={() => handleRestoreStudent(student.id)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                          title="Restore Student"
+                        >
+                          ↻
+                        </button>
+                      )}
 
                     <button
                       onClick={() =>
@@ -692,11 +692,10 @@ export default function StudentsList() {
                         handleDeleteStudent(student.id)
                       }
                       disabled={student.status === StudentStatus.Deleted}
-                      className={`p-2 rounded-lg transition-colors duration-200 ${
-                        student.status === StudentStatus.Deleted
-                          ? "text-gray-300 cursor-not-allowed"
-                          : "text-red-600 hover:bg-red-50"
-                      }`}
+                      className={`p-2 rounded-lg transition-colors duration-200 ${student.status === StudentStatus.Deleted
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-red-600 hover:bg-red-50"
+                        }`}
                       title={
                         student.status === StudentStatus.Deleted
                           ? "Already deleted"
@@ -730,11 +729,10 @@ export default function StudentsList() {
             <button
               onClick={handlePreviousPage}
               disabled={currentPage === 1 || totalPages <= 1}
-              className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition-colors duration-200 ${
-                currentPage === 1 || totalPages <= 1
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
+              className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition-colors duration-200 ${currentPage === 1 || totalPages <= 1
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
             >
               &lt;
             </button>
@@ -764,11 +762,10 @@ export default function StudentsList() {
                   <button
                     key={page}
                     onClick={() => handlePageChange(page)}
-                    className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition-colors duration-200 ${
-                      currentPage === page
-                        ? "bg-[#FAD23C] text-gray-800"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
+                    className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition-colors duration-200 ${currentPage === page
+                      ? "bg-[#FAD23C] text-gray-800"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
                   >
                     {page}
                   </button>
@@ -780,11 +777,10 @@ export default function StudentsList() {
             <button
               onClick={handleNextPage}
               disabled={currentPage === totalPages || totalPages <= 1}
-              className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition-colors duration-200 ${
-                currentPage === totalPages || totalPages <= 1
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
+              className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition-colors duration-200 ${currentPage === totalPages || totalPages <= 1
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
             >
               &gt;
             </button>
@@ -818,6 +814,29 @@ export default function StudentsList() {
           setSelectedStudent(null);
         }}
         student={selectedStudent}
+      />
+
+      {/* Deactivate Student Modal */}
+      <DeactivateStudentModal
+        isOpen={isDeactivateModalOpen}
+        onClose={() => {
+          setIsDeactivateModalOpen(false);
+          setStudentToDeactivate(null);
+        }}
+        onConfirm={handleConfirmDeactivate}
+        studentName={studentToDeactivate?.name || ""}
+      />
+
+      {/* Delete Student Modal */}
+      <DeleteStudentModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setStudentToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        studentName={studentToDelete?.name || ""}
+        loading={deleting}
       />
     </div>
   );

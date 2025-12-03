@@ -12,12 +12,12 @@ export default function ParentRequestList() {
   const [requests, setRequests] = useState<PickupPointRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Search and filter states
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
@@ -33,30 +33,30 @@ export default function ParentRequestList() {
   const fetchRequests = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       // Calculate pagination
       const skip = (currentPage - 1) * itemsPerPage;
-      
+
       // Build query parameters
       const query: Record<string, unknown> = {
         skip,
         take: itemsPerPage
       };
-      
+
       // Add filters
       if (statusFilter) {
         query.status = statusFilter;
       }
-      
+
       // If search text looks like an email, search by email via API
       if (searchText.trim() && searchText.includes('@')) {
         query.parentEmail = searchText.trim();
       }
-      
+
       // Fetch data from API
       const data = await pickupPointService.listRequests(query);
-      
+
       // Apply client-side filtering for name or email (if not already filtered by API)
       let filteredData = data;
       if (searchText.trim()) {
@@ -76,14 +76,14 @@ export default function ParentRequestList() {
           return false;
         });
       }
-      
+
       setRequests(filteredData);
       // Note: API doesn't return total count, so we'll estimate based on current page
       setTotalItems(filteredData.length === itemsPerPage ? (currentPage * itemsPerPage) + 1 : currentPage * itemsPerPage);
     } catch (err: unknown) {
-      const errorMessage = (err as { response?: { data?: { detail?: string } }; message?: string }).response?.data?.detail || 
-                          (err as { message?: string }).message || 
-                          "Failed to load requests. Please try again.";
+      const errorMessage = (err as { response?: { data?: { detail?: string } }; message?: string }).response?.data?.detail ||
+        (err as { message?: string }).message ||
+        "Failed to load requests. Please try again.";
       setError(errorMessage);
       console.error("Error loading requests:", err);
       setRequests([]);
@@ -104,27 +104,27 @@ export default function ParentRequestList() {
 
   const handleApprove = async (requestId: string, notes?: string) => {
     setActionLoading(true);
-    
+
     try {
       await pickupPointService.approveRequest(requestId, { notes });
-      
+
       // Refresh the requests list
       await fetchRequests();
-      
+
       // Notify other pages that a transaction was created
-      window.dispatchEvent(new CustomEvent('transactionCreated', { 
-        detail: { requestId, timestamp: Date.now() } 
+      window.dispatchEvent(new CustomEvent('transactionCreated', {
+        detail: { requestId, timestamp: Date.now() }
       }));
-      
+
       setShowApproveModal(false);
       setSelectedRequest(null);
-      
+
       alert("Request approved successfully!");
     } catch (err: unknown) {
       console.error("Error approving request:", err);
-      const errorMessage = (err as { response?: { data?: { detail?: string } }; message?: string }).response?.data?.detail || 
-                          (err as { message?: string }).message || 
-                          "Failed to approve request. Please try again.";
+      const errorMessage = (err as { response?: { data?: { detail?: string } }; message?: string }).response?.data?.detail ||
+        (err as { message?: string }).message ||
+        "Failed to approve request. Please try again.";
       alert(errorMessage);
     } finally {
       setActionLoading(false);
@@ -133,22 +133,22 @@ export default function ParentRequestList() {
 
   const handleReject = async (requestId: string, reason: string) => {
     setActionLoading(true);
-    
+
     try {
       await pickupPointService.rejectRequest(requestId, { reason });
-      
+
       // Refresh the requests list
       await fetchRequests();
-      
+
       setShowRejectModal(false);
       setSelectedRequest(null);
-      
+
       alert("Request rejected successfully!");
     } catch (err: unknown) {
       console.error("Error rejecting request:", err);
-      const errorMessage = (err as { response?: { data?: { detail?: string } }; message?: string }).response?.data?.detail || 
-                          (err as { message?: string }).message || 
-                          "Failed to reject request. Please try again.";
+      const errorMessage = (err as { response?: { data?: { detail?: string } }; message?: string }).response?.data?.detail ||
+        (err as { message?: string }).message ||
+        "Failed to reject request. Please try again.";
       alert(errorMessage);
     } finally {
       setActionLoading(false);
@@ -175,16 +175,6 @@ export default function ParentRequestList() {
       currency: 'VND'
     }).format(amount);
   };
-
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#fad23c]"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 pb-8">
       {/* Search and Filter Section */}
@@ -203,7 +193,7 @@ export default function ParentRequestList() {
               autoComplete="off"
             />
           </div>
-          
+
           {/* Clear Search */}
           {searchText && (
             <button
@@ -214,7 +204,7 @@ export default function ParentRequestList() {
               Clear
             </button>
           )}
-          
+
           {/* Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
@@ -258,7 +248,11 @@ export default function ParentRequestList() {
 
       {/* Requests List */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-        {requests.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#fad23c]" />
+          </div>
+        ) : requests.length === 0 ? (
           <div className="text-center py-12">
             <FaUser className="mx-auto h-12 w-12 text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No requests found</h3>
@@ -288,8 +282,8 @@ export default function ParentRequestList() {
                         </div>
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {request.parentInfo ? 
-                              `${request.parentInfo.firstName} ${request.parentInfo.lastName}` : 
+                            {request.parentInfo ?
+                              `${request.parentInfo.firstName} ${request.parentInfo.lastName}` :
                               'N/A'
                             }
                           </div>
@@ -300,14 +294,14 @@ export default function ParentRequestList() {
                         </div>
                       </div>
                     </td>
-                    
+
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
                         <FaChild className="h-4 w-4 text-gray-400" />
                         <div>
                           {request.students.length > 0 ? (
                             <div className="text-sm text-gray-900">
-                              {request.students.map(student => 
+                              {request.students.map(student =>
                                 `${student.firstName} ${student.lastName}`
                               ).join(', ')}
                             </div>
@@ -317,7 +311,7 @@ export default function ParentRequestList() {
                         </div>
                       </div>
                     </td>
-                    
+
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
                         <FaMapMarkerAlt className="h-4 w-4 text-gray-400" />
@@ -331,13 +325,13 @@ export default function ParentRequestList() {
                         </div>
                       </div>
                     </td>
-                    
+
                     <td className="px-6 py-4">
                       <span className={getStatusBadge(request.status)}>
                         {request.status}
                       </span>
                     </td>
-                    
+
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
                         <button
@@ -350,7 +344,7 @@ export default function ParentRequestList() {
                         >
                           <FaEye className="h-4 w-4" />
                         </button>
-                        
+
                         {request.status === "Pending" && (
                           <>
                             <button
@@ -363,7 +357,7 @@ export default function ParentRequestList() {
                             >
                               <FaCheck className="h-4 w-4" />
                             </button>
-                            
+
                             <button
                               onClick={() => {
                                 setSelectedRequest(request);
@@ -396,11 +390,11 @@ export default function ParentRequestList() {
           >
             Previous
           </button>
-          
+
           <span className="px-4 py-2 text-sm text-gray-700">
             Page {currentPage} of {Math.ceil(totalItems / itemsPerPage)}
           </span>
-          
+
           <button
             onClick={() => setCurrentPage(prev => prev + 1)}
             disabled={currentPage >= Math.ceil(totalItems / itemsPerPage)}
@@ -452,15 +446,15 @@ export default function ParentRequestList() {
 }
 
 // Approve Modal Component
-function ApproveModal({ 
-  request, 
-  onApprove, 
-  onClose, 
-  loading 
-}: { 
-  request: PickupPointRequest; 
-  onApprove: (id: string, notes?: string) => void; 
-  onClose: () => void; 
+function ApproveModal({
+  request,
+  onApprove,
+  onClose,
+  loading
+}: {
+  request: PickupPointRequest;
+  onApprove: (id: string, notes?: string) => void;
+  onClose: () => void;
   loading: boolean;
 }) {
   const [notes, setNotes] = useState("");
@@ -469,7 +463,7 @@ function ApproveModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Approve Request</h3>
-        
+
         <div className="mb-4">
           <p className="text-sm text-gray-600 mb-2">
             Approve pickup point request for <strong>{request.parentInfo?.firstName} {request.parentInfo?.lastName}</strong>?
@@ -518,15 +512,15 @@ function ApproveModal({
 }
 
 // Reject Modal Component
-function RejectModal({ 
-  request, 
-  onReject, 
-  onClose, 
-  loading 
-}: { 
-  request: PickupPointRequest; 
-  onReject: (id: string, reason: string) => void; 
-  onClose: () => void; 
+function RejectModal({
+  request,
+  onReject,
+  onClose,
+  loading
+}: {
+  request: PickupPointRequest;
+  onReject: (id: string, reason: string) => void;
+  onClose: () => void;
   loading: boolean;
 }) {
   const [reason, setReason] = useState("");
@@ -535,7 +529,7 @@ function RejectModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Reject Request</h3>
-        
+
         <div className="mb-4">
           <p className="text-sm text-gray-600 mb-2">
             Reject pickup point request for <strong>{request.parentInfo?.firstName} {request.parentInfo?.lastName}</strong>?

@@ -307,7 +307,7 @@ export default function AcademicCalendarList({
   const handleDeleteSemester = (semesterIndex: number) => {
     if (!selectedCalendar) return;
     if (!confirm("Are you sure you want to delete this semester?")) return;
-    
+
     const updatedSemesters = selectedCalendar.semesters.filter((_, index) => index !== semesterIndex);
     setSelectedCalendar({
       ...selectedCalendar,
@@ -317,18 +317,18 @@ export default function AcademicCalendarList({
 
   const handleSaveSemester = (semesterData: AcademicSemester) => {
     if (!selectedCalendar) return;
-    
+
     let updatedSemesters;
     if (editingSemester) {
       // Edit existing semester
-      updatedSemesters = selectedCalendar.semesters.map(semester => 
+      updatedSemesters = selectedCalendar.semesters.map(semester =>
         semester === editingSemester ? semesterData : semester
       );
     } else {
       // Add new semester
       updatedSemesters = [...selectedCalendar.semesters, semesterData];
     }
-    
+
     setSelectedCalendar({
       ...selectedCalendar,
       semesters: updatedSemesters
@@ -351,7 +351,7 @@ export default function AcademicCalendarList({
   const handleDeleteHoliday = (holidayIndex: number) => {
     if (!selectedCalendar) return;
     if (!confirm("Are you sure you want to delete this holiday?")) return;
-    
+
     const updatedHolidays = selectedCalendar.holidays.filter((_, index) => index !== holidayIndex);
     setSelectedCalendar({
       ...selectedCalendar,
@@ -361,18 +361,18 @@ export default function AcademicCalendarList({
 
   const handleSaveHoliday = (holidayData: SchoolHoliday) => {
     if (!selectedCalendar) return;
-    
+
     let updatedHolidays;
     if (editingHoliday) {
       // Edit existing holiday
-      updatedHolidays = selectedCalendar.holidays.map(holiday => 
+      updatedHolidays = selectedCalendar.holidays.map(holiday =>
         holiday === editingHoliday ? holidayData : holiday
       );
     } else {
       // Add new holiday
       updatedHolidays = [...selectedCalendar.holidays, holidayData];
     }
-    
+
     setSelectedCalendar({
       ...selectedCalendar,
       holidays: updatedHolidays
@@ -426,11 +426,10 @@ export default function AcademicCalendarList({
                       </p>
                     </div>
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        calendar.isActive
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${calendar.isActive
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                        }`}
                     >
                       {calendar.isActive ? "Active" : "Inactive"}
                     </span>
@@ -543,7 +542,7 @@ export default function AcademicCalendarList({
                   <FaTimes className="w-5 h-5 text-[#463B3B]" />
                 </button>
               </div>
-              </div>
+            </div>
 
             {/* Content */}
             <div className="p-8 overflow-y-auto max-h-[calc(95vh-120px)]">
@@ -551,19 +550,18 @@ export default function AcademicCalendarList({
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center space-x-4">
                   <span
-                    className={`px-4 py-2 rounded-full text-sm font-medium ${
-                      selectedCalendar.isActive
-                        ? "bg-green-100 text-green-800 border border-green-200"
-                        : "bg-gray-100 text-gray-800 border border-gray-200"
-                    }`}
+                    className={`px-4 py-2 rounded-full text-sm font-medium ${selectedCalendar.isActive
+                      ? "bg-green-100 text-green-800 border border-green-200"
+                      : "bg-gray-100 text-gray-800 border border-gray-200"
+                      }`}
                   >
                     {selectedCalendar.isActive ? "🟢 Active" : "⚫ Inactive"}
                   </span>
                   <div className="text-sm text-gray-600">
                     Created: {formatDate(selectedCalendar.createdAt)}
-                    </div>
-                    </div>
-                    </div>
+                  </div>
+                </div>
+              </div>
 
 
               {/* Academic Year Calendar Visualization */}
@@ -572,7 +570,7 @@ export default function AcademicCalendarList({
                   <FaCalendarAlt className="w-5 h-5 mr-2 text-yellow-600" />
                   Academic Year Calendar Overview
                 </h4>
-                
+
                 {/* Calendar Grid */}
                 <div className="bg-white rounded-xl p-4 shadow-sm">
                   <div className="grid grid-cols-7 gap-1 mb-4">
@@ -582,7 +580,7 @@ export default function AcademicCalendarList({
                         {day}
                       </div>
                     ))}
-                    
+
                     {/* Calendar Days */}
                     {(() => {
                       const startDate = new Date(selectedCalendar.startDate);
@@ -591,27 +589,27 @@ export default function AcademicCalendarList({
                       const startYear = startDate.getFullYear();
                       // const endMonth = endDate.getMonth();
                       // const endYear = endDate.getFullYear();
-                      
+
                       const months = [];
                       let currentDate = new Date(startYear, startMonth, 1);
-                      
+
                       // Generate months from start to end
                       while (currentDate <= endDate) {
                         months.push(new Date(currentDate));
                         currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
                       }
-                      
+
                       return months.map((month, monthIndex) => {
                         const firstDay = new Date(month.getFullYear(), month.getMonth(), 1);
                         const lastDay = new Date(month.getFullYear(), month.getMonth() + 1, 0);
                         const startDayOfWeek = firstDay.getDay();
                         const daysInMonth = lastDay.getDate();
-                        
+
                         // Check if this month overlaps with academic year
                         // const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
                         // const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
                         // const isInAcademicYear = monthStart <= endDate && monthEnd >= startDate;
-                        
+
                         return (
                           <div key={monthIndex} className="col-span-7 mb-6">
                             {/* Month Header */}
@@ -620,55 +618,55 @@ export default function AcademicCalendarList({
                                 {month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                               </h5>
                             </div>
-                            
+
                             {/* Calendar Grid for this month */}
                             <div className="grid grid-cols-7 gap-1">
                               {/* Empty cells for days before month starts */}
                               {Array.from({ length: startDayOfWeek }).map((_, index) => (
                                 <div key={`empty-${index}`} className="h-8"></div>
                               ))}
-                              
+
                               {/* Days of the month */}
                               {Array.from({ length: daysInMonth }, (_, index) => {
                                 const day = index + 1;
                                 const currentDay = new Date(month.getFullYear(), month.getMonth(), day);
                                 const isInRange = currentDay >= startDate && currentDay <= endDate;
-                                
+
                                 // Check if this day is in any semester
-                                const semesterForDay = selectedCalendar.semesters.find(semester => 
+                                const semesterForDay = selectedCalendar.semesters.find(semester =>
                                   currentDay >= new Date(semester.startDate) && currentDay <= new Date(semester.endDate)
                                 );
-                                
+
                                 // Get semester index for color coding
-                                const semesterIndex = selectedCalendar.semesters.findIndex(semester => 
+                                const semesterIndex = selectedCalendar.semesters.findIndex(semester =>
                                   currentDay >= new Date(semester.startDate) && currentDay <= new Date(semester.endDate)
                                 );
-                                
+
                                 // Check if this day is a holiday
-                                const holidayForDay = selectedCalendar.holidays.find(holiday => 
+                                const holidayForDay = selectedCalendar.holidays.find(holiday =>
                                   currentDay >= new Date(holiday.startDate) && currentDay <= new Date(holiday.endDate)
                                 );
-                                
+
                                 // Check if this day is a special school day
-                                const schoolDayForDay = selectedCalendar.schoolDays.find(schoolDay => 
+                                const schoolDayForDay = selectedCalendar.schoolDays.find(schoolDay =>
                                   new Date(schoolDay.date).toDateString() === currentDay.toDateString()
                                 );
-                                
+
                                 // Determine what types of days this day represents
                                 const dayTypes = [];
                                 if (semesterForDay) dayTypes.push({ type: 'semester', index: semesterIndex });
                                 if (holidayForDay) dayTypes.push({ type: 'holiday' });
                                 if (schoolDayForDay) dayTypes.push({ type: 'schoolDay', isSchoolDay: schoolDayForDay.isSchoolDay });
-                                
+
                                 let dayClass = "h-8 flex items-center justify-center text-sm rounded-md transition-all duration-200 relative overflow-hidden ";
                                 // let dayStyle = {};
-                                
+
                                 if (!isInRange) {
                                   dayClass += "text-gray-300 bg-gray-50";
                                 } else {
                                   dayClass += "text-gray-700 bg-white hover:bg-yellow-50 border border-gray-200 font-medium";
                                 }
-                                
+
                                 // Create tooltip text
                                 const tooltipParts = [];
                                 if (semesterForDay) {
@@ -683,7 +681,7 @@ export default function AcademicCalendarList({
                                 if (tooltipParts.length === 0) {
                                   tooltipParts.push(isInRange ? 'Academic Year' : 'Outside Academic Year');
                                 }
-                                
+
                                 return (
                                   <div
                                     key={day}
@@ -695,33 +693,33 @@ export default function AcademicCalendarList({
                                       <div className="absolute inset-0 flex flex-col">
                                         {/* Top line for semester */}
                                         {semesterForDay && (
-                                          <div 
+                                          <div
                                             className={`h-2 ${getSemesterLegendColor(semesterIndex).replace('bg-', 'bg-')}`}
                                             title={`Semester ${semesterIndex + 1}: ${semesterForDay.name}`}
                                           ></div>
                                         )}
-                                        
+
                                         {/* Middle line for holiday */}
                                         {holidayForDay && (
-                                          <div 
+                                          <div
                                             className="h-2 bg-red-500"
                                             title={`Holiday: ${holidayForDay.name}`}
                                           ></div>
                                         )}
-                                        
+
                                         {/* Bottom line for special school day */}
                                         {schoolDayForDay && (
-                                          <div 
+                                          <div
                                             className={`h-2 ${schoolDayForDay.isSchoolDay ? 'bg-green-500' : 'bg-gray-500'}`}
                                             title={`Special: ${schoolDayForDay.isSchoolDay ? 'School Day' : 'No School'}`}
                                           ></div>
                                         )}
-                                        
+
                                         {/* Fill remaining space */}
                                         <div className="flex-1"></div>
                                       </div>
                                     )}
-                                    
+
                                     {/* Day number */}
                                     <span className="relative z-10">{day}</span>
                                   </div>
@@ -733,7 +731,7 @@ export default function AcademicCalendarList({
                       });
                     })()}
                   </div>
-                  
+
                   {/* Legend */}
                   <div className="mt-6 pt-4 border-t border-gray-200">
                     <h6 className="text-sm font-medium text-gray-700 mb-3">Legend:</h6>
@@ -759,7 +757,7 @@ export default function AcademicCalendarList({
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* Semesters */}
                       {selectedCalendar.semesters.length > 0 && (
                         <div>
@@ -776,7 +774,7 @@ export default function AcademicCalendarList({
                           </div>
                         </div>
                       )}
-                      
+
                       {/* Other Legend Items */}
                       <div>
                         <div className="text-xs font-medium text-gray-600 mb-2">Other Day Types:</div>
@@ -817,23 +815,22 @@ export default function AcademicCalendarList({
                         <div className="flex items-start justify-between mb-4">
                           <div>
                             <h5 className="text-lg font-semibold text-[#463B3B] mb-1">
-                          {semester.name}
+                              {semester.name}
                             </h5>
                             <p className="text-yellow-700 text-sm font-medium">
                               Code: {semester.code}
                             </p>
-                        </div>
-                        <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            semester.isActive
+                          </div>
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${semester.isActive
                               ? "bg-green-100 text-green-800"
                               : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {semester.isActive ? "Active" : "Inactive"}
-                        </span>
+                              }`}
+                          >
+                            {semester.isActive ? "Active" : "Inactive"}
+                          </span>
                         </div>
-                        
+
                         <div className="space-y-2">
                           <div className="flex items-center text-sm">
                             <span className="w-2 h-2 bg-yellow-500 rounded-full mr-3"></span>
@@ -865,7 +862,7 @@ export default function AcademicCalendarList({
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex-1">
                             <h5 className="text-lg font-semibold text-[#463B3B] mb-2">
-                          {holiday.name}
+                              {holiday.name}
                             </h5>
                             {holiday.description && (
                               <p className="text-yellow-700 text-sm mb-3">
@@ -906,27 +903,25 @@ export default function AcademicCalendarList({
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {selectedCalendar.schoolDays.map((schoolDay, index) => (
-                      <div key={index} className={`rounded-xl p-4 border ${
-                        schoolDay.isSchoolDay 
-                          ? "bg-yellow-50 border-yellow-200" 
-                          : "bg-gray-50 border-gray-200"
-                      }`}>
+                      <div key={index} className={`rounded-xl p-4 border ${schoolDay.isSchoolDay
+                        ? "bg-yellow-50 border-yellow-200"
+                        : "bg-gray-50 border-gray-200"
+                        }`}>
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="font-medium text-gray-800">
                               {formatDate(schoolDay.date)}
-                        </div>
+                            </div>
                             {schoolDay.description && (
-                          <div className="text-sm text-gray-600 mt-1">
+                              <div className="text-sm text-gray-600 mt-1">
                                 {schoolDay.description}
                               </div>
                             )}
                           </div>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            schoolDay.isSchoolDay
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${schoolDay.isSchoolDay
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
+                            }`}>
                             {schoolDay.isSchoolDay ? "School Day" : "No School"}
                           </span>
                         </div>
@@ -1004,29 +999,41 @@ export default function AcademicCalendarList({
                       value={
                         selectedCalendar.startDate
                           ? (() => {
-                              const d = new Date(selectedCalendar.startDate);
-                              const year = d.getFullYear();
-                              const month = String(d.getMonth() + 1).padStart(2, '0');
-                              const day = String(d.getDate()).padStart(2, '0');
-                              return `${year}-${month}-${day}`;
-                            })()
+                            const d = new Date(selectedCalendar.startDate);
+                            const year = d.getFullYear();
+                            const month = String(d.getMonth() + 1).padStart(2, '0');
+                            const day = String(d.getDate()).padStart(2, '0');
+                            return `${year}-${month}-${day}`;
+                          })()
                           : ""
                       }
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const newStartDate = e.target.value;
+                        const updatedSemesters = [...selectedCalendar.semesters];
+
+                        // Auto-update Semester 1 start date if it exists
+                        if (updatedSemesters.length > 0) {
+                          updatedSemesters[0] = {
+                            ...updatedSemesters[0],
+                            startDate: newStartDate
+                          };
+                        }
+
                         setSelectedCalendar({
                           ...selectedCalendar,
-                          startDate: e.target.value,
-                        })
-                      }
+                          startDate: newStartDate,
+                          semesters: updatedSemesters
+                        });
+                      }}
                       max={
                         selectedCalendar.endDate
                           ? (() => {
-                              const d = new Date(selectedCalendar.endDate);
-                              const year = d.getFullYear();
-                              const month = String(d.getMonth() + 1).padStart(2, '0');
-                              const day = String(d.getDate()).padStart(2, '0');
-                              return `${year}-${month}-${day}`;
-                            })()
+                            const d = new Date(selectedCalendar.endDate);
+                            const year = d.getFullYear();
+                            const month = String(d.getMonth() + 1).padStart(2, '0');
+                            const day = String(d.getDate()).padStart(2, '0');
+                            return `${year}-${month}-${day}`;
+                          })()
                           : undefined
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
@@ -1042,31 +1049,44 @@ export default function AcademicCalendarList({
                       value={
                         selectedCalendar.endDate
                           ? (() => {
-                              const d = new Date(selectedCalendar.endDate);
-                              const year = d.getFullYear();
-                              const month = String(d.getMonth() + 1).padStart(2, '0');
-                              const day = String(d.getDate()).padStart(2, '0');
-                              return `${year}-${month}-${day}`;
-                            })()
+                            const d = new Date(selectedCalendar.endDate);
+                            const year = d.getFullYear();
+                            const month = String(d.getMonth() + 1).padStart(2, '0');
+                            const day = String(d.getDate()).padStart(2, '0');
+                            return `${year}-${month}-${day}`;
+                          })()
                           : ""
                       }
                       min={
                         selectedCalendar.startDate
                           ? (() => {
-                              const d = new Date(selectedCalendar.startDate);
-                              const year = d.getFullYear();
-                              const month = String(d.getMonth() + 1).padStart(2, '0');
-                              const day = String(d.getDate()).padStart(2, '0');
-                              return `${year}-${month}-${day}`;
-                            })()
+                            const d = new Date(selectedCalendar.startDate);
+                            const year = d.getFullYear();
+                            const month = String(d.getMonth() + 1).padStart(2, '0');
+                            const day = String(d.getDate()).padStart(2, '0');
+                            return `${year}-${month}-${day}`;
+                          })()
                           : undefined
                       }
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const newEndDate = e.target.value;
+                        const updatedSemesters = [...selectedCalendar.semesters];
+
+                        // Auto-update last semester's end date if semesters exist
+                        if (updatedSemesters.length > 0) {
+                          const lastIndex = updatedSemesters.length - 1;
+                          updatedSemesters[lastIndex] = {
+                            ...updatedSemesters[lastIndex],
+                            endDate: newEndDate
+                          };
+                        }
+
                         setSelectedCalendar({
                           ...selectedCalendar,
-                          endDate: e.target.value,
-                        })
-                      }
+                          endDate: newEndDate,
+                          semesters: updatedSemesters
+                        });
+                      }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
                       required
                     />
@@ -1112,7 +1132,7 @@ export default function AcademicCalendarList({
                       Add Semester
                     </button>
                   </div>
-                  
+
                   <div className="space-y-3">
                     {selectedCalendar.semesters?.map((semester, index) => (
                       <div key={index} className="bg-gray-50 rounded-lg p-3 flex items-center justify-between">
@@ -1163,7 +1183,7 @@ export default function AcademicCalendarList({
                       Add Holiday
                     </button>
                   </div>
-                  
+
                   <div className="space-y-3">
                     {selectedCalendar.holidays?.map((holiday, index) => (
                       <div key={index} className="bg-gray-50 rounded-lg p-3 flex items-center justify-between">
@@ -1251,16 +1271,16 @@ export default function AcademicCalendarList({
 }
 
 // Semester Form Modal Component
-function SemesterFormModal({ 
-  semester, 
-  academicCalendar, 
-  onSave, 
-  onCancel 
-}: { 
-  semester: AcademicSemester | null; 
-  academicCalendar: AcademicCalendar | null; 
-  onSave: (data: AcademicSemester) => void; 
-  onCancel: () => void; 
+function SemesterFormModal({
+  semester,
+  academicCalendar,
+  onSave,
+  onCancel
+}: {
+  semester: AcademicSemester | null;
+  academicCalendar: AcademicCalendar | null;
+  onSave: (data: AcademicSemester) => void;
+  onCancel: () => void;
 }) {
   const [formData, setFormData] = useState({
     name: semester?.name || '',
@@ -1385,16 +1405,16 @@ function SemesterFormModal({
 }
 
 // Holiday Form Modal Component
-function HolidayFormModal({ 
-  holiday, 
-  academicCalendar, 
-  onSave, 
-  onCancel 
-}: { 
-  holiday: SchoolHoliday | null; 
-  academicCalendar: AcademicCalendar | null; 
-  onSave: (data: SchoolHoliday) => void; 
-  onCancel: () => void; 
+function HolidayFormModal({
+  holiday,
+  academicCalendar,
+  onSave,
+  onCancel
+}: {
+  holiday: SchoolHoliday | null;
+  academicCalendar: AcademicCalendar | null;
+  onSave: (data: SchoolHoliday) => void;
+  onCancel: () => void;
 }) {
   const [formData, setFormData] = useState({
     name: holiday?.name || '',

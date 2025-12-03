@@ -56,6 +56,25 @@ export const createSupervisor = async (
   return result as unknown as CreateUserResponse;
 };
 
+export interface SupervisorResponse {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  address?: string;
+  dateOfBirth?: string;
+  gender: string | number;
+  userPhotoFileId?: string;
+  status: string;
+  lastActiveDate?: string;
+}
+
+export const getAllSupervisors = async (): Promise<SupervisorResponse[]> => {
+  const res = await apiService.get<SupervisorResponse[]>("/supervisor");
+  return Array.isArray(res) ? res : [];
+};
+
 export const importSupervisorsFromExcel = async (
   file: File
 ): Promise<ImportSupervisorsResponse> => {

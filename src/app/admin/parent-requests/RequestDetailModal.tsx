@@ -14,14 +14,14 @@ export default function RequestDetailModal({ request, onClose }: RequestDetailMo
     if (amount === undefined || amount === null || isNaN(amount)) {
       return 'N/A';
     }
-    return new Intl.NumberFormat('vi-VN', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'VND'
     }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('vi-VN', {
+    return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -77,12 +77,46 @@ export default function RequestDetailModal({ request, onClose }: RequestDetailMo
               <span className={getStatusBadge(request.status)}>
                 {request.status}
               </span>
-              <div className="text-sm text-gray-500">
-                Request ID: {request.id}
-              </div>
             </div>
-            <div className="text-sm text-gray-500">
-              Created: {formatDate(request.createdAt)}
+          </div>
+
+          {/* Semester Information */}
+          <div className="bg-purple-50 rounded-xl p-6 border border-purple-200">
+            <h3 className="text-lg font-semibold text-purple-900 mb-4 flex items-center">
+              <FaCalendarAlt className="mr-2" />
+              Semester Information
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Semester Name</label>
+                <p className="text-gray-900 mt-1 font-semibold">
+                  {request.semesterName || 'N/A'}
+                </p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700">Academic Year</label>
+                <p className="text-gray-900 mt-1">
+                  {request.academicYear || 'N/A'}
+                </p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700">Semester Period</label>
+                <p className="text-gray-900 mt-1">
+                  {request.semesterStartDate && request.semesterEndDate
+                    ? `${formatDate(request.semesterStartDate)} - ${formatDate(request.semesterEndDate)}`
+                    : 'N/A'}
+                </p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700">Total School Days</label>
+                <p className="text-gray-900 mt-1">
+                  {request.totalSchoolDays || 'N/A'} days
+                </p>
+              </div>
             </div>
           </div>
 
@@ -92,7 +126,7 @@ export default function RequestDetailModal({ request, onClose }: RequestDetailMo
               <FaUser className="mr-2" />
               Parent Information
             </h3>
-            
+
             {request.parentInfo ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-3">
@@ -117,7 +151,7 @@ export default function RequestDetailModal({ request, onClose }: RequestDetailMo
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="space-y-3">
                   <div>
                     <label className="text-sm font-medium text-gray-700">Date of Birth</label>
@@ -150,7 +184,7 @@ export default function RequestDetailModal({ request, onClose }: RequestDetailMo
               <FaChild className="mr-2" />
               Students ({request.students.length})
             </h3>
-            
+
             {request.students.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {request.students.map((student) => (
@@ -163,7 +197,6 @@ export default function RequestDetailModal({ request, onClose }: RequestDetailMo
                         <p className="font-medium text-gray-900">
                           {student.firstName} {student.lastName}
                         </p>
-                        <p className="text-sm text-gray-500">Student ID: {student.id}</p>
                       </div>
                     </div>
                   </div>
@@ -180,21 +213,21 @@ export default function RequestDetailModal({ request, onClose }: RequestDetailMo
               <FaMapMarkerAlt className="mr-2" />
               Pickup Point Information
             </h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700">Address</label>
                   <p className="text-gray-900 mt-1">{request.addressText}</p>
                 </div>
-                
+
                 <div>
                   <label className="text-sm font-medium text-gray-700">Coordinates</label>
                   <p className="text-gray-900 mt-1">
                     {request.latitude.toFixed(6)}, {request.longitude.toFixed(6)}
                   </p>
                 </div>
-                
+
                 <div>
                   <label className="text-sm font-medium text-gray-700">Distance</label>
                   <p className="text-gray-900 mt-1 flex items-center">
@@ -203,7 +236,7 @@ export default function RequestDetailModal({ request, onClose }: RequestDetailMo
                   </p>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 {request.description && (
                   <div>
@@ -211,7 +244,7 @@ export default function RequestDetailModal({ request, onClose }: RequestDetailMo
                     <p className="text-gray-900 mt-1">{request.description}</p>
                   </div>
                 )}
-                
+
                 {request.reason && (
                   <div>
                     <label className="text-sm font-medium text-gray-700">Reason for Request</label>
@@ -228,7 +261,7 @@ export default function RequestDetailModal({ request, onClose }: RequestDetailMo
               <FaDollarSign className="mr-2" />
               Pricing Information
             </h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="text-sm font-medium text-gray-700">Unit Price per Kilometer</label>
@@ -236,7 +269,7 @@ export default function RequestDetailModal({ request, onClose }: RequestDetailMo
                   {formatCurrency(request.unitPricePerKm)}
                 </p>
               </div>
-              
+
               <div>
                 <label className="text-sm font-medium text-gray-700">Estimated Total Price</label>
                 <p className="text-2xl font-bold text-yellow-800 mt-1">
@@ -250,23 +283,14 @@ export default function RequestDetailModal({ request, onClose }: RequestDetailMo
           {(request.status === "Approved" || request.status === "Rejected") && (
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Review Information</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Reviewed At</label>
-                  <p className="text-gray-900 mt-1">
-                    {request.reviewedAt ? formatDate(request.reviewedAt) : 'N/A'}
-                  </p>
-                </div>
-                
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Reviewed By Admin ID</label>
-                  <p className="text-gray-900 mt-1">
-                    {request.reviewedByAdminId || 'N/A'}
-                  </p>
-                </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700">Reviewed At</label>
+                <p className="text-gray-900 mt-1">
+                  {request.reviewedAt ? formatDate(request.reviewedAt) : 'N/A'}
+                </p>
               </div>
-              
+
               {request.adminNotes && (
                 <div className="mt-4">
                   <label className="text-sm font-medium text-gray-700">Admin Notes</label>

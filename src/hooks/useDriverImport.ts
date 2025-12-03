@@ -92,21 +92,13 @@ export const useDriverImport = () => {
     try {
       await downloadTemplate("driver");
     } catch (e: unknown) {
-      console.error("Template download error:", e);
       if (isAxiosError(e) && e.response?.status === 404) {
-        console.warn(
-          "Driver template not found on server. Falling back to local template."
-        );
-        downloadDriverTemplate();
-        return;
+        console.warn("Server template not found (404). Generating local template.");
+      } else {
+        console.error("Template download error:", e);
+        console.warn("Falling back to local template due to error.");
       }
-      let message: unknown = "Failed to download template";
-      if (isAxiosError(e)) {
-        message = e.response?.data ?? e.message ?? message;
-      } else if (e instanceof Error) {
-        message = e.message;
-      }
-      alert(typeof message === "string" ? message : JSON.stringify(message));
+      downloadDriverTemplate();
     }
   }, []);
 
