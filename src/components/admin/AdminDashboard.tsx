@@ -15,6 +15,10 @@ import {
 import StatCard from "./StatCard";
 import TimelineCard from "./TimelineCard";
 import RevenueChart from "./RevenueChart";
+import AttendanceRateCard from "./AttendanceRateCard";
+import DailyStudentsChart from "./DailyStudentsChart";
+import VehicleRuntimeCard from "./VehicleRuntimeCard";
+import RouteStatisticsTable from "./RouteStatisticsTable";
 import { enrollmentSemesterSettingsService } from "@/services/api/enrollmentSemesterSettingsService";
 import { unitPriceService } from "@/services/unitPriceService";
 import { userAccountService } from "@/services/userAccountService/userAccountService.api";
@@ -23,6 +27,7 @@ import { vehicleService } from "@/services/vehicleService";
 import { tripService } from "@/services/tripService";
 import { transactionService } from "@/services/transactionService";
 import { TransactionStatus } from "@/types/transaction";
+import { dashboardService } from "@/services/dashboardService";
 
 export default function AdminDashboard() {
     // Fetch active semester
@@ -133,6 +138,41 @@ export default function AdminDashboard() {
             };
         },
         enabled: !!semesterData,
+    });
+
+    // Fetch Dashboard Statistics
+    const { data: dashboardStats, isLoading: dashboardLoading } = useQuery({
+        queryKey: ["dashboardStatistics"],
+        queryFn: () => dashboardService.getDashboardStatistics(),
+        refetchInterval: 30000, // Refetch every 30 seconds
+    });
+
+    // Fetch Daily Students
+    const { data: dailyStudents, isLoading: dailyStudentsLoading } = useQuery({
+        queryKey: ["dailyStudents"],
+        queryFn: () => dashboardService.getDailyStudents(),
+        refetchInterval: 30000,
+    });
+
+    // Fetch Attendance Rate
+    const { data: attendanceRate, isLoading: attendanceRateLoading } = useQuery({
+        queryKey: ["attendanceRate"],
+        queryFn: () => dashboardService.getAttendanceRate("today"),
+        refetchInterval: 30000,
+    });
+
+    // Fetch Vehicle Runtime
+    const { data: vehicleRuntime, isLoading: vehicleRuntimeLoading } = useQuery({
+        queryKey: ["vehicleRuntime"],
+        queryFn: () => dashboardService.getVehicleRuntime(),
+        refetchInterval: 30000,
+    });
+
+    // Fetch Route Statistics
+    const { data: routeStatistics, isLoading: routeStatisticsLoading } = useQuery({
+        queryKey: ["routeStatistics"],
+        queryFn: () => dashboardService.getRouteStatistics(),
+        refetchInterval: 60000, // Refetch every minute
     });
 
     const totalUsers = (parentData?.totalCount || 0) + (driverData?.totalCount || 0) + (supervisorData?.totalCount || 0);
@@ -284,12 +324,54 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            {/* Revenue Statistics */}
+            {/* Dashboard Analytics Section */}
             <div>
                 <motion.h2
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.5 }}
+                    className="text-xl font-bold text-[#463B3B] mb-4"
+                >
+                    Analytics & Insights
+                </motion.h2>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                    {/* Attendance Rate Card */}
+                    <AttendanceRateCard 
+                        data={attendanceRate || dashboardStats?.attendanceRate || null} 
+                        loading={attendanceRateLoading || dashboardLoading} 
+                    />
+
+                    {/* Daily Students Chart */}
+                    <DailyStudentsChart 
+                        data={dailyStudents || dashboardStats?.dailyStudents || null} 
+                        loading={dailyStudentsLoading || dashboardLoading} 
+                    />
+                </div>
+
+                {/* Vehicle Runtime Card */}
+                <div className="mb-6">
+                    <VehicleRuntimeCard 
+                        data={vehicleRuntime || dashboardStats?.vehicleRuntime || null} 
+                        loading={vehicleRuntimeLoading || dashboardLoading} 
+                    />
+                </div>
+
+                {/* Route Statistics Table */}
+                <div className="mb-6">
+                    <RouteStatisticsTable 
+                        data={routeStatistics || dashboardStats?.routeStatistics || null} 
+                        loading={routeStatisticsLoading || dashboardLoading} 
+                    />
+                </div>
+            </div>
+
+            {/* Revenue Statistics */}
+            <div>
+                <motion.h2
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.6 }}
                     className="text-xl font-bold text-[#463B3B] mb-4"
                 >
                     Financial Overview
