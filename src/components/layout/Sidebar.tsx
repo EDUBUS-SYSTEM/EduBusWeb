@@ -20,7 +20,8 @@ import {
   FaReceipt,
   FaUserCog,
   FaSchool,
-  FaMapMarkerAlt
+  FaMapMarkerAlt,
+  FaKey
 } from "react-icons/fa";
 
 const SIDEBAR_SCROLL_KEY = 'sidebar_scroll_position';
@@ -37,6 +38,7 @@ export default function Sidebar() {
       label: "Personal Profile",
       icon: <FaUserCircle />,
     },
+    { href: "/admin/change-password", label: "Change Password", icon: <FaKey /> },
     { href: "/admin/users", label: "User Management", icon: <FaUsers /> },
     { href: "/admin/driver-requests", label: "Driver's Requests", icon: <FaFileAlt /> },
     { href: "/admin/parent-requests", label: "Parent Requests", icon: <FaUserCheck /> },
@@ -114,7 +116,7 @@ export default function Sidebar() {
       </div>
 
       {/* Menu */}
-      <nav 
+      <nav
         ref={navRef}
         className="flex-1 overflow-y-auto mt-2 text-[#463B3B] text-sm font-medium pr-1"
       >
