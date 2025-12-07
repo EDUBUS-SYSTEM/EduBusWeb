@@ -10,6 +10,7 @@ import {
   FaTimes as FaTimesIcon,
 } from "react-icons/fa";
 import { StudentDto } from "@/services/studentService/studentService.types";
+import { StudentAvatar } from "./StudentAvatar";
 
 interface ViewStudentModalProps {
   isOpen: boolean;
@@ -42,11 +43,14 @@ export default function ViewStudentModal({
         <div className="p-6 space-y-6">
           {/* Full Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-500 mb-1">
+            <label className="block text-sm font-medium text-gray-500 mb-2">
               Full Name
             </label>
-            <div className="flex items-center space-x-2">
-              <FaUser className="text-gray-400 w-4 h-4" />
+            <div className="flex items-center space-x-3">
+              <StudentAvatar
+                studentId={student.id}
+                studentName={`${student.lastName} ${student.firstName}`}
+              />
               <p className="text-lg font-semibold text-gray-900">
                 {student.lastName} {student.firstName}
               </p>

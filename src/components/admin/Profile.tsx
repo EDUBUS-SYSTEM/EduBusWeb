@@ -1,7 +1,7 @@
 "use client";
-import Image from "next/image";
 import { useUserAccount } from "@/hooks/useUserAccount";
 import { getUserIdFromToken } from "@/lib/jwt";
+import { UserAvatarImage } from "./UserAvatarImage";
 
 export default function Profile() {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -26,15 +26,13 @@ export default function Profile() {
       <div className="flex gap-12 justify-center items-center">
         {/* Avatar + name */}
         <div className="flex flex-col items-center w-[220px]">
-          <div className="w-28 h-28 rounded-full bg-[#fde535] flex items-center justify-center shadow-md">
-            <Image
-              src="/images/admin_avt_default.png"
-              alt="avatar"
-              width={96}
-              height={96}
-              className="rounded-full object-cover"
-            />
-          </div>
+          <UserAvatarImage
+            userId={user.id}
+            firstName={user.firstName}
+            lastName={user.lastName}
+            size={112}
+            className="shadow-md"
+          />
           <h3 className="mt-4 text-base font-semibold text-[#463B3B] text-center">
             {user.firstName} {user.lastName}
           </h3>
