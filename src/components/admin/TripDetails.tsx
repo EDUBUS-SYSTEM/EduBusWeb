@@ -3,6 +3,7 @@
 import React from 'react';
 import { TripDto } from '@/types';
 import { FaRoute, FaClock, FaCheckCircle, FaTimesCircle, FaMapMarkerAlt, FaCalendarAlt, FaUser, FaPhone, FaCar, FaInfoCircle, FaUsers } from 'react-icons/fa';
+import { StudentAvatar } from './StudentAvatar';
 
 interface TripDetailsProps {
   trip: TripDto;
@@ -345,10 +346,11 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
                                     key={attIndex}
                                     className="flex items-center justify-between bg-white rounded-lg px-3 py-2.5 border border-gray-200 hover:border-gray-300 transition-colors"
                                   >
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-600">
-                                        {attIndex + 1}
-                                      </div>
+                                    <div className="flex items-center gap-3">
+                                      <StudentAvatar
+                                        studentId={attendance.studentId}
+                                        studentName={attendance.studentName || `Student ${attIndex + 1}`}
+                                      />
                                       <span className="text-sm font-medium text-gray-800">
                                         {attendance.studentName || `Student ${attIndex + 1}`}
                                       </span>

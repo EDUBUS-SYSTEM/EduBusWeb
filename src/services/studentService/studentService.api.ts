@@ -1,8 +1,8 @@
-import { apiService } from "@/lib/api";
-import { 
-  CreateStudentRequest, 
-  UpdateStudentRequest, 
-  StudentDto, 
+import { apiService, apiClient } from "@/lib/api";
+import {
+  CreateStudentRequest,
+  UpdateStudentRequest,
+  StudentDto,
   ImportStudentResult,
   StudentStatus
 } from "./studentService.types";
@@ -37,40 +37,41 @@ export const studentService = {
   importFromExcel: async (file: File): Promise<ImportStudentResult> => {
     const formData = new FormData();
     formData.append('file', file);
-    
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/Student/import`, {
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+    const response = await fetch(`${apiUrl}/Student/import`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${localStorage.getItem("token")}`,
       },
       body: formData,
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.message || 'Failed to import students');
     }
-    
+
     const result = await response.json();
-    // The backend returns { TotalProcessed, SuccessfulStudents, FailedStudents }
     console.log(result);
     return result;
   },
 
   // Export students to Excel
   exportToExcel: async (): Promise<Blob> => {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/Student/export`, {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+    const response = await fetch(`${apiUrl}/Student/export`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${localStorage.getItem("token")}`,
       },
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.message || 'Failed to export students');
     }
-    
+
     return await response.blob();
   },
 
@@ -95,8 +96,22 @@ export const studentService = {
     return await apiService.get<StudentDto[]>(`/Student/status/${status}`);
   },
 
-  // Get students without parent (unassigned)
   getUnassigned: async (): Promise<StudentDto[]> => {
     return await apiService.get<StudentDto[]>("/Student/unassigned");
+  },
+
+  uploadPhoto: async (studentId: string, file: File): Promise<{ FileId: string; Message?: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return await apiService.post<{ FileId: string; Message?: string }>(
+      `/Student/${studentId}/upload-photo`,
+      formData
+    );
+  },
+
+  getPhotoUrl: (studentId: string): string => {
+    const baseURL = apiClient.defaults.baseURL || "http://localhost:5223/api";
+    return `${baseURL}/Student/${studentId}/photo`;
   },
 };

@@ -18,6 +18,7 @@ import {
   GetUsersParams,
   UserListResponse,
 } from "@/services/userAccountService/userAccountService.api";
+import { UserAvatarImage } from "./UserAvatarImage";
 import {
   UserAccount,
   LockUserRequest,
@@ -60,12 +61,22 @@ const UserRow = memo(({
       {/* User Information */}
       <td className="px-6 py-6">
         <div className="flex items-center">
-          <div className="flex-shrink-0 h-12 w-12">
-            <div className="h-12 w-12 rounded-full bg-gradient-to-r from-[#fad23c] to-[#FFF085] flex items-center justify-center">
-              <span className="text-[#463B3B] font-bold text-lg">
-                {user.firstName.charAt(0)}{user.lastName.charAt(0)}
-              </span>
-            </div>
+          <div className="flex-shrink-0 h-12 w-12 relative">
+            {user.userPhotoFileId ? (
+              <UserAvatarImage
+                userId={user.id}
+                firstName={user.firstName}
+                lastName={user.lastName}
+                size={48}
+                className="h-12 w-12"
+              />
+            ) : (
+              <div className="h-12 w-12 rounded-full bg-gradient-to-r from-[#fad23c] to-[#FFF085] flex items-center justify-center">
+                <span className="text-[#463B3B] font-bold text-lg">
+                  {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                </span>
+              </div>
+            )}
           </div>
           <div className="ml-4">
             <div className="text-sm font-semibold text-gray-900">

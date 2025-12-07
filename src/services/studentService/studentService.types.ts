@@ -51,6 +51,7 @@ export interface StudentDto {
   lastName: string;
   parentEmail: string;
   status: StudentStatus;
+  studentImageId?: string;
   createdAt: string;
   updatedAt?: string;
 }
@@ -71,6 +72,6 @@ export interface ImportStudentError {
 
 export interface ImportStudentResult {
   totalProcessed: number;
-  successfulStudents: ImportStudentSuccess[];  
-  failedStudents: ImportStudentError[];        
+  successfulStudents: ImportStudentSuccess[];
+  failedStudents: ImportStudentError[];
 }

@@ -12,6 +12,7 @@ import {
   FaDownload,
 } from "react-icons/fa";
 import { AddStudentModal, EditStudentModal, ViewStudentModal, DeactivateStudentModal, DeleteStudentModal } from "./index";
+import { StudentAvatar } from "./StudentAvatar";
 import { studentService } from "@/services/studentService/studentService.api";
 import {
   StudentDto,
@@ -373,10 +374,17 @@ export default function StudentsList() {
   }
 
   return (
-    <div className="bg-[#FEFCE8] rounded-2xl shadow-lg p-4">
+    <div className="bg-gradient-to-br from-[#FEFCE8] to-[#FEF9E7] rounded-3xl shadow-xl p-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold text-gray-800">Student Management</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-gray-200">
+        <div>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+            Student Management
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Manage and organize student information
+          </p>
+        </div>
         <div className="flex gap-3">
           {/* Export Button */}
           <button
@@ -517,128 +525,157 @@ export default function StudentsList() {
       )}
 
       {/* Search and Sort */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-4">
-        <div className="relative flex-1">
-          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <input
-            type="text"
-            placeholder="Search by first name, last name or parent email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-          />
-        </div>
+      <div className="bg-white rounded-2xl shadow-md p-4 mb-6">
+        <div className="flex flex-col lg:flex-row gap-4">
+          <div className="relative flex-1">
+            <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search by first name, last name or parent email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white"
+            />
+          </div>
 
-        <div className="flex gap-2">
-          {/* Status Filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) =>
-              setStatusFilter(
-                e.target.value === "all"
-                  ? "all"
-                  : (Number(e.target.value) as StudentStatus)
-              )
-            }
-            className="px-3 py-2 rounded-xl border border-gray-300 bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-          >
-            <option value="all">All Status</option>
-            <option value={StudentStatus.Available}>Available</option>
-            <option value={StudentStatus.Pending}>Pending</option>
-            <option value={StudentStatus.Active}>Active</option>
-            <option value={StudentStatus.Inactive}>Inactive</option>
-          </select>
+          <div className="flex flex-wrap gap-2">
+            {/* Status Filter */}
+            <select
+              value={statusFilter}
+              onChange={(e) =>
+                setStatusFilter(
+                  e.target.value === "all"
+                    ? "all"
+                    : (Number(e.target.value) as StudentStatus)
+                )
+              }
+              className="px-4 py-3 rounded-xl border-2 border-gray-200 bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-medium"
+            >
+              <option value="all">All Status</option>
+              <option value={StudentStatus.Available}>Available</option>
+              <option value={StudentStatus.Pending}>Pending</option>
+              <option value={StudentStatus.Active}>Active</option>
+              <option value={StudentStatus.Inactive}>Inactive</option>
+            </select>
 
-          <button
-            onClick={() => handleSort("firstName")}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-colors duration-200 ${sortBy === "firstName"
-              ? "bg-blue-50 border-blue-300 text-blue-700"
-              : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-              }`}
-          >
-            <FaSort className="w-4 h-4" />
-            Name {sortBy === "firstName" && (sortOrder === "asc" ? "↑" : "↓")}
-          </button>
+            <button
+              onClick={() => handleSort("firstName")}
+              className={`flex items-center gap-2 px-4 py-3 rounded-xl border-2 transition-all duration-200 font-medium ${sortBy === "firstName"
+                ? "bg-blue-50 border-blue-500 text-blue-700 shadow-sm"
+                : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300"
+                }`}
+            >
+              <FaSort className="w-4 h-4" />
+              Name {sortBy === "firstName" && (sortOrder === "asc" ? "↑" : "↓")}
+            </button>
 
-          <button
-            onClick={() => handleSort("createdAt")}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-colors duration-200 ${sortBy === "createdAt"
-              ? "bg-blue-50 border-blue-300 text-blue-700"
-              : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-              }`}
-          >
-            <FaSort className="w-4 h-4" />
-            Created Date{" "}
-            {sortBy === "createdAt" && (sortOrder === "asc" ? "↑" : "↓")}
-          </button>
+            <button
+              onClick={() => handleSort("createdAt")}
+              className={`flex items-center gap-2 px-4 py-3 rounded-xl border-2 transition-all duration-200 font-medium ${sortBy === "createdAt"
+                ? "bg-blue-50 border-blue-500 text-blue-700 shadow-sm"
+                : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300"
+                }`}
+            >
+              <FaSort className="w-4 h-4" />
+              Date{" "}
+              {sortBy === "createdAt" && (sortOrder === "asc" ? "↑" : "↓")}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Students Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="text-left py-3 px-3 font-semibold text-gray-700">
-                Full Name
-              </th>
-              <th className="text-left py-3 px-3 font-semibold text-gray-700">
-                Parent Status
-              </th>
-              <th className="text-left py-3 px-3 font-semibold text-gray-700">
-                Parent Email
-              </th>
-              <th className="text-left py-3 px-3 font-semibold text-gray-700">
-                Status
-              </th>
-              <th className="text-left py-3 px-3 font-semibold text-gray-700">
-                Created Date
-              </th>
-              <th className="text-center py-3 px-3 font-semibold text-gray-700">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedStudents.map((student) => (
-              <tr
-                key={student.id}
-                className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150"
-              >
-                <td className="py-3 px-3">
-                  <div className="font-medium text-gray-900">
-                    {student.lastName} {student.firstName}
-                  </div>
-                </td>
-                <td className="py-3 px-3 text-gray-600">
-                  {student.parentId ? "Linked" : "Not linked"}
-                </td>
-                <td className="py-3 px-3 text-gray-600">
-                  {student.parentEmail}
-                </td>
-                <td className="py-3 px-3">
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusInfo(student.status).className
-                      }`}
-                  >
-                    {getStatusInfo(student.status).text}
-                  </span>
-                </td>
-                <td className="py-3 px-3 text-gray-600">
-                  {new Date(student.createdAt).toLocaleDateString('en-US')}
-                </td>
-                <td className="py-3 px-3">
-                  <div className="flex justify-center gap-2">
+      <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                <th className="text-center py-4 px-4 font-bold text-gray-700 text-sm uppercase tracking-wider">
+                  Avatar
+                </th>
+                <th className="text-left py-4 px-4 font-bold text-gray-700 text-sm uppercase tracking-wider">
+                  Full Name
+                </th>
+                <th className="text-left py-4 px-4 font-bold text-gray-700 text-sm uppercase tracking-wider">
+                  Parent Status
+                </th>
+                <th className="text-left py-4 px-4 font-bold text-gray-700 text-sm uppercase tracking-wider">
+                  Parent Email
+                </th>
+                <th className="text-left py-4 px-4 font-bold text-gray-700 text-sm uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="text-left py-4 px-4 font-bold text-gray-700 text-sm uppercase tracking-wider">
+                  Created Date
+                </th>
+                <th className="text-center py-4 px-4 font-bold text-gray-700 text-sm uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {paginatedStudents.map((student, index) => (
+                <tr
+                  key={student.id}
+                  className={`hover:bg-blue-50/50 transition-all duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}
+                >
+                  <td className="py-4 px-4">
+                    <div className="flex justify-center">
+                      <StudentAvatar
+                        studentId={student.id}
+                        studentName={`${student.firstName} ${student.lastName}`}
+                        onUploadSuccess={() => fetchStudents(statusFilter)}
+                      />
+                    </div>
+                  </td>
+                  <td className="py-4 px-4">
+                    <div className="font-semibold text-gray-900">
+                      {student.lastName} {student.firstName}
+                    </div>
+                  </td>
+                  <td className="py-4 px-4">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                      student.parentId 
+                        ? "bg-green-100 text-green-800" 
+                        : "bg-yellow-100 text-yellow-800"
+                    }`}>
+                      {student.parentId ? "Linked" : "Not linked"}
+                    </span>
+                  </td>
+                  <td className="py-4 px-4">
+                    <div className="text-gray-700 font-medium">
+                      {student.parentEmail}
+                    </div>
+                  </td>
+                  <td className="py-4 px-4">
+                    <span
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusInfo(student.status).className
+                        }`}
+                    >
+                      {getStatusInfo(student.status).text}
+                    </span>
+                  </td>
+                  <td className="py-4 px-4">
+                    <div className="text-gray-600 font-medium">
+                      {new Date(student.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </div>
+                  </td>
+                  <td className="py-4 px-4">
+                    <div className="flex justify-center gap-1">
                     <button
                       onClick={() => handleViewStudent(student)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                      className="p-2.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-all duration-200 hover:scale-110 hover:shadow-md"
                       title="View Details"
                     >
                       <FaEye className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleEditStudent(student)}
-                      className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
+                      className="p-2.5 text-green-600 hover:bg-green-100 rounded-lg transition-all duration-200 hover:scale-110 hover:shadow-md"
                       title="Edit Student"
                     >
                       <FaEdit className="w-4 h-4" />
@@ -648,7 +685,7 @@ export default function StudentsList() {
                     {student.status === StudentStatus.Available && (
                       <button
                         onClick={() => handleActivateStudent(student.id)}
-                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
+                        className="p-2.5 text-green-600 hover:bg-green-100 rounded-lg transition-all duration-200 hover:scale-110 hover:shadow-md"
                         title="Activate Student"
                       >
                         ✓
@@ -658,7 +695,7 @@ export default function StudentsList() {
                     {student.status === StudentStatus.Pending && (
                       <button
                         onClick={() => handleActivateStudent(student.id)}
-                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
+                        className="p-2.5 text-green-600 hover:bg-green-100 rounded-lg transition-all duration-200 hover:scale-110 hover:shadow-md"
                         title="Activate Student"
                       >
                         ✓
@@ -668,7 +705,7 @@ export default function StudentsList() {
                     {student.status === StudentStatus.Active && (
                       <button
                         onClick={() => handleDeactivateStudent(student.id)}
-                        className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors duration-200"
+                        className="p-2.5 text-yellow-600 hover:bg-yellow-100 rounded-lg transition-all duration-200 hover:scale-110 hover:shadow-md"
                         title="Deactivate Student"
                       >
                         ⏸
@@ -679,7 +716,7 @@ export default function StudentsList() {
                       student.status === StudentStatus.Deleted) && (
                         <button
                           onClick={() => handleRestoreStudent(student.id)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                          className="p-2.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-all duration-200 hover:scale-110 hover:shadow-md"
                           title="Restore Student"
                         >
                           ↻
@@ -692,9 +729,9 @@ export default function StudentsList() {
                         handleDeleteStudent(student.id)
                       }
                       disabled={student.status === StudentStatus.Deleted}
-                      className={`p-2 rounded-lg transition-colors duration-200 ${student.status === StudentStatus.Deleted
+                      className={`p-2.5 rounded-lg transition-all duration-200 ${student.status === StudentStatus.Deleted
                         ? "text-gray-300 cursor-not-allowed"
-                        : "text-red-600 hover:bg-red-50"
+                        : "text-red-600 hover:bg-red-100 hover:scale-110 hover:shadow-md"
                         }`}
                       title={
                         student.status === StudentStatus.Deleted
@@ -711,10 +748,14 @@ export default function StudentsList() {
           </tbody>
         </table>
 
+        </div>
         {paginatedStudents.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            <p className="text-lg">No students found</p>
-            <p className="text-sm mt-2">
+          <div className="text-center py-16">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 mb-4">
+              <FaSearch className="w-10 h-10 text-gray-400" />
+            </div>
+            <p className="text-xl font-semibold text-gray-700 mb-2">No students found</p>
+            <p className="text-sm text-gray-500">
               Try changing your search terms or add a new student
             </p>
           </div>
@@ -724,7 +765,7 @@ export default function StudentsList() {
       {/* Pagination Controls */}
       {sortedStudents.length > 0 && (
         <div className="flex justify-center mt-6">
-          <div className="flex items-center space-x-2 bg-[#FEFCE8] rounded-xl px-4 py-2 shadow-sm">
+          <div className="flex items-center space-x-2 bg-white rounded-2xl px-6 py-3 shadow-md border border-gray-200">
             {/* Previous Button */}
             <button
               onClick={handlePreviousPage}

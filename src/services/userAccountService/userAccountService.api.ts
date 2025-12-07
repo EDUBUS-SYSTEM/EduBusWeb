@@ -1,4 +1,4 @@
-import { apiService } from "@/lib/api";
+import { apiService, apiClient } from "@/lib/api";
 import { UserAccount, BasicSuccessResponse } from "@/types";
 import { LockUserRequest, LockMultipleUsersRequest, UnlockMultipleUsersRequest} from "./userAccountService.type"
 
@@ -62,5 +62,11 @@ export const userAccountService = {
   // Unlock multiple users
   unlockMultipleUsers: async (request: UnlockMultipleUsersRequest): Promise<BasicSuccessResponse> => {
     return await apiService.post<BasicSuccessResponse>("/UserAccount/unlock-multiple", request);
+  },
+
+  // Get user avatar URL
+  getAvatarUrl: (userId: string): string => {
+    const baseUrl = apiClient.defaults.baseURL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5223/api';
+    return `${baseUrl}/UserAccount/${userId}/user-photo`;
   },
 };
