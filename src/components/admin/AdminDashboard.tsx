@@ -19,21 +19,18 @@ import AttendanceRateCard from "./AttendanceRateCard";
 import DailyStudentsChart from "./DailyStudentsChart";
 import VehicleRuntimeCard from "./VehicleRuntimeCard";
 import RouteStatisticsTable from "./RouteStatisticsTable";
-import { enrollmentSemesterSettingsService } from "@/services/api/enrollmentSemesterSettingsService";
 import { unitPriceService } from "@/services/unitPriceService";
 import { userAccountService } from "@/services/userAccountService/userAccountService.api";
 import { studentService } from "@/services/studentService/studentService.api";
 import { vehicleService } from "@/services/vehicleService";
 import { tripService } from "@/services/tripService";
-import { transactionService } from "@/services/transactionService";
-import { TransactionStatus } from "@/types/transaction";
 import { dashboardService } from "@/services/dashboardService";
 
 export default function AdminDashboard() {
-    // Fetch active semester
+    // Fetch current semester (from dashboard-specific API)
     const { data: semesterData, isLoading: semesterLoading } = useQuery({
-        queryKey: ["activeSemester"],
-        queryFn: () => enrollmentSemesterSettingsService.getActiveSettings(),
+        queryKey: ["currentSemester"],
+        queryFn: () => dashboardService.getCurrentSemester(),
     });
 
     // Fetch current unit price
@@ -84,7 +81,7 @@ export default function AdminDashboard() {
 
     // Fetch trips for current semester
     const { data: tripsData } = useQuery({
-        queryKey: ["trips", semesterData?.id],
+        queryKey: ["trips", semesterData?.semesterCode],
         queryFn: () => {
             if (!semesterData) return null;
             return tripService.getAllTrips({
@@ -96,48 +93,32 @@ export default function AdminDashboard() {
         enabled: !!semesterData,
     });
 
-    // Fetch revenue statistics
-    const { data: transactionsData } = useQuery({
-        queryKey: ["transactions", semesterData?.id],
-        queryFn: async () => {
+    // Fetch revenue statistics based on paid transactions
+    const { data: revenueStatistics, isLoading: revenueLoading } = useQuery({
+        queryKey: ["revenue", semesterData?.semesterCode],
+        queryFn: () => {
             if (!semesterData) return null;
-
-            const [completed, pending, failed] = await Promise.all([
-                transactionService.getTransactionList({
-                    status: TransactionStatus.Paid,
-                    from: semesterData.semesterStartDate,
-                    to: semesterData.semesterEndDate,
-                    page: 1,
-                    pageSize: 1000,
-                }),
-                transactionService.getTransactionList({
-                    status: TransactionStatus.Pending,
-                    from: semesterData.semesterStartDate,
-                    to: semesterData.semesterEndDate,
-                    page: 1,
-                    pageSize: 1000,
-                }),
-                transactionService.getTransactionList({
-                    status: TransactionStatus.Failed,
-                    from: semesterData.semesterStartDate,
-                    to: semesterData.semesterEndDate,
-                    page: 1,
-                    pageSize: 1000,
-                }),
-            ]);
-
-            const completedTotal = completed.transactions?.reduce((sum, t) => sum + t.amount, 0) || 0;
-            const pendingTotal = pending.transactions?.reduce((sum, t) => sum + t.amount, 0) || 0;
-            const failedTotal = failed.transactions?.reduce((sum, t) => sum + t.amount, 0) || 0;
-
-            return {
-                total: completedTotal + pendingTotal + failedTotal,
-                completed: completedTotal,
-                pending: pendingTotal,
-                failed: failedTotal,
-            };
+            return dashboardService.getRevenueStatistics(
+                semesterData.semesterStartDate,
+                semesterData.semesterEndDate
+            );
         },
         enabled: !!semesterData,
+        refetchInterval: 30000,
+    });
+
+    // Fetch revenue timeline
+    const { data: revenueTimeline } = useQuery({
+        queryKey: ["revenueTimeline", semesterData?.semesterCode],
+        queryFn: () => {
+            if (!semesterData) return [];
+            return dashboardService.getRevenueTimeline(
+                semesterData.semesterStartDate,
+                semesterData.semesterEndDate
+            );
+        },
+        enabled: !!semesterData,
+        refetchInterval: 30000,
     });
 
     // Fetch Dashboard Statistics
@@ -177,6 +158,32 @@ export default function AdminDashboard() {
 
     const totalUsers = (parentData?.totalCount || 0) + (driverData?.totalCount || 0) + (supervisorData?.totalCount || 0);
 
+    let unitPriceContent: React.ReactNode;
+    if (unitPriceLoading) {
+        unitPriceContent = <div className="h-10 w-28 bg-[#F5D565]/30 rounded-lg animate-pulse" />;
+    } else if (unitPriceData) {
+        unitPriceContent = (
+            <>
+                <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                    className="text-3xl font-bold mb-1 text-[#B57300]"
+                >
+                    {unitPriceData.pricePerKm.toLocaleString()} VND/km
+                </motion.div>
+                <p className="text-gray-700 text-xs">
+                    Effective from {new Date(unitPriceData.effectiveFrom).toLocaleDateString()}
+                </p>
+                {unitPriceData.description && (
+                    <p className="text-gray-600 text-[10px] mt-2 italic">{unitPriceData.description}</p>
+                )}
+            </>
+        );
+    } else {
+        unitPriceContent = <p className="text-gray-700">No active unit price</p>;
+    }
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -201,41 +208,20 @@ export default function AdminDashboard() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.2 }}
                     whileHover={{ scale: 1.01 }}
-                    className="bg-gradient-to-br from-[#FDC700] to-[#D08700] rounded-2xl p-6 shadow-[0_8px_20px_rgba(253,199,0,0.2)] hover:shadow-lg transition-all duration-300 text-white"
+                    className="bg-gradient-to-br from-white to-[#FFF4DB] rounded-2xl p-6 shadow-[0_8px_20px_rgba(0,0,0,0.05)] hover:shadow-lg transition-all duration-300 text-[#463B3B] border border-[#F5D565]"
                 >
                     <div className="relative z-10">
                         <motion.div
                             whileHover={{ rotate: 360, scale: 1.1 }}
                             transition={{ duration: 0.6 }}
-                            className="inline-flex items-center justify-center w-12 h-12 bg-white/20 rounded-xl mb-3 backdrop-blur-sm"
+                            className="inline-flex items-center justify-center w-12 h-12 bg-[#F5D565]/30 rounded-xl mb-3 backdrop-blur-sm text-[#B57300]"
                         >
                             <FaDollarSign className="w-6 h-6" />
                         </motion.div>
 
                         <h3 className="text-lg font-bold mb-3">Current Unit Price</h3>
 
-                        {unitPriceLoading ? (
-                            <div className="h-10 w-28 bg-white/20 rounded-lg animate-pulse" />
-                        ) : unitPriceData ? (
-                            <>
-                                <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                                    className="text-3xl font-bold mb-1"
-                                >
-                                    {unitPriceData.pricePerKm.toLocaleString()} VND/km
-                                </motion.div>
-                                <p className="text-white/80 text-xs">
-                                    Effective from {new Date(unitPriceData.effectiveFrom).toLocaleDateString()}
-                                </p>
-                                {unitPriceData.description && (
-                                    <p className="text-white/70 text-[10px] mt-2 italic">{unitPriceData.description}</p>
-                                )}
-                            </>
-                        ) : (
-                            <p className="text-white/80">No active unit price</p>
-                        )}
+                        {unitPriceContent}
                     </div>
                 </motion.div>
             </div>
@@ -377,7 +363,14 @@ export default function AdminDashboard() {
                     Financial Overview
                 </motion.h2>
 
-                <RevenueChart data={transactionsData || null} loading={!semesterData} />
+                <RevenueChart
+                    data={
+                        revenueStatistics
+                            ? { ...revenueStatistics, timeline: revenueTimeline || [] }
+                            : null
+                    }
+                    loading={revenueLoading || !semesterData}
+                />
             </div>
         </div>
     );

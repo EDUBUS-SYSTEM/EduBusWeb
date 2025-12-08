@@ -56,6 +56,30 @@ export interface DashboardStatisticsDto {
     routeStatistics: RouteStatisticsDto[];
 }
 
+export interface ActiveSemesterDto {
+    semesterName: string;
+    semesterCode: string;
+    academicYear: string;
+    semesterStartDate: string;
+    semesterEndDate: string;
+}
+
+export interface RevenueStatisticsDto {
+    totalRevenue: number;
+    pendingAmount: number;
+    failedAmount: number;
+    currency: string;
+    paidTransactionCount: number;
+    pendingTransactionCount: number;
+    failedTransactionCount: number;
+}
+
+export interface RevenueTimelinePointDto {
+    date: string;
+    amount: number;
+    count: number;
+}
+
 class DashboardService {
     async getDashboardStatistics(from?: string, to?: string): Promise<DashboardStatisticsDto> {
         const params = new URLSearchParams();
@@ -122,6 +146,48 @@ class DashboardService {
             return response.data;
         }
         throw new Error('Failed to fetch route statistics');
+    }
+
+    async getRevenueStatistics(from?: string, to?: string): Promise<RevenueStatisticsDto> {
+        const params = new URLSearchParams();
+        if (from) params.append('from', from);
+        if (to) params.append('to', to);
+
+        const response = await apiService.get<{ success: boolean; data: RevenueStatisticsDto }>(
+            `/Dashboard/revenue${params.toString() ? `?${params.toString()}` : ''}`
+        );
+
+        if (response.data) {
+            return response.data;
+        }
+
+        throw new Error('Failed to fetch revenue statistics');
+    }
+
+    async getRevenueTimeline(from?: string, to?: string): Promise<RevenueTimelinePointDto[]> {
+        const params = new URLSearchParams();
+        if (from) params.append('from', from);
+        if (to) params.append('to', to);
+
+        const response = await apiService.get<{ success: boolean; data: RevenueTimelinePointDto[] }>(
+            `/Dashboard/revenue/timeline${params.toString() ? `?${params.toString()}` : ''}`
+        );
+
+        if (response.data) {
+            return response.data;
+        }
+
+        throw new Error('Failed to fetch revenue timeline');
+    }
+
+    async getCurrentSemester(): Promise<ActiveSemesterDto> {
+        const response = await apiService.get<{ success: boolean; data: ActiveSemesterDto }>('/Dashboard/current-semester');
+
+        if (response.data) {
+            return response.data;
+        }
+
+        throw new Error('Failed to fetch current semester');
     }
 }
 
