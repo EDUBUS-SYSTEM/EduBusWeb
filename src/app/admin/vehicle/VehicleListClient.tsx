@@ -14,6 +14,7 @@ import vehicleService from "@/services/vehicleService";
 import type { Driver } from "@/services/driverService";
 import { getAllSupervisors, SupervisorResponse } from "@/services/api/supervisors";
 import { academicCalendarService } from "@/services/api/academicCalendarService";
+import { formatDate } from "@/utils/dateUtils";
 const PER_PAGE = 5;
 
 type SemesterOption = {
@@ -35,9 +36,7 @@ const toDateOnly = (value?: string | null): string => {
 
 const formatDisplayDate = (date?: string): string => {
   if (!date) return "N/A";
-  const parsed = new Date(date);
-  if (Number.isNaN(parsed.getTime())) return date;
-  return parsed.toLocaleDateString();
+  return formatDate(date);
 };
 
 const localDateToUTCStart = (localDate: string): string => {

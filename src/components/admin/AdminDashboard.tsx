@@ -23,6 +23,7 @@ import { vehicleService } from "@/services/vehicleService";
 import { tripService } from "@/services/tripService";
 import { transactionService } from "@/services/transactionService";
 import { TransactionStatus } from "@/types/transaction";
+import { formatDate } from "@/utils/dateUtils";
 
 export default function AdminDashboard() {
     // Fetch active semester
@@ -187,7 +188,7 @@ export default function AdminDashboard() {
                                     {unitPriceData.pricePerKm.toLocaleString()} VND/km
                                 </motion.div>
                                 <p className="text-white/80 text-xs">
-                                    Effective from {new Date(unitPriceData.effectiveFrom).toLocaleDateString()}
+                                    Effective from {formatDate(unitPriceData.effectiveFrom)}
                                 </p>
                                 {unitPriceData.description && (
                                     <p className="text-white/70 text-[10px] mt-2 italic">{unitPriceData.description}</p>

@@ -13,6 +13,7 @@ import {
 } from "@/services/api/driverLeaveRequests";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchLeaveRequests, setCurrentPage, updateLeaveInList } from "@/store/slices/driverRequestsSlice";
+import { formatDateTime } from "@/utils/dateUtils";
 
 export default function LeaveRequestsTab() {
   const dispatch = useAppDispatch();
@@ -231,15 +232,7 @@ export default function LeaveRequestsTab() {
     }
   };
 
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  // Using centralized formatDateTime from @/utils/dateUtils
 
   const calculateLeaveDays = (startDate: string, endDate: string) => {
     const start = new Date(startDate);

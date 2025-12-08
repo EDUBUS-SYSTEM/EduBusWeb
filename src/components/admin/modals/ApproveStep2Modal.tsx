@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { DriverLeaveRequest } from "@/services/api/driverLeaveRequests";
 import { getAvailableDrivers, GetAvailableDriverDto } from "@/services/api/drivers";
+import { formatDate } from "@/utils/dateUtils";
 
 interface ApproveStep2ModalProps {
   leave: DriverLeaveRequest;
@@ -13,20 +14,20 @@ interface ApproveStep2ModalProps {
   error?: string;
 }
 
-export default function ApproveStep2Modal({ 
-  leave, 
+export default function ApproveStep2Modal({
+  leave,
   notes,
-  onApprove, 
+  onApprove,
   onBack,
   onClose,
   loading,
-  error 
+  error
 }: ApproveStep2ModalProps) {
   const [replacementDriverId, setReplacementDriverId] = useState<string>('');
   const [availableDrivers, setAvailableDrivers] = useState<GetAvailableDriverDto[]>([]);
   const [loadingDrivers, setLoadingDrivers] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Track component mount state để tránh duplicate calls
   const isMountedRef = useRef(false);
   const fetchStateRef = useRef({
@@ -42,10 +43,10 @@ export default function ApproveStep2Modal({
     if (isMountedRef.current) {
       return;
     }
-    
+
     // Mark component as mounted
     isMountedRef.current = true;
-    
+
     const fetchAvailableDrivers = async () => {
       setLoadingDrivers(true);
       try {
@@ -55,7 +56,7 @@ export default function ApproveStep2Modal({
         console.log("End date:", endDate);
         const drivers = await getAvailableDrivers(startDate, endDate);
         setAvailableDrivers(drivers);
-        
+
         // Update fetch state
         fetchStateRef.current = {
           hasFetched: true,
@@ -69,13 +70,13 @@ export default function ApproveStep2Modal({
         setLoadingDrivers(false);
       }
     };
-    
+
     fetchAvailableDrivers();
-  }, []); 
+  }, []);
 
   const filteredDrivers = availableDrivers.filter(driver => {
     const matchesSearch = driver.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         driver.phoneNumber.includes(searchTerm);
+      driver.phoneNumber.includes(searchTerm);
     return matchesSearch;
   });
 
@@ -147,7 +148,7 @@ export default function ApproveStep2Modal({
                 <div>
                   <span className="font-medium text-gray-700">Duration:</span>
                   <p className="text-gray-900">
-                    {new Date(leave.startDate).toLocaleDateString('en-US')} - {new Date(leave.endDate).toLocaleDateString('en-US')}
+                    {formatDate(leave.startDate)} - {formatDate(leave.endDate)}
                   </p>
                 </div>
                 <div>
@@ -208,7 +209,7 @@ export default function ApproveStep2Modal({
               </svg>
               <span>Available Drivers</span>
             </h3>
-            
+
             {loadingDrivers ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -224,11 +225,10 @@ export default function ApproveStep2Modal({
                   filteredDrivers.map((driver) => (
                     <div
                       key={driver.id}
-                      className={`p-4 border rounded-lg cursor-pointer transition-colors duration-200 ${
-                        replacementDriverId === driver.id
+                      className={`p-4 border rounded-lg cursor-pointer transition-colors duration-200 ${replacementDriverId === driver.id
                           ? 'border-blue-500 bg-blue-50'
                           : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                      }`}
+                        }`}
                       onClick={() => setReplacementDriverId(driver.id)}
                     >
                       <div className="flex items-center justify-between">
@@ -281,7 +281,7 @@ export default function ApproveStep2Modal({
               </svg>
               <span>Back</span>
             </button>
-            
+
             <div className="flex space-x-3">
               <button
                 onClick={onClose}

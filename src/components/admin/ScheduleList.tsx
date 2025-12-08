@@ -17,6 +17,7 @@ import { Schedule, ScheduleTimeOverride } from "@/types";
 import TimeOverrideModal from "./TimeOverrideModal";
 import ExceptionModal from "./ExceptionModal";
 import Pagination from "../ui/Pagination";
+import { formatDate, formatDateForInput } from "@/utils/dateUtils";
 
 interface ScheduleListProps {
   searchTerm: string;
@@ -218,22 +219,7 @@ export default function ScheduleList({
     });
   };
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  // Helper function to format date for input fields (avoiding timezone issues)
-  const formatDateForInput = (date: string) => {
-    const d = new Date(date);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
+  // Using centralized formatDate and formatDateForInput from @/utils/dateUtils
 
   const handleDeleteSchedule = async (scheduleId: string) => {
     if (!confirm("Are you sure you want to delete this schedule?")) {
@@ -720,7 +706,7 @@ export default function ScheduleList({
                         {selectedSchedule.exceptions.map(
                           (exception: Date, index: number) => (
                             <p key={index} className="text-sm text-gray-700">
-                              {new Date(exception).toLocaleDateString()}
+                              {formatDate(exception)}
                             </p>
                           )
                         )}
@@ -742,7 +728,7 @@ export default function ScheduleList({
                           .map(
                             (override: ScheduleTimeOverride, index: number) => (
                               <p key={index} className="text-sm text-gray-700">
-                                {new Date(override.date).toLocaleDateString()}:{" "}
+                                {formatDate(override.date)}:{" "}
                                 {override.startTime} - {override.endTime}
                               </p>
                             )
@@ -1035,7 +1021,7 @@ export default function ScheduleList({
                             <div>
                               <p className="text-xs text-gray-500">Date</p>
                               <p className="text-sm font-medium">
-                                {new Date(override.date).toLocaleDateString()}
+                                {formatDate(override.date)}
                               </p>
                             </div>
                             <div>

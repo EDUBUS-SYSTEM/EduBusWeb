@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa";
 import { StudentDto } from "@/services/studentService/studentService.types";
 import { StudentAvatar } from "./StudentAvatar";
+import { formatDate } from "@/utils/dateUtils";
 
 interface ViewStudentModalProps {
   isOpen: boolean;
@@ -74,9 +75,8 @@ export default function ViewStudentModal({
               Parent Status
             </label>
             <div className="flex items-center space-x-2">
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                student.parentId ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
-              }`}>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${student.parentId ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                }`}>
                 {student.parentId ? "Linked" : "Not Linked"}
               </span>
             </div>
@@ -129,11 +129,7 @@ export default function ViewStudentModal({
               </span>
             </div>
             <p className="text-sm text-blue-700">
-              {student.createdAt ? new Date(student.createdAt).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              }) : ''}
+              {formatDate(student.createdAt)}
             </p>
           </div>
 
@@ -146,11 +142,7 @@ export default function ViewStudentModal({
               </span>
             </div>
             <p className="text-sm text-gray-700">
-              {student.updatedAt ? new Date(student.updatedAt).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              }) : ''}
+              {formatDate(student.updatedAt)}
             </p>
           </div>
         </div>

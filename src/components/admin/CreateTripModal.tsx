@@ -8,6 +8,7 @@ import { routeService } from "@/services/routeService/routeService.api";
 import { RouteDto } from "@/services/routeService/routeService.types";
 import { routeScheduleService } from "@/services/routeScheduleService/routeSchedule.api";
 import { FaTimes } from 'react-icons/fa';
+import { formatDate } from "@/utils/dateUtils";
 
 interface CreateTripModalProps {
   isOpen: boolean;
@@ -25,7 +26,7 @@ export default function CreateTripModal({
   existingTrips = [],
 }: CreateTripModalProps) {
   console.log('CreateTripModal - existingTrips:', existingTrips);
-  
+
   // New: Schedules state
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [scheduleLoading, setScheduleLoading] = useState(false);
@@ -61,7 +62,7 @@ export default function CreateTripModal({
     if (isOpen) {
       loadRoutes();
       loadSchedules();
-      
+
       // Set initial service date if provided (from calendar click)
       if (initialServiceDate) {
         setFormData(prev => ({
@@ -81,7 +82,7 @@ export default function CreateTripModal({
           ...prev,
           vehicleId: selectedRoute.vehicleId
         }));
-        
+
         // Load route schedules
         loadRouteSchedules(formData.routeId);
       }
@@ -128,7 +129,7 @@ export default function CreateTripModal({
   // Filter schedules to exclude those already used on the selected date
   const availableSchedules = useMemo(() => {
     if (!formData.serviceDate) return schedules;
-    
+
     // Get schedule IDs already used on this date
     const usedScheduleIds = existingTrips
       .filter(trip => {
@@ -138,9 +139,9 @@ export default function CreateTripModal({
       })
       .map(trip => trip.scheduleSnapshot?.scheduleId)
       .filter(Boolean);
-    
+
     console.log('Service Date:', formData.serviceDate, 'Used Schedules:', usedScheduleIds, 'Existing Trips:', existingTrips);
-    
+
     // Return schedules that are not used on this date
     return schedules.filter(s => !usedScheduleIds.includes(s.id));
   }, [schedules, formData.serviceDate, existingTrips]);
@@ -150,7 +151,7 @@ export default function CreateTripModal({
   // Filter schedules based on selected route and exclude already used schedules on this date
   const filteredSchedules = useMemo(() => {
     if (!formData.routeId || routeScheduleIds.length === 0) return [];
-    
+
     // Filter schedules that are linked to this route AND not already used on this date
     return availableSchedules.filter(s => routeScheduleIds.includes(s.id));
   }, [formData.routeId, routeScheduleIds, availableSchedules]);
@@ -170,7 +171,7 @@ export default function CreateTripModal({
     }
     if (!formData.vehicleId) newErrors.vehicleId = 'Vehicle ID is required (set from route)';
     if (!formData.scheduleSnapshot?.scheduleId) newErrors.scheduleSnapshot = 'Schedule is required';
-    
+
     // Validate service date is within schedule effective date range
     if (formData.serviceDate && formData.scheduleSnapshot?.scheduleId) {
       const selectedSchedule = schedules.find(s => s.id === formData.scheduleSnapshot?.scheduleId);
@@ -178,15 +179,15 @@ export default function CreateTripModal({
         const serviceDate = new Date(formData.serviceDate);
         const effectiveFrom = new Date(selectedSchedule.effectiveFrom);
         const effectiveTo = selectedSchedule.effectiveTo ? new Date(selectedSchedule.effectiveTo) : null;
-        
+
         if (serviceDate < effectiveFrom) {
-          newErrors.serviceDate = `Service date must be on or after ${effectiveFrom.toLocaleDateString()}`;
+          newErrors.serviceDate = `Service date must be on or after ${formatDate(effectiveFrom)}`;
         } else if (effectiveTo && serviceDate > effectiveTo) {
-          newErrors.serviceDate = `Service date must be on or before ${effectiveTo.toLocaleDateString()}`;
+          newErrors.serviceDate = `Service date must be on or before ${formatDate(effectiveTo)}`;
         }
       }
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -202,12 +203,12 @@ export default function CreateTripModal({
           formData.scheduleSnapshot?.scheduleId || '',
           formData.serviceDate
         );
-        
+
         if (tripExists) {
           setSubmissionError('A trip already exists for this route, schedule, and service date. Please choose a different date or schedule.');
           return;
         }
-        
+
         await onSubmit(formData);
         setSubmissionError(null);
       } catch (error: unknown) {
@@ -244,21 +245,21 @@ export default function CreateTripModal({
       // Parse schedule times and combine with service date
       const [startHours, startMinutes] = schedule.startTime.split(':').map(Number);
       const [endHours, endMinutes] = schedule.endTime.split(':').map(Number);
-      
+
       // Create date in local timezone (not UTC)
       const [year, month, day] = formData.serviceDate.split('-').map(Number);
-      
+
       const plannedStart = new Date(year, month - 1, day, startHours, startMinutes, 0, 0);
       const plannedEnd = new Date(year, month - 1, day, endHours, endMinutes, 0, 0);
-      
+
       // Format as HH:mm for time input
       const startTimeStr = `${String(startHours).padStart(2, '0')}:${String(startMinutes).padStart(2, '0')}`;
       const endTimeStr = `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
-      
+
       // Format as ISO string for datetime-local compatibility (YYYY-MM-DDTHH:mm)
       const plannedStartAt = `${formData.serviceDate}T${startTimeStr}`;
       const plannedEndAt = `${formData.serviceDate}T${endTimeStr}`;
-      
+
       setFormData({
         ...formData,
         plannedStartAt: plannedStartAt,

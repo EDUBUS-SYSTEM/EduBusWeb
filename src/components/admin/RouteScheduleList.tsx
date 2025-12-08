@@ -9,6 +9,7 @@ import {
   FaCalendarAlt,
 } from "react-icons/fa";
 import { scheduleService, RouteSchedule } from "@/services/api/scheduleService";
+import { formatDate } from "@/utils/dateUtils";
 
 interface RouteScheduleListProps {
   searchTerm: string;
@@ -100,13 +101,7 @@ export default function RouteScheduleList({
     return matchesSearch && matchesFilter;
   });
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
+  // Using centralized formatDate from @/utils/dateUtils
 
   const handleDeleteRouteSchedule = async (routeScheduleId: string) => {
     if (!confirm("Are you sure you want to delete this route schedule?")) {
@@ -179,11 +174,10 @@ export default function RouteScheduleList({
                       {routeSchedule.routeName}
                     </h3>
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        routeSchedule.isActive
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${routeSchedule.isActive
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-800"
-                      }`}
+                        }`}
                     >
                       {routeSchedule.isActive ? "Active" : "Inactive"}
                     </span>
@@ -315,11 +309,10 @@ export default function RouteScheduleList({
                         Status
                       </label>
                       <span
-                        className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                          selectedRouteSchedule.isActive
+                        className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${selectedRouteSchedule.isActive
                             ? "bg-green-100 text-green-800"
                             : "bg-red-100 text-red-800"
-                        }`}
+                          }`}
                       >
                         {selectedRouteSchedule.isActive ? "Active" : "Inactive"}
                       </span>

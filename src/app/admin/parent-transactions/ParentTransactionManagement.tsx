@@ -5,6 +5,7 @@ import { transactionService } from "@/services/transactionService";
 import { TransactionSummary, TransactionStatus, TransactionListRequest } from "@/types/transaction";
 import TransactionDetailModal from "./TransactionDetailModal";
 import TransactionStatusModal from "./TransactionStatusModal";
+import { formatDate, formatDateTime } from "@/utils/dateUtils";
 
 export default function ParentTransactionManagement() {
   const [transactions, setTransactions] = useState<TransactionSummary[]>([]);
@@ -35,7 +36,7 @@ export default function ParentTransactionManagement() {
     };
 
     window.addEventListener('transactionCreated', handleTransactionCreated);
-    
+
     return () => {
       window.removeEventListener('transactionCreated', handleTransactionCreated);
     };
@@ -52,7 +53,7 @@ export default function ParentTransactionManagement() {
 
     // Search filter
     if (searchTerm) {
-      filtered = filtered.filter(transaction => 
+      filtered = filtered.filter(transaction =>
         transaction.parentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         transaction.parentEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         transaction.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -67,12 +68,12 @@ export default function ParentTransactionManagement() {
 
     // Date filter
     if (dateFilter.from) {
-      filtered = filtered.filter(transaction => 
+      filtered = filtered.filter(transaction =>
         new Date(transaction.createdAt) >= new Date(dateFilter.from)
       );
     }
     if (dateFilter.to) {
-      filtered = filtered.filter(transaction => 
+      filtered = filtered.filter(transaction =>
         new Date(transaction.createdAt) <= new Date(dateFilter.to)
       );
     }
@@ -139,13 +140,7 @@ export default function ParentTransactionManagement() {
     }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('vi-VN');
-  };
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('vi-VN');
-  };
+  // Using centralized formatDate and formatDateTime from @/utils/dateUtils
 
   const getStatusColor = (status: TransactionStatus) => {
     switch (status) {
@@ -403,11 +398,11 @@ export default function ParentTransactionManagement() {
           >
             Previous
           </button>
-          
+
           <span className="px-4 py-2 text-sm text-gray-700">
             Page {currentPage} of {totalPages}
           </span>
-          
+
           <button
             onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
             disabled={currentPage === totalPages}

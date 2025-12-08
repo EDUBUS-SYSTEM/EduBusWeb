@@ -6,14 +6,15 @@ import Card from "@/components/ui/Card";
 import Select from "@/components/ui/Select";
 import Pagination from "@/components/ui/Pagination";
 import driverVehicleService from "@/services/driverVehicleService";
-import { 
-  driverLeaveRequestService, 
+import {
+  driverLeaveRequestService,
   ReplacementInfoResponse,
-  ReplacementMatchDto 
+  ReplacementMatchDto
 } from "@/services/api/driverLeaveRequests";
 import { AssignmentTableRow, DriverVehicleStatus } from "@/types/driverVehicle";
 import { getAllSupervisors, SupervisorResponse } from "@/services/api/supervisors";
 import { apiService } from "@/lib/api";
+import { formatDate, formatDateForInput } from "@/utils/dateUtils";
 
 const PER_PAGE = 5;
 
@@ -38,29 +39,7 @@ function SuccessToast({ message, onClose }: { message: string; onClose: () => vo
   );
 }
 
-// Date utility - Parse UTC datetime string and format to local date
-const formatUTCToLocalDate = (utcString: string): string => {
-  if (!utcString) return '';
-  
-  // Ensure the string is treated as UTC by adding 'Z' if missing
-  let dateStr = utcString.trim();
-  if (!dateStr.endsWith('Z') && (dateStr.includes('T') || dateStr.includes(' '))) {
-    dateStr = dateStr.replace(' ', 'T') + 'Z';
-  }
-  
-  const date = new Date(dateStr);
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const year = date.getUTCFullYear();
-  return `${day}/${month}/${year}`;
-};
-
-const formatDateLocal = (date: Date): string => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
+// Local date helpers removed in favor of dateUtils
 
 // Convert local date string (YYYY-MM-DD) to UTC start of day (00:00:00)
 const localDateToUTCStart = (localDate: string): string => {
@@ -80,11 +59,10 @@ const localDateToUTCEnd = (localDate: string): string => {
 function StatusBadge({ status }: { status: DriverVehicleStatus }) {
   return (
     <span
-      className={`px-3 py-1 rounded-full text-sm font-medium ${
-        status === "Assigned"
-          ? "bg-green-100 text-green-800"
-          : "bg-gray-100 text-gray-800"
-      }`}
+      className={`px-3 py-1 rounded-full text-sm font-medium ${status === "Assigned"
+        ? "bg-green-100 text-green-800"
+        : "bg-gray-100 text-gray-800"
+        }`}
     >
       {status}
     </span>
@@ -109,14 +87,14 @@ export default function DriverVehicleListClient() {
   const [allAssignments, setAllAssignments] = useState<AssignmentTableRow[]>([]);
   const [supervisorAssignments, setSupervisorAssignments] = useState<SupervisorAssignmentRow[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Filters
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState<string>("startTime");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  
+
   // Pagination
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -129,15 +107,15 @@ export default function DriverVehicleListClient() {
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<AssignmentTableRow | null>(null);
   const [updateError, setUpdateError] = useState("");
-  
+
   // Replacement Info Modal
   const [showReplacementModal, setShowReplacementModal] = useState(false);
   const [replacementInfo, setReplacementInfo] = useState<ReplacementInfoResponse | null>(null);
   const [loadingReplacement, setLoadingReplacement] = useState(false);
-  
+
   // Active replacement matches
   const [replacementMatches, setReplacementMatches] = useState<ReplacementMatchDto[]>([]);
-  
+
   // Success Toast
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -162,7 +140,7 @@ export default function DriverVehicleListClient() {
         sortBy: 'startTimeUtc',
         sortOrder: 'desc',
       });
-      
+
       if (response.success && response.data) {
         const mapped: AssignmentTableRow[] = response.data.map((item) => ({
           id: item.id,
@@ -200,11 +178,11 @@ export default function DriverVehicleListClient() {
         supervisors.map(async (s) => {
           try {
             const res = await apiService.get<{
-              data?: { 
-                data?: Array<{ data?: Partial<SupervisorAssignmentRow> } & Partial<SupervisorAssignmentRow>>; 
+              data?: {
+                data?: Array<{ data?: Partial<SupervisorAssignmentRow> } & Partial<SupervisorAssignmentRow>>;
                 Data?: Array<{ data?: Partial<SupervisorAssignmentRow> } & Partial<SupervisorAssignmentRow>>;
               };
-              Data?: { 
+              Data?: {
                 Data?: Array<{ data?: Partial<SupervisorAssignmentRow> } & Partial<SupervisorAssignmentRow>>;
               };
             }>(
@@ -269,7 +247,7 @@ export default function DriverVehicleListClient() {
         console.error("Error fetching replacement matches:", error);
       }
     };
-    
+
     fetchReplacementMatches();
   }, []);
 
@@ -277,17 +255,17 @@ export default function DriverVehicleListClient() {
   const hasActiveReplacement = useCallback((assignment: AssignmentTableRow): boolean => {
     const assignmentStart = new Date(assignment.startTime);
     const assignmentEnd = assignment.endTime ? new Date(assignment.endTime) : new Date('2099-12-31');
-    
+
     return replacementMatches.some(match => {
       const leaveStart = new Date(match.startDate);
       const leaveEnd = new Date(match.endDate);
-      
+
       // Check:
       // 1. Driver match
       // 2. Leave period overlaps with assignment period
       const driverMatch = match.driverId === assignment.driverId;
       const dateOverlap = leaveStart <= assignmentEnd && leaveEnd >= assignmentStart;
-      
+
       return driverMatch && dateOverlap;
     });
   }, [replacementMatches]);
@@ -375,7 +353,7 @@ export default function DriverVehicleListClient() {
   }, [supervisorAssignments, debouncedSearch, sortBy, sortOrder]);
 
   // Pagination
-  const baseItems = tab === "driver" 
+  const baseItems = tab === "driver"
     ? (filteredAssignments as Array<AssignmentTableRow | SupervisorAssignmentRow>)
     : (filteredSupervisorAssignments as Array<AssignmentTableRow | SupervisorAssignmentRow>);
   const totalItems = baseItems.length;
@@ -407,7 +385,7 @@ export default function DriverVehicleListClient() {
     setLoadingReplacement(true);
     setShowReplacementModal(true);
     setReplacementInfo(null);
-    
+
     try {
       const data = await driverLeaveRequestService.getReplacementInfo(driverId);
       setReplacementInfo(data);
@@ -433,22 +411,20 @@ export default function DriverVehicleListClient() {
         <button
           type="button"
           onClick={() => setTab("driver")}
-          className={`px-4 py-2 text-sm font-semibold rounded-full transition ${
-            tab === "driver" 
-              ? "bg-[#463B3B] text-white" 
-              : "text-[#463B3B] hover:bg-gray-100"
-          }`}
+          className={`px-4 py-2 text-sm font-semibold rounded-full transition ${tab === "driver"
+            ? "bg-[#463B3B] text-white"
+            : "text-[#463B3B] hover:bg-gray-100"
+            }`}
         >
           Driver Assignments
         </button>
         <button
           type="button"
           onClick={() => setTab("supervisor")}
-          className={`px-4 py-2 text-sm font-semibold rounded-full transition ${
-            tab === "supervisor" 
-              ? "bg-[#463B3B] text-white" 
-              : "text-[#463B3B] hover:bg-gray-100"
-          }`}
+          className={`px-4 py-2 text-sm font-semibold rounded-full transition ${tab === "supervisor"
+            ? "bg-[#463B3B] text-white"
+            : "text-[#463B3B] hover:bg-gray-100"
+            }`}
         >
           Supervisor Assignments
         </button>
@@ -474,14 +450,14 @@ export default function DriverVehicleListClient() {
               options={
                 tab === "driver"
                   ? [
-                      { value: "all", label: "All Status" },
-                      { value: "Assigned", label: "Assigned" },
-                      { value: "Unassigned", label: "Unassigned" },
-                    ]
+                    { value: "all", label: "All Status" },
+                    { value: "Assigned", label: "Assigned" },
+                    { value: "Unassigned", label: "Unassigned" },
+                  ]
                   : [
-                      { value: "all", label: "All Status" },
-                      { value: "Assigned", label: "Active" },
-                    ]
+                    { value: "all", label: "All Status" },
+                    { value: "Assigned", label: "Active" },
+                  ]
               }
               onChange={(val) => {
                 setStatusFilter(val);
@@ -581,8 +557,8 @@ export default function DriverVehicleListClient() {
               ) : (
                 tab === "driver"
                   ? paginatedAssignments.map((assignment) => {
-                      const driverAssignment = assignment as AssignmentTableRow;
-                      return (
+                    const driverAssignment = assignment as AssignmentTableRow;
+                    return (
                       <tr key={driverAssignment.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {driverAssignment.driverName}
@@ -591,11 +567,11 @@ export default function DriverVehicleListClient() {
                           {driverAssignment.licensePlate}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {formatUTCToLocalDate(driverAssignment.startTime)}
+                          {formatDate(driverAssignment.startTime)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                           {driverAssignment.endTime
-                            ? formatUTCToLocalDate(driverAssignment.endTime)
+                            ? formatDate(driverAssignment.endTime)
                             : "Ongoing"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -650,11 +626,11 @@ export default function DriverVehicleListClient() {
                           </div>
                         </td>
                       </tr>
-                      );
-                    })
+                    );
+                  })
                   : paginatedAssignments.map((assignment) => {
-                      const supervisorAssignment = assignment as SupervisorAssignmentRow;
-                      return (
+                    const supervisorAssignment = assignment as SupervisorAssignmentRow;
+                    return (
                       <tr key={supervisorAssignment.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {supervisorAssignment.supervisorName}
@@ -663,11 +639,11 @@ export default function DriverVehicleListClient() {
                           {supervisorAssignment.licensePlate}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {formatUTCToLocalDate(supervisorAssignment.startTime)}
+                          {formatDate(supervisorAssignment.startTime)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                           {supervisorAssignment.endTime
-                            ? formatUTCToLocalDate(supervisorAssignment.endTime)
+                            ? formatDate(supervisorAssignment.endTime)
                             : "Ongoing"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -676,8 +652,8 @@ export default function DriverVehicleListClient() {
                           </span>
                         </td>
                       </tr>
-                      );
-                    })
+                    );
+                  })
               )}
             </tbody>
           </table>
@@ -718,7 +694,7 @@ export default function DriverVehicleListClient() {
                 <p className="text-red-800 text-sm font-medium">{updateError}</p>
               </div>
             )}
-            
+
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -728,11 +704,11 @@ export default function DriverVehicleListClient() {
                   id="update-start-date"
                   type="date"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
-                  defaultValue={selectedAssignment.startTime ? formatDateLocal(new Date(selectedAssignment.startTime)) : ''}
+                  defaultValue={selectedAssignment.startTime ? formatDateForInput(new Date(selectedAssignment.startTime)) : ''}
                   min={(() => {
                     const tomorrow = new Date();
                     tomorrow.setDate(tomorrow.getDate() + 1);
-                    return formatDateLocal(tomorrow);
+                    return formatDateForInput(tomorrow);
                   })()}
                   onChange={() => setUpdateError("")}
                 />
@@ -745,11 +721,11 @@ export default function DriverVehicleListClient() {
                   id="update-end-date"
                   type="date"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
-                  defaultValue={selectedAssignment.endTime ? formatDateLocal(new Date(selectedAssignment.endTime)) : ''}
+                  defaultValue={selectedAssignment.endTime ? formatDateForInput(new Date(selectedAssignment.endTime)) : ''}
                   min={(() => {
                     const tomorrow = new Date();
                     tomorrow.setDate(tomorrow.getDate() + 1);
-                    return formatDateLocal(tomorrow);
+                    return formatDateForInput(tomorrow);
                   })()}
                   onChange={() => setUpdateError("")}
                 />
@@ -758,23 +734,23 @@ export default function DriverVehicleListClient() {
             </div>
 
             <div className="flex gap-3 justify-end">
-              <button 
+              <button
                 onClick={() => {
                   setShowUpdateModal(null);
                   setSelectedAssignment(null);
                   setUpdateError("");
-                }} 
+                }}
                 className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={async () => {
                   try {
                     setUpdateError("");
                     const startDateInput = (document.getElementById('update-start-date') as HTMLInputElement)?.value;
                     const endDateInput = (document.getElementById('update-end-date') as HTMLInputElement)?.value;
-                    
+
                     if (!startDateInput) {
                       setUpdateError("Please select a start date");
                       return;
@@ -795,7 +771,7 @@ export default function DriverVehicleListClient() {
                     console.error("Error updating assignment:", error);
                     setUpdateError(error instanceof Error ? error.message : "Unknown error");
                   }
-                }} 
+                }}
                 className="px-4 py-2 bg-[#fad23c] text-[#463B3B] rounded-lg hover:bg-[#FFF085] transition-colors duration-200 font-medium"
               >
                 Update
@@ -906,19 +882,19 @@ export default function DriverVehicleListClient() {
                   <div className="bg-gray-50 rounded-lg p-4">
                     <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">Leave Type</label>
                     <p className="mt-1 text-sm font-semibold text-gray-900">
-                      {replacementInfo.leaveType === 0 ? 'Annual Leave' : 
-                       replacementInfo.leaveType === 1 ? 'Sick Leave' : 
-                       replacementInfo.leaveType === 2 ? 'Emergency' : 'Other'}
+                      {replacementInfo.leaveType === 0 ? 'Annual Leave' :
+                        replacementInfo.leaveType === 1 ? 'Sick Leave' :
+                          replacementInfo.leaveType === 2 ? 'Emergency' : 'Other'}
                     </p>
                   </div>
 
                   <div className="bg-gray-50 rounded-lg p-4">
                     <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">Replacement Period</label>
                     <p className="mt-1 text-sm text-gray-900">
-                      <span className="font-medium">From:</span> {formatUTCToLocalDate(replacementInfo.startDate)}
+                      <span className="font-medium">From:</span> {formatDate(replacementInfo.startDate)}
                     </p>
                     <p className="text-sm text-gray-900">
-                      <span className="font-medium">To:</span> {formatUTCToLocalDate(replacementInfo.endDate)}
+                      <span className="font-medium">To:</span> {formatDate(replacementInfo.endDate)}
                     </p>
                   </div>
 
@@ -967,9 +943,9 @@ export default function DriverVehicleListClient() {
 
       {/* Success Toast */}
       {successMessage && (
-        <SuccessToast 
-          message={successMessage} 
-          onClose={() => setSuccessMessage(null)} 
+        <SuccessToast
+          message={successMessage}
+          onClose={() => setSuccessMessage(null)}
         />
       )}
     </div>

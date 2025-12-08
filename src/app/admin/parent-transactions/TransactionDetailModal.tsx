@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { FaTimes, FaReceipt, FaUser, FaChild, FaMapMarkerAlt, FaCalendarAlt, FaCreditCard, FaInfoCircle } from "react-icons/fa";
 import { transactionService } from "@/services/transactionService";
 import { TransactionDetailResponseDto } from "@/types/transaction";
+import { formatDateTime } from "@/utils/dateUtils";
 
 interface TransactionDetailModalProps {
   transactionId: string;
@@ -36,9 +37,7 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
     }).format(amount);
   };
 
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('vi-VN');
-  };
+  // Using centralized formatDateTime from @/utils/dateUtils
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -269,12 +268,11 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
                         <td className="px-4 py-3 text-[#463B3B]">{item.distanceKm || 0} km</td>
                         <td className="px-4 py-3 font-semibold text-[#D08700]">{formatCurrency(item.amount)}</td>
                         <td className="px-4 py-3">
-                          <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${
-                            item.status === 'Paid' ? 'bg-green-100 text-green-800 border-green-200' :
-                            item.status === 'Approved' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                            item.status === 'Pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                            'bg-red-100 text-red-800 border-red-200'
-                          }`}>
+                          <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${item.status === 'Paid' ? 'bg-green-100 text-green-800 border-green-200' :
+                              item.status === 'Approved' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                item.status === 'Pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                  'bg-red-100 text-red-800 border-red-200'
+                            }`}>
                             {item.status}
                           </span>
                         </td>

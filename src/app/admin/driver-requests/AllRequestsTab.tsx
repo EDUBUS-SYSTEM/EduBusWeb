@@ -7,9 +7,10 @@ import GeneralRequestDetailModal from "./GeneralRequestDetailModal";
 // This will combine both leave requests and general requests from the backend
 import { DriverLeaveRequest } from "@/services/api/driverLeaveRequests";
 import { GeneralDriverRequest } from "./GeneralRequestsTab";
+import { formatDateTime } from "@/utils/dateUtils";
 
 // Combined request type
-type CombinedRequest = 
+type CombinedRequest =
   | { type: 'leave'; data: DriverLeaveRequest }
   | { type: 'general'; data: GeneralDriverRequest };
 
@@ -17,14 +18,14 @@ export default function AllRequestsTab() {
   const [requests, setRequests] = useState<CombinedRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Search and filter states
   const [searchDriverName, setSearchDriverName] = useState("");
   const [searchDriverEmail, setSearchDriverEmail] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
@@ -37,7 +38,7 @@ export default function AllRequestsTab() {
   const fetchRequests = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       // TODO: Replace with real API calls
       // Example: 
@@ -45,11 +46,11 @@ export default function AllRequestsTab() {
       //   driverLeaveRequestService.getLeaveRequests({...leaveFilters}),
       //   generalDriverRequestService.getRequests({...generalFilters})
       // ]);
-      
+
       // For now, show empty state until APIs are implemented
       setRequests([]);
       setTotalItems(0);
-      
+
       // Remove this comment when APIs are ready:
       // const leaveRequests: CombinedRequest[] = leaveRequestsResponse.data.map(leave => ({
       //   type: 'leave' as const,
@@ -66,10 +67,10 @@ export default function AllRequestsTab() {
       // // Apply filters and pagination as needed
       // setRequests(combinedData);
       // setTotalItems(combinedData.length);
-      
+
     } catch (err: unknown) {
-      const errorMessage = (err as { message?: string }).message || 
-                          "Failed to load requests. Please try again.";
+      const errorMessage = (err as { message?: string }).message ||
+        "Failed to load requests. Please try again.";
       setError(errorMessage);
       console.error("Error loading requests:", err);
       setRequests([]);
@@ -90,7 +91,7 @@ export default function AllRequestsTab() {
 
   const getStatusBadge = (status: string | number) => {
     const baseClasses = "px-3 py-1 rounded-full text-sm font-medium";
-    
+
     // Handle number status (DriverLeaveRequest)
     if (typeof status === 'number') {
       switch (status) {
@@ -108,7 +109,7 @@ export default function AllRequestsTab() {
           return `${baseClasses} bg-gray-100 text-gray-800`;
       }
     }
-    
+
     // Handle string status (GeneralDriverRequest)
     switch (status) {
       case "Pending":
@@ -131,20 +132,12 @@ export default function AllRequestsTab() {
 
   const getTypeBadge = (type: string) => {
     const baseClasses = "px-2 py-1 rounded-full text-xs font-medium";
-    return type === 'leave' 
+    return type === 'leave'
       ? `${baseClasses} bg-blue-100 text-blue-800`
       : `${baseClasses} bg-purple-100 text-purple-800`;
   };
 
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  // Using centralized formatDateTime from @/utils/dateUtils
 
   if (loading) {
     return (
@@ -171,7 +164,7 @@ export default function AllRequestsTab() {
               autoComplete="off"
             />
           </div>
-          
+
           {/* Search by Driver Email */}
           <div className="flex-1 relative">
             <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -184,7 +177,7 @@ export default function AllRequestsTab() {
               autoComplete="off"
             />
           </div>
-          
+
           {/* Clear Search */}
           {(searchDriverName || searchDriverEmail) && (
             <button
@@ -198,7 +191,7 @@ export default function AllRequestsTab() {
               Clear
             </button>
           )}
-          
+
           {/* Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
@@ -230,7 +223,7 @@ export default function AllRequestsTab() {
                   <option value="Rejected">Rejected</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Request Type
@@ -289,7 +282,7 @@ export default function AllRequestsTab() {
                         </span>
                       </div>
                     </td>
-                    
+
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
                         <div className="flex-shrink-0">
@@ -310,7 +303,7 @@ export default function AllRequestsTab() {
                         </div>
                       </div>
                     </td>
-                    
+
                     <td className="px-6 py-4">
                       <div className="max-w-xs">
                         {item.type === 'leave' ? (
@@ -337,7 +330,7 @@ export default function AllRequestsTab() {
                         )}
                       </div>
                     </td>
-                    
+
                     <td className="px-6 py-4">
                       <span className={getStatusBadge(item.data.status)}>
                         {item.type === 'leave' ? (
@@ -358,7 +351,7 @@ export default function AllRequestsTab() {
                         )}
                       </span>
                     </td>
-                    
+
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
                         <FaClock className="h-4 w-4 text-gray-400" />
@@ -367,7 +360,7 @@ export default function AllRequestsTab() {
                         </div>
                       </div>
                     </td>
-                    
+
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
                         <button
@@ -400,11 +393,11 @@ export default function AllRequestsTab() {
           >
             Previous
           </button>
-          
+
           <span className="px-4 py-2 text-sm text-gray-700">
             Page {currentPage} / {Math.ceil(totalItems / itemsPerPage)}
           </span>
-          
+
           <button
             onClick={() => setCurrentPage(prev => prev + 1)}
             disabled={currentPage >= Math.ceil(totalItems / itemsPerPage)}

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { CalendarView } from '@/types';
+import { formatMonthYear } from '@/utils/dateUtils';
 
 interface CalendarHeaderProps {
   view: CalendarView;
@@ -13,22 +14,16 @@ interface CalendarHeaderProps {
   onRouteChange?: (routeId: string) => void;
 }
 
-export default function CalendarHeader({ 
-  view, 
-  onViewChange, 
-  onDateChange, 
+export default function CalendarHeader({
+  view,
+  onViewChange,
+  onDateChange,
   onTodayClick,
   routes = [],
   selectedRoute = 'all',
   onRouteChange
 }: CalendarHeaderProps) {
-  const formatDate = (date: Date) => {
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'long'
-    };
-    return date.toLocaleDateString('en-US', options);
-  };
+  // Using centralized formatMonthYear from @/utils/dateUtils
 
   const navigateDate = (direction: 'prev' | 'next') => {
     const newDate = new Date(view.date);
@@ -47,7 +42,7 @@ export default function CalendarHeader({
           >
             Today
           </button>
-          
+
           <div className="flex items-center space-x-2">
             <button
               onClick={() => navigateDate('prev')}
@@ -57,7 +52,7 @@ export default function CalendarHeader({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            
+
             <button
               onClick={() => navigateDate('next')}
               className="p-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors duration-200 hover:scale-105"
@@ -67,9 +62,9 @@ export default function CalendarHeader({
               </svg>
             </button>
           </div>
-          
+
           <h1 className="text-2xl font-bold text-gray-800 ml-4">
-            {formatDate(view.date)}
+            {formatMonthYear(view.date)}
           </h1>
         </div>
 

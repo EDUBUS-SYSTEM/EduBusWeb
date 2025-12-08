@@ -8,6 +8,7 @@ import {
 } from "react-icons/fa";
 import { scheduleService } from "@/services/api/scheduleService";
 import { Schedule } from "@/types";
+import { formatDate } from "@/utils/dateUtils";
 
 interface ExceptionModalProps {
   isOpen: boolean;
@@ -392,11 +393,10 @@ export default function ExceptionModal({
               <div>
                 <span className="text-orange-600 font-medium">Status:</span>
                 <span
-                  className={`ml-2 px-2 py-1 rounded-full text-xs font-semibold ${
-                    schedule.isActive
+                  className={`ml-2 px-2 py-1 rounded-full text-xs font-semibold ${schedule.isActive
                       ? "bg-green-100 text-green-800"
                       : "bg-red-100 text-red-800"
-                  }`}
+                    }`}
                 >
                   {schedule.isActive ? "Active" : "Inactive"}
                 </span>
@@ -424,21 +424,20 @@ export default function ExceptionModal({
                   min={
                     schedule.effectiveFrom
                       ? new Date(schedule.effectiveFrom)
-                          .toISOString()
-                          .split("T")[0]
+                        .toISOString()
+                        .split("T")[0]
                       : undefined
                   }
                   max={
                     schedule.effectiveTo
                       ? new Date(schedule.effectiveTo)
-                          .toISOString()
-                          .split("T")[0]
+                        .toISOString()
+                        .split("T")[0]
                       : undefined
                   }
                   onChange={(e) => handleInputChange(e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
-                    errors.date ? "border-red-300 bg-red-50" : "border-gray-200"
-                  }`}
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${errors.date ? "border-red-300 bg-red-50" : "border-gray-200"
+                    }`}
                   aria-describedby={errors.date ? "date-error" : undefined}
                 />
                 {errors.date && (
@@ -545,19 +544,10 @@ export default function ExceptionModal({
                           />
                           <div>
                             <p className="text-sm font-medium text-gray-800">
-                              {new Date(
-                                exception as unknown as string | Date
-                              ).toLocaleDateString("en-US", {
-                                weekday: "long",
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              })}
+                              {formatDate(exception as unknown as string | Date)}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {new Date(
-                                exception as unknown as string | Date
-                              ).toLocaleDateString()}
+                              {formatDate(exception as unknown as string | Date)}
                             </p>
                           </div>
                         </div>
@@ -566,7 +556,7 @@ export default function ExceptionModal({
                           disabled={loading}
                           className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors duration-200 disabled:opacity-50"
                           title="Remove Exception"
-                          aria-label={`Remove exception for ${new Date(exception as unknown as string | Date).toLocaleDateString()}`}
+                          aria-label={`Remove exception for ${formatDate(exception as unknown as string | Date)}`}
                         >
                           <FaTimes className="w-4 h-4" aria-hidden="true" />
                         </button>
