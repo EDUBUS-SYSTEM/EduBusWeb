@@ -165,11 +165,30 @@ export default function ParentTransactionManagement() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('vi-VN');
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleDateString('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
   };
 
   const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('vi-VN');
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleString('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
   };
 
   const getStatusColor = (status: TransactionStatus | string | number | null | undefined) => {

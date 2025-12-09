@@ -37,7 +37,18 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
   };
 
   const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('vi-VN');
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleString('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
   };
 
   const formatStatus = (status: string | number | null | undefined) => {
@@ -198,12 +209,6 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-[#555] font-medium">Provider:</span>
-                  <span className={`px-3 py-1 text-sm font-semibold rounded-full border ${getProviderColor(transaction.provider || 'Unknown')}`}>
-                    {transaction.provider || 'Unknown'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
                   <span className="text-[#555] font-medium">Created At:</span>
                   <span className="font-medium text-[#333]">
                     {formatDateTime(transaction.createdAt)}
@@ -232,7 +237,7 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
                 <FaUser className="w-5 h-5 text-[#8c6a00]" />
                 <h3 className="text-lg font-semibold text-[#333]">Parent & Student Information</h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
                   <p className="text-sm font-semibold text-[#333] mb-2">Parent</p>
                   <div className="space-y-2 text-sm">
