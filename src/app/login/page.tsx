@@ -193,6 +193,11 @@ export default function AdminLoginPage() {
               {errors.password && (
                 <p className="text-red-600 text-sm ml-2">{errors.password}</p>
               )}
+              <div className="text-right mt-1">
+                <a href="/forgot-password" className="text-sm text-[#D08700] hover:text-[#B87500] hover:underline transition-colors">
+                  Forgot Password?
+                </a>
+              </div>
             </div>
 
             {/* Sign In Button */}
