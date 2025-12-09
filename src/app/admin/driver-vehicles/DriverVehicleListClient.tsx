@@ -1,145 +1,421 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Search, Edit, Trash2, CheckCircle, Info } from "lucide-react";
-import Card from "@/components/ui/Card";
-import Select from "@/components/ui/Select";
+import { Search, User, Users, Calendar, CheckCircle, Edit2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import Pagination from "@/components/ui/Pagination";
+import vehicleService from "@/services/vehicleService";
 import driverVehicleService from "@/services/driverVehicleService";
-import { 
-  driverLeaveRequestService, 
-  ReplacementInfoResponse,
-  ReplacementMatchDto 
-} from "@/services/api/driverLeaveRequests";
-import { AssignmentTableRow, DriverVehicleStatus } from "@/types/driverVehicle";
-import { getAllSupervisors, SupervisorResponse } from "@/services/api/supervisors";
 import { apiService } from "@/lib/api";
+import { VehicleDto } from "@/types/vehicle";
+import EditAssignmentModal from "./EditAssignmentModal";
+import { enrollmentSemesterSettingsService } from "@/services/api/enrollmentSemesterSettingsService";
 
-const PER_PAGE = 5;
+const PER_PAGE = 6;
 
-// Success Toast Component
-function SuccessToast({ message, onClose }: { message: string; onClose: () => void }) {
-  useEffect(() => {
-    const timer = setTimeout(onClose, 2000);
-    return () => clearTimeout(timer);
-  }, [onClose]);
+// Types
+type DriverAssignmentApiItem = {
+  id?: string;
+  Id?: string;
+  driverId?: string;
+  DriverId?: string;
+  driver?: {
+    email?: string;
+  };
+  startTimeUtc?: string;
+  StartTimeUtc?: string;
+  endTimeUtc?: string;
+  EndTimeUtc?: string;
+  status?: number;
+  isPrimaryDriver?: boolean;
+  IsPrimaryDriver?: boolean;
+};
+
+type DriverAssignment = {
+  id: string;
+  driverId: string;
+  driverName: string;
+  driverEmail?: string;
+  isPrimaryDriver: boolean;
+  startTime: string;
+  endTime?: string;
+  status: string;
+  isUpcoming?: boolean; // Flag to indicate if assignment hasn't started yet or spans to next semester
+  isInCurrentSemester?: boolean; // Flag to indicate if assignment is in current semester
+  isInNextSemester?: boolean; // Flag to indicate if assignment spans to next semester
+};
+
+type SupervisorAssignment = {
+  id: string;
+  supervisorId: string;
+  supervisorName: string;
+  supervisorEmail?: string;
+  startTime: string;
+  endTime?: string;
+  isActive: boolean;
+  isUpcoming?: boolean; // Flag to indicate if assignment hasn't started yet or spans to next semester
+  isPrimarySupervisor?: boolean; // Flag to indicate if this is the primary supervisor
+  isInCurrentSemester?: boolean; // Flag to indicate if assignment is in current semester
+  isInNextSemester?: boolean; // Flag to indicate if assignment spans to next semester
+};
+
+type VehicleWithAssignments = {
+  id: string;
+  licensePlate: string;
+  capacity: number;
+  status: "Active" | "Inactive" | "Maintenance";
+  drivers: DriverAssignment[];
+  supervisors: SupervisorAssignment[];
+};
+
+// Utility functions
+const formatUTCToLocalDate = (utcString: string): string => {
+  if (!utcString) return "";
+  let dateStr = utcString.trim();
+  if (!dateStr.endsWith("Z") && (dateStr.includes("T") || dateStr.includes(" "))) {
+    dateStr = dateStr.replace(" ", "T") + "Z";
+  }
+  const date = new Date(dateStr);
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const year = date.getUTCFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+// Status Badge Component
+function StatusBadge({ status }: { readonly status: "Active" | "Inactive" | "Maintenance" }) {
+  const styles = {
+    Active: "bg-gradient-to-r from-emerald-500 to-green-600 text-white border-emerald-300 shadow-md",
+    Inactive: "bg-gradient-to-r from-gray-400 to-gray-500 text-white border-gray-300",
+    Maintenance: "bg-gradient-to-r from-amber-500 to-orange-600 text-white border-amber-300 shadow-md",
+  };
 
   return (
-    <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[100] animate-slideDown">
-      <div className="bg-white rounded-lg shadow-2xl border border-green-200 p-4 flex items-center gap-3 min-w-[320px]">
-        <div className="flex-shrink-0">
-          <CheckCircle className="w-12 h-12 text-green-500 animate-scaleIn" />
+    <span className={`px-4 py-1.5 rounded-full text-xs font-bold border-2 ${styles[status]} shadow-sm`}>
+      {status}
+    </span>
+  );
+}
+
+// Vehicle Card Component
+function VehicleCard({
+  vehicle,
+  onEditDriver,
+  onEditSupervisor
+}: {
+  readonly vehicle: VehicleWithAssignments;
+  readonly onEditDriver: (driver: DriverAssignment) => void;
+  readonly onEditSupervisor: (supervisor: SupervisorAssignment) => void;
+}) {
+  const [expanded, setExpanded] = useState({ drivers: false, supervisors: false });
+
+  return (
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-2xl hover:border-[#FDC700]/30 transition-all duration-300 transform hover:-translate-y-1">
+      {/* Header */}
+      <div className="bg-gradient-to-br from-[#FEFCE8] via-[#FFF6D8] to-[#FEF3C7] p-6 border-b border-[#FDC700]/20 relative overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-[#FDC700]/10 rounded-full -mr-16 -mt-16"></div>
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#FDC700]/10 rounded-full -ml-12 -mb-12"></div>
+        
+        <div className="flex items-start justify-between relative z-10">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-[#FDC700] to-[#D08700] rounded-xl flex items-center justify-center shadow-lg">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-[#463B3B] mb-1">
+                  {vehicle.licensePlate}
+                </h3>
+                <div className="flex items-center gap-3 text-sm text-gray-600">
+                  <span className="flex items-center gap-1.5 px-2.5 py-1 bg-white/60 rounded-lg backdrop-blur-sm">
+                    <Users className="w-3.5 h-3.5 text-[#D08700]" />
+                    <span className="font-medium">Capacity: {vehicle.capacity}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <StatusBadge status={vehicle.status} />
         </div>
-        <div className="flex-1">
-          <p className="text-gray-800 font-medium">{message}</p>
+      </div>
+
+      {/* Body */}
+      <div className="p-6 space-y-6 bg-gradient-to-b from-white to-gray-50/50">
+        {/* Drivers Section */}
+        <div>
+          <button
+            onClick={() => setExpanded(prev => ({ ...prev, drivers: !prev.drivers }))}
+            className="w-full flex items-center justify-between mb-4 text-left group hover:bg-gray-50 rounded-xl p-3 -m-3 transition-all duration-200"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+                <User className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h4 className="font-bold text-[#463B3B] text-base">
+                  Drivers
+                </h4>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {vehicle.drivers.length} {vehicle.drivers.length === 1 ? 'driver' : 'drivers'} assigned
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {vehicle.drivers.length > 0 && (
+                <span className="px-2.5 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">
+                  {vehicle.drivers.length}
+                </span>
+              )}
+              <span className="text-gray-400 group-hover:text-[#FDC700] transition-colors">
+                {expanded.drivers ? "▼" : "▶"}
+              </span>
+            </div>
+          </button>
+
+          {expanded.drivers && (
+            <div className="space-y-3">
+              {vehicle.drivers.length === 0 ? (
+                <div className="p-4 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 text-center">
+                  <User className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500 font-medium">No drivers assigned</p>
+                </div>
+              ) : (
+                vehicle.drivers.map((driver, index) => (
+                  <div
+                    key={driver.id}
+                    className="p-4 bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 hover:border-[#FDC700]/50 hover:shadow-md transition-all duration-200 group"
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="font-semibold text-gray-900 text-sm">
+                            {driver.driverName}
+                          </span>
+                          {(() => {
+                            if (driver.isPrimaryDriver) {
+                              return (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-semibold rounded-full shadow-sm flex-shrink-0">
+                                  <CheckCircle className="w-3 h-3" />
+                                  Primary
+                                </span>
+                              );
+                            }
+                            if (driver.isUpcoming) {
+                              return (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-blue-500 to-cyan-600 text-white text-xs font-semibold rounded-full shadow-sm flex-shrink-0">
+                                  <Calendar className="w-3 h-3" />
+                                  Upcoming
+                                </span>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
+                        {driver.driverEmail && (
+                          <p className="text-xs text-gray-600 mb-3 flex items-center gap-1.5">
+                            <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+                            {driver.driverEmail}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
+                          <Calendar className="w-3.5 h-3.5 text-[#D08700]" />
+                          <span className="font-medium">
+                            {formatUTCToLocalDate(driver.startTime)} -{" "}
+                            {driver.endTime ? formatUTCToLocalDate(driver.endTime) : "Ongoing"}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => onEditDriver(driver)}
+                        className="p-2.5 text-gray-400 hover:text-white hover:bg-gradient-to-br hover:from-[#FDC700] hover:to-[#D08700] rounded-lg transition-all duration-200 shadow-sm hover:shadow-md flex-shrink-0"
+                        title="Edit assignment dates"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Supervisors Section */}
+        <div>
+          <button
+            onClick={() => setExpanded(prev => ({ ...prev, supervisors: !prev.supervisors }))}
+            className="w-full flex items-center justify-between mb-4 text-left group hover:bg-gray-50 rounded-xl p-3 -m-3 transition-all duration-200"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+                <Users className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h4 className="font-bold text-[#463B3B] text-base">
+                  Supervisors
+                </h4>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {vehicle.supervisors.length} {vehicle.supervisors.length === 1 ? 'supervisor' : 'supervisors'} assigned
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {vehicle.supervisors.length > 0 && (
+                <span className="px-2.5 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
+                  {vehicle.supervisors.length}
+                </span>
+              )}
+              <span className="text-gray-400 group-hover:text-[#FDC700] transition-colors">
+                {expanded.supervisors ? "▼" : "▶"}
+              </span>
+            </div>
+          </button>
+
+          {expanded.supervisors && (
+            <div className="space-y-3">
+              {vehicle.supervisors.length === 0 ? (
+                <div className="p-4 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 text-center">
+                  <Users className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500 font-medium">No supervisors assigned</p>
+                </div>
+              ) : (
+                vehicle.supervisors.map((supervisor, index) => (
+                  <div
+                    key={supervisor.id}
+                    className="p-4 bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 hover:border-[#FDC700]/50 hover:shadow-md transition-all duration-200 group"
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="font-semibold text-gray-900 text-sm">
+                            {supervisor.supervisorName}
+                          </span>
+                          {(() => {
+                            if (supervisor.isPrimarySupervisor) {
+                              return (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-semibold rounded-full shadow-sm flex-shrink-0">
+                                  <CheckCircle className="w-3 h-3" />
+                                  Primary
+                                </span>
+                              );
+                            }
+                            if (supervisor.isUpcoming) {
+                              return (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-blue-500 to-cyan-600 text-white text-xs font-semibold rounded-full shadow-sm flex-shrink-0">
+                                  <Calendar className="w-3 h-3" />
+                                  Upcoming
+                                </span>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
+                        {supervisor.supervisorEmail && (
+                          <p className="text-xs text-gray-600 mb-3 flex items-center gap-1.5">
+                            <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+                            {supervisor.supervisorEmail}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
+                          <Calendar className="w-3.5 h-3.5 text-[#D08700]" />
+                          <span className="font-medium">
+                            {formatUTCToLocalDate(supervisor.startTime)} -{" "}
+                            {supervisor.endTime ? formatUTCToLocalDate(supervisor.endTime) : "Ongoing"}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => onEditSupervisor(supervisor)}
+                        className="p-2.5 text-gray-400 hover:text-white hover:bg-gradient-to-br hover:from-[#FDC700] hover:to-[#D08700] rounded-lg transition-all duration-200 shadow-sm hover:shadow-md flex-shrink-0"
+                        title="Edit assignment dates"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-// Date utility - Parse UTC datetime string and format to local date
-const formatUTCToLocalDate = (utcString: string): string => {
-  if (!utcString) return '';
-  
-  // Ensure the string is treated as UTC by adding 'Z' if missing
-  let dateStr = utcString.trim();
-  if (!dateStr.endsWith('Z') && (dateStr.includes('T') || dateStr.includes(' '))) {
-    dateStr = dateStr.replace(' ', 'T') + 'Z';
-  }
-  
-  const date = new Date(dateStr);
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const year = date.getUTCFullYear();
-  return `${day}/${month}/${year}`;
-};
+// Removed semester filtering helper - no longer needed
 
-const formatDateLocal = (date: Date): string => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
-// Convert local date string (YYYY-MM-DD) to UTC start of day (00:00:00)
-const localDateToUTCStart = (localDate: string): string => {
-  const [year, month, day] = localDate.split('-').map(Number);
-  const utcDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
-  return utcDate.toISOString();
-};
-
-// Convert local date string (YYYY-MM-DD) to UTC end of day (23:59:59)
-const localDateToUTCEnd = (localDate: string): string => {
-  const [year, month, day] = localDate.split('-').map(Number);
-  const utcDate = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
-  return utcDate.toISOString();
-};
-
-
-function StatusBadge({ status }: { status: DriverVehicleStatus }) {
-  return (
-    <span
-      className={`px-3 py-1 rounded-full text-sm font-medium ${
-        status === "Assigned"
-          ? "bg-green-100 text-green-800"
-          : "bg-gray-100 text-gray-800"
-      }`}
-    >
-      {status}
-    </span>
-  );
-}
-
-type SupervisorAssignmentRow = {
-  id: string;
-  supervisorId: string;
-  supervisorName: string;
-  supervisorEmail?: string;
-  supervisorPhone?: string;
-  vehicleId: string;
-  licensePlate: string;
-  startTime: string;
-  endTime?: string;
-  isActive: boolean;
-};
-
+// Main Component
 export default function DriverVehicleListClient() {
-  const [tab, setTab] = useState<"driver" | "supervisor">("driver");
-  const [allAssignments, setAllAssignments] = useState<AssignmentTableRow[]>([]);
-  const [supervisorAssignments, setSupervisorAssignments] = useState<SupervisorAssignmentRow[]>([]);
+  const [mounted, setMounted] = useState(false);
+  const [vehicles, setVehicles] = useState<VehicleWithAssignments[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  // Filters
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [sortBy, setSortBy] = useState<string>("startTime");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  
-  // Pagination
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [editModal, setEditModal] = useState<{
+    isOpen: boolean;
+    type: "driver" | "supervisor";
+    data: { id: string; name: string; startTime: string; endTime?: string } | null;
+  }>({ isOpen: false, type: "driver", data: null });
 
-  // Supervisor loading
-  const [supervisorLoading, setSupervisorLoading] = useState(false);
+  // Fetch all semesters to check if assignment spans multiple semesters
+  const { data: semestersData } = useQuery({
+    queryKey: ["allSemesters"],
+    queryFn: () => enrollmentSemesterSettingsService.getEnrollmentSemesterSettings({
+      perPage: 100,
+      sortBy: "semesterStartDate",
+      sortOrder: "asc",
+    }),
+  });
 
-  // Modals
-  const [showUpdateModal, setShowUpdateModal] = useState<string | null>(null);
-  const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
-  const [selectedAssignment, setSelectedAssignment] = useState<AssignmentTableRow | null>(null);
-  const [updateError, setUpdateError] = useState("");
-  
-  // Replacement Info Modal
-  const [showReplacementModal, setShowReplacementModal] = useState(false);
-  const [replacementInfo, setReplacementInfo] = useState<ReplacementInfoResponse | null>(null);
-  const [loadingReplacement, setLoadingReplacement] = useState(false);
-  
-  // Active replacement matches
-  const [replacementMatches, setReplacementMatches] = useState<ReplacementMatchDto[]>([]);
-  
-  // Success Toast
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  // Helper function to check if assignment spans multiple semesters
+  const checkAssignmentSemesters = useCallback((startTime: string, endTime: string | undefined) => {
+    if (!semestersData?.items || semestersData.items.length === 0) {
+      return { isInCurrentSemester: false, isInNextSemester: false };
+    }
+
+    const assignmentStart = new Date(startTime);
+    const assignmentEnd = endTime ? new Date(endTime) : new Date('9999-12-31');
+    const now = new Date();
+
+    // Find current semester (active or the one containing today)
+    const currentSemester = semestersData.items.find(s => {
+      const semStart = new Date(s.semesterStartDate);
+      const semEnd = new Date(s.semesterEndDate);
+      return s.isActive || (semStart <= now && semEnd >= now);
+    });
+
+    // Find next semester (after current one)
+    const nextSemester = currentSemester 
+      ? semestersData.items.find(s => {
+          const semStart = new Date(s.semesterStartDate);
+          const currentEnd = new Date(currentSemester.semesterEndDate);
+          return semStart > currentEnd && semStart <= assignmentEnd;
+        })
+      : null;
+
+    // Check if assignment is in current semester
+    const isInCurrentSemester = currentSemester 
+      ? assignmentStart <= new Date(currentSemester.semesterEndDate) && 
+        assignmentEnd >= new Date(currentSemester.semesterStartDate)
+      : false;
+
+    // Check if assignment spans to next semester
+    const isInNextSemester = nextSemester 
+      ? assignmentEnd >= new Date(nextSemester.semesterStartDate)
+      : false;
+
+    return { isInCurrentSemester, isInNextSemester };
+  }, [semestersData]);
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Debounce search
   useEffect(() => {
@@ -152,827 +428,437 @@ export default function DriverVehicleListClient() {
     setPage(1);
   }, [debouncedSearch]);
 
-  // Fetch data from API - extracted as reusable function
-  const fetchAssignments = useCallback(async () => {
+  // Fetch vehicles with assignments
+  const fetchVehiclesWithAssignments = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await driverVehicleService.getAssignments({
+
+      // Fetch all vehicles
+      const vehiclesResponse = await vehicleService.getVehicles({
         page: 1,
-        perPage: 1000, // Get all for client-side filtering
-        sortBy: 'startTimeUtc',
-        sortOrder: 'desc',
+        perPage: 1000,
+        sortBy: "licensePlate",
+        sortOrder: "asc",
       });
-      
-      if (response.success && response.data) {
-        const mapped: AssignmentTableRow[] = response.data.map((item) => ({
-          id: item.id,
-          driverId: item.driverId,
-          driverName: item.driver?.fullName || "Unknown Driver",
-          vehicleId: item.vehicleId,
-          licensePlate: item.vehicle?.licensePlate || "Unknown Vehicle",
-          startTime: item.startTimeUtc,
-          endTime: item.endTimeUtc,
-          status: item.status === 1 ? "Assigned" : "Unassigned",
-          isPrimaryDriver: item.isPrimaryDriver,
-          driverEmail: item.driver?.email,
-        }));
-        setAllAssignments(mapped);
-      }
-    } catch (error) {
-      console.error("Error fetching assignments:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
-  // Initial fetch
-  useEffect(() => {
-    fetchAssignments();
-  }, [fetchAssignments]);
+       const vehicleList = vehiclesResponse.vehicles || vehiclesResponse.data || [];
 
-  const fetchSupervisorAssignments = useCallback(async () => {
-    try {
-      setSupervisorLoading(true);
-      const supervisors: SupervisorResponse[] = await getAllSupervisors();
-      const rows: SupervisorAssignmentRow[] = [];
+       // Fetch assignments for each vehicle
+       // We get ALL assignments regardless of date - including upcoming ones
+       const vehiclesWithAssignments = await Promise.all(
+         vehicleList.map(async (vehicle: VehicleDto) => {
+           try {
+             // Fetch ALL driver assignments - no date filter, no isActive filter
+             // This shows all assignments including future ones
+             const driversResponse = await driverVehicleService.getAssignments({
+               vehicleId: vehicle.id,
+               // Don't filter by isActive - we want ALL assignments (active, upcoming, past)
+               isActive: undefined,
+               isUpcoming: undefined,
+               page: 1,
+               perPage: 1000,
+             });
 
-      await Promise.all(
-        supervisors.map(async (s) => {
-          try {
-            const res = await apiService.get<{
-              data?: { 
-                data?: Array<{ data?: Partial<SupervisorAssignmentRow> } & Partial<SupervisorAssignmentRow>>; 
-                Data?: Array<{ data?: Partial<SupervisorAssignmentRow> } & Partial<SupervisorAssignmentRow>>;
-              };
-              Data?: { 
-                Data?: Array<{ data?: Partial<SupervisorAssignmentRow> } & Partial<SupervisorAssignmentRow>>;
-              };
-            }>(
-              `/SupervisorVehicle/supervisor/${s.id}/assignments`,
-              {
-                isActive: true,
-                page: 1,
-                perPage: 100,
-              }
+            console.log('Driver response for vehicle', vehicle.licensePlate, ':', driversResponse);
+
+            // Fetch driver details for each assignment to get actual names
+            const allDrivers: DriverAssignment[] = await Promise.all(
+              (driversResponse.data || []).map(async (item: DriverAssignmentApiItem) => {
+                let driverName = "Unknown Driver";
+                let driverEmail = item.driver?.email || "";
+
+                try {
+                  // Fetch actual driver details from Driver API
+                  const driverDetailsResponse = await apiService.get<{
+                    id: string;
+                    email: string;
+                    firstName: string;
+                    lastName: string;
+                    phoneNumber: string;
+                    gender: number;
+                    dateOfBirth: string;
+                    address: string;
+                  }>(`/Driver/${item.driverId}`);
+
+                  if (driverDetailsResponse) {
+                    const firstName = driverDetailsResponse.firstName || "";
+                    const lastName = driverDetailsResponse.lastName || "";
+                    driverName = `${firstName} ${lastName}`.trim() || driverDetailsResponse.email?.split('@')[0] || "Unknown Driver";
+                    driverEmail = driverDetailsResponse.email || driverEmail;
+                  }
+                } catch (error) {
+                  console.error(`Error fetching driver details for ${item.driverId}:`, error);
+                  // Fallback to email username if API call fails
+                  if (driverEmail) {
+                    driverName = driverEmail.split('@')[0];
+                  }
+                }
+
+                 const startTime = item.startTimeUtc || item.StartTimeUtc || "";
+                 const endTime = item.endTimeUtc || item.EndTimeUtc;
+                 const now = new Date();
+                 const assignmentStart = startTime ? new Date(startTime) : new Date();
+                 
+                 // Check if assignment hasn't started yet
+                 const isNotStarted = startTime ? assignmentStart > now : false;
+                 
+                 // Check semester spans
+                 const { isInCurrentSemester, isInNextSemester } = checkAssignmentSemesters(startTime, endTime);
+                 
+                 // Logic: NEVER show both Primary and Upcoming at the same time
+                 // If assignment touches next semester (even just 1 day) → only show Primary, not Upcoming
+                 // Upcoming only shows if: not started AND not touching next semester AND not primary
+                 const touchesNextSemester = isInNextSemester;
+                 const isUpcoming = isNotStarted && !touchesNextSemester; // Don't show upcoming if touches next semester
+
+                 return {
+                   id: item.id || item.Id || "",
+                   driverId: item.driverId || item.DriverId || "",
+                   driverName: driverName,
+                   driverEmail: driverEmail,
+                   isPrimaryDriver: item.isPrimaryDriver || item.IsPrimaryDriver || false,
+                   startTime: startTime || "",
+                   endTime: endTime,
+                   status: item.status === 1 ? "Assigned" : "Unassigned",
+                   isUpcoming: isUpcoming,
+                   isInCurrentSemester: isInCurrentSemester,
+                   isInNextSemester: isInNextSemester,
+                 };
+              })
             );
 
-            const list: Array<{ data?: Partial<SupervisorAssignmentRow> } & Partial<SupervisorAssignmentRow> & { id?: string; supervisorId?: string; supervisorName?: string; supervisorEmail?: string; supervisorPhone?: string; vehicleId?: string; vehiclePlate?: string; startTimeUtc?: string; endTimeUtc?: string; isActive?: boolean }> =
-              res?.data?.data ??
-              res?.data?.Data ??
-              res?.Data?.Data ??
-              [];
+             // Show ALL drivers - no filtering by semester or date
+             const drivers: DriverAssignment[] = allDrivers;
 
-            list.forEach((item) => {
-              const dto = (item.data ?? item) as { id?: string; supervisorId?: string; supervisorName?: string; supervisorEmail?: string; supervisorPhone?: string; vehicleId?: string; vehiclePlate?: string; startTimeUtc?: string; endTimeUtc?: string; isActive?: boolean };
+            // Fetch supervisor assignments
+            let allSupervisors: SupervisorAssignment[] = [];
+            try {
+              // Fetch ALL supervisor assignments (not just active ones)
+              const supervisorsResponse = await apiService.get<{
+                data?: Array<{
+                  id?: string;
+                  supervisorId?: string;
+                  supervisorName?: string;
+                  supervisorEmail?: string;
+                  vehicleId?: string;
+                  startTimeUtc?: string;
+                  endTimeUtc?: string;
+                  isActive?: boolean;
+                }>;
+              }>(`/VehicleAssignment/vehicle/${vehicle.id}/supervisors`);
 
-              rows.push({
-                id: dto.id ?? '',
-                supervisorId: dto.supervisorId ?? '',
-                supervisorName: dto.supervisorName ?? '',
-                supervisorEmail: dto.supervisorEmail,
-                supervisorPhone: dto.supervisorPhone,
-                vehicleId: dto.vehicleId ?? '',
-                licensePlate: dto.vehiclePlate ?? '',
-                startTime: dto.startTimeUtc ?? '',
-                endTime: dto.endTimeUtc,
-                isActive: dto.isActive ?? true,
-              });
-            });
+              console.log('Supervisor response for vehicle', vehicle.licensePlate, ':', supervisorsResponse);
+
+               // First, map all supervisors with basic info
+               const supervisorsWithStatus = (supervisorsResponse.data || []).map((item) => {
+                 const supervisorName = item.supervisorName ||
+                   item.supervisorEmail?.split('@')[0] ||
+                   "Unknown Supervisor";
+                 
+                 const startTime = item.startTimeUtc || "";
+                 const endTime = item.endTimeUtc;
+                 const now = new Date();
+                 const assignmentStart = startTime ? new Date(startTime) : new Date();
+                 
+                 // Check if assignment hasn't started yet
+                 const isNotStarted = startTime ? assignmentStart > now : false;
+                 
+                 // Check semester spans
+                 const { isInCurrentSemester, isInNextSemester } = checkAssignmentSemesters(startTime, endTime);
+                 
+                 // Logic: NEVER show both Primary and Upcoming at the same time
+                 // If assignment touches next semester (even just 1 day) → only show Primary, not Upcoming
+                 // Upcoming only shows if: not started AND not touching next semester AND not primary
+                 const endTimeDate = endTime ? new Date(endTime) : null;
+                 const isCurrentlyActive = !isNotStarted && (endTimeDate === null || endTimeDate > now);
+                 const touchesNextSemester = isInNextSemester;
+                 const isUpcoming = isNotStarted && !touchesNextSemester; // Don't show upcoming if touches next semester
+
+                 return {
+                   id: item.id || "",
+                   supervisorId: item.supervisorId || "",
+                   supervisorName: supervisorName,
+                   supervisorEmail: item.supervisorEmail,
+                   startTime: startTime,
+                   endTime: item.endTimeUtc,
+                   isActive: item.isActive ?? true,
+                   isUpcoming: isUpcoming,
+                   isPrimarySupervisor: false, // Will be set below
+                   isCurrentlyActive: isCurrentlyActive, // For sorting
+                   isInCurrentSemester: isInCurrentSemester,
+                   isInNextSemester: isInNextSemester,
+                 };
+               });
+               
+               // Determine primary supervisor: first active one, or first one if none are active
+               if (supervisorsWithStatus.length > 0) {
+                 // Sort: active ones first, then by start time
+                 const sorted = [...supervisorsWithStatus].sort((a, b) => {
+                   if (a.isCurrentlyActive !== b.isCurrentlyActive) {
+                     return a.isCurrentlyActive ? -1 : 1;
+                   }
+                   return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
+                 });
+                 
+                 // Mark the first one as primary
+                 const primaryId = sorted[0].id;
+                 allSupervisors = supervisorsWithStatus.map(s => ({
+                   id: s.id,
+                   supervisorId: s.supervisorId,
+                   supervisorName: s.supervisorName,
+                   supervisorEmail: s.supervisorEmail,
+                   startTime: s.startTime,
+                   endTime: s.endTime,
+                   isActive: s.isActive,
+                   isUpcoming: s.isUpcoming,
+                   isPrimarySupervisor: s.id === primaryId,
+                   isInCurrentSemester: s.isInCurrentSemester,
+                   isInNextSemester: s.isInNextSemester,
+                 }));
+               } else {
+                 allSupervisors = [];
+               }
+
+               // Show ALL supervisors - no filtering by semester or date
+               const supervisors: SupervisorAssignment[] = allSupervisors;
+
+              return {
+                id: vehicle.id,
+                licensePlate: vehicle.licensePlate,
+                capacity: vehicle.capacity,
+                status: vehicle.status,
+                drivers,
+                supervisors,
+              };
+            } catch (err) {
+              console.error(`Error fetching supervisors for vehicle ${vehicle.id}:`, err);
+              return {
+                id: vehicle.id,
+                licensePlate: vehicle.licensePlate,
+                capacity: vehicle.capacity,
+                status: vehicle.status,
+                drivers,
+                supervisors: [],
+              };
+            }
           } catch (err) {
-            console.error("Error fetching supervisor assignments for", s.id, err);
+            console.error(`Error fetching assignments for vehicle ${vehicle.id}:`, err);
+            return {
+              id: vehicle.id,
+              licensePlate: vehicle.licensePlate,
+              capacity: vehicle.capacity,
+              status: vehicle.status,
+              drivers: [],
+              supervisors: [],
+            };
           }
         })
       );
 
-      setSupervisorAssignments(rows);
+      setVehicles(vehiclesWithAssignments);
     } catch (error) {
-      console.error("Error fetching supervisor assignments:", error);
-      setSupervisorAssignments([]);
+      console.error("Error fetching vehicles:", error);
     } finally {
-      setSupervisorLoading(false);
+      setLoading(false);
     }
-  }, []);
+   }, [checkAssignmentSemesters]); // Include checkAssignmentSemesters dependency
 
+  // Initial fetch
   useEffect(() => {
-    if (tab === "supervisor") {
-      fetchSupervisorAssignments();
-    }
-  }, [tab, fetchSupervisorAssignments]);
+    fetchVehiclesWithAssignments();
+  }, [fetchVehiclesWithAssignments]);
 
-  // Fetch replacement matches when component mounts
-  useEffect(() => {
-    const fetchReplacementMatches = async () => {
-      try {
-        const matches = await driverLeaveRequestService.getActiveReplacementMatches();
-        setReplacementMatches(matches);
-      } catch (error) {
-        console.error("Error fetching replacement matches:", error);
-      }
-    };
-    
-    fetchReplacementMatches();
-  }, []);
-
-  // Helper function to check if assignment has active replacement
-  const hasActiveReplacement = useCallback((assignment: AssignmentTableRow): boolean => {
-    const assignmentStart = new Date(assignment.startTime);
-    const assignmentEnd = assignment.endTime ? new Date(assignment.endTime) : new Date('2099-12-31');
-    
-    return replacementMatches.some(match => {
-      const leaveStart = new Date(match.startDate);
-      const leaveEnd = new Date(match.endDate);
-      
-      // Check:
-      // 1. Driver match
-      // 2. Leave period overlaps with assignment period
-      const driverMatch = match.driverId === assignment.driverId;
-      const dateOverlap = leaveStart <= assignmentEnd && leaveEnd >= assignmentStart;
-      
-      return driverMatch && dateOverlap;
+  // Edit assignment handlers
+  const handleEditDriver = (driver: DriverAssignment) => {
+    setEditModal({
+      isOpen: true,
+      type: "driver",
+      data: {
+        id: driver.id,
+        name: driver.driverName,
+        startTime: driver.startTime,
+        endTime: driver.endTime,
+      },
     });
-  }, [replacementMatches]);
+  };
 
-  // Client-side filtering - driver
-  const filteredAssignments = useMemo(() => {
-    let filtered = allAssignments;
-
-    // Status filter
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((a) => a.status === statusFilter);
-    }
-
-    // Search filter
-    if (debouncedSearch) {
-      const searchLower = debouncedSearch.toLowerCase();
-      filtered = filtered.filter(
-        (a) =>
-          a.driverName.toLowerCase().includes(searchLower) ||
-          a.licensePlate.toLowerCase().includes(searchLower) ||
-          a.driverEmail?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Sort
-    filtered = [...filtered].sort((a, b) => {
-      let comparison = 0;
-      switch (sortBy) {
-        case "driverName":
-          comparison = a.driverName.localeCompare(b.driverName);
-          break;
-        case "licensePlate":
-          comparison = a.licensePlate.localeCompare(b.licensePlate);
-          break;
-        case "startTime":
-          comparison =
-            new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
-          break;
-        case "status":
-          comparison = a.status.localeCompare(b.status);
-          break;
-        default:
-          comparison = 0;
-      }
-      return sortOrder === "asc" ? comparison : -comparison;
+  const handleEditSupervisor = (supervisor: SupervisorAssignment) => {
+    setEditModal({
+      isOpen: true,
+      type: "supervisor",
+      data: {
+        id: supervisor.id,
+        name: supervisor.supervisorName,
+        startTime: supervisor.startTime,
+        endTime: supervisor.endTime,
+      },
     });
+  };
 
-    return filtered;
-  }, [allAssignments, statusFilter, debouncedSearch, sortBy, sortOrder]);
-
-  // Client-side filtering - supervisor
-  const filteredSupervisorAssignments = useMemo(() => {
-    let filtered = supervisorAssignments;
-
-    if (debouncedSearch) {
-      const searchLower = debouncedSearch.toLowerCase();
-      filtered = filtered.filter(
-        (a) =>
-          a.supervisorName.toLowerCase().includes(searchLower) ||
-          a.licensePlate.toLowerCase().includes(searchLower) ||
-          a.supervisorEmail?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    filtered = [...filtered].sort((a, b) => {
-      let comparison = 0;
-      switch (sortBy) {
-        case "driverName":
-          comparison = a.supervisorName.localeCompare(b.supervisorName);
-          break;
-        case "licensePlate":
-          comparison = a.licensePlate.localeCompare(b.licensePlate);
-          break;
-        case "startTime":
-          comparison =
-            new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
-          break;
-        default:
-          comparison = 0;
-      }
-      return sortOrder === "asc" ? comparison : -comparison;
-    });
-
-    return filtered;
-  }, [supervisorAssignments, debouncedSearch, sortBy, sortOrder]);
-
-  // Pagination
-  const baseItems = tab === "driver" 
-    ? (filteredAssignments as Array<AssignmentTableRow | SupervisorAssignmentRow>)
-    : (filteredSupervisorAssignments as Array<AssignmentTableRow | SupervisorAssignmentRow>);
-  const totalItems = baseItems.length;
-  const totalPagesCount = Math.max(1, Math.ceil(totalItems / PER_PAGE));
-  const paginatedAssignments = useMemo(() => {
-    const start = (page - 1) * PER_PAGE;
-    return baseItems.slice(start, start + PER_PAGE);
-  }, [baseItems, page]);
-
-  useEffect(() => {
-    setTotalPages(totalPagesCount);
-  }, [totalPagesCount]);
-
-  const handlePageChange = useCallback((newPage: number) => {
-    setPage(newPage);
-  }, []);
-
-  const handleSort = useCallback((field: string) => {
-    if (sortBy === field) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortBy(field);
-      setSortOrder("asc");
-    }
-  }, [sortBy, sortOrder]);
-
-  // Fetch replacement info
-  const fetchReplacementInfo = async (driverId: string) => {
-    setLoadingReplacement(true);
-    setShowReplacementModal(true);
-    setReplacementInfo(null);
-    
+  const handleSaveAssignment = async (id: string, startTimeUtc: string, endTimeUtc?: string) => {
     try {
-      const data = await driverLeaveRequestService.getReplacementInfo(driverId);
-      setReplacementInfo(data);
+      if (editModal.type === "driver") {
+        // Update driver assignment
+        await driverVehicleService.updateAssignment(id, {
+          startTimeUtc,
+          endTimeUtc,
+        });
+      } else {
+        // Update supervisor assignment
+        await vehicleService.updateSupervisorAssignment(id, {
+          startTimeUtc,
+          endTimeUtc,
+        });
+      }
+
+      // Refresh data
+      await fetchVehiclesWithAssignments();
+      setEditModal({ isOpen: false, type: "driver", data: null });
     } catch (error) {
-      console.error("Error fetching replacement info:", error);
-      setReplacementInfo(null);
-    } finally {
-      setLoadingReplacement(false);
+      const errorMessage = error instanceof Error ? error.message : "Failed to update assignment";
+      throw new Error(errorMessage);
     }
   };
 
+  // Filter vehicles by search
+  const filteredVehicles = useMemo(() => {
+    if (!debouncedSearch) return vehicles;
+    const searchLower = debouncedSearch.toLowerCase();
+    return vehicles.filter((v) =>
+      v.licensePlate.toLowerCase().includes(searchLower)
+    );
+  }, [vehicles, debouncedSearch]);
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filteredVehicles.length / PER_PAGE));
+  const paginatedVehicles = useMemo(() => {
+    const start = (page - 1) * PER_PAGE;
+    return filteredVehicles.slice(start, start + PER_PAGE);
+  }, [filteredVehicles, page]);
+
+  // Prevent hydration mismatch - don't render until mounted
+  if (!mounted) {
+    return (
+      <div className="w-full">
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-[#fad23c] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full">
-      <h1 className="text-3xl font-bold text-[#463B3B] mb-2">
-        Driver/Supervisor Assignments
-      </h1>
-      <p className="text-[#6B7280] mb-8">
-        Manage driver and supervisor vehicle assignments in one place.
-      </p>
-
-      {/* Tabs */}
-      <div className="inline-flex rounded-full border border-gray-200 bg-white p-1 shadow-sm mb-6">
-        <button
-          type="button"
-          onClick={() => setTab("driver")}
-          className={`px-4 py-2 text-sm font-semibold rounded-full transition ${
-            tab === "driver" 
-              ? "bg-[#463B3B] text-white" 
-              : "text-[#463B3B] hover:bg-gray-100"
-          }`}
-        >
-          Driver Assignments
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("supervisor")}
-          className={`px-4 py-2 text-sm font-semibold rounded-full transition ${
-            tab === "supervisor" 
-              ? "bg-[#463B3B] text-white" 
-              : "text-[#463B3B] hover:bg-gray-100"
-          }`}
-        >
-          Supervisor Assignments
-        </button>
-      </div>
-
-      {/* Filters */}
-      <div className="sticky top-16 z-40 bg-white rounded-2xl shadow-lg p-4 border border-gray-100 mb-6">
-        <div className="flex flex-col lg:flex-row gap-3 items-stretch">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search by driver name, vehicle..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-full pl-9 pr-3 py-2 text-xs border border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-200"
-              autoComplete="off"
-            />
-          </div>
-          <div className="w-36">
-            <Select
-              value={statusFilter}
-              options={
-                tab === "driver"
-                  ? [
-                      { value: "all", label: "All Status" },
-                      { value: "Assigned", label: "Assigned" },
-                      { value: "Unassigned", label: "Unassigned" },
-                    ]
-                  : [
-                      { value: "all", label: "All Status" },
-                      { value: "Assigned", label: "Active" },
-                    ]
-              }
-              onChange={(val) => {
-                setStatusFilter(val);
-                setPage(1);
-              }}
-              className="py-2 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-[#fad23c] focus:border-transparent text-xs"
-            />
+      {/* Header Section */}
+      <div className="mb-6">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-4 mb-3">
+              <div className="w-14 h-14 bg-gradient-to-br from-[#FDC700] to-[#D08700] rounded-2xl flex items-center justify-center shadow-lg">
+                <Users className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-[#463B3B] mb-1">
+                  Vehicle Assignments
+                </h1>
+                <p className="text-[#6B7280] text-sm">
+                  View drivers and supervisors assigned to each vehicle
+                </p>
+              </div>
+            </div>
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FEFCE8] to-[#FFF6D8] rounded-xl border border-[#FDC700]/20">
+              <Calendar className="w-4 h-4 text-[#D08700]" />
+              <p className="text-sm text-[#D08700] font-semibold">
+                Showing all assignments (including upcoming ones)
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Table */}
-      <Card className="overflow-hidden bg-white rounded-2xl shadow-lg border border-gray-100">
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="bg-[#FEFCE8] border-b border-gray-200">
-              <tr>
-                <th
-                  className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B] cursor-pointer hover:bg-[#FFF085] transition-colors"
-                  onClick={() => handleSort("driverName")}
-                >
-                  <div className="flex items-center gap-2">
-                    {tab === "driver" ? "Driver" : "Supervisor"}
-                    {sortBy === "driverName" && (
-                      <span>{sortOrder === "asc" ? "↑" : "↓"}</span>
-                    )}
-                  </div>
-                </th>
-                <th
-                  className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B] cursor-pointer hover:bg-[#FFF085] transition-colors"
-                  onClick={() => handleSort("licensePlate")}
-                >
-                  <div className="flex items-center gap-2">
-                    Vehicle
-                    {sortBy === "licensePlate" && (
-                      <span>{sortOrder === "asc" ? "↑" : "↓"}</span>
-                    )}
-                  </div>
-                </th>
-                <th
-                  className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B] cursor-pointer hover:bg-[#FFF085] transition-colors"
-                  onClick={() => handleSort("startTime")}
-                >
-                  <div className="flex items-center gap-2">
-                    Start Date
-                    {sortBy === "startTime" && (
-                      <span>{sortOrder === "asc" ? "↑" : "↓"}</span>
-                    )}
-                  </div>
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">
-                  End Date
-                </th>
-                <th
-                  className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B] cursor-pointer hover:bg-[#FFF085] transition-colors"
-                  onClick={() => handleSort("status")}
-                >
-                  <div className="flex items-center gap-2">
-                    Status
-                    {sortBy === "status" && (
-                      <span>{sortOrder === "asc" ? "↑" : "↓"}</span>
-                    )}
-                  </div>
-                </th>
-                {tab === "driver" && (
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">
-                    Primary
-                  </th>
-                )}
-                {tab === "driver" && (
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#463B3B]">
-                    Actions
-                  </th>
-                )}
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {loading && tab === "driver" ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                    Loading assignments...
-                  </td>
-                </tr>
-              ) : supervisorLoading && tab === "supervisor" ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                    Loading supervisor assignments...
-                  </td>
-                </tr>
-              ) : paginatedAssignments.length === 0 ? (
-                <tr>
-                  <td colSpan={tab === "driver" ? 7 : 5} className="px-6 py-8 text-center text-gray-500">
-                    No assignments found
-                    {searchTerm && ` matching "${searchTerm}"`}
-                  </td>
-                </tr>
-              ) : (
-                tab === "driver"
-                  ? paginatedAssignments.map((assignment) => {
-                      const driverAssignment = assignment as AssignmentTableRow;
-                      return (
-                      <tr key={driverAssignment.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {driverAssignment.driverName}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {driverAssignment.licensePlate}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {formatUTCToLocalDate(driverAssignment.startTime)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {driverAssignment.endTime
-                            ? formatUTCToLocalDate(driverAssignment.endTime)
-                            : "Ongoing"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <StatusBadge status={driverAssignment.status} />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <div className="flex items-center justify-center">
-                            {driverAssignment.isPrimaryDriver ? (
-                              <CheckCircle className="w-5 h-5 text-green-600" />
-                            ) : (
-                              <span className="text-gray-400">-</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <div className="flex items-center gap-2">
-                            {/* Info button - always occupy space to prevent layout shift */}
-                            {hasActiveReplacement(driverAssignment) ? (
-                              <button
-                                onClick={() =>
-                                  fetchReplacementInfo(driverAssignment.driverId)
-                                }
-                                className="p-2 text-[#fad23c] hover:bg-[#FFF085] rounded transition-colors duration-200"
-                                title="Replacement Info"
-                              >
-                                <Info className="w-4 h-4" />
-                              </button>
-                            ) : (
-                              <div className="w-8 h-8" /> // Empty space to maintain layout
-                            )}
-                            <button
-                              onClick={() => {
-                                setSelectedAssignment(driverAssignment);
-                                setShowUpdateModal(driverAssignment.id);
-                                setUpdateError("");
-                              }}
-                              className="p-2 text-[#463B3B] hover:text-[#fad23c] transition-colors duration-200"
-                              title="Edit"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                setSelectedAssignment(driverAssignment);
-                                setShowDeleteModal(driverAssignment.id);
-                              }}
-                              className="p-2 text-[#463B3B] hover:text-red-600 transition-colors duration-200"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                      );
-                    })
-                  : paginatedAssignments.map((assignment) => {
-                      const supervisorAssignment = assignment as SupervisorAssignmentRow;
-                      return (
-                      <tr key={supervisorAssignment.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {supervisorAssignment.supervisorName}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {supervisorAssignment.licensePlate}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {formatUTCToLocalDate(supervisorAssignment.startTime)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {supervisorAssignment.endTime
-                            ? formatUTCToLocalDate(supervisorAssignment.endTime)
-                            : "Ongoing"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <span className="text-xs text-gray-400">
-                            Managed in Vehicle page
-                          </span>
-                        </td>
-                      </tr>
-                      );
-                    })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-
-      {/* Pagination */}
-      {paginatedAssignments.length > 0 && (
-        <div className="mt-6 flex justify-center">
-          <Pagination
-            currentPage={page}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
+      {/* Search */}
+      <div className="sticky top-16 z-40 bg-white rounded-2xl shadow-lg p-5 border border-gray-100 mb-6 backdrop-blur-sm bg-white/95">
+        <div className="relative">
+          <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+            <Search className="w-5 h-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search by vehicle license plate..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-12 pr-4 py-3.5 text-sm border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#FDC700] focus:border-[#FDC700] transition-all duration-200 bg-gray-50/50 hover:bg-white"
+            autoComplete="off"
           />
         </div>
-      )}
+      </div>
 
-      {/* Results Info */}
-      {!loading && totalItems > 0 && (
-        <div className="mt-4 text-center text-sm text-[#6B7280]">
-          Showing {((page - 1) * PER_PAGE) + 1} to{" "}
-          {Math.min(page * PER_PAGE, totalItems)} of {totalItems} assignments
-        </div>
-      )}
-
-      {/* Update Modal */}
-      {showUpdateModal && selectedAssignment && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            <h3 className="text-lg font-semibold text-[#463B3B] mb-4">Update Assignment</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Driver: <strong>{selectedAssignment.driverName}</strong> - Vehicle: <strong>{selectedAssignment.licensePlate}</strong>
-            </p>
-
-            {/* Error Message */}
-            {updateError && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-800 text-sm font-medium">{updateError}</p>
+      {/* Loading State */}
+      {(() => {
+        if (loading) {
+          return (
+            <div className="flex items-center justify-center py-20">
+              <div className="text-center">
+                <div className="w-16 h-16 border-4 border-[#fad23c] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading vehicles...</p>
               </div>
-            )}
-            
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Start Date
-                </label>
-                <input
-                  id="update-start-date"
-                  type="date"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
-                  defaultValue={selectedAssignment.startTime ? formatDateLocal(new Date(selectedAssignment.startTime)) : ''}
-                  min={(() => {
-                    const tomorrow = new Date();
-                    tomorrow.setDate(tomorrow.getDate() + 1);
-                    return formatDateLocal(tomorrow);
-                  })()}
-                  onChange={() => setUpdateError("")}
+            </div>
+          );
+        }
+        if (paginatedVehicles.length === 0) {
+          return (
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-12 text-center">
+              <p className="text-gray-500">
+                {searchTerm ? `No vehicles found matching "${searchTerm}"` : "No vehicles found"}
+              </p>
+            </div>
+          );
+        }
+        return (
+          <>
+            {/* Vehicle Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
+              {paginatedVehicles.map((vehicle) => (
+                <VehicleCard
+                  key={vehicle.id}
+                  vehicle={vehicle}
+                  onEditDriver={handleEditDriver}
+                  onEditSupervisor={handleEditSupervisor}
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  End Date (Optional)
-                </label>
-                <input
-                  id="update-end-date"
-                  type="date"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
-                  defaultValue={selectedAssignment.endTime ? formatDateLocal(new Date(selectedAssignment.endTime)) : ''}
-                  min={(() => {
-                    const tomorrow = new Date();
-                    tomorrow.setDate(tomorrow.getDate() + 1);
-                    return formatDateLocal(tomorrow);
-                  })()}
-                  onChange={() => setUpdateError("")}
-                />
-                <p className="text-xs text-gray-500 mt-1">Leave empty for ongoing assignment</p>
-              </div>
+              ))}
             </div>
 
-            <div className="flex gap-3 justify-end">
-              <button 
-                onClick={() => {
-                  setShowUpdateModal(null);
-                  setSelectedAssignment(null);
-                  setUpdateError("");
-                }} 
-                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={async () => {
-                  try {
-                    setUpdateError("");
-                    const startDateInput = (document.getElementById('update-start-date') as HTMLInputElement)?.value;
-                    const endDateInput = (document.getElementById('update-end-date') as HTMLInputElement)?.value;
-                    
-                    if (!startDateInput) {
-                      setUpdateError("Please select a start date");
-                      return;
-                    }
-
-                    await driverVehicleService.updateAssignment(selectedAssignment.id, {
-                      startTimeUtc: localDateToUTCStart(startDateInput),
-                      endTimeUtc: endDateInput ? localDateToUTCEnd(endDateInput) : undefined
-                    });
-
-                    setShowUpdateModal(null);
-                    setSelectedAssignment(null);
-                    setUpdateError("");
-                    setSuccessMessage("Assignment updated successfully!");
-                    // Refresh data without reloading page
-                    await fetchAssignments();
-                  } catch (error) {
-                    console.error("Error updating assignment:", error);
-                    setUpdateError(error instanceof Error ? error.message : "Unknown error");
-                  }
-                }} 
-                className="px-4 py-2 bg-[#fad23c] text-[#463B3B] rounded-lg hover:bg-[#FFF085] transition-colors duration-200 font-medium"
-              >
-                Update
-              </button>
+            {/* Pagination */}
+            {totalPages > 1 && (
+            <div className="flex justify-center">
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+              />
             </div>
+          )}
+
+          {/* Results Info */}
+          <div className="mt-4 text-center text-sm text-[#6B7280]">
+            Showing {((page - 1) * PER_PAGE) + 1} to{" "}
+            {Math.min(page * PER_PAGE, filteredVehicles.length)} of {filteredVehicles.length} vehicles
           </div>
-        </div>
-      )}
+          </>
+        );
+      })()}
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && selectedAssignment && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
-            <h3 className="text-lg font-semibold text-[#463B3B] mb-4">Delete Assignment</h3>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to delete this assignment for <strong>{selectedAssignment.driverName}</strong> on vehicle <strong>{selectedAssignment.licensePlate}</strong>?
-              This action cannot be undone.
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => {
-                  setShowDeleteModal(null);
-                  setSelectedAssignment(null);
-                }}
-                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={async () => {
-                  try {
-                    await driverVehicleService.deleteAssignment(selectedAssignment.id);
-                    setShowDeleteModal(null);
-                    setSelectedAssignment(null);
-                    setSuccessMessage("Assignment deleted successfully!");
-                    // Refresh data without reloading page
-                    await fetchAssignments();
-                  } catch (error) {
-                    console.error("Error deleting assignment:", error);
-                    setSuccessMessage(null);
-                    alert("Failed to delete assignment: " + (error instanceof Error ? error.message : "Unknown error"));
-                  }
-                }}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Replacement Info Modal */}
-      {showReplacementModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-[#463B3B]">Replacement Information</h3>
-              <button
-                onClick={() => {
-                  setShowReplacementModal(false);
-                  setReplacementInfo(null);
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {loadingReplacement ? (
-              <div className="py-12 text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-[#fad23c] border-t-transparent"></div>
-                <p className="mt-4 text-[#6B7280]">Loading replacement information...</p>
-              </div>
-            ) : replacementInfo ? (
-              <div className="space-y-4">
-                <div className="bg-[#FFF085] border border-[#fad23c] rounded-xl p-4">
-                  <div className="flex items-start gap-3">
-                    <Info className="w-5 h-5 text-[#463B3B] mt-0.5" />
-                    <div>
-                      <p className="font-medium text-[#463B3B]">This driver is currently on leave with a replacement</p>
-                      <p className="text-sm text-[#463B3B] mt-1 opacity-80">Someone is temporarily replacing this driver</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">Driver On Leave</label>
-                    <p className="mt-1 text-sm font-semibold text-gray-900">{replacementInfo.driverName}</p>
-                    <p className="text-xs text-gray-600 mt-1">{replacementInfo.driverEmail}</p>
-                    {replacementInfo.driverPhoneNumber && (
-                      <p className="text-xs text-gray-600">{replacementInfo.driverPhoneNumber}</p>
-                    )}
-                  </div>
-
-                  <div className="bg-[#FFF085] rounded-xl p-4 border border-[#fad23c]">
-                    <label className="text-xs font-medium text-[#463B3B] uppercase tracking-wide">Replacement Driver</label>
-                    {replacementInfo.suggestedReplacementDriverName ? (
-                      <p className="mt-1 text-sm font-semibold text-[#463B3B]">{replacementInfo.suggestedReplacementDriverName}</p>
-                    ) : (
-                      <p className="mt-1 text-sm text-gray-500">Not assigned</p>
-                    )}
-                  </div>
-
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">Leave Type</label>
-                    <p className="mt-1 text-sm font-semibold text-gray-900">
-                      {replacementInfo.leaveType === 0 ? 'Annual Leave' : 
-                       replacementInfo.leaveType === 1 ? 'Sick Leave' : 
-                       replacementInfo.leaveType === 2 ? 'Emergency' : 'Other'}
-                    </p>
-                  </div>
-
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">Replacement Period</label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      <span className="font-medium">From:</span> {formatUTCToLocalDate(replacementInfo.startDate)}
-                    </p>
-                    <p className="text-sm text-gray-900">
-                      <span className="font-medium">To:</span> {formatUTCToLocalDate(replacementInfo.endDate)}
-                    </p>
-                  </div>
-
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">Status</label>
-                    <p className="mt-1">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Approved
-                      </span>
-                    </p>
-                    {replacementInfo.approvedByAdminName && (
-                      <p className="text-xs text-gray-600 mt-1">By: {replacementInfo.approvedByAdminName}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">Reason for Leave</label>
-                    <p className="mt-1 text-sm text-gray-900">{replacementInfo.reason || 'No reason provided'}</p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="py-12 text-center">
-                <Info className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-600 font-medium">No Active Replacement</p>
-                <p className="text-sm text-gray-500 mt-2">This driver is not currently on leave or has no replacement assigned.</p>
-              </div>
-            )}
-
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={() => {
-                  setShowReplacementModal(false);
-                  setReplacementInfo(null);
-                }}
-                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Success Toast */}
-      {successMessage && (
-        <SuccessToast 
-          message={successMessage} 
-          onClose={() => setSuccessMessage(null)} 
-        />
-      )}
+      {/* Edit Assignment Modal */}
+      <EditAssignmentModal
+        isOpen={editModal.isOpen}
+        onClose={() => setEditModal({ isOpen: false, type: "driver", data: null })}
+        assignmentType={editModal.type}
+        assignmentData={editModal.data}
+        onSave={handleSaveAssignment}
+      />
     </div>
   );
 }
-
