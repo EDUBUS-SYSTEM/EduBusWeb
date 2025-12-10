@@ -23,6 +23,7 @@ import {
   UserAccount,
   LockUserRequest,
 } from "@/services/userAccountService/userAccountService.type";
+import { formatDate } from "@/utils/dateUtils";
 
 // Memoized User Row Component
 const UserRow = memo(({
@@ -108,7 +109,7 @@ const UserRow = memo(({
           {locked && user.lockedUntil && (
             <div className="text-xs text-gray-500 flex items-center gap-1">
               <FaCalendarAlt className="text-red-500" />
-              Until: {new Date(user.lockedUntil + "Z").toLocaleDateString()}
+              Until: {formatDate(user.lockedUntil)}
             </div>
           )}
           {user.lockReason && (
@@ -122,11 +123,11 @@ const UserRow = memo(({
       {/* Account Info */}
       <td className="px-6 py-6">
         <div className="text-sm text-gray-900">
-          Created: {new Date(user.createdAt).toLocaleDateString()}
+          Created: {formatDate(user.createdAt)}
         </div>
         {user.updatedAt && (
           <div className="text-xs text-gray-500">
-            Updated: {new Date(user.updatedAt).toLocaleDateString()}
+            Updated: {formatDate(user.updatedAt)}
           </div>
         )}
       </td>
@@ -460,8 +461,8 @@ export default function AccountManagement() {
               <button
                 onClick={() => handleSort("firstName")}
                 className={`px-4 py-2 text-sm rounded-xl border transition-all duration-300 flex items-center gap-2 ${sortBy === "firstName"
-                    ? "bg-[#fad23c] border-[#fad23c] text-[#463B3B] shadow-md"
-                    : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                  ? "bg-[#fad23c] border-[#fad23c] text-[#463B3B] shadow-md"
+                  : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                   }`}
               >
                 Name
@@ -474,8 +475,8 @@ export default function AccountManagement() {
               <button
                 onClick={() => handleSort("createdAt")}
                 className={`px-4 py-2 text-sm rounded-xl border transition-all duration-300 flex items-center gap-2 ${sortBy === "createdAt"
-                    ? "bg-[#fad23c] border-[#fad23c] text-[#463B3B] shadow-md"
-                    : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                  ? "bg-[#fad23c] border-[#fad23c] text-[#463B3B] shadow-md"
+                  : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                   }`}
               >
                 Created Date
@@ -650,8 +651,8 @@ export default function AccountManagement() {
                     lockValidationError !== null || reasonValidationError !== null || !selectedUserId
                   }
                   className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${lockValidationError || reasonValidationError || !selectedUserId
-                      ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-                      : "bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 shadow-lg hover:shadow-xl"
+                    ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                    : "bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 shadow-lg hover:shadow-xl"
                     }`}
                 >
                   Lock User

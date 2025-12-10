@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { TripDto } from '@/types';
 import { FaEdit, FaTrash, FaEye, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { formatDate } from '@/utils/dateUtils';
 
 interface TripTableProps {
   trips: TripDto[];
@@ -79,13 +80,7 @@ export default function TripTable({
     );
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
+  // Using centralized formatDate from @/utils/dateUtils
 
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString('en-US', {
@@ -219,12 +214,11 @@ export default function TripTable({
                       {getScheduleTime(trip, 'end')}
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                        trip.status === 'Scheduled' ? 'bg-blue-100 text-blue-800' :
-                        trip.status === 'InProgress' ? 'bg-green-100 text-green-800' :
-                        trip.status === 'Completed' ? 'bg-gray-100 text-gray-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${trip.status === 'Scheduled' ? 'bg-blue-100 text-blue-800' :
+                          trip.status === 'InProgress' ? 'bg-green-100 text-green-800' :
+                            trip.status === 'Completed' ? 'bg-gray-100 text-gray-800' :
+                              'bg-red-100 text-red-800'
+                        }`}>
                         {trip.status === 'InProgress' ? 'In Progress' : trip.status}
                       </span>
                     </td>

@@ -13,6 +13,7 @@ import {
 import { academicCalendarService } from "@/services/api/academicCalendarService";
 import { AcademicCalendar, AcademicCalendarQueryParams } from "@/types";
 import Pagination from "../ui/Pagination";
+import { formatDate } from "@/utils/dateUtils";
 
 interface AcademicSemester {
   name: string;
@@ -177,13 +178,7 @@ export default function AcademicCalendarList({
     setCurrentPage(page);
   };
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
+  // Using centralized formatDate from @/utils/dateUtils
 
   // Function to get semester color based on index (currently unused but kept for future use)
   // const getSemesterColor = (index: number) => {

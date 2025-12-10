@@ -6,6 +6,7 @@ import { UnitPriceResponseDto, CreateUnitPriceDto, UpdateUnitPriceDto } from "@/
 import CreateUnitPriceModal from "./CreateUnitPriceModal";
 import EditUnitPriceModal from "./EditUnitPriceModal";
 import UnitPriceDetailModal from "./UnitPriceDetailModal";
+import { formatDate } from "@/utils/dateUtils";
 
 export default function UnitPriceManagement() {
   const [unitPrices, setUnitPrices] = useState<UnitPriceResponseDto[]>([]);
@@ -35,7 +36,7 @@ export default function UnitPriceManagement() {
 
     // Search filter
     if (searchTerm) {
-      filtered = filtered.filter(price => 
+      filtered = filtered.filter(price =>
         price.byAdminName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         price.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         price.pricePerKm?.toString().includes(searchTerm)
@@ -117,9 +118,7 @@ export default function UnitPriceManagement() {
     }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('vi-VN');
-  };
+  // Using centralized formatDate from @/utils/dateUtils
 
   if (loading) {
     return (
@@ -152,31 +151,28 @@ export default function UnitPriceManagement() {
           <div className="flex gap-2">
             <button
               onClick={() => setFilterActive(null)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                filterActive === null
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filterActive === null
                   ? "bg-[#fad23c] text-[#463B3B]"
                   : "bg-white text-gray-600 hover:bg-gray-50"
-              }`}
+                }`}
             >
               All ({unitPrices?.length || 0})
             </button>
             <button
               onClick={() => setFilterActive(true)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                filterActive === true
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filterActive === true
                   ? "bg-[#fad23c] text-[#463B3B]"
                   : "bg-white text-gray-600 hover:bg-gray-50"
-              }`}
+                }`}
             >
               Active ({unitPrices?.filter(p => p.isActive).length || 0})
             </button>
             <button
               onClick={() => setFilterActive(false)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                filterActive === false
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filterActive === false
                   ? "bg-[#fad23c] text-[#463B3B]"
                   : "bg-white text-gray-600 hover:bg-gray-50"
-              }`}
+                }`}
             >
               Inactive ({unitPrices?.filter(p => !p.isActive).length || 0})
             </button>
@@ -246,11 +242,10 @@ export default function UnitPriceManagement() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      unitPrice.isActive
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${unitPrice.isActive
                         ? "bg-green-100 text-green-800"
                         : "bg-red-100 text-red-800"
-                    }`}>
+                      }`}>
                       {unitPrice.isActive ? "Active" : "Inactive"}
                     </span>
                   </td>
@@ -275,11 +270,10 @@ export default function UnitPriceManagement() {
                       </button>
                       <button
                         onClick={() => handleToggleStatus(unitPrice.id, unitPrice.isActive)}
-                        className={`transition-colors ${
-                          unitPrice.isActive
+                        className={`transition-colors ${unitPrice.isActive
                             ? "text-red-600 hover:text-red-900"
                             : "text-green-600 hover:text-green-900"
-                        }`}
+                          }`}
                         title={unitPrice.isActive ? "Deactivate" : "Activate"}
                       >
                         {unitPrice.isActive ? (

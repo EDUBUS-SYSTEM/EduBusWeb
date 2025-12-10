@@ -5,6 +5,7 @@ import { DriverLeaveRequest } from "@/services/api/driverLeaveRequests";
 import ApproveStep1Modal from "@/components/admin/modals/ApproveStep1Modal";
 import ApproveStep2Modal from "@/components/admin/modals/ApproveStep2Modal";
 import { RejectLeaveModal } from "@/components/admin";
+import { formatDate, formatDateTime } from "@/utils/dateUtils";
 
 interface LeaveRequestDetailModalProps {
   leave: DriverLeaveRequest;
@@ -20,25 +21,17 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
   const [actionLoading, setActionLoading] = useState(false);
   const [approveNotes, setApproveNotes] = useState("");
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  // Using centralized formatDate from @/utils/dateUtils
 
   // Kiểm tra xem ngày nghỉ đã hết hạn chưa
   const isLeaveExpired = (startDate: string, endDate: string) => {
     const today = new Date();
     const leaveEndDate = new Date(endDate);
-    
+
     // Set time to start of day to avoid timezone issues
     today.setHours(0, 0, 0, 0);
     leaveEndDate.setHours(0, 0, 0, 0);
-    
+
     // Leave đã hết hạn nếu endDate < today
     return leaveEndDate < today;
   };
@@ -107,14 +100,14 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
   const calculateLeaveDays = () => {
     const startDate = new Date(leave.startDate);
     const endDate = new Date(leave.endDate);
-    
+
     // Set time to start of day to avoid timezone issues
     startDate.setHours(0, 0, 0, 0);
     endDate.setHours(0, 0, 0, 0);
-    
+
     const diffTime = endDate.getTime() - startDate.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    
+
     return diffDays;
   };
 
@@ -131,7 +124,7 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
 
   const handleApproveDirect = async (notes: string) => {
     if (!onApprove) return;
-    
+
     setActionLoading(true);
     try {
       await onApprove(leave.id, undefined, notes); // replacementDriverId = undefined
@@ -146,7 +139,7 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
 
   const handleApproveStep2 = async (replacementDriverId?: string) => {
     if (!onApprove) return;
-    
+
     setActionLoading(true);
     try {
       await onApprove(leave.id, replacementDriverId, approveNotes); // replacementDriverId can be undefined
@@ -161,7 +154,7 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
 
   const handleReject = async (leaveId: string, reason: string) => {
     if (!onReject) return;
-    
+
     setActionLoading(true);
     try {
       await onReject(leaveId, reason);
@@ -219,7 +212,7 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
                     {leave.driverName}
                   </p>
                 </div>
-                
+
                 <div>
                   <label className="text-sm font-medium text-gray-700">Phone Number</label>
                   <p className="text-gray-900 flex items-center">
@@ -227,7 +220,7 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
                     {leave.driverPhoneNumber}
                   </p>
                 </div>
-                
+
                 <div>
                   <label className="text-sm font-medium text-gray-700">Email</label>
                   <p className="text-gray-900 flex items-center">
@@ -236,7 +229,7 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
                   </p>
                 </div>
               </div>
-              
+
               <div className="space-y-3">
                 <div>
                   <label className="text-sm font-medium text-gray-700">License Number</label>
@@ -245,7 +238,7 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
                     {leave.driverLicenseNumber}
                   </p>
                 </div>
-                
+
                 {leave.primaryVehicleLicensePlate && (
                   <div>
                     <label className="text-sm font-medium text-gray-700">Vehicle</label>
@@ -271,18 +264,18 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
                   <label className="text-sm font-medium text-gray-700">From Date</label>
                   <p className="text-gray-900">{formatDate(leave.startDate)}</p>
                 </div>
-                
+
                 <div>
                   <label className="text-sm font-medium text-gray-700">To Date</label>
                   <p className="text-gray-900">{formatDate(leave.endDate)}</p>
                 </div>
-                
+
                 <div>
                   <label className="text-sm font-medium text-gray-700">Leave Days</label>
                   <p className="text-gray-900">{calculateLeaveDays()} days</p>
                 </div>
               </div>
-              
+
               <div className="space-y-3">
                 <div>
                   <label className="text-sm font-medium text-gray-700">Request Date</label>
@@ -291,7 +284,7 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
                     {formatDate(leave.requestedAt)}
                   </p>
                 </div>
-                
+
                 <div>
                   <label className="text-sm font-medium text-gray-700">Leave Reason</label>
                   <p className="text-gray-900 mt-1 bg-white p-3 rounded-lg border">
@@ -309,21 +302,21 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
                 <FaCheck className="mr-2 h-5 w-5" />
                 Processing Information
               </h3>
-              
+
               {leave.status === 2 && leave.approvedAt && (
                 <div className="space-y-3">
                   <div>
                     <label className="text-sm font-medium text-gray-700">Approval Date</label>
                     <p className="text-gray-900">{formatDate(leave.approvedAt)}</p>
                   </div>
-                  
+
                   {leave.approvedByAdminName && (
                     <div>
                       <label className="text-sm font-medium text-gray-700">Approved By</label>
                       <p className="text-gray-900">{leave.approvedByAdminName}</p>
                     </div>
                   )}
-                  
+
                   {leave.approvalNote && (
                     <div>
                       <label className="text-sm font-medium text-gray-700">Admin Notes</label>
@@ -341,14 +334,14 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
                     <label className="text-sm font-medium text-gray-700">Rejection Date</label>
                     <p className="text-gray-900">{formatDate(leave.approvedAt)}</p>
                   </div>
-                  
+
                   {leave.approvedByAdminName && (
                     <div>
                       <label className="text-sm font-medium text-gray-700">Rejected By</label>
                       <p className="text-gray-900">{leave.approvedByAdminName}</p>
                     </div>
                   )}
-                  
+
                   {leave.approvalNote && (
                     <div>
                       <label className="text-sm font-medium text-gray-700">Rejection Reason</label>

@@ -25,6 +25,9 @@ import { studentService } from "@/services/studentService/studentService.api";
 import { vehicleService } from "@/services/vehicleService";
 import { tripService } from "@/services/tripService";
 import { dashboardService } from "@/services/dashboardService";
+import { transactionService } from "@/services/transactionService";
+import { TransactionStatus } from "@/types/transaction";
+import { formatDate } from "@/utils/dateUtils";
 
 export default function AdminDashboard() {
     // Fetch current semester (from dashboard-specific API)
@@ -221,7 +224,28 @@ export default function AdminDashboard() {
 
                         <h3 className="text-lg font-bold mb-3">Current Unit Price</h3>
 
-                        {unitPriceContent}
+                        {unitPriceLoading ? (
+                            <div className="h-10 w-28 bg-white/20 rounded-lg animate-pulse" />
+                        ) : unitPriceData ? (
+                            <>
+                                <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                                    className="text-3xl font-bold mb-1"
+                                >
+                                    {unitPriceData.pricePerKm.toLocaleString()} VND/km
+                                </motion.div>
+                                <p className="text-white/80 text-xs">
+                                    Effective from {formatDate(unitPriceData.effectiveFrom)}
+                                </p>
+                                {unitPriceData.description && (
+                                    <p className="text-white/70 text-[10px] mt-2 italic">{unitPriceData.description}</p>
+                                )}
+                            </>
+                        ) : (
+                            <p className="text-white/80">No active unit price</p>
+                        )}
                     </div>
                 </motion.div>
             </div>

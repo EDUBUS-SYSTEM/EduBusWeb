@@ -1,6 +1,7 @@
 "use client";
 import { FaTimes } from "react-icons/fa";
 import { UnitPriceResponseDto } from "@/types/unitPrice";
+import { formatDate, formatDateTime } from "@/utils/dateUtils";
 
 interface UnitPriceDetailModalProps {
   unitPrice: UnitPriceResponseDto;
@@ -15,13 +16,7 @@ export default function UnitPriceDetailModal({ unitPrice, onClose }: UnitPriceDe
     }).format(amount);
   };
 
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('vi-VN');
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('vi-VN');
-  };
+  // Using centralized formatDate and formatDateTime from @/utils/dateUtils
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -63,11 +58,10 @@ export default function UnitPriceDetailModal({ unitPrice, onClose }: UnitPriceDe
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Status:</span>
-                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                  unitPrice.isActive
+                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${unitPrice.isActive
                     ? "bg-green-100 text-green-800"
                     : "bg-red-100 text-red-800"
-                }`}>
+                  }`}>
                   {unitPrice.isActive ? "Active" : "Inactive"}
                 </span>
               </div>
@@ -119,11 +113,10 @@ export default function UnitPriceDetailModal({ unitPrice, onClose }: UnitPriceDe
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Deleted:</span>
-                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                  unitPrice.isDeleted
+                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${unitPrice.isDeleted
                     ? "bg-red-100 text-red-800"
                     : "bg-green-100 text-green-800"
-                }`}>
+                  }`}>
                   {unitPrice.isDeleted ? "Yes" : "No"}
                 </span>
               </div>

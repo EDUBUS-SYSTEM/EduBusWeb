@@ -1,6 +1,7 @@
 "use client";
 import { FaUser, FaCar, FaFileAlt, FaPhone, FaEnvelope, FaIdCard, FaTimes, FaDownload, FaClock, FaExclamationTriangle, FaCheckCircle } from "react-icons/fa";
 import { GeneralDriverRequest } from "./GeneralRequestsTab";
+import { formatDateTime } from "@/utils/dateUtils";
 
 interface GeneralRequestDetailModalProps {
   request: GeneralDriverRequest;
@@ -8,15 +9,7 @@ interface GeneralRequestDetailModalProps {
 }
 
 export default function GeneralRequestDetailModal({ request, onClose }: GeneralRequestDetailModalProps) {
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  // Using centralized formatDateTime from @/utils/dateUtils
 
   const getStatusBadge = (status: string) => {
     const baseClasses = "px-3 py-1 rounded-full text-sm font-medium";
@@ -162,7 +155,7 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
               <FaUser className="mr-2" />
               Driver Information
             </h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-3">
                 <div>
@@ -186,7 +179,7 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
                   </p>
                 </div>
               </div>
-              
+
               <div className="space-y-3">
                 <div>
                   <label className="text-sm font-medium text-gray-700">License Number</label>
@@ -195,7 +188,7 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
                     {request.driverInfo.licenseNumber}
                   </p>
                 </div>
-                
+
                 {request.driverInfo.vehicleInfo && (
                   <div>
                     <label className="text-sm font-medium text-gray-700">Vehicle</label>
@@ -215,7 +208,7 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
               <FaFileAlt className="mr-2" />
               Request Information
             </h3>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-700">Title</label>
@@ -223,7 +216,7 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
                   {request.title}
                 </p>
               </div>
-              
+
               <div>
                 <label className="text-sm font-medium text-gray-700">Description</label>
                 <p className="text-gray-900 mt-1 bg-white p-4 rounded-lg border">
@@ -240,7 +233,7 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
                 <FaFileAlt className="mr-2" />
                 Attachments ({request.attachments.length})
               </h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {request.attachments.map((attachment) => (
                   <div key={attachment.id} className="bg-white rounded-lg p-4 border border-green-100">
@@ -276,7 +269,7 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
           {(request.status === "Resolved" || request.status === "Rejected") && (
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Processing Information</h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700">Processing Date</label>
@@ -285,7 +278,7 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
                     {request.resolvedAt ? formatDateTime(request.resolvedAt) : 'N/A'}
                   </p>
                 </div>
-                
+
                 <div>
                   <label className="text-sm font-medium text-gray-700">Processing Admin</label>
                   <p className="text-gray-900 mt-1">
@@ -293,7 +286,7 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
                   </p>
                 </div>
               </div>
-              
+
               {request.adminNotes && (
                 <div className="mt-4">
                   <label className="text-sm font-medium text-gray-700">Admin Notes</label>

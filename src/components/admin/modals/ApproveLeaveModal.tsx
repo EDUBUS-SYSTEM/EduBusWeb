@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { DriverLeaveRequest } from "@/services/api/driverLeaveRequests";
+import { formatDate } from "@/utils/dateUtils";
 
 interface ApproveLeaveModalProps {
   leave: DriverLeaveRequest;
@@ -9,11 +10,11 @@ interface ApproveLeaveModalProps {
   loading: boolean;
 }
 
-export default function ApproveLeaveModal({ 
-  leave, 
-  onApprove, 
-  onClose, 
-  loading 
+export default function ApproveLeaveModal({
+  leave,
+  onApprove,
+  onClose,
+  loading
 }: ApproveLeaveModalProps) {
   const [notes, setNotes] = useState("");
 
@@ -33,7 +34,7 @@ export default function ApproveLeaveModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Phê duyệt đơn nghỉ</h3>
-        
+
         <div className="mb-4">
           <p className="text-sm text-gray-600 mb-2">
             Phê duyệt đơn nghỉ cho tài xế <strong>{leave.driverName}</strong>?
@@ -42,7 +43,7 @@ export default function ApproveLeaveModal({
             Loại nghỉ: {getLeaveTypeText(leave.leaveType)}
           </p>
           <p className="text-sm text-gray-500">
-            Thời gian: {new Date(leave.startDate).toLocaleDateString('vi-VN')} - {new Date(leave.endDate).toLocaleDateString('vi-VN')}
+            Thời gian: {formatDate(leave.startDate)} - {formatDate(leave.endDate)}
           </p>
         </div>
 
@@ -69,7 +70,8 @@ export default function ApproveLeaveModal({
           </button>
           <button
             onClick={() => {
-              onApprove(leave.id, notes)}
+              onApprove(leave.id, notes)
+            }
             }
             disabled={loading}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 flex items-center space-x-2"
