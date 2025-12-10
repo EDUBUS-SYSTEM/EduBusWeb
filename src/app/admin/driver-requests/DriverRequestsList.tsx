@@ -1,14 +1,34 @@
 "use client";
-import { useState } from "react";
-import { FaCalendarAlt, FaFileAlt, FaList } from "react-icons/fa";
+import { useState, useEffect } from "react";
+import { FaCalendarAlt, FaExclamationTriangle } from "react-icons/fa";
 import LeaveRequestsTab from "./LeaveRequestsTab";
-import GeneralRequestsTab from "./GeneralRequestsTab";
-import AllRequestsTab from "./AllRequestsTab";
+import IncidentReportsTab from "./IncidentReportsTab";
 import { useAppSelector } from "@/store/hooks";
+import { getTripHubService } from "@/services/tripHubService";
 
 export default function DriverRequestsList() {
   const [activeTab, setActiveTab] = useState("leave");
   const pendingLeavesCount = useAppSelector(state => state.driverRequests.pendingLeavesCount);
+  const openIncidentsCount = useAppSelector(state => state.driverRequests.openIncidentsCount);
+
+  useEffect(() => {
+    const hubService = getTripHubService();
+    
+    const connectSignalR = async () => {
+      try {
+        if (!hubService.isConnected) {
+          await hubService.connect();
+        }
+      } catch (error) {
+        console.error("Failed to connect SignalR:", error);
+      }
+    };
+
+    connectSignalR();
+
+    return () => {
+    };
+  }, []);
   const tabs = [
     {
       id: "leave",
@@ -17,7 +37,13 @@ export default function DriverRequestsList() {
       count: pendingLeavesCount, 
       component: <LeaveRequestsTab />
     },
-    
+    {
+      id: "incidents",
+      label: "Report Incident",
+      icon: <FaExclamationTriangle />,
+      count: openIncidentsCount,
+      component: <IncidentReportsTab />
+    },
   ];
 
   return (

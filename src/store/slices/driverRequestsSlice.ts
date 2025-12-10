@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { driverLeaveRequestService, DriverLeaveRequest, DriverLeaveRequestFilters } from '@/services/api/driverLeaveRequests';
+import { tripIncidentService, TripIncidentListItem, TripIncidentFilters, TripIncidentStatus } from '@/services/api/tripIncidents';
 
 // Async thunk for fetch leave requests
 export const fetchLeaveRequests = createAsyncThunk(
@@ -28,6 +29,14 @@ export const rejectLeaveRequest = createAsyncThunk(
     }
 );
 
+export const fetchIncidentReports = createAsyncThunk(
+    'driverRequests/fetchIncidentReports',
+    async (filters: TripIncidentFilters = {}) => {
+        const response = await tripIncidentService.getAll(filters);
+        return response;
+    }
+);
+
 interface DriverRequestsState {
     leaves: DriverLeaveRequest[];
     pendingLeavesCount: number;
@@ -39,6 +48,16 @@ interface DriverRequestsState {
         totalPages: number;
     };
     filters: DriverLeaveRequestFilters;
+    incidents: TripIncidentListItem[];
+    incidentsLoading: boolean;
+    incidentsError: string | null;
+    incidentsPagination: {
+        currentPage: number;
+        totalItems: number;
+        totalPages: number;
+    };
+    openIncidentsCount: number;
+    allIncidents: TripIncidentListItem[];
 }
 
 const initialState: DriverRequestsState = {
@@ -52,6 +71,16 @@ const initialState: DriverRequestsState = {
         totalPages: 0,
     },
     filters: {},
+    incidents: [],
+    incidentsLoading: false,
+    incidentsError: null,
+    incidentsPagination: {
+        currentPage: 1,
+        totalItems: 0,
+        totalPages: 0,
+    },
+    openIncidentsCount: 0,
+    allIncidents: [],
 };
 
 const driverRequestsSlice = createSlice({
@@ -83,6 +112,48 @@ const driverRequestsSlice = createSlice({
               }
             }
           },
+        setIncidentsCurrentPage: (state, action: PayloadAction<number>) => {
+            state.incidentsPagination.currentPage = action.payload;
+        },
+        addIncidentToList: (state, action: PayloadAction<TripIncidentListItem>) => {
+            const existingIndex = state.allIncidents.findIndex(inc => inc.id === action.payload.id);
+            if (existingIndex === -1) {
+                state.allIncidents.unshift(action.payload);
+                const getStatusString = (status: TripIncidentStatus | string | number): string => {
+                    if (typeof status === 'string') return status;
+                    if (typeof status === 'number') {
+                        const statusMap: Record<number, string> = { 0: 'Open', 1: 'Acknowledged', 2: 'Resolved' };
+                        return statusMap[status] || String(status);
+                    }
+                    return String(status);
+                };
+                if (getStatusString(action.payload.status) === TripIncidentStatus.Open) {
+                    state.openIncidentsCount += 1;
+                }
+            }
+        },
+        updateIncidentInList: (state, action: PayloadAction<TripIncidentListItem>) => {
+            const getStatusString = (status: TripIncidentStatus | string | number): string => {
+                if (typeof status === 'string') return status;
+                if (typeof status === 'number') {
+                    const statusMap: Record<number, string> = { 0: 'Open', 1: 'Acknowledged', 2: 'Resolved' };
+                    return statusMap[status] || String(status);
+                }
+                return String(status);
+            };
+            const index = state.allIncidents.findIndex(inc => inc.id === action.payload.id);
+            if (index !== -1) {
+                const oldStatus = getStatusString(state.allIncidents[index].status);
+                const newStatus = getStatusString(action.payload.status);
+                state.allIncidents[index] = action.payload;
+                
+                if (oldStatus === TripIncidentStatus.Open && newStatus !== TripIncidentStatus.Open) {
+                    state.openIncidentsCount = Math.max(0, state.openIncidentsCount - 1);
+                } else if (oldStatus !== TripIncidentStatus.Open && newStatus === TripIncidentStatus.Open) {
+                    state.openIncidentsCount += 1;
+                }
+            }
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -132,9 +203,67 @@ const driverRequestsSlice = createSlice({
             .addCase(rejectLeaveRequest.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.error.message || 'Failed to reject leave request';
+            })
+            .addCase(fetchIncidentReports.pending, (state) => {
+                state.incidentsLoading = true;
+                state.incidentsError = null;
+            })
+            .addCase(fetchIncidentReports.fulfilled, (state, action) => {
+                state.incidentsLoading = false;
+                const newIncidents = action.payload.data;
+                const existingIds = new Set(state.allIncidents.map(inc => inc.id));
+                const uniqueNewIncidents = newIncidents.filter(inc => !existingIds.has(inc.id));
+                state.allIncidents = [...state.allIncidents, ...uniqueNewIncidents];
+                
+                const statusFilter = action.meta.arg.status;
+                if (statusFilter) {
+                    state.incidents = state.allIncidents.filter(inc => {
+                        const getStatusString = (status: TripIncidentStatus | string | number): string => {
+                            if (typeof status === 'string') return status;
+                            if (typeof status === 'number') {
+                                const statusMap: Record<number, string> = { 0: 'Open', 1: 'Acknowledged', 2: 'Resolved' };
+                                return statusMap[status] || String(status);
+                            }
+                            return String(status);
+                        };
+                        return getStatusString(inc.status) === statusFilter;
+                    });
+                } else {
+                    state.incidents = state.allIncidents;
+                }
+                
+                state.incidentsPagination = {
+                    currentPage: action.payload.pagination.currentPage,
+                    totalItems: action.payload.pagination.totalItems,
+                    totalPages: action.payload.pagination.totalPages,
+                };
+                
+                const getStatusString = (status: TripIncidentStatus | string | number): string => {
+                    if (typeof status === 'string') return status;
+                    if (typeof status === 'number') {
+                        const statusMap: Record<number, string> = { 0: 'Open', 1: 'Acknowledged', 2: 'Resolved' };
+                        return statusMap[status] || String(status);
+                    }
+                    return String(status);
+                };
+                state.openIncidentsCount = state.allIncidents.filter(
+                    inc => getStatusString(inc.status) === TripIncidentStatus.Open
+                ).length;
+            })
+            .addCase(fetchIncidentReports.rejected, (state, action) => {
+                state.incidentsLoading = false;
+                state.incidentsError = action.error.message || 'Failed to fetch incident reports';
             });
     },
 });
 
-export const { setFilters, setCurrentPage, clearError, updateLeaveInList } = driverRequestsSlice.actions;
+export const { 
+    setFilters, 
+    setCurrentPage, 
+    clearError, 
+    updateLeaveInList,
+    setIncidentsCurrentPage,
+    addIncidentToList,
+    updateIncidentInList
+} = driverRequestsSlice.actions;
 export default driverRequestsSlice.reducer;

@@ -11,6 +11,8 @@ import {
   TripStatusChangedData,
   AttendanceUpdatedData
 } from '@/store/slices/liveTripsSlice';
+import { addIncidentToList } from '@/store/slices/driverRequestsSlice';
+import { TripIncidentReason, TripIncidentStatus } from '@/services/api/tripIncidents';
 
 export class TripHubService {
   private connection: signalR.HubConnection | null = null;
@@ -95,6 +97,35 @@ export class TripHubService {
 
     this.connection.on("AttendanceUpdated", (data: AttendanceUpdatedData) => {
       store.dispatch(updateAttendance(data));
+    });
+
+    this.connection.on("IncidentCreated", (data: {
+      incidentId: string;
+      tripId: string;
+      supervisorId: string;
+      supervisorName: string;
+      reason: string;
+      title: string;
+      description?: string;
+      status: string;
+      routeName: string;
+      vehiclePlate: string;
+      serviceDate: string;
+      createdAt: string;
+      timestamp: string;
+    }) => {
+      store.dispatch(addIncidentToList({
+        id: data.incidentId,
+        tripId: data.tripId,
+        reason: data.reason as TripIncidentReason,
+        title: data.title,
+        description: data.description,
+        status: data.status as TripIncidentStatus,
+        createdAt: data.createdAt,
+        routeName: data.routeName,
+        vehiclePlate: data.vehiclePlate,
+        serviceDate: data.serviceDate
+      }));
     });
 
     this.connection.on("Error", (error: string) => {

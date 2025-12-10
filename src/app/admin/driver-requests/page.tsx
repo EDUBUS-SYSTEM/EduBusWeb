@@ -15,7 +15,7 @@ export default function DriverRequestsPage() {
               Driver Requests
             </h1>
             <p className="text-[#6B7280]">
-              Manage all driver requests and leave applications
+              Manage all driver requests, leave applications, and trip incident reports
             </p>
           </div>
           <div className="pb-8">
