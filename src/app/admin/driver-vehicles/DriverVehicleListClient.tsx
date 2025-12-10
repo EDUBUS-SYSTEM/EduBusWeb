@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Search, User, Users, Calendar, CheckCircle, Edit2 } from "lucide-react";
+import { Search, User, Users, Calendar, CheckCircle, Edit2, Info, Edit, Trash2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import Pagination from "@/components/ui/Pagination";
 import vehicleService from "@/services/vehicleService";
@@ -15,6 +15,75 @@ import { AssignmentTableRow, DriverVehicleStatus } from "@/types/driverVehicle";
 import { getAllSupervisors, SupervisorResponse } from "@/services/api/supervisors";
 import { apiService } from "@/lib/api";
 import { formatDate, formatDateForInput } from "@/utils/dateUtils";
+import { Select } from "antd";
+
+// Helper function to format UTC date to local date for display
+const formatUTCToLocalDate = (utcDateString: string): string => {
+  if (!utcDateString) return "";
+  const date = new Date(utcDateString);
+  return formatDate(date);
+};
+
+// Helper function to convert UTC date string to local date string for input fields
+// This extracts the date part from UTC string and converts to local date
+const utcDateStringToLocalDateInput = (utcDateString: string): string => {
+  if (!utcDateString) return "";
+  // Parse UTC string and get local date components
+  const date = new Date(utcDateString);
+  if (isNaN(date.getTime())) return "";
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// Types
+interface VehicleWithAssignments {
+  id: string;
+  licensePlate: string;
+  capacity: number;
+  status: string;
+  drivers: DriverAssignment[];
+  supervisors: SupervisorAssignment[];
+}
+
+interface DriverAssignment {
+  id: string;
+  driverId: string;
+  driverName: string;
+  driverEmail?: string;
+  startTime: string;
+  endTime?: string;
+  isPrimaryDriver: boolean;
+  isUpcoming: boolean;
+}
+
+interface SupervisorAssignment {
+  id: string;
+  supervisorId: string;
+  supervisorName: string;
+  supervisorEmail?: string;
+  startTime: string;
+  endTime?: string;
+  isPrimarySupervisor: boolean;
+  isUpcoming: boolean;
+}
+
+interface SupervisorAssignmentRow {
+  id: string;
+  supervisorId: string;
+  supervisorName: string;
+  supervisorEmail?: string;
+  licensePlate: string;
+  startTime: string;
+  endTime?: string;
+  status: string;
+}
+
+// Card component wrapper
+const Card = ({ className, children }: { className?: string; children: React.ReactNode }) => (
+  <div className={className}>{children}</div>
+);
 
 const PER_PAGE = 5;
 function SuccessToast({ message, onClose }: { message: string; onClose: () => void }) {
@@ -48,7 +117,7 @@ const localDateToUTCEnd = (localDate: string): string => {
   return utcDate.toISOString();
 };
 
-
+function StatusBadge({ status }: { status: string }) {
   return (
     <span
       className={`px-3 py-1 rounded-full text-sm font-medium ${status === "Assigned"
@@ -317,6 +386,9 @@ export default function DriverVehicleListClient() {
   const [mounted, setMounted] = useState(false);
   const [vehicles, setVehicles] = useState<VehicleWithAssignments[]>([]);
   const [loading, setLoading] = useState(true);
+  const [allAssignments, setAllAssignments] = useState<AssignmentTableRow[]>([]);
+  const [tab, setTab] = useState<"driver" | "supervisor">("driver");
+  const [filteredSupervisorAssignments, setFilteredSupervisorAssignments] = useState<SupervisorAssignmentRow[]>([]);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState("");
@@ -363,8 +435,8 @@ export default function DriverVehicleListClient() {
     try {
       setLoading(true);
 
-      // Fetch all vehicles
-      const vehiclesResponse = await vehicleService.getVehicles({
+      // Fetch all driver-vehicle assignments
+      const response = await driverVehicleService.getAssignments({
         page: 1,
         perPage: 1000, 
         sortBy: 'startTimeUtc',
@@ -400,42 +472,14 @@ export default function DriverVehicleListClient() {
   const fetchSupervisorAssignments = useCallback(async () => {
     try {
       setSupervisorLoading(true);
-      const supervisors: SupervisorResponse[] = await getAllSupervisors();
-      const rows: SupervisorAssignmentRow[] = [];
-
-      await Promise.all(
-        supervisors.map(async (s) => {
-          try {
-            const res = await apiService.get<{
-              data?: {
-                data?: Array<{ data?: Partial<SupervisorAssignmentRow> } & Partial<SupervisorAssignmentRow>>;
-                Data?: Array<{ data?: Partial<SupervisorAssignmentRow> } & Partial<SupervisorAssignmentRow>>;
-              };
-              Data?: {
-                Data?: Array<{ data?: Partial<SupervisorAssignmentRow> } & Partial<SupervisorAssignmentRow>>;
-              };
-            }
-          } catch (err) {
-            console.error(`Error fetching assignments for vehicle ${vehicle.id}:`, err);
-            return {
-              id: vehicle.id,
-              licensePlate: vehicle.licensePlate,
-              capacity: vehicle.capacity,
-              status: vehicle.status,
-              drivers: [],
-              supervisors: [],
-            };
-          }
-        })
-      );
-
-      setVehicles(vehiclesWithAssignments);
+      // TODO: Implement supervisor assignments fetching
+      // This function needs to be properly implemented
     } catch (error) {
-      console.error("Error fetching vehicles:", error);
+      console.error("Error fetching supervisor assignments:", error);
     } finally {
-      setLoading(false);
+      setSupervisorLoading(false);
     }
-   }, [checkAssignmentSemesters]); // Include checkAssignmentSemesters dependency
+  }, []);
 
   useEffect(() => {
     const fetchReplacementMatches = async () => {
@@ -508,28 +552,25 @@ export default function DriverVehicleListClient() {
       }
       return sortOrder === "asc" ? comparison : -comparison;
     });
-  };
+
+    return filtered;
+  }, [allAssignments, statusFilter, debouncedSearch, sortBy, sortOrder]);
 
   const handleSaveAssignment = async (id: string, startTimeUtc: string, endTimeUtc?: string) => {
     try {
-      if (editModal.type === "driver") {
-        // Update driver assignment
-        await driverVehicleService.updateAssignment(id, {
-          startTimeUtc,
-          endTimeUtc,
-        });
-      } else {
-        // Update supervisor assignment
-        await vehicleService.updateSupervisorAssignment(id, {
-          startTimeUtc,
-          endTimeUtc,
-        });
-      }
-      return sortOrder === "asc" ? comparison : -comparison;
-    });
-
-    return filtered;
-  }, [supervisorAssignments, debouncedSearch, sortBy, sortOrder]);
+      // Update driver assignment
+      await driverVehicleService.updateAssignment(id, {
+        startTimeUtc,
+        endTimeUtc,
+      });
+      setSuccessMessage("Assignment updated successfully!");
+      await fetchAssignments();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to update assignment";
+      setUpdateError(errorMessage);
+      throw error;
+    }
+  };
 
   // Pagination
   const baseItems = tab === "driver"
@@ -645,8 +686,6 @@ export default function DriverVehicleListClient() {
           </div>
         </div>
       </div>
-    );
-  }
 
       {/* Table */}
       <Card className="overflow-hidden bg-white rounded-2xl shadow-lg border border-gray-100">
@@ -746,11 +785,11 @@ export default function DriverVehicleListClient() {
                           {driverAssignment.licensePlate}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {formatDate(driverAssignment.startTime)}
+                          {formatUTCToLocalDate(driverAssignment.startTime)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                           {driverAssignment.endTime
-                            ? formatDate(driverAssignment.endTime)
+                            ? formatUTCToLocalDate(driverAssignment.endTime)
                             : "Ongoing"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -818,11 +857,11 @@ export default function DriverVehicleListClient() {
                           {supervisorAssignment.licensePlate}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {formatDate(supervisorAssignment.startTime)}
+                          {formatUTCToLocalDate(supervisorAssignment.startTime)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                           {supervisorAssignment.endTime
-                            ? formatDate(supervisorAssignment.endTime)
+                            ? formatUTCToLocalDate(supervisorAssignment.endTime)
                             : "Ongoing"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -883,7 +922,7 @@ export default function DriverVehicleListClient() {
                   id="update-start-date"
                   type="date"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
-                  defaultValue={selectedAssignment.startTime ? formatDateForInput(new Date(selectedAssignment.startTime)) : ''}
+                  defaultValue={selectedAssignment.startTime ? utcDateStringToLocalDateInput(selectedAssignment.startTime) : ''}
                   min={(() => {
                     const tomorrow = new Date();
                     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -900,7 +939,7 @@ export default function DriverVehicleListClient() {
                   id="update-end-date"
                   type="date"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent"
-                  defaultValue={selectedAssignment.endTime ? formatDateForInput(new Date(selectedAssignment.endTime)) : ''}
+                  defaultValue={selectedAssignment.endTime ? utcDateStringToLocalDateInput(selectedAssignment.endTime) : ''}
                   min={(() => {
                     const tomorrow = new Date();
                     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -958,100 +997,38 @@ export default function DriverVehicleListClient() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Search */}
-      <div className="sticky top-16 z-40 bg-white rounded-2xl shadow-lg p-5 border border-gray-100 mb-6 backdrop-blur-sm bg-white/95">
-        <div className="relative">
-          <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-            <Search className="w-5 h-5 text-gray-400" />
-          </div>
-          <input
-            type="text"
-            placeholder="Search by vehicle license plate..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3.5 text-sm border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#FDC700] focus:border-[#FDC700] transition-all duration-200 bg-gray-50/50 hover:bg-white"
-            autoComplete="off"
-          />
-        </div>
-      </div>
+      )}
 
       {/* Loading State */}
-      {(() => {
-        if (loading) {
-          return (
-            <div className="flex items-center justify-center py-20">
-              <div className="text-center">
-                <div className="w-16 h-16 border-4 border-[#fad23c] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading vehicles...</p>
-              </div>
-            ) : replacementInfo ? (
-              <div className="space-y-4">
-                <div className="bg-[#FFF085] border border-[#fad23c] rounded-xl p-4">
-                  <div className="flex items-start gap-3">
-                    <Info className="w-5 h-5 text-[#463B3B] mt-0.5" />
-                    <div>
-                      <p className="font-medium text-[#463B3B]">This driver is currently on leave with a replacement</p>
-                      <p className="text-sm text-[#463B3B] mt-1 opacity-80">Someone is temporarily replacing this driver</p>
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-[#fad23c] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading vehicles...</p>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Vehicle Cards or Table will go here */}
+          {paginatedAssignments.length > 0 && (
+            <div className="space-y-4">
+              {paginatedAssignments.map((assignment) => {
+                if (tab === "driver") {
+                  const driverAssignment = assignment as AssignmentTableRow;
+                  return (
+                    <div key={driverAssignment.id} className="p-4 bg-white rounded-lg border">
+                      <p>{driverAssignment.driverName} - {driverAssignment.licensePlate}</p>
                     </div>
-                  </div>
-                </div>
+                  );
+                }
+                return null;
+              })}
+            </div>
+          )}
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">Driver On Leave</label>
-                    <p className="mt-1 text-sm font-semibold text-gray-900">{replacementInfo.driverName}</p>
-                    <p className="text-xs text-gray-600 mt-1">{replacementInfo.driverEmail}</p>
-                    {replacementInfo.driverPhoneNumber && (
-                      <p className="text-xs text-gray-600">{replacementInfo.driverPhoneNumber}</p>
-                    )}
-                  </div>
-
-                  <div className="bg-[#FFF085] rounded-xl p-4 border border-[#fad23c]">
-                    <label className="text-xs font-medium text-[#463B3B] uppercase tracking-wide">Replacement Driver</label>
-                    {replacementInfo.suggestedReplacementDriverName ? (
-                      <p className="mt-1 text-sm font-semibold text-[#463B3B]">{replacementInfo.suggestedReplacementDriverName}</p>
-                    ) : (
-                      <p className="mt-1 text-sm text-gray-500">Not assigned</p>
-                    )}
-                  </div>
-
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">Leave Type</label>
-                    <p className="mt-1 text-sm font-semibold text-gray-900">
-                      {replacementInfo.leaveType === 0 ? 'Annual Leave' :
-                        replacementInfo.leaveType === 1 ? 'Sick Leave' :
-                          replacementInfo.leaveType === 2 ? 'Emergency' : 'Other'}
-                    </p>
-                  </div>
-
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">Replacement Period</label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      <span className="font-medium">From:</span> {formatDate(replacementInfo.startDate)}
-                    </p>
-                    <p className="text-sm text-gray-900">
-                      <span className="font-medium">To:</span> {formatDate(replacementInfo.endDate)}
-                    </p>
-                  </div>
-
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">Status</label>
-                    <p className="mt-1">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Approved
-                      </span>
-                    </p>
-                    {replacementInfo.approvedByAdminName && (
-                      <p className="text-xs text-gray-600 mt-1">By: {replacementInfo.approvedByAdminName}</p>
-                    )}
-                  </div>
-                </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-            <div className="flex justify-center">
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-6">
               <Pagination
                 currentPage={page}
                 totalPages={totalPages}
@@ -1061,9 +1038,93 @@ export default function DriverVehicleListClient() {
           )}
 
           {/* Results Info */}
-          <div className="mt-4 text-center text-sm text-[#6B7280]">
-            Showing {((page - 1) * PER_PAGE) + 1} to{" "}
-            {Math.min(page * PER_PAGE, filteredVehicles.length)} of {filteredVehicles.length} vehicles
+          {!loading && totalItems > 0 && (
+            <div className="mt-4 text-center text-sm text-[#6B7280]">
+              Showing {((page - 1) * PER_PAGE) + 1} to{" "}
+              {Math.min(page * PER_PAGE, totalItems)} of {totalItems} assignments
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Replacement Info Modal */}
+      {showReplacementModal && replacementInfo && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <h3 className="text-lg font-semibold text-[#463B3B] mb-4">Replacement Information</h3>
+            <div className="space-y-4">
+              <div className="bg-[#FFF085] border border-[#fad23c] rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                  <Info className="w-5 h-5 text-[#463B3B] mt-0.5" />
+                  <div>
+                    <p className="font-medium text-[#463B3B]">This driver is currently on leave with a replacement</p>
+                    <p className="text-sm text-[#463B3B] mt-1 opacity-80">Someone is temporarily replacing this driver</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">Driver On Leave</label>
+                  <p className="mt-1 text-sm font-semibold text-gray-900">{replacementInfo.driverName}</p>
+                  <p className="text-xs text-gray-600 mt-1">{replacementInfo.driverEmail}</p>
+                  {replacementInfo.driverPhoneNumber && (
+                    <p className="text-xs text-gray-600">{replacementInfo.driverPhoneNumber}</p>
+                  )}
+                </div>
+
+                <div className="bg-[#FFF085] rounded-xl p-4 border border-[#fad23c]">
+                  <label className="text-xs font-medium text-[#463B3B] uppercase tracking-wide">Replacement Driver</label>
+                  {replacementInfo.suggestedReplacementDriverName ? (
+                    <p className="mt-1 text-sm font-semibold text-[#463B3B]">{replacementInfo.suggestedReplacementDriverName}</p>
+                  ) : (
+                    <p className="mt-1 text-sm text-gray-500">Not assigned</p>
+                  )}
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">Leave Type</label>
+                  <p className="mt-1 text-sm font-semibold text-gray-900">
+                    {replacementInfo.leaveType === 0 ? 'Annual Leave' :
+                      replacementInfo.leaveType === 1 ? 'Sick Leave' :
+                        replacementInfo.leaveType === 2 ? 'Emergency' : 'Other'}
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">Replacement Period</label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    <span className="font-medium">From:</span> {formatUTCToLocalDate(replacementInfo.startDate)}
+                  </p>
+                  <p className="text-sm text-gray-900">
+                    <span className="font-medium">To:</span> {formatUTCToLocalDate(replacementInfo.endDate)}
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">Status</label>
+                  <p className="mt-1">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Approved
+                    </span>
+                  </p>
+                  {replacementInfo.approvedByAdminName && (
+                    <p className="text-xs text-gray-600 mt-1">By: {replacementInfo.approvedByAdminName}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => {
+                  setShowReplacementModal(false);
+                  setReplacementInfo(null);
+                }}
+                className="px-4 py-2 bg-[#fad23c] text-[#463B3B] rounded-lg hover:bg-[#FFF085] transition-colors duration-200 font-medium"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

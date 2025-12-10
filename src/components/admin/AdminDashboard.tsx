@@ -24,6 +24,7 @@ import { userAccountService } from "@/services/userAccountService/userAccountSer
 import { studentService } from "@/services/studentService/studentService.api";
 import { vehicleService } from "@/services/vehicleService";
 import { tripService } from "@/services/tripService";
+import { dashboardService } from "@/services/dashboardService";
 import { transactionService } from "@/services/transactionService";
 import { TransactionStatus } from "@/types/transaction";
 import { formatDate } from "@/utils/dateUtils";
