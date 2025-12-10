@@ -21,7 +21,8 @@ import {
   FaUserCog,
   FaSchool,
   FaMapMarkerAlt,
-  FaKey
+  FaKey,
+  FaExchangeAlt
 } from "react-icons/fa";
 
 const SIDEBAR_SCROLL_KEY = 'sidebar_scroll_position';
@@ -42,6 +43,7 @@ export default function Sidebar() {
     { href: "/admin/users", label: "User Management", icon: <FaUsers /> },
     { href: "/admin/driver-requests", label: "Driver's Requests", icon: <FaFileAlt /> },
     { href: "/admin/parent-requests", label: "Parent Requests", icon: <FaUserCheck /> },
+    { href: "/admin/relocation-requests", label: "Relocation Requests", icon: <FaExchangeAlt /> },
     {
       href: "/admin/trips",
       label: "Trip Management",
