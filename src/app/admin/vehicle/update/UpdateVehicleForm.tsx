@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button';
 import { Save } from 'lucide-react';
 import { UpdateVehicleRequest, VehicleFormErrors } from '@/types/vehicle';
 import vehicleService from '@/services/vehicleService';
+import { formatDateTime } from '@/utils/dateUtils';
 
 export default function UpdateVehicleForm() {
   const router = useRouter();
@@ -123,16 +124,7 @@ export default function UpdateVehicleForm() {
 
   const handleCancel = () => router.push('/admin/vehicle');
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '';
-    return new Date(dateString).toLocaleString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  // Using centralized formatDateTime from @/utils/dateUtils
 
   if (fetching) {
     return (
@@ -186,11 +178,11 @@ export default function UpdateVehicleForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-200">
             <div className="bg-gray-50 p-4 rounded-lg">
               <label className="block text-sm font-medium text-gray-700 mb-2">Created At</label>
-              <p className="text-sm text-gray-600">{formatDate(createdAt)}</p>
+              <p className="text-sm text-gray-600">{formatDateTime(createdAt)}</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <label className="block text-sm font-medium text-gray-700 mb-2">Last Updated</label>
-              <p className="text-sm text-gray-600">{formatDate(updatedAt)}</p>
+              <p className="text-sm text-gray-600">{formatDateTime(updatedAt)}</p>
             </div>
           </div>
 

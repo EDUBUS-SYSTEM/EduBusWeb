@@ -1,6 +1,7 @@
 "use client";
 import { FaUser, FaChild, FaMapMarkerAlt, FaDollarSign, FaCalendarAlt, FaPhone, FaEnvelope, FaHome, FaTimes, FaRoute } from "react-icons/fa";
 import { PickupPointRequestDetailDto } from "@/services/pickupPointService";
+import { formatDate } from "@/utils/dateUtils";
 
 type PickupPointRequest = PickupPointRequestDetailDto;
 
@@ -20,15 +21,7 @@ export default function RequestDetailModal({ request, onClose }: RequestDetailMo
     }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  // Using centralized formatDate from @/utils/dateUtils
 
   const getStatusBadge = (status: string) => {
     const baseClasses = "px-3 py-1 rounded-full text-sm font-medium";

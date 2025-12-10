@@ -5,6 +5,7 @@ import { Schedule } from '@/types';
 import { RouteScheduleDto, CreateRouteScheduleDto } from '@/services/routeScheduleService/routeSchedule.type';
 import { scheduleService } from '@/services/api/scheduleService';
 import { routeScheduleService } from '@/services/routeScheduleService/routeSchedule.api';
+import { formatDate, formatDateTime } from '@/utils/dateUtils';
 
 interface RouteScheduleModalProps {
   route: RouteDto;
@@ -198,23 +199,7 @@ export default function RouteScheduleModal({ route, onClose, onSuccess }: RouteS
     !routeSchedules.some(rs => rs.scheduleId === schedule.id)
   );
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  // Using centralized formatDate and formatDateTime from @/utils/dateUtils
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

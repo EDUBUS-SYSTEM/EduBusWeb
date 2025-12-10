@@ -7,12 +7,13 @@ import { FaMapMarkerAlt, FaUsers, FaCheckCircle, FaClock, FaTimesCircle, FaSpinn
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Pagination from '@/components/ui/Pagination';
+import { formatDate } from '@/utils/dateUtils';
 
 const PickupPointsTab: React.FC = () => {
   const [pickupPoints, setPickupPoints] = useState<PickupPointWithStudentStatusDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPickupPoint, setSelectedPickupPoint] = useState<PickupPointWithStudentStatusDto | null>(null);
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -27,7 +28,7 @@ const PickupPointsTab: React.FC = () => {
       setIsLoading(true);
       const data = await pickupPointService.getPickupPointsWithStudentStatus();
       setTotalItems(data.length);
-      
+
       // Client-side pagination
       const startIndex = (currentPage - 1) * itemsPerPage;
       const endIndex = startIndex + itemsPerPage;
@@ -48,14 +49,7 @@ const PickupPointsTab: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
+  // Using centralized formatDate from @/utils/dateUtils
 
   if (isLoading && pickupPoints.length === 0) {
     return (
@@ -205,11 +199,11 @@ const PickupPointsTab: React.FC = () => {
 
       {/* Detail Modal */}
       {selectedPickupPoint && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
           onClick={() => setSelectedPickupPoint(null)}
         >
-          <div 
+          <div
             className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
@@ -274,13 +268,12 @@ const PickupPointsTab: React.FC = () => {
                               </p>
                             )}
                           </div>
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                            student.status === 1 
-                              ? 'bg-green-100 text-green-800' 
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${student.status === 1
+                              ? 'bg-green-100 text-green-800'
                               : student.status === 2
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
                             {student.status === 1 ? 'Active' : student.status === 2 ? 'Pending' : 'Inactive'}
                           </span>
                         </div>

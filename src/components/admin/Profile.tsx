@@ -2,6 +2,7 @@
 import { useUserAccount } from "@/hooks/useUserAccount";
 import { getUserIdFromToken } from "@/lib/jwt";
 import { UserAvatarImage } from "./UserAvatarImage";
+import { formatDateForInput } from "@/utils/dateUtils";
 
 export default function Profile() {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -16,7 +17,7 @@ export default function Profile() {
     { label: "Email", value: `${user.email} (Read only)`, type: "email" },
     { label: "Full Name", value: `${user.firstName} ${user.lastName}`, type: "text" },
     { label: "Phone Number", value: user.phoneNumber, type: "text" },
-    { label: "Date of Birth", value: user.dateOfBirth?.split("T")[0] || "", type: "date" },
+    { label: "Date of Birth", value: formatDateForInput(user.dateOfBirth), type: "date" },
   ];
 
   return (

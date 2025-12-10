@@ -4,6 +4,7 @@ import React from 'react';
 import { TripDto } from '@/types';
 import { FaRoute, FaClock, FaCheckCircle, FaTimesCircle, FaMapMarkerAlt, FaCalendarAlt, FaUser, FaPhone, FaCar, FaInfoCircle, FaUsers } from 'react-icons/fa';
 import { StudentAvatar } from './StudentAvatar';
+import { formatDate } from '@/utils/dateUtils';
 
 interface TripDetailsProps {
   trip: TripDto;
@@ -45,13 +46,7 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+  // Using centralized formatDate from @/utils/dateUtils
 
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString('en-US', {

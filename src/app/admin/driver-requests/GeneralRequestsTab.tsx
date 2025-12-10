@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { FaSearch, FaFilter, FaEye, FaTimes, FaFileAlt, FaUser, FaClock } from "react-icons/fa";
 import GeneralRequestDetailModal from "./GeneralRequestDetailModal";
+import { formatDateTime } from "@/utils/dateUtils";
 // TODO: Implement real API service for general driver requests
 // This will need to be created based on the backend API
 
@@ -42,7 +43,7 @@ export default function GeneralRequestsTab() {
   const [requests, setRequests] = useState<GeneralDriverRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Search and filter states
   const [searchDriverName, setSearchDriverName] = useState("");
   const [searchDriverEmail, setSearchDriverEmail] = useState("");
@@ -50,7 +51,7 @@ export default function GeneralRequestsTab() {
   const [requestTypeFilter, setRequestTypeFilter] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
@@ -63,15 +64,15 @@ export default function GeneralRequestsTab() {
   const fetchRequests = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       // TODO: Replace with real API call
       // Example: const response = await generalDriverRequestService.getRequests({...filters});
-      
+
       // For now, show empty state until API is implemented
       setRequests([]);
       setTotalItems(0);
-      
+
       // Remove this comment when API is ready:
       // const params = {
       //   status: statusFilter || undefined,
@@ -85,10 +86,10 @@ export default function GeneralRequestsTab() {
       // const response = await generalDriverRequestService.getRequests(params);
       // setRequests(response.data);
       // setTotalItems(response.totalCount);
-      
+
     } catch (err: unknown) {
-      const errorMessage = (err as { message?: string }).message || 
-                          "Failed to load general requests. Please try again.";
+      const errorMessage = (err as { message?: string }).message ||
+        "Failed to load general requests. Please try again.";
       setError(errorMessage);
       console.error("Error loading general requests:", err);
       setRequests([]);
@@ -161,15 +162,7 @@ export default function GeneralRequestsTab() {
     }
   };
 
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  // Using centralized formatDateTime from @/utils/dateUtils
 
   if (loading) {
     return (
@@ -196,7 +189,7 @@ export default function GeneralRequestsTab() {
               autoComplete="off"
             />
           </div>
-          
+
           {/* Search by Driver Email */}
           <div className="flex-1 relative">
             <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -209,7 +202,7 @@ export default function GeneralRequestsTab() {
               autoComplete="off"
             />
           </div>
-          
+
           {/* Clear Search */}
           {(searchDriverName || searchDriverEmail) && (
             <button
@@ -223,7 +216,7 @@ export default function GeneralRequestsTab() {
               Clear
             </button>
           )}
-          
+
           {/* Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
@@ -254,7 +247,7 @@ export default function GeneralRequestsTab() {
                   <option value="Rejected">Rejected</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Request Type
@@ -344,7 +337,7 @@ export default function GeneralRequestsTab() {
                         </div>
                       </div>
                     </td>
-                    
+
                     <td className="px-6 py-4">
                       <span className={getRequestTypeBadge(request.requestType)}>
                         {request.requestType === "Route Change" && "Route Change"}
@@ -354,7 +347,7 @@ export default function GeneralRequestsTab() {
                         {request.requestType === "Other" && "Other"}
                       </span>
                     </td>
-                    
+
                     <td className="px-6 py-4">
                       <div className="max-w-xs">
                         <div className="text-sm font-medium text-gray-900 truncate">
@@ -365,7 +358,7 @@ export default function GeneralRequestsTab() {
                         </div>
                       </div>
                     </td>
-                    
+
                     <td className="px-6 py-4">
                       <span className={getPriorityBadge(request.priority)}>
                         {request.priority === "Urgent" && "Urgent"}
@@ -374,7 +367,7 @@ export default function GeneralRequestsTab() {
                         {request.priority === "Low" && "Low"}
                       </span>
                     </td>
-                    
+
                     <td className="px-6 py-4">
                       <span className={getStatusBadge(request.status)}>
                         {request.status === "Pending" && "Pending"}
@@ -383,7 +376,7 @@ export default function GeneralRequestsTab() {
                         {request.status === "Rejected" && "Rejected"}
                       </span>
                     </td>
-                    
+
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
                         <FaClock className="h-4 w-4 text-gray-400" />
@@ -392,7 +385,7 @@ export default function GeneralRequestsTab() {
                         </div>
                       </div>
                     </td>
-                    
+
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
                         <button
@@ -425,11 +418,11 @@ export default function GeneralRequestsTab() {
           >
             Previous
           </button>
-          
+
           <span className="px-4 py-2 text-sm text-gray-700">
             Page {currentPage} / {Math.ceil(totalItems / itemsPerPage)}
           </span>
-          
+
           <button
             onClick={() => setCurrentPage(prev => prev + 1)}
             disabled={currentPage >= Math.ceil(totalItems / itemsPerPage)}

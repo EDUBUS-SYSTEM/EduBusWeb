@@ -4,6 +4,7 @@ import { FaTimes, FaSave, FaCalendarAlt } from "react-icons/fa";
 import { ScheduleTimeOverride } from "@/types";
 import { scheduleService } from "@/services/api/scheduleService";
 import TimeSlotSelector from "./TimeSlotSelector";
+import { formatDate, formatDateForInput } from "@/utils/dateUtils";
 
 interface TimeOverrideModalProps {
   isOpen: boolean;
@@ -51,7 +52,7 @@ export default function TimeOverrideModal({
   useEffect(() => {
     if (override) {
       setFormData({
-        date: new Date(override.date).toISOString().split("T")[0],
+        date: formatDateForInput(override.date),
         startTime: override.startTime,
         endTime: override.endTime,
         reason: override.reason,
@@ -82,10 +83,10 @@ export default function TimeOverrideModal({
         const date = new Date(formData.date);
         const from = effectiveFrom ? new Date(effectiveFrom) : null;
         const to = effectiveTo ? new Date(effectiveTo) : null;
-        if (from && date < new Date(from.toISOString().split("T")[0])) {
+        if (from && date < new Date(formatDateForInput(from))) {
           newErrors.date = "Date must be on or after Effective From";
         }
-        if (to && date > new Date(to.toISOString().split("T")[0])) {
+        if (to && date > new Date(formatDateForInput(to))) {
           newErrors.date = "Date must be on or before Effective To";
         }
       }
@@ -101,10 +102,10 @@ export default function TimeOverrideModal({
         const date = new Date(formData.date);
         const from = effectiveFrom ? new Date(effectiveFrom) : null;
         const to = effectiveTo ? new Date(effectiveTo) : null;
-        if (from && date < new Date(from.toISOString().split("T")[0])) {
+        if (from && date < new Date(formatDateForInput(from))) {
           newErrors.date = "Override date must be on or after Effective From";
         }
-        if (to && date > new Date(to.toISOString().split("T")[0])) {
+        if (to && date > new Date(formatDateForInput(to))) {
           newErrors.date = "Override date must be on or before Effective To";
         }
       }
@@ -251,7 +252,7 @@ export default function TimeOverrideModal({
       const timeOverrides = currentSchedule.timeOverrides || [];
 
       const data = timeOverrides.map((override) => ({
-        Date: new Date(override.date).toLocaleDateString(),
+        Date: formatDate(override.date),
         StartTime: override.startTime,
         EndTime: override.endTime,
         Reason: override.reason,
@@ -358,11 +359,10 @@ export default function TimeOverrideModal({
                 <button
                   type="button"
                   onClick={() => setOverrideType("standalone")}
-                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
-                    overrideType === "standalone"
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${overrideType === "standalone"
                       ? "border-blue-500 bg-blue-50 text-blue-800"
                       : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                  }`}
+                    }`}
                 >
                   <div className="text-center">
                     <div className="text-lg font-semibold mb-1">
@@ -376,11 +376,10 @@ export default function TimeOverrideModal({
                 <button
                   type="button"
                   onClick={() => setOverrideType("exception")}
-                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
-                    overrideType === "exception"
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${overrideType === "exception"
                       ? "border-orange-500 bg-orange-50 text-orange-800"
                       : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                  }`}
+                    }`}
                 >
                   <div className="text-center">
                     <div className="text-lg font-semibold mb-1">
@@ -408,18 +407,17 @@ export default function TimeOverrideModal({
                   value={formData.date}
                   min={
                     effectiveFrom
-                      ? new Date(effectiveFrom).toISOString().split("T")[0]
+                      ? formatDateForInput(effectiveFrom)
                       : undefined
                   }
                   max={
                     effectiveTo
-                      ? new Date(effectiveTo).toISOString().split("T")[0]
+                      ? formatDateForInput(effectiveTo)
                       : undefined
                   }
                   onChange={(e) => handleInputChange("date", e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
-                    errors.date ? "border-red-300 bg-red-50" : "border-gray-200"
-                  }`}
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${errors.date ? "border-red-300 bg-red-50" : "border-gray-200"
+                    }`}
                 />
                 {errors.date && (
                   <p className="mt-1 text-sm text-red-600">{errors.date}</p>
@@ -441,26 +439,20 @@ export default function TimeOverrideModal({
                           setErrors((prev) => ({ ...prev, exceptionDate: "" }));
                         }
                       }}
-                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
-                        errors.exceptionDate
+                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${errors.exceptionDate
                           ? "border-red-300 bg-red-50"
                           : "border-gray-200"
-                      }`}
+                        }`}
                     >
                       <option value="">Select an exception date...</option>
                       {existingExceptions.map((exception, index) => (
                         <option
                           key={index}
                           value={
-                            new Date(exception).toISOString().split("T")[0]
+                            formatDateForInput(exception)
                           }
                         >
-                          {new Date(exception).toLocaleDateString("en-US", {
-                            weekday: "long",
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          })}
+                          {formatDate(exception)}
                         </option>
                       ))}
                     </select>
@@ -489,20 +481,19 @@ export default function TimeOverrideModal({
                     value={formData.date}
                     min={
                       effectiveFrom
-                        ? new Date(effectiveFrom).toISOString().split("T")[0]
+                        ? formatDateForInput(effectiveFrom)
                         : undefined
                     }
                     max={
                       effectiveTo
-                        ? new Date(effectiveTo).toISOString().split("T")[0]
+                        ? formatDateForInput(effectiveTo)
                         : undefined
                     }
                     onChange={(e) => handleInputChange("date", e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
-                      errors.date
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${errors.date
                         ? "border-red-300 bg-red-50"
                         : "border-gray-200"
-                    }`}
+                      }`}
                   />
                   {errors.date && (
                     <p className="mt-1 text-sm text-red-600">{errors.date}</p>
@@ -532,9 +523,8 @@ export default function TimeOverrideModal({
                 value={formData.reason}
                 onChange={(e) => handleInputChange("reason", e.target.value)}
                 rows={3}
-                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
-                  errors.reason ? "border-red-300 bg-red-50" : "border-gray-200"
-                }`}
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${errors.reason ? "border-red-300 bg-red-50" : "border-gray-200"
+                  }`}
                 placeholder="Enter reason for this time override..."
               />
               {errors.reason && (

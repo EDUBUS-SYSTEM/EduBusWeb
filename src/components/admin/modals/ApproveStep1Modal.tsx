@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { DriverLeaveRequest } from "@/services/api/driverLeaveRequests";
+import { formatDate } from "@/utils/dateUtils";
 
 interface ApproveStep1ModalProps {
   leave: DriverLeaveRequest;
@@ -8,10 +9,10 @@ interface ApproveStep1ModalProps {
   onClose: () => void;
 }
 
-export default function ApproveStep1Modal({ 
-  leave, 
-  onNext, 
-  onClose 
+export default function ApproveStep1Modal({
+  leave,
+  onNext,
+  onClose
 }: ApproveStep1ModalProps) {
   const [notes, setNotes] = useState("");
   const [needsReplacement, setNeedsReplacement] = useState(false);
@@ -71,11 +72,11 @@ export default function ApproveStep1Modal({
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium text-gray-700">From Date:</span>
-                  <span className="text-gray-900">{new Date(leave.startDate).toLocaleDateString('en-US')}</span>
+                  <span className="text-gray-900">{formatDate(leave.startDate)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium text-gray-700">To Date:</span>
-                  <span className="text-gray-900">{new Date(leave.endDate).toLocaleDateString('en-US')}</span>
+                  <span className="text-gray-900">{formatDate(leave.endDate)}</span>
                 </div>
                 <div className="mt-3">
                   <span className="font-medium text-gray-700">Reason:</span>

@@ -20,6 +20,7 @@ import {
   UpdateStudentRequest,
   StudentStatus,
 } from "@/services/studentService/studentService.types";
+import { formatDate } from "@/utils/dateUtils";
 
 export default function StudentsList() {
   const [students, setStudents] = useState<StudentDto[]>([]);
@@ -634,11 +635,10 @@ export default function StudentsList() {
                     </div>
                   </td>
                   <td className="py-4 px-4">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                      student.parentId 
-                        ? "bg-green-100 text-green-800" 
-                        : "bg-yellow-100 text-yellow-800"
-                    }`}>
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${student.parentId
+                      ? "bg-green-100 text-green-800"
+                      : "bg-yellow-100 text-yellow-800"
+                      }`}>
                       {student.parentId ? "Linked" : "Not linked"}
                     </span>
                   </td>
@@ -657,96 +657,92 @@ export default function StudentsList() {
                   </td>
                   <td className="py-4 px-4">
                     <div className="text-gray-600 font-medium">
-                      {new Date(student.createdAt).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      })}
+                      {formatDate(student.createdAt)}
                     </div>
                   </td>
                   <td className="py-4 px-4">
                     <div className="flex justify-center gap-1">
-                    <button
-                      onClick={() => handleViewStudent(student)}
-                      className="p-2.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-all duration-200 hover:scale-110 hover:shadow-md"
-                      title="View Details"
-                    >
-                      <FaEye className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleEditStudent(student)}
-                      className="p-2.5 text-green-600 hover:bg-green-100 rounded-lg transition-all duration-200 hover:scale-110 hover:shadow-md"
-                      title="Edit Student"
-                    >
-                      <FaEdit className="w-4 h-4" />
-                    </button>
-
-                    {/* Status-specific actions */}
-                    {student.status === StudentStatus.Available && (
                       <button
-                        onClick={() => handleActivateStudent(student.id)}
+                        onClick={() => handleViewStudent(student)}
+                        className="p-2.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-all duration-200 hover:scale-110 hover:shadow-md"
+                        title="View Details"
+                      >
+                        <FaEye className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleEditStudent(student)}
                         className="p-2.5 text-green-600 hover:bg-green-100 rounded-lg transition-all duration-200 hover:scale-110 hover:shadow-md"
-                        title="Activate Student"
+                        title="Edit Student"
                       >
-                        ✓
+                        <FaEdit className="w-4 h-4" />
                       </button>
-                    )}
 
-                    {student.status === StudentStatus.Pending && (
-                      <button
-                        onClick={() => handleActivateStudent(student.id)}
-                        className="p-2.5 text-green-600 hover:bg-green-100 rounded-lg transition-all duration-200 hover:scale-110 hover:shadow-md"
-                        title="Activate Student"
-                      >
-                        ✓
-                      </button>
-                    )}
-
-                    {student.status === StudentStatus.Active && (
-                      <button
-                        onClick={() => handleDeactivateStudent(student.id)}
-                        className="p-2.5 text-yellow-600 hover:bg-yellow-100 rounded-lg transition-all duration-200 hover:scale-110 hover:shadow-md"
-                        title="Deactivate Student"
-                      >
-                        ⏸
-                      </button>
-                    )}
-
-                    {(student.status === StudentStatus.Inactive ||
-                      student.status === StudentStatus.Deleted) && (
+                      {/* Status-specific actions */}
+                      {student.status === StudentStatus.Available && (
                         <button
-                          onClick={() => handleRestoreStudent(student.id)}
-                          className="p-2.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-all duration-200 hover:scale-110 hover:shadow-md"
-                          title="Restore Student"
+                          onClick={() => handleActivateStudent(student.id)}
+                          className="p-2.5 text-green-600 hover:bg-green-100 rounded-lg transition-all duration-200 hover:scale-110 hover:shadow-md"
+                          title="Activate Student"
                         >
-                          ↻
+                          ✓
                         </button>
                       )}
 
-                    <button
-                      onClick={() =>
-                        student.status !== StudentStatus.Deleted &&
-                        handleDeleteStudent(student.id)
-                      }
-                      disabled={student.status === StudentStatus.Deleted}
-                      className={`p-2.5 rounded-lg transition-all duration-200 ${student.status === StudentStatus.Deleted
-                        ? "text-gray-300 cursor-not-allowed"
-                        : "text-red-600 hover:bg-red-100 hover:scale-110 hover:shadow-md"
-                        }`}
-                      title={
-                        student.status === StudentStatus.Deleted
-                          ? "Already deleted"
-                          : "Delete Student"
-                      }
-                    >
-                      <FaTrash className="w-4 h-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                      {student.status === StudentStatus.Pending && (
+                        <button
+                          onClick={() => handleActivateStudent(student.id)}
+                          className="p-2.5 text-green-600 hover:bg-green-100 rounded-lg transition-all duration-200 hover:scale-110 hover:shadow-md"
+                          title="Activate Student"
+                        >
+                          ✓
+                        </button>
+                      )}
+
+                      {student.status === StudentStatus.Active && (
+                        <button
+                          onClick={() => handleDeactivateStudent(student.id)}
+                          className="p-2.5 text-yellow-600 hover:bg-yellow-100 rounded-lg transition-all duration-200 hover:scale-110 hover:shadow-md"
+                          title="Deactivate Student"
+                        >
+                          ⏸
+                        </button>
+                      )}
+
+                      {(student.status === StudentStatus.Inactive ||
+                        student.status === StudentStatus.Deleted) && (
+                          <button
+                            onClick={() => handleRestoreStudent(student.id)}
+                            className="p-2.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-all duration-200 hover:scale-110 hover:shadow-md"
+                            title="Restore Student"
+                          >
+                            ↻
+                          </button>
+                        )}
+
+                      <button
+                        onClick={() =>
+                          student.status !== StudentStatus.Deleted &&
+                          handleDeleteStudent(student.id)
+                        }
+                        disabled={student.status === StudentStatus.Deleted}
+                        className={`p-2.5 rounded-lg transition-all duration-200 ${student.status === StudentStatus.Deleted
+                          ? "text-gray-300 cursor-not-allowed"
+                          : "text-red-600 hover:bg-red-100 hover:scale-110 hover:shadow-md"
+                          }`}
+                        title={
+                          student.status === StudentStatus.Deleted
+                            ? "Already deleted"
+                            : "Delete Student"
+                        }
+                      >
+                        <FaTrash className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
         </div>
         {paginatedStudents.length === 0 && (

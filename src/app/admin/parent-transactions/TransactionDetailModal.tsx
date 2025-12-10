@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { FaTimes, FaReceipt, FaUser, FaChild, FaMapMarkerAlt, FaCalendarAlt, FaCreditCard, FaInfoCircle } from "react-icons/fa";
 import { transactionService } from "@/services/transactionService";
 import { TransactionDetailResponseDto } from "@/types/transaction";
+import { formatDateTime } from "@/utils/dateUtils";
 
 interface TransactionDetailModalProps {
   transactionId: string;
@@ -36,20 +37,7 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
     }).format(amount);
   };
 
-  const formatDateTime = (dateString: string) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    if (Number.isNaN(date.getTime())) return 'N/A';
-    return date.toLocaleString('vi-VN', {
-      timeZone: 'Asia/Ho_Chi_Minh',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  };
+  // Using centralized formatDateTime from @/utils/dateUtils
 
   const formatStatus = (status: string | number | null | undefined) => {
     if (status === null || status === undefined) return "Unknown";
@@ -318,13 +306,12 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
                         <td className="px-4 py-3 text-[#444]">{item.distanceKm || 0} km</td>
                         <td className="px-4 py-3 font-semibold text-[#8c6a00]">{formatCurrency(item.amount)}</td>
                         <td className="px-4 py-3">
-                          <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${
-                            formatItemStatus(item.status) === 'Paid' ? 'bg-green-100 text-green-800 border-green-200' :
-                            formatItemStatus(item.status) === 'Approved' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                            formatItemStatus(item.status) === 'Pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                            'bg-red-100 text-red-800 border-red-200'
-                          }`}>
-                            {formatItemStatus(item.status)}
+                          <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${item.status === 'Paid' ? 'bg-green-100 text-green-800 border-green-200' :
+                              item.status === 'Approved' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                item.status === 'Pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                  'bg-red-100 text-red-800 border-red-200'
+                            }`}>
+                            {item.status}
                           </span>
                         </td>
                       </tr>

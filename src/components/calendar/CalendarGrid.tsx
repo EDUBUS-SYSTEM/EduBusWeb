@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import { CalendarView, CalendarEvent } from '@/types';
 import EventCard from './EventCard';
 import { FaTimes, FaBus, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
+import { formatDate, formatTime } from "@/utils/dateUtils";
 
 interface CalendarGridProps {
   view: CalendarView;
@@ -13,10 +14,10 @@ interface CalendarGridProps {
   onEventMove?: (eventId: string, newStart: Date, newEnd: Date) => void;
 }
 
-export default function CalendarGrid({ 
-  view, 
-  events, 
-  onEventClick, 
+export default function CalendarGrid({
+  view,
+  events,
+  onEventClick,
   onEventCreate,
   onEventMove
 }: CalendarGridProps) {
@@ -46,28 +47,28 @@ export default function CalendarGrid({
   const calculateEventPosition = (event: CalendarEvent, date: Date) => {
     const eventStart = new Date(event.start);
     const eventEnd = new Date(event.end);
-    
+
     // Check if event is on this date
     if (eventStart.toDateString() !== date.toDateString()) {
       return { top: 0, height: 0 };
     }
-    
+
     const dayStart = new Date(date);
     dayStart.setHours(0, 0, 0, 0);
-    
+
     // Calculate position in minutes from start of day
     const startMinutes = eventStart.getHours() * 60 + eventStart.getMinutes();
     const endMinutes = eventEnd.getHours() * 60 + eventEnd.getMinutes();
     const duration = endMinutes - startMinutes;
-    
+
     // Height per minute (60px per hour = 1px per minute)
     const top = startMinutes;
     const height = Math.max(duration, 30); // Minimum 30 minutes height
-    
+
     return { top, height };
   };
 
-  const formatTime = (hour: number) => {
+  const formatHour = (hour: number) => {
     const period = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
     return `${displayHour}:00 ${period}`;
@@ -93,37 +94,37 @@ export default function CalendarGrid({
   const handleDragOver = (e: React.DragEvent, date: Date, hour: number) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    
+
     if (!containerRef.current) return;
-    
+
     const rect = containerRef.current.getBoundingClientRect();
     const y = e.clientY - rect.top;
     const hourHeight = 60; // 60px per hour
     const totalOffset = y - (hour * hourHeight);
     const minutes = Math.max(0, Math.min(59, Math.floor(totalOffset / (hourHeight / 60))));
-    
+
     setDragOverSlot({ date, hour, minute: minutes });
   };
 
   const handleDrop = (e: React.DragEvent, date: Date, hour: number) => {
     e.preventDefault();
-    
+
     if (!draggedEvent || !onEventMove) return;
-    
+
     const eventId = e.dataTransfer.getData('text/plain');
     if (eventId !== draggedEvent.id) return;
-    
+
     const newStart = new Date(date);
     if (dragOverSlot) {
       newStart.setHours(dragOverSlot.hour, dragOverSlot.minute, 0, 0);
     } else {
       newStart.setHours(hour, 0, 0, 0);
     }
-    
+
     // Calculate duration from original event
     const originalDuration = new Date(draggedEvent.end).getTime() - new Date(draggedEvent.start).getTime();
     const newEnd = new Date(newStart.getTime() + originalDuration);
-    
+
     onEventMove(eventId, newStart, newEnd);
     setDraggedEvent(null);
     setDragOverSlot(null);
@@ -145,12 +146,8 @@ export default function CalendarGrid({
   const renderDayView = () => {
     const day = view.date;
     const dayName = day.toLocaleDateString('en-US', { weekday: 'long' });
-    const dayDate = day.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-    
+    const dayDate = formatDate(day);
+
     const dayEvents = events.filter(event => {
       const eventDate = new Date(event.start);
       return eventDate.toDateString() === day.toDateString();
@@ -163,7 +160,7 @@ export default function CalendarGrid({
           <h2 className="text-2xl font-bold text-[#463B3B]">{dayName}</h2>
           <p className="text-gray-600">{dayDate}</p>
         </div>
-        
+
         {/* Calendar Grid */}
         <div className="relative overflow-y-auto max-h-[calc(100vh-400px)]" ref={containerRef}>
           <div className="flex">
@@ -175,12 +172,12 @@ export default function CalendarGrid({
                   className="h-[60px] border-b border-gray-100 px-3 flex items-start pt-1"
                 >
                   <span className="text-xs text-gray-600 font-medium">
-                    {formatTime(hour)}
+                    {formatHour(hour)}
                   </span>
                 </div>
               ))}
             </div>
-            
+
             {/* Events column */}
             <div className="flex-1 relative">
               {timeSlots.map((hour) => (
@@ -203,12 +200,12 @@ export default function CalendarGrid({
                   )}
                 </div>
               ))}
-              
+
               {/* Render events */}
               {dayEvents.map((event) => {
                 const { top, height } = calculateEventPosition(event, day);
                 if (height === 0) return null;
-                
+
                 return (
                   <div
                     key={event.id}
@@ -245,7 +242,7 @@ export default function CalendarGrid({
     const weekStart = new Date(view.date);
     const dayOfWeek = weekStart.getDay();
     weekStart.setDate(weekStart.getDate() - dayOfWeek);
-    
+
     const weekDays = Array.from({ length: 7 }, (_, i) => {
       const day = new Date(weekStart);
       day.setDate(weekStart.getDate() + i);
@@ -253,31 +250,30 @@ export default function CalendarGrid({
     });
 
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    
+
     return (
       <div className="bg-white rounded-2xl shadow-soft-lg overflow-hidden border border-gray-100">
         {/* Header */}
         <div className="flex border-b border-gray-100">
           <div className="w-24 flex-shrink-0 p-4 border-r border-gray-100 bg-gray-50"></div>
           {weekDays.map((day, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className="flex-1 p-4 text-center border-r border-gray-100 last:border-r-0 min-w-0"
             >
               <div className="text-sm font-medium text-gray-600 mb-1">
                 {dayNames[index]}
               </div>
-              <div className={`text-lg font-bold ${
-                isToday(day) 
-                  ? 'text-[#463B3B] bg-[#fad23c] rounded-full w-8 h-8 flex items-center justify-center mx-auto' 
-                  : 'text-gray-800'
-              }`}>
+              <div className={`text-lg font-bold ${isToday(day)
+                ? 'text-[#463B3B] bg-[#fad23c] rounded-full w-8 h-8 flex items-center justify-center mx-auto'
+                : 'text-gray-800'
+                }`}>
                 {day.getDate()}
               </div>
             </div>
           ))}
         </div>
-        
+
         {/* Calendar Grid */}
         <div className="relative overflow-y-auto max-h-[calc(100vh-400px)]" ref={containerRef}>
           <div className="flex">
@@ -289,12 +285,12 @@ export default function CalendarGrid({
                   className="h-[60px] border-b border-gray-100 px-3 flex items-start pt-1"
                 >
                   <span className="text-xs text-gray-600 font-medium">
-                    {formatTime(hour)}
+                    {formatHour(hour)}
                   </span>
                 </div>
               ))}
             </div>
-            
+
             {/* Days columns */}
             <div className="flex-1 flex">
               {weekDays.map((day, dayIndex) => {
@@ -304,8 +300,8 @@ export default function CalendarGrid({
                 });
 
                 return (
-                  <div 
-                    key={dayIndex} 
+                  <div
+                    key={dayIndex}
                     className="flex-1 border-r border-gray-100 last:border-r-0 relative min-w-0"
                   >
                     {timeSlots.map((hour) => (
@@ -317,26 +313,26 @@ export default function CalendarGrid({
                         onClick={() => handleCellClick(day, hour)}
                       >
                         {/* Drop indicator */}
-                        {dragOverSlot && 
-                         dragOverSlot.date.toDateString() === day.toDateString() && 
-                         dragOverSlot.hour === hour && 
-                         draggedEvent && (
-                          <div
-                            className="absolute left-0 right-0 bg-blue-200 opacity-50 border-2 border-blue-400 border-dashed z-10"
-                            style={{
-                              top: `${(dragOverSlot.minute / 60) * 100}%`,
-                              height: '2px'
-                            }}
-                          />
-                        )}
+                        {dragOverSlot &&
+                          dragOverSlot.date.toDateString() === day.toDateString() &&
+                          dragOverSlot.hour === hour &&
+                          draggedEvent && (
+                            <div
+                              className="absolute left-0 right-0 bg-blue-200 opacity-50 border-2 border-blue-400 border-dashed z-10"
+                              style={{
+                                top: `${(dragOverSlot.minute / 60) * 100}%`,
+                                height: '2px'
+                              }}
+                            />
+                          )}
                       </div>
                     ))}
-                    
+
                     {/* Render events for this day */}
                     {dayEvents.map((event) => {
                       const { top, height } = calculateEventPosition(event, day);
                       if (height === 0) return null;
-                      
+
                       return (
                         <div
                           key={event.id}
@@ -379,7 +375,7 @@ export default function CalendarGrid({
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
     const startingDayOfWeek = firstDay.getDay();
-    
+
     const days = [];
     for (let i = 0; i < startingDayOfWeek; i++) {
       days.push(null);
@@ -387,7 +383,7 @@ export default function CalendarGrid({
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(new Date(year, month, day));
     }
-    
+
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     const getEventsForDate = (date: Date) => {
@@ -411,7 +407,7 @@ export default function CalendarGrid({
             </div>
           ))}
         </div>
-        
+
         {/* Calendar grid */}
         <div className="grid grid-cols-7 gap-0">
           {days.map((day, index) => {
@@ -444,7 +440,7 @@ export default function CalendarGrid({
                     `}>
                       {day.getDate()}
                     </div>
-                    
+
                     {dayTripsCount > 0 && (
                       <div className="flex items-center justify-center">
                         <div className="bg-gradient-to-br from-[#fad23c] to-[#FDC700] text-[#463B3B] rounded-full w-9 h-9 flex items-center justify-center text-sm font-bold shadow-md hover:shadow-lg transition-shadow">
@@ -472,7 +468,7 @@ export default function CalendarGrid({
             <div className="flex items-center gap-3">
               <FaBus className="w-6 h-6 text-[#463B3B]" />
               <h2 className="text-xl font-bold text-[#463B3B]">
-                {date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                {formatDate(date)}
               </h2>
               <span className="text-sm font-semibold text-[#463B3B] bg-white px-3 py-1 rounded-full">
                 {trips.length} trip{trips.length !== 1 ? 's' : ''}
@@ -518,11 +514,10 @@ export default function CalendarGrid({
                             const startHour = new Date(trip.start).getHours();
                             const ismorning = startHour < 12;
                             return (
-                              <span className={`px-2 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${
-                                ismorning 
-                                  ? 'bg-blue-100 text-blue-700' 
-                                  : 'bg-orange-100 text-orange-700'
-                              }`}>
+                              <span className={`px-2 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${ismorning
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-orange-100 text-orange-700'
+                                }`}>
                                 {ismorning ? '🌅 Morning' : '🌆 Afternoon'}
                               </span>
                             );
@@ -538,7 +533,7 @@ export default function CalendarGrid({
                             <FaClock className="w-4 h-4 text-[#fad23c] flex-shrink-0" />
                             <span className="font-medium">Time:</span>
                             <span className="text-gray-600">
-                              {new Date(trip.start).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - {new Date(trip.end).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                              {formatTime(trip.start)} - {formatTime(trip.end)}
                             </span>
                           </div>
                         </div>
@@ -546,25 +541,24 @@ export default function CalendarGrid({
 
                       {/* Status Badge */}
                       <div
-                        className={`px-3 py-1.5 rounded-full text-xs font-semibold flex-shrink-0 ${
-                          trip.status === 'planned'
-                            ? 'bg-blue-100 text-blue-800'
-                            : trip.status === 'in-progress'
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold flex-shrink-0 ${trip.status === 'planned'
+                          ? 'bg-blue-100 text-blue-800'
+                          : trip.status === 'in-progress'
                             ? 'bg-green-100 text-green-800'
                             : trip.status === 'completed'
-                            ? 'bg-gray-100 text-gray-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
+                              ? 'bg-gray-100 text-gray-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
                       >
                         {trip.status === 'planned'
                           ? 'Scheduled'
                           : trip.status === 'in-progress'
-                          ? 'In Progress'
-                          : trip.status === 'completed'
-                          ? 'Completed'
-                          : trip.status === 'cancelled'
-                          ? 'Cancelled'
-                          : 'Unknown'}
+                            ? 'In Progress'
+                            : trip.status === 'completed'
+                              ? 'Completed'
+                              : trip.status === 'cancelled'
+                                ? 'Cancelled'
+                                : 'Unknown'}
                       </div>
                     </div>
                   </div>
@@ -579,13 +573,13 @@ export default function CalendarGrid({
 
   // Always render month view
   const monthView = renderMonthView();
-  
+
   return (
     <>
       {monthView}
       {selectedDate && (
-        <DayTripsModal 
-          date={selectedDate} 
+        <DayTripsModal
+          date={selectedDate}
           trips={events.filter(event => {
             const eventDate = new Date(event.start);
             return eventDate.toDateString() === selectedDate.toDateString();

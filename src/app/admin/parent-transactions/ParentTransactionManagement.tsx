@@ -5,6 +5,7 @@ import { transactionService } from "@/services/transactionService";
 import { TransactionSummary, TransactionStatus, TransactionListRequest } from "@/types/transaction";
 import TransactionDetailModal from "./TransactionDetailModal";
 import TransactionStatusModal from "./TransactionStatusModal";
+import { formatDate, formatDateTime } from "@/utils/dateUtils";
 
 export default function ParentTransactionManagement() {
   const [transactions, setTransactions] = useState<TransactionSummary[]>([]);
@@ -56,7 +57,7 @@ export default function ParentTransactionManagement() {
     };
 
     window.addEventListener('transactionCreated', handleTransactionCreated);
-    
+
     return () => {
       window.removeEventListener('transactionCreated', handleTransactionCreated);
     };
@@ -73,7 +74,7 @@ export default function ParentTransactionManagement() {
 
     // Search filter
     if (searchTerm) {
-      filtered = filtered.filter(transaction => 
+      filtered = filtered.filter(transaction =>
         transaction.parentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         transaction.parentEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         transaction.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -88,12 +89,12 @@ export default function ParentTransactionManagement() {
 
     // Date filter
     if (dateFilter.from) {
-      filtered = filtered.filter(transaction => 
+      filtered = filtered.filter(transaction =>
         new Date(transaction.createdAt) >= new Date(dateFilter.from)
       );
     }
     if (dateFilter.to) {
-      filtered = filtered.filter(transaction => 
+      filtered = filtered.filter(transaction =>
         new Date(transaction.createdAt) <= new Date(dateFilter.to)
       );
     }
@@ -164,32 +165,7 @@ export default function ParentTransactionManagement() {
     }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    if (Number.isNaN(date.getTime())) return 'N/A';
-    return date.toLocaleDateString('vi-VN', {
-      timeZone: 'Asia/Ho_Chi_Minh',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    });
-  };
-
-  const formatDateTime = (dateString: string) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    if (Number.isNaN(date.getTime())) return 'N/A';
-    return date.toLocaleString('vi-VN', {
-      timeZone: 'Asia/Ho_Chi_Minh',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  };
+  // Using centralized formatDate and formatDateTime from @/utils/dateUtils
 
   const getStatusColor = (status: TransactionStatus | string | number | null | undefined) => {
     const value = formatStatus(status);
@@ -442,11 +418,11 @@ export default function ParentTransactionManagement() {
           >
             Previous
           </button>
-          
+
           <span className="px-4 py-2 text-sm text-gray-700">
             Page {currentPage} of {totalPages}
           </span>
-          
+
           <button
             onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
             disabled={currentPage === totalPages}
