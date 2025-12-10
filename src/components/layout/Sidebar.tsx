@@ -20,7 +20,8 @@ import {
   FaReceipt,
   FaUserCog,
   FaSchool,
-  FaMapMarkerAlt
+  FaMapMarkerAlt,
+  FaPercent
 } from "react-icons/fa";
 
 const SIDEBAR_SCROLL_KEY = 'sidebar_scroll_position';
@@ -60,6 +61,7 @@ export default function Sidebar() {
     { href: "/admin/driver-vehicles", label: "Driver/Supervisor Assignments", icon: <FaUserCog /> },
     { href: "/admin/routes", label: "Route Management", icon: <FaRoute /> },
     { href: "/admin/unit-price", label: "Unit Price Management", icon: <FaDollarSign /> },
+    { href: "/admin/multi-student-policy", label: "Multi-Student Policy", icon: <FaPercent /> },
     { href: "/admin/parent-transactions", label: "Parent Transactions", icon: <FaReceipt /> },
     { href: "/admin/pickup-point-management", label: "Pickup Points", icon: <FaMapMarkerAlt /> },
     { href: "/admin/school", label: "School Management", icon: <FaSchool /> },
