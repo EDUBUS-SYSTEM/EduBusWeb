@@ -3,11 +3,20 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { FaCalendarAlt, FaClock } from "react-icons/fa";
-import { EnrollmentSemesterSettingsDto } from "@/services/api/enrollmentSemesterSettingsService";
+type SemesterInfo = {
+    readonly semesterName: string;
+    readonly academicYear: string;
+    readonly semesterCode?: string;
+    readonly semesterStartDate: string;
+    readonly semesterEndDate: string;
+    readonly registrationStartDate?: string;
+    readonly registrationEndDate?: string;
+    readonly description?: string;
+};
 
 interface TimelineCardProps {
-    semesterData: EnrollmentSemesterSettingsDto | null;
-    loading?: boolean;
+    readonly semesterData: SemesterInfo | null;
+    readonly loading?: boolean;
 }
 
 export default function TimelineCard({ semesterData, loading }: TimelineCardProps) {
@@ -46,8 +55,8 @@ export default function TimelineCard({ semesterData, loading }: TimelineCardProp
     const startDate = new Date(semesterData.semesterStartDate);
     const endDate = new Date(semesterData.semesterEndDate);
     const today = new Date();
-    const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    const daysPassed = Math.ceil((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const totalDays = Math.max(Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)), 1);
+    const daysPassed = Math.max(Math.ceil((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)), 0);
     const progress = Math.min(Math.max((daysPassed / totalDays) * 100, 0), 100);
 
     return (
@@ -117,9 +126,13 @@ export default function TimelineCard({ semesterData, loading }: TimelineCardProp
                         <span className="text-xs font-medium text-gray-600">Registration Period</span>
                     </div>
                     <p className="text-xs font-semibold text-[#463B3B]">
-                        {new Date(semesterData.registrationStartDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        {semesterData.registrationStartDate
+                            ? new Date(semesterData.registrationStartDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                            : "N/A"}
                         {" → "}
-                        {new Date(semesterData.registrationEndDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        {semesterData.registrationEndDate
+                            ? new Date(semesterData.registrationEndDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                            : "N/A"}
                     </p>
                 </motion.div>
             </div>

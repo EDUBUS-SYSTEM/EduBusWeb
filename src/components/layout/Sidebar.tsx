@@ -38,6 +38,7 @@ export default function Sidebar() {
       label: "Personal Profile",
       icon: <FaUserCircle />,
     },
+    { href: "/admin/change-password", label: "Change Password", icon: <FaKey /> },
     { href: "/admin/users", label: "User Management", icon: <FaUsers /> },
     { href: "/admin/driver-requests", label: "Driver's Requests", icon: <FaFileAlt /> },
     { href: "/admin/parent-requests", label: "Parent Requests", icon: <FaUserCheck /> },
@@ -58,7 +59,7 @@ export default function Sidebar() {
       icon: <FaCalendarAlt />,
     },
     { href: "/admin/vehicle", label: "Vehicles", icon: <FaBus /> },
-    { href: "/admin/driver-vehicles", label: "Driver/Supervisor Assignments", icon: <FaUserCog /> },
+    { href: "/admin/driver-vehicles", label: "Vehicle Assignments", icon: <FaUserCog /> },
     { href: "/admin/routes", label: "Route Management", icon: <FaRoute /> },
     { href: "/admin/unit-price", label: "Unit Price Management", icon: <FaDollarSign /> },
     { href: "/admin/multi-student-policy", label: "Multi-Student Policy", icon: <FaPercent /> },
@@ -116,7 +117,7 @@ export default function Sidebar() {
       </div>
 
       {/* Menu */}
-      <nav 
+      <nav
         ref={navRef}
         className="flex-1 overflow-y-auto mt-2 text-[#463B3B] text-sm font-medium pr-1"
       >
