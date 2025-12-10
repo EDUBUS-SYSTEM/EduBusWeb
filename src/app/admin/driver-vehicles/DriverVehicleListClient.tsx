@@ -17,8 +17,6 @@ import { apiService } from "@/lib/api";
 import { formatDate, formatDateForInput } from "@/utils/dateUtils";
 
 const PER_PAGE = 5;
-
-// Success Toast Component
 function SuccessToast({ message, onClose }: { message: string; onClose: () => void }) {
   useEffect(() => {
     const timer = setTimeout(onClose, 2000);
@@ -38,17 +36,12 @@ function SuccessToast({ message, onClose }: { message: string; onClose: () => vo
     </div>
   );
 }
-
-// Local date helpers removed in favor of dateUtils
-
-// Convert local date string (YYYY-MM-DD) to UTC start of day (00:00:00)
 const localDateToUTCStart = (localDate: string): string => {
   const [year, month, day] = localDate.split('-').map(Number);
   const utcDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
   return utcDate.toISOString();
 };
 
-// Convert local date string (YYYY-MM-DD) to UTC end of day (23:59:59)
 const localDateToUTCEnd = (localDate: string): string => {
   const [year, month, day] = localDate.split('-').map(Number);
   const utcDate = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
@@ -116,27 +109,25 @@ export default function DriverVehicleListClient() {
   // Active replacement matches
   const [replacementMatches, setReplacementMatches] = useState<ReplacementMatchDto[]>([]);
 
-  // Success Toast
+ 
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Debounce search
+
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 300);
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Reset to page 1 when search changes
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch]);
 
-  // Fetch data from API - extracted as reusable function
   const fetchAssignments = useCallback(async () => {
     try {
       setLoading(true);
       const response = await driverVehicleService.getAssignments({
         page: 1,
-        perPage: 1000, // Get all for client-side filtering
+        perPage: 1000, 
         sortBy: 'startTimeUtc',
         sortOrder: 'desc',
       });
@@ -163,7 +154,6 @@ export default function DriverVehicleListClient() {
     }
   }, []);
 
-  // Initial fetch
   useEffect(() => {
     fetchAssignments();
   }, [fetchAssignments]);
@@ -237,7 +227,6 @@ export default function DriverVehicleListClient() {
     }
   }, [tab, fetchSupervisorAssignments]);
 
-  // Fetch replacement matches when component mounts
   useEffect(() => {
     const fetchReplacementMatches = async () => {
       try {
@@ -251,7 +240,7 @@ export default function DriverVehicleListClient() {
     fetchReplacementMatches();
   }, []);
 
-  // Helper function to check if assignment has active replacement
+ 
   const hasActiveReplacement = useCallback((assignment: AssignmentTableRow): boolean => {
     const assignmentStart = new Date(assignment.startTime);
     const assignmentEnd = assignment.endTime ? new Date(assignment.endTime) : new Date('2099-12-31');
@@ -260,9 +249,7 @@ export default function DriverVehicleListClient() {
       const leaveStart = new Date(match.startDate);
       const leaveEnd = new Date(match.endDate);
 
-      // Check:
-      // 1. Driver match
-      // 2. Leave period overlaps with assignment period
+     
       const driverMatch = match.driverId === assignment.driverId;
       const dateOverlap = leaveStart <= assignmentEnd && leaveEnd >= assignmentStart;
 
@@ -270,16 +257,15 @@ export default function DriverVehicleListClient() {
     });
   }, [replacementMatches]);
 
-  // Client-side filtering - driver
+
   const filteredAssignments = useMemo(() => {
     let filtered = allAssignments;
 
-    // Status filter
     if (statusFilter !== "all") {
       filtered = filtered.filter((a) => a.status === statusFilter);
     }
 
-    // Search filter
+
     if (debouncedSearch) {
       const searchLower = debouncedSearch.toLowerCase();
       filtered = filtered.filter(
@@ -290,7 +276,7 @@ export default function DriverVehicleListClient() {
       );
     }
 
-    // Sort
+
     filtered = [...filtered].sort((a, b) => {
       let comparison = 0;
       switch (sortBy) {
