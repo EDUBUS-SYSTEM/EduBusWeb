@@ -39,8 +39,29 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
 
   // Using centralized formatDateTime from @/utils/dateUtils
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
+  const formatStatus = (status: string | number | null | undefined) => {
+    if (status === null || status === undefined) return "Unknown";
+    const str = status.toString();
+    switch (str) {
+      case "0":
+      case "Pending":
+        return "Pending";
+      case "1":
+      case "Paid":
+        return "Paid";
+      case "2":
+      case "Cancelled":
+        return "Cancelled";
+      case "3":
+      case "Failed":
+        return "Failed";
+      default:
+        return str;
+    }
+  };
+
+  const getStatusColor = (status: string | number | null | undefined) => {
+    switch (formatStatus(status)) {
       case 'Paid':
         return "bg-green-100 text-green-800 border-green-200";
       case 'Pending':
@@ -53,6 +74,27 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
         return "bg-[#fad23c] text-[#463B3B] border-[#D08700]";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+
+  const formatItemStatus = (status: string | number | null | undefined) => {
+    if (status === null || status === undefined) return "Unknown";
+    const str = status.toString();
+    switch (str) {
+      case "0":
+      case "Pending":
+        return "Pending";
+      case "1":
+      case "Approved":
+        return "Approved";
+      case "2":
+      case "Rejected":
+        return "Rejected";
+      case "3":
+      case "Paid":
+        return "Paid";
+      default:
+        return str;
     }
   };
 
@@ -71,10 +113,10 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+      <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
           <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#fad23c]"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#d4b106]"></div>
           </div>
         </div>
       </div>
@@ -83,13 +125,13 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
 
   if (!transaction) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <div className="text-center">
+      <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+          <div className="text-center space-y-4">
             <div className="text-red-500 text-lg">Transaction not found</div>
             <button
               onClick={onClose}
-              className="mt-4 px-4 py-2 bg-[#fad23c] text-[#463B3B] rounded-lg font-medium hover:bg-[#FFF085] transition-colors"
+              className="mt-2 px-4 py-2 bg-[#f6e58d] text-[#463B3B] rounded-lg font-medium hover:bg-[#f9eec4] transition-colors"
             >
               Close
             </button>
@@ -100,87 +142,77 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[95vh] overflow-y-auto border border-gray-100">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#fad23c] to-[#FFF085] p-6 rounded-t-2xl">
+        <div className="bg-white border-b border-gray-100 p-6 rounded-t-xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <FaReceipt className="w-6 h-6 text-[#463B3B]" />
-              <h2 className="text-2xl font-bold text-[#463B3B]">Transaction Details</h2>
+              <FaReceipt className="w-6 h-6 text-[#444]" />
+              <h2 className="text-2xl font-bold text-[#333]">Transaction Details</h2>
             </div>
             <button
               onClick={onClose}
-              className="text-[#463B3B] hover:text-red-600 transition-colors p-2 rounded-full hover:bg-white hover:bg-opacity-20"
+              className="text-[#555] hover:text-red-500 transition-colors p-2 rounded-full hover:bg-gray-100"
             >
               <FaTimes className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 bg-gray-50">
           {/* Transaction Overview */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Transaction Information */}
-            <div className="bg-gradient-to-br from-[#FEFCE8] to-[#FFF085] rounded-xl p-6 border border-[#fad23c] shadow-lg">
+            <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
               <div className="flex items-center space-x-2 mb-4">
-                <FaCreditCard className="w-5 h-5 text-[#D08700]" />
-                <h3 className="text-lg font-semibold text-[#463B3B]">Transaction Information</h3>
+                <FaCreditCard className="w-5 h-5 text-[#8c6a00]" />
+                <h3 className="text-lg font-semibold text-[#333]">Transaction Information</h3>
               </div>
               <div className="space-y-4">
+                {transaction.transactionCode && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-[#555] font-medium">Transaction Code:</span>
+                    <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded text-[#333]">
+                      {transaction.transactionCode}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
-                  <span className="text-[#463B3B] font-medium">Transaction ID:</span>
-                  <span className="font-mono text-sm bg-[#fad23c] px-2 py-1 rounded text-[#463B3B]">
-                    {transaction.id}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[#463B3B] font-medium">Transaction Code:</span>
-                  <span className="font-mono text-sm bg-[#fad23c] px-2 py-1 rounded text-[#463B3B]">
-                    {transaction.transactionCode || 'N/A'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[#463B3B] font-medium">Amount:</span>
-                  <span className="text-xl font-bold text-[#D08700]">
+                  <span className="text-[#555] font-medium">Amount:</span>
+                  <span className="text-xl font-bold text-[#8c6a00]">
                     {formatCurrency(transaction.amount)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-[#463B3B] font-medium">Currency:</span>
-                  <span className="font-medium text-[#463B3B]">
+                  <span className="text-[#555] font-medium">Currency:</span>
+                  <span className="font-medium text-[#333]">
                     {transaction.currency}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-[#463B3B] font-medium">Status:</span>
+                  <span className="text-[#555] font-medium">Status:</span>
                   <span className={`px-3 py-1 text-sm font-semibold rounded-full border ${getStatusColor(transaction.status)}`}>
-                    {transaction.status}
+                    {formatStatus(transaction.status)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-[#463B3B] font-medium">Provider:</span>
-                  <span className={`px-3 py-1 text-sm font-semibold rounded-full border ${getProviderColor(transaction.provider || 'Unknown')}`}>
-                    {transaction.provider || 'Unknown'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[#463B3B] font-medium">Created At:</span>
-                  <span className="font-medium text-[#463B3B]">
+                  <span className="text-[#555] font-medium">Created At:</span>
+                  <span className="font-medium text-[#333]">
                     {formatDateTime(transaction.createdAt)}
                   </span>
                 </div>
                 {transaction.paidAt && (
                   <div className="flex justify-between items-center">
-                    <span className="text-[#463B3B] font-medium">Paid At:</span>
-                    <span className="font-medium text-[#D08700]">
+                    <span className="text-[#555] font-medium">Paid At:</span>
+                    <span className="font-medium text-[#8c6a00]">
                       {formatDateTime(transaction.paidAt)}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between items-center">
-                  <span className="text-[#463B3B] font-medium">Updated At:</span>
-                  <span className="font-medium text-[#463B3B]">
+                  <span className="text-[#555] font-medium">Updated At:</span>
+                  <span className="font-medium text-[#333]">
                     {formatDateTime(transaction.updatedAt)}
                   </span>
                 </div>
@@ -188,35 +220,39 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
             </div>
 
             {/* Parent & Student Information */}
-            <div className="bg-gradient-to-br from-[#FEFCE8] to-[#FFF085] rounded-xl p-6 border border-[#fad23c] shadow-lg">
+            <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
               <div className="flex items-center space-x-2 mb-4">
-                <FaUser className="w-5 h-5 text-[#D08700]" />
-                <h3 className="text-lg font-semibold text-[#463B3B]">Parent & Student Information</h3>
+                <FaUser className="w-5 h-5 text-[#8c6a00]" />
+                <h3 className="text-lg font-semibold text-[#333]">Parent & Student Information</h3>
               </div>
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-[#463B3B] font-medium">Parent Name:</span>
-                  <span className="font-medium text-[#463B3B]">
-                    {transaction.parentName || 'N/A'}
-                  </span>
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                  <p className="text-sm font-semibold text-[#333] mb-2">Parent</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[#555] font-medium">Name:</span>
+                      <span className="font-medium text-[#333]">
+                        {transaction.parentName || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[#555] font-medium">Email:</span>
+                      <span className="font-medium text-[#333]">
+                        {transaction.parentEmail || 'N/A'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[#463B3B] font-medium">Parent Email:</span>
-                  <span className="font-medium text-[#463B3B]">
-                    {transaction.parentEmail || 'N/A'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[#463B3B] font-medium">Student Name:</span>
-                  <span className="font-medium text-[#463B3B]">
-                    {transaction.studentName || 'N/A'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[#463B3B] font-medium">Student ID:</span>
-                  <span className="font-mono text-sm bg-[#fad23c] px-2 py-1 rounded text-[#463B3B]">
-                    {transaction.studentId || 'N/A'}
-                  </span>
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                  <p className="text-sm font-semibold text-[#333] mb-2">Student</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[#555] font-medium">Name:</span>
+                      <span className="font-medium text-[#333]">
+                        {transaction.studentName || 'N/A'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -224,49 +260,51 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
 
           {/* Description */}
           {transaction.description && (
-            <div className="bg-gradient-to-br from-[#FEFCE8] to-[#FFF085] rounded-xl p-6 border border-[#fad23c] shadow-lg">
+            <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
               <div className="flex items-center space-x-2 mb-4">
-                <FaInfoCircle className="w-5 h-5 text-[#D08700]" />
-                <h3 className="text-lg font-semibold text-[#463B3B]">Description</h3>
+                <FaInfoCircle className="w-5 h-5 text-[#8c6a00]" />
+                <h3 className="text-lg font-semibold text-[#333]">Description</h3>
               </div>
-              <p className="text-[#463B3B] leading-relaxed">{transaction.description}</p>
+              <p className="text-[#444] leading-relaxed">{transaction.description}</p>
             </div>
           )}
 
           {/* Transport Fee Items */}
           {transaction.transportFeeItems && transaction.transportFeeItems.length > 0 && (
-            <div className="bg-gradient-to-br from-[#FEFCE8] to-[#FFF085] rounded-xl p-6 border border-[#fad23c] shadow-lg">
+            <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
               <div className="flex items-center space-x-2 mb-4">
-                <FaMapMarkerAlt className="w-5 h-5 text-[#D08700]" />
-                <h3 className="text-lg font-semibold text-[#463B3B]">Transport Fee Items</h3>
+                <FaMapMarkerAlt className="w-5 h-5 text-[#8c6a00]" />
+                <h3 className="text-lg font-semibold text-[#333]">Transport Fee Items</h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-[#fad23c] rounded-lg">
+                  <thead className="bg-gray-100 rounded-lg">
                     <tr>
-                      <th className="px-4 py-3 text-left font-semibold text-[#463B3B] rounded-tl-lg">Student</th>
-                      <th className="px-4 py-3 text-left font-semibold text-[#463B3B]">Semester</th>
-                      <th className="px-4 py-3 text-left font-semibold text-[#463B3B]">Academic Year</th>
-                      <th className="px-4 py-3 text-left font-semibold text-[#463B3B]">Unit Price</th>
-                      <th className="px-4 py-3 text-left font-semibold text-[#463B3B]">Distance</th>
-                      <th className="px-4 py-3 text-left font-semibold text-[#463B3B]">Total Amount</th>
-                      <th className="px-4 py-3 text-left font-semibold text-[#463B3B] rounded-tr-lg">Status</th>
+                      <th className="px-4 py-3 text-left font-semibold text-[#555] rounded-tl-lg">Student</th>
+                      <th className="px-4 py-3 text-left font-semibold text-[#555]">Semester</th>
+                      <th className="px-4 py-3 text-left font-semibold text-[#555]">Academic Year</th>
+                      <th className="px-4 py-3 text-left font-semibold text-[#555]">Unit Price</th>
+                      <th className="px-4 py-3 text-left font-semibold text-[#555]">Distance</th>
+                      <th className="px-4 py-3 text-left font-semibold text-[#555]">Total Amount</th>
+                      <th className="px-4 py-3 text-left font-semibold text-[#555] rounded-tr-lg">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#fad23c]">
+                  <tbody className="divide-y divide-gray-100">
                     {transaction.transportFeeItems.map((item, index) => (
-                      <tr key={item.id} className={`${index % 2 === 0 ? 'bg-[#FEFCE8]' : 'bg-white'} hover:bg-[#FFF085] transition-colors`}>
+                      <tr key={item.id} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} transition-colors`}>
                         <td className="px-4 py-3">
                           <div className="flex items-center space-x-2">
-                            <FaChild className="w-4 h-4 text-[#D08700]" />
-                            <span className="font-medium text-[#463B3B]">{item.studentName}</span>
+                            <FaChild className="w-4 h-4 text-[#8c6a00]" />
+                            <span className="font-medium text-[#333]">{item.studentName}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-[#463B3B]">{item.semesterName || 'N/A'}</td>
-                        <td className="px-4 py-3 text-[#463B3B]">{item.academicYear || 'N/A'}</td>
-                        <td className="px-4 py-3 text-[#463B3B]">{formatCurrency(item.unitPrice)}</td>
-                        <td className="px-4 py-3 text-[#463B3B]">{item.distanceKm || 0} km</td>
-                        <td className="px-4 py-3 font-semibold text-[#D08700]">{formatCurrency(item.amount)}</td>
+                        <td className="px-4 py-3 text-[#444]">{item.semesterName || 'N/A'}</td>
+                        <td className="px-4 py-3 text-[#444]">{item.academicYear || 'N/A'}</td>
+                        <td className="px-4 py-3 text-[#444]">
+                          {formatCurrency(item.unitPrice ?? 0)}
+                        </td>
+                        <td className="px-4 py-3 text-[#444]">{item.distanceKm || 0} km</td>
+                        <td className="px-4 py-3 font-semibold text-[#8c6a00]">{formatCurrency(item.amount)}</td>
                         <td className="px-4 py-3">
                           <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${item.status === 'Paid' ? 'bg-green-100 text-green-800 border-green-200' :
                               item.status === 'Approved' ? 'bg-blue-100 text-blue-800 border-blue-200' :
@@ -285,10 +323,10 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
           )}
 
           {/* Action Button */}
-          <div className="flex justify-end pt-6 border-t border-[#fad23c]">
+          <div className="flex justify-end pt-4">
             <button
               onClick={onClose}
-              className="px-8 py-3 bg-gradient-to-r from-[#fad23c] to-[#FFF085] text-[#463B3B] rounded-xl font-semibold hover:from-[#FFF085] hover:to-[#fad23c] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              className="px-6 py-3 bg-gray-200 text-[#333] rounded-lg font-semibold hover:bg-gray-300 transition-colors shadow-sm"
             >
               Close
             </button>

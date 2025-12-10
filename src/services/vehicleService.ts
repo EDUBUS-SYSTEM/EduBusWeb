@@ -21,6 +21,11 @@ export interface SupervisorAssignmentRequest {
   assignmentReason?: string;
 }
 
+export interface UpdateSupervisorAssignmentRequest {
+  startTimeUtc?: string;
+  endTimeUtc?: string;
+}
+
 export interface SupervisorAssignmentDto {
   id: string;
   supervisorId: string;
@@ -184,6 +189,18 @@ export class VehicleService {
     }
   }
 
+  async updateSupervisorAssignment(assignmentId: string, request: UpdateSupervisorAssignmentRequest): Promise<SupervisorAssignmentResponse> {
+    try {
+      return await apiService.put<SupervisorAssignmentResponse>(`/VehicleAssignment/assignments/${assignmentId}/supervisor`, request);
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { data?: { error?: string } } };
+      if (axiosError.response?.data?.error) {
+        throw new Error(axiosError.response.data.error);
+      }
+      throw error;
+    }
+  }
+
   async getVehicleById(vehicleId: string): Promise<VehicleGetResponse> {
     try {
       return await apiService.get<VehicleGetResponse>(`/vehicle/${vehicleId}`);
@@ -220,14 +237,14 @@ export class VehicleService {
     vehicleId: string,
     startTimeUtc?: string,
     endTimeUtc?: string
-  ): Promise<ApiListResponse<Array<{ id: string; supervisorId: string; supervisorName: string; vehicleId: string; startTimeUtc: string; endTimeUtc?: string; isActive: boolean }>>> {
+  ): Promise<ApiListResponse<Array<{ id: string; firstName: string; lastName: string; email: string; phoneNumber: string; status: string }>>> {
     try {
       const q = new URLSearchParams();
       q.set('availableOnly', 'true');
       if (startTimeUtc) q.set('startTimeUtc', startTimeUtc);
       if (endTimeUtc) q.set('endTimeUtc', endTimeUtc);
       const qs = `?${q.toString()}`;
-      return await apiService.get<ApiListResponse<Array<{ id: string; supervisorId: string; supervisorName: string; vehicleId: string; startTimeUtc: string; endTimeUtc?: string; isActive: boolean }>>>(
+      return await apiService.get<ApiListResponse<Array<{ id: string; firstName: string; lastName: string; email: string; phoneNumber: string; status: string }>>>(
         `/VehicleAssignment/vehicle/${vehicleId}/supervisors${qs}`
       );
     } catch (error: unknown) {

@@ -23,6 +23,27 @@ export default function ParentTransactionManagement() {
 
   const pageSize = 20;
 
+  const formatStatus = (status: TransactionStatus | string | number | null | undefined): TransactionStatus => {
+    if (status === null || status === undefined) return TransactionStatus.Pending;
+    const str = status.toString();
+    switch (str) {
+      case "0":
+      case TransactionStatus.Pending:
+        return TransactionStatus.Pending;
+      case "1":
+      case TransactionStatus.Paid:
+        return TransactionStatus.Paid;
+      case "2":
+      case TransactionStatus.Cancelled:
+        return TransactionStatus.Cancelled;
+      case "3":
+      case TransactionStatus.Failed:
+        return TransactionStatus.Failed;
+      default:
+        return TransactionStatus.Pending;
+    }
+  };
+
   // Load transactions
   useEffect(() => {
     loadTransactions();
@@ -92,7 +113,11 @@ export default function ParentTransactionManagement() {
       };
 
       const response = await transactionService.getTransactionList(request);
-      setTransactions(response?.transactions || []);
+      const normalized = (response?.transactions || []).map(t => ({
+        ...t,
+        status: formatStatus(t.status)
+      }));
+      setTransactions(normalized);
       setTotalPages(response?.totalPages || 1);
     } catch (error) {
       console.error("Error loading transactions:", error);
@@ -142,8 +167,9 @@ export default function ParentTransactionManagement() {
 
   // Using centralized formatDate and formatDateTime from @/utils/dateUtils
 
-  const getStatusColor = (status: TransactionStatus) => {
-    switch (status) {
+  const getStatusColor = (status: TransactionStatus | string | number | null | undefined) => {
+    const value = formatStatus(status);
+    switch (value) {
       case TransactionStatus.Paid:
         return "bg-green-100 text-green-800";
       case TransactionStatus.Pending:
@@ -296,22 +322,22 @@ export default function ParentTransactionManagement() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Parent & Student
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
+                  Parent
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
+                  Student
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
                   Amount
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
                   Status
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-56">
                   Description
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Created At
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
                   Actions
                 </th>
               </tr>
@@ -319,33 +345,34 @@ export default function ParentTransactionManagement() {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredTransactions?.map((transaction) => (
                 <tr key={transaction.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-3 whitespace-nowrap">
                     <div className="text-sm">
-                      <div className="font-medium text-gray-900">{transaction.parentName}</div>
-                      <div className="text-gray-500">{transaction.parentEmail}</div>
-                      <div className="text-gray-500">Student: {transaction.studentName}</div>
+                      <div className="font-medium text-gray-900">{transaction.parentName || "N/A"}</div>
+                      <div className="text-gray-500">{transaction.parentEmail || "N/A"}</div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <div className="text-sm">
+                      <div className="font-medium text-gray-900">{transaction.studentName || "N/A"}</div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
                       {formatCurrency(transaction.amount)}
                     </div>
                     <div className="text-xs text-gray-500">{transaction.currency}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-3 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(transaction.status)}`}>
-                      {transaction.status}
+                      {formatStatus(transaction.status)}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900 max-w-xs truncate">
+                  <td className="px-4 py-3">
+                    <div className="text-sm text-gray-900 max-w-[220px] truncate">
                       {transaction.description}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{formatDateTime(transaction.createdAt)}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleView(transaction)}
@@ -353,13 +380,6 @@ export default function ParentTransactionManagement() {
                         title="View Details"
                       >
                         <FaEye className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleStatusChange(transaction)}
-                        className="text-indigo-600 hover:text-indigo-900 transition-colors"
-                        title="Change Status"
-                      >
-                        <FaEdit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(transaction.id)}

@@ -269,22 +269,17 @@ export default function VehicleListClient() {
         endIso
       );
       if (res.success && res.data) {
-        // Map assignment data to SupervisorResponse format
-        const supervisorMap = new Map<string, SupervisorResponse>();
-        res.data.forEach((assignment) => {
-          if (!supervisorMap.has(assignment.supervisorId)) {
-            supervisorMap.set(assignment.supervisorId, {
-              id: assignment.supervisorId,
-              email: '',
-              firstName: '',
-              lastName: assignment.supervisorName.split(' ').slice(-1)[0] || '',
-              phoneNumber: '',
-              gender: 0,
-              status: assignment.isActive ? 'Active' : 'Inactive',
-            });
-          }
-        });
-        setSupervisors(Array.from(supervisorMap.values()));
+        // Map supervisor data to SupervisorResponse format
+        const mappedSupervisors: SupervisorResponse[] = res.data.map((supervisor) => ({
+          id: supervisor.id,
+          email: supervisor.email,
+          firstName: supervisor.firstName,
+          lastName: supervisor.lastName,
+          phoneNumber: supervisor.phoneNumber,
+          gender: 0, // Default value as it's not provided by the API
+          status: supervisor.status,
+        }));
+        setSupervisors(mappedSupervisors);
       } else {
         console.error("Failed to fetch available supervisors:", res.error);
         setSupervisors([]);
