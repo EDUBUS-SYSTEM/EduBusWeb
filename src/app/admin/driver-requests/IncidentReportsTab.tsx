@@ -9,6 +9,7 @@ import {
 } from "@/services/api/tripIncidents";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchIncidentReports } from "@/store/slices/driverRequestsSlice";
+import { formatDateTime } from "@/utils/dateUtils";
 
 export default function IncidentReportsTab() {
   const dispatch = useAppDispatch();
@@ -72,17 +73,6 @@ export default function IncidentReportsTab() {
     return String(status);
   };
 
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const month = months[date.getMonth()];
-    const day = String(date.getDate()).padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${month} ${day}, ${year} ${hours}:${minutes}`;
-  };
-
   const statusCounts = useMemo(() => {
     const counts = {
       [TripIncidentStatus.Open]: 0,
@@ -131,11 +121,11 @@ export default function IncidentReportsTab() {
     switch (status) {
       case TripIncidentStatus.Open:
         return {
-          bg: 'bg-red-50',
-          border: 'border-red-200',
-          text: 'text-red-800',
-          badge: 'bg-red-100',
-          accent: 'bg-red-500'
+          bg: 'bg-blue-50',
+          border: 'border-blue-200',
+          text: 'text-blue-800',
+          badge: 'bg-blue-100',
+          accent: 'bg-blue-500'
         };
       case TripIncidentStatus.Acknowledged:
         return {
@@ -335,7 +325,7 @@ export default function IncidentReportsTab() {
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <FaClock className="h-3 w-3 flex-shrink-0" />
-                        <span>{formatDate(incident.createdAt)}</span>
+                        <span>{formatDateTime(incident.createdAt)}</span>
                       </div>
                     </div>
                   </div>

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { FaTimes, FaMagic } from 'react-icons/fa';
 import { scheduleService } from "@/services/api/scheduleService";
 import { Schedule } from "@/types";
+import { formatTime } from "@/utils/dateUtils";
 
 interface GenerateTripsModalProps {
   isOpen: boolean;
@@ -55,8 +56,8 @@ export default function GenerateTripsModal({
     }
   };
 
-  // Format time for display
-  const formatTime = (isoTime: string): string => {
+  // Format time for display - handles time strings (HH:mm format)
+  const formatTimeLocal = (isoTime: string): string => {
     try {
       // Handle different time formats
       let timeStr = isoTime;
@@ -68,7 +69,7 @@ export default function GenerateTripsModal({
       if (isNaN(date.getTime())) {
         return isoTime; // Return original if can't parse
       }
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return formatTime(date.toISOString());
     } catch {
       return isoTime;
     }
@@ -196,7 +197,7 @@ export default function GenerateTripsModal({
                   <option value="">Select Schedule</option>
                   {schedules.map((schedule) => (
                     <option key={schedule.id} value={schedule.id}>
-                      {schedule.name} ({formatTime(schedule.startTime)} - {formatTime(schedule.endTime)})
+                      {schedule.name} ({formatTimeLocal(schedule.startTime)} - {formatTimeLocal(schedule.endTime)})
                     </option>
                   ))}
                 </select>

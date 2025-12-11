@@ -4,6 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { FaUsers, FaArrowUp, FaArrowDown } from "react-icons/fa";
 import { DailyStudentsDto } from "@/services/dashboardService";
+import { formatDate } from "@/utils/dateUtils";
 
 interface DailyStudentsChartProps {
     data: DailyStudentsDto | null;
@@ -181,7 +182,7 @@ export default function DailyStudentsChart({ data, loading }: DailyStudentsChart
                                 <div className="text-center">
                                     <p className="text-[10px] font-bold text-[#463B3B]">{day.count}</p>
                                     <p className="text-[9px] text-gray-500 mt-1">
-                                        {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                        {formatDate(day.date)}
                                     </p>
                                 </div>
                             </motion.div>

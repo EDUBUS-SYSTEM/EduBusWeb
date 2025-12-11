@@ -10,6 +10,7 @@ import TripDetails from './TripDetails';
 import { TripDto, TripStopDto, ParentAttendanceDto } from '@/types';
 import { tripService } from '@/services/tripService';
 import { schoolService } from '@/services/schoolService/schoolService.api';
+import { formatTime } from '@/utils/dateUtils';
 
 export default function LiveTripMonitoring() {
   const dispatch = useAppDispatch();
@@ -305,7 +306,7 @@ export default function LiveTripMonitoring() {
                   {locationUpdate && (
                     <div className="text-xs text-gray-500 pt-1 flex items-center gap-1">
                       <FaClock className="w-3 h-3" />
-                      <span>Updated: {new Date(locationUpdate.timestamp).toLocaleTimeString()}</span>
+                      <span>Updated: {formatTime(locationUpdate.timestamp)}</span>
                     </div>
                   )}
                 </div>

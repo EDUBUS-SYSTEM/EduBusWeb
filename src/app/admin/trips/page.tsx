@@ -63,12 +63,17 @@ export default function TripManagementPage() {
 
   // Fetch trips with current filters
   const fetchTripsData = useCallback(() => {
+    // Use a large page size so we always retrieve the full list (past + present + future)
+    const perPageAll = 1000;
     const params = {
       page: pagination.currentPage,
-      perPage: pagination.perPage,
+      perPage: perPageAll,
       routeId: routeFilter !== 'all' ? routeFilter : undefined,
       status: statusFilter !== 'all' ? statusFilter : undefined,
       serviceDate: dateFilter || undefined,
+      // Keep date window wide so backend doesn't drop past trips
+      startDate: '1900-01-01',
+      endDate: '2100-12-31',
       sortBy: filters.sortBy || 'serviceDate',
       sortOrder: filters.sortOrder || 'desc',
     };

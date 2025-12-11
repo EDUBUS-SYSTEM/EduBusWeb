@@ -15,6 +15,7 @@ import {
 } from "react-icons/fa";
 import { useNotifications } from "@/hooks/useNotifications";
 import { NotificationResponse, NotificationType } from "@/types/notification.types";
+import { formatDate } from "@/utils/dateUtils";
 
 const getNotificationIcon = (type: NotificationType) => {
     const iconClass = "text-lg flex-shrink-0";
@@ -50,7 +51,7 @@ const getRelativeTime = (timestamp: string): string => {
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
     if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
-    return notifTime.toLocaleDateString();
+    return formatDate(notifTime);
 };
 
 export default function NotificationBell() {

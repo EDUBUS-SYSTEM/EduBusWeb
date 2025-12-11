@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { TripDto } from '@/types';
 import { FaEdit, FaTrash, FaEye, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import { formatDate } from '@/utils/dateUtils';
+import { formatDate, formatDateTimeShort } from '@/utils/dateUtils';
 
 interface TripTableProps {
   trips: TripDto[];
@@ -80,16 +80,7 @@ export default function TripTable({
     );
   };
 
-  // Using centralized formatDate from @/utils/dateUtils
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  // Using centralized formatDate and formatDateTime from @/utils/dateUtils
 
   const getScheduleTime = (trip: TripDto, timeType: 'start' | 'end') => {
     // Use schedule snapshot time if available
@@ -100,11 +91,11 @@ export default function TripTable({
         const [hours, minutes] = timeStr.split(':').map(Number);
         const date = new Date(serviceDate);
         date.setHours(hours, minutes, 0, 0);
-        return formatDateTime(date.toISOString());
+        return formatDateTimeShort(date.toISOString());
       }
     }
     // Fallback to planned time
-    return formatDateTime(timeType === 'start' ? trip.plannedStartAt : trip.plannedEndAt);
+    return formatDateTimeShort(timeType === 'start' ? trip.plannedStartAt : trip.plannedEndAt);
   };
 
   const handleSort = (column: string) => {

@@ -383,8 +383,6 @@ function VehicleCard({
 
 // Main Component
 export default function DriverVehicleListClient() {
-  const [mounted, setMounted] = useState(false);
-  const [vehicles, setVehicles] = useState<VehicleWithAssignments[]>([]);
   const [loading, setLoading] = useState(true);
   const [allAssignments, setAllAssignments] = useState<AssignmentTableRow[]>([]);
   const [tab, setTab] = useState<"driver" | "supervisor">("driver");
@@ -997,54 +995,6 @@ export default function DriverVehicleListClient() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Loading State */}
-      {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-[#fad23c] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading vehicles...</p>
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* Vehicle Cards or Table will go here */}
-          {paginatedAssignments.length > 0 && (
-            <div className="space-y-4">
-              {paginatedAssignments.map((assignment) => {
-                if (tab === "driver") {
-                  const driverAssignment = assignment as AssignmentTableRow;
-                  return (
-                    <div key={driverAssignment.id} className="p-4 bg-white rounded-lg border">
-                      <p>{driverAssignment.driverName} - {driverAssignment.licensePlate}</p>
-                    </div>
-                  );
-                }
-                return null;
-              })}
-            </div>
-          )}
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center mt-6">
-              <Pagination
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={setPage}
-              />
-            </div>
-          )}
-
-          {/* Results Info */}
-          {!loading && totalItems > 0 && (
-            <div className="mt-4 text-center text-sm text-[#6B7280]">
-              Showing {((page - 1) * PER_PAGE) + 1} to{" "}
-              {Math.min(page * PER_PAGE, totalItems)} of {totalItems} assignments
-            </div>
-          )}
-        </>
       )}
 
       {/* Replacement Info Modal */}

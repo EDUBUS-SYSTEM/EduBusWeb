@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { FaTimes, FaReceipt, FaUser, FaChild, FaMapMarkerAlt, FaCalendarAlt, FaCreditCard, FaInfoCircle } from "react-icons/fa";
 import { transactionService } from "@/services/transactionService";
-import { TransactionDetailResponseDto } from "@/types/transaction";
+import { TransactionDetailResponseDto, TransportFeeItemSummary } from "@/types/transaction";
 import { formatDateTime } from "@/utils/dateUtils";
 
 interface TransactionDetailModalProps {
@@ -301,18 +301,29 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
                         <td className="px-4 py-3 text-[#444]">{item.semesterName || 'N/A'}</td>
                         <td className="px-4 py-3 text-[#444]">{item.academicYear || 'N/A'}</td>
                         <td className="px-4 py-3 text-[#444]">
-                          {formatCurrency(item.unitPrice ?? 0)}
+                          {(() => {
+                            // Try both unitPrice and unitPricePerKm in case of field name mismatch
+                            const price = (item as TransportFeeItemSummary & { unitPricePerKm?: number }).unitPricePerKm ?? item.unitPrice;
+                            return price !== null && price !== undefined ? formatCurrency(price) : 'N/A';
+                          })()}
                         </td>
                         <td className="px-4 py-3 text-[#444]">{item.distanceKm || 0} km</td>
                         <td className="px-4 py-3 font-semibold text-[#8c6a00]">{formatCurrency(item.amount)}</td>
                         <td className="px-4 py-3">
-                          <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${item.status === 'Paid' ? 'bg-green-100 text-green-800 border-green-200' :
-                              item.status === 'Approved' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                                item.status === 'Pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                                  'bg-red-100 text-red-800 border-red-200'
-                            }`}>
-                            {item.status}
-                          </span>
+                          {(() => {
+                            const formattedStatus = formatItemStatus(item.status);
+                            return (
+                              <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${
+                                formattedStatus === 'Paid' ? 'bg-green-100 text-green-800 border-green-200' :
+                                formattedStatus === 'Approved' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                formattedStatus === 'Pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                formattedStatus === 'Rejected' ? 'bg-red-100 text-red-800 border-red-200' :
+                                'bg-gray-100 text-gray-800 border-gray-200'
+                              }`}>
+                                {formattedStatus}
+                              </span>
+                            );
+                          })()}
                         </td>
                       </tr>
                     ))}

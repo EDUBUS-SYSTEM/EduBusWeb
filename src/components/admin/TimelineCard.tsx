@@ -3,6 +3,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { FaCalendarAlt, FaClock } from "react-icons/fa";
+import { formatDate } from "@/utils/dateUtils";
 type SemesterInfo = {
     readonly semesterName: string;
     readonly academicYear: string;
@@ -109,9 +110,9 @@ export default function TimelineCard({ semesterData, loading }: TimelineCardProp
                         <span className="text-xs font-medium text-gray-600">Semester Period</span>
                     </div>
                     <p className="text-xs font-semibold text-[#463B3B]">
-                        {startDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        {formatDate(startDate)}
                         {" → "}
-                        {endDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        {formatDate(endDate)}
                     </p>
                 </motion.div>
 
@@ -127,11 +128,11 @@ export default function TimelineCard({ semesterData, loading }: TimelineCardProp
                     </div>
                     <p className="text-xs font-semibold text-[#463B3B]">
                         {semesterData.registrationStartDate
-                            ? new Date(semesterData.registrationStartDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                            ? formatDate(semesterData.registrationStartDate)
                             : "N/A"}
                         {" → "}
                         {semesterData.registrationEndDate
-                            ? new Date(semesterData.registrationEndDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                            ? formatDate(semesterData.registrationEndDate)
                             : "N/A"}
                     </p>
                 </motion.div>

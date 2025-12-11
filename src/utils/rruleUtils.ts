@@ -1,4 +1,6 @@
 // RRule Utilities - Modern and Optimized System
+import { formatDate } from './dateUtils';
+
 export interface RRulePattern {
   id: string;
   name: string;
@@ -298,7 +300,7 @@ export class RRuleUtils {
     }
 
     if (config.until) {
-      description += ` (Until ${config.until.toLocaleDateString("en-US")})`;
+      description += ` (Until ${formatDate(config.until)})`;
     }
 
     if (config.count) {

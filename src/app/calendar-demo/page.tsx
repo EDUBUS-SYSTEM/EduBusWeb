@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { CalendarView, CalendarEvent } from '@/types';
 import { Calendar } from '@/components/calendar';
 import { mockCalendarEvents } from '@/data/mockCalendarData';
+import { formatDateTime } from '@/utils/dateUtils';
 
 export default function CalendarDemoPage() {
   const [view, setView] = useState<CalendarView>({
@@ -87,7 +88,7 @@ export default function CalendarDemoPage() {
                 <div>
                   <h4 className="font-semibold text-gray-700 mb-1">Time</h4>
                   <p className="text-gray-800">
-                    {selectedEvent.start.toLocaleString()} - {selectedEvent.end.toLocaleString()}
+                    {formatDateTime(selectedEvent.start)} - {formatDateTime(selectedEvent.end)}
                   </p>
                 </div>
 

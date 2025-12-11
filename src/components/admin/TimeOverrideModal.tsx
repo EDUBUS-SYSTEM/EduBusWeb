@@ -4,7 +4,7 @@ import { FaTimes, FaSave, FaCalendarAlt } from "react-icons/fa";
 import { ScheduleTimeOverride } from "@/types";
 import { scheduleService } from "@/services/api/scheduleService";
 import TimeSlotSelector from "./TimeSlotSelector";
-import { formatDate, formatDateForInput } from "@/utils/dateUtils";
+import { formatDate, formatDateForInput, formatDateTime } from "@/utils/dateUtils";
 
 interface TimeOverrideModalProps {
   isOpen: boolean;
@@ -258,7 +258,7 @@ export default function TimeOverrideModal({
         Reason: override.reason,
         Status: override.isCancelled ? "Cancelled" : "Active",
         CreatedBy: override.createdBy,
-        CreatedAt: new Date(override.createdAt).toLocaleString(),
+        CreatedAt: formatDateTime(override.createdAt),
       }));
 
       const csv = convertToCSV(data);
