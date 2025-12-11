@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { formatDateForInput } from "@/utils/dateUtils";
 
 interface EditAssignmentModalProps {
     isOpen: boolean;
@@ -30,13 +31,11 @@ export default function EditAssignmentModal({
     // Initialize dates when modal opens
     useEffect(() => {
         if (isOpen && assignmentData) {
-            // Convert UTC to local date for input (YYYY-MM-DD format)
-            const startDateObj = new Date(assignmentData.startTime);
-            setStartDate(startDateObj.toISOString().split('T')[0]);
+            // Convert UTC to local date for input (YYYY-MM-DD format) using centralized utility
+            setStartDate(formatDateForInput(assignmentData.startTime));
 
             if (assignmentData.endTime) {
-                const endDateObj = new Date(assignmentData.endTime);
-                setEndDate(endDateObj.toISOString().split('T')[0]);
+                setEndDate(formatDateForInput(assignmentData.endTime));
             } else {
                 setEndDate("");
             }

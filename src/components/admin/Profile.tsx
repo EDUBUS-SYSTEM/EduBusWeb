@@ -33,6 +33,7 @@ export default function Profile() {
             lastName={user.lastName}
             size={112}
             className="shadow-md"
+            userPhotoFileId={user.userPhotoFileId}
           />
           <h3 className="mt-4 text-base font-semibold text-[#463B3B] text-center">
             {user.firstName} {user.lastName}

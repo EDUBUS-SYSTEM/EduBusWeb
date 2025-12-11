@@ -10,6 +10,7 @@ import { apiService } from "@/lib/api";
 import { VehicleDto } from "@/types/vehicle";
 import EditAssignmentModal from "./EditAssignmentModal";
 import { enrollmentSemesterSettingsService } from "@/services/api/enrollmentSemesterSettingsService";
+import { formatDate } from "@/utils/dateUtils";
 
 const PER_PAGE = 6;
 
@@ -68,19 +69,7 @@ type VehicleWithAssignments = {
   supervisors: SupervisorAssignment[];
 };
 
-// Utility functions
-const formatUTCToLocalDate = (utcString: string): string => {
-  if (!utcString) return "";
-  let dateStr = utcString.trim();
-  if (!dateStr.endsWith("Z") && (dateStr.includes("T") || dateStr.includes(" "))) {
-    dateStr = dateStr.replace(" ", "T") + "Z";
-  }
-  const date = new Date(dateStr);
-  const day = String(date.getUTCDate()).padStart(2, "0");
-  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const year = date.getUTCFullYear();
-  return `${day}/${month}/${year}`;
-};
+// Utility functions - using centralized dateUtils
 
 // Status Badge Component
 function StatusBadge({ status }: { readonly status: "Active" | "Inactive" | "Maintenance" }) {
@@ -222,8 +211,8 @@ function VehicleCard({
                         <div className="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
                           <Calendar className="w-3.5 h-3.5 text-[#D08700]" />
                           <span className="font-medium">
-                            {formatUTCToLocalDate(driver.startTime)} -{" "}
-                            {driver.endTime ? formatUTCToLocalDate(driver.endTime) : "Ongoing"}
+                            {formatDate(driver.startTime)} -{" "}
+                            {driver.endTime ? formatDate(driver.endTime) : "Ongoing"}
                           </span>
                         </div>
                       </div>
@@ -322,8 +311,8 @@ function VehicleCard({
                         <div className="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
                           <Calendar className="w-3.5 h-3.5 text-[#D08700]" />
                           <span className="font-medium">
-                            {formatUTCToLocalDate(supervisor.startTime)} -{" "}
-                            {supervisor.endTime ? formatUTCToLocalDate(supervisor.endTime) : "Ongoing"}
+                            {formatDate(supervisor.startTime)} -{" "}
+                            {supervisor.endTime ? formatDate(supervisor.endTime) : "Ongoing"}
                           </span>
                         </div>
                       </div>

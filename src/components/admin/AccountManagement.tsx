@@ -70,6 +70,7 @@ const UserRow = memo(({
                 lastName={user.lastName}
                 size={48}
                 className="h-12 w-12"
+                userPhotoFileId={user.userPhotoFileId}
               />
             ) : (
               <div className="h-12 w-12 rounded-full bg-gradient-to-r from-[#fad23c] to-[#FFF085] flex items-center justify-center">

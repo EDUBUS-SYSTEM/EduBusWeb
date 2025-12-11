@@ -140,11 +140,16 @@ export const parentLeaveReportService = {
       }
     });
 
+    console.log("parentLeaveReportService.listReports - calling API with params:", params);
     const response = await apiService.get<Record<string, unknown>>("/student-absence-requests", params);
+    console.log("parentLeaveReportService.listReports - API response:", response);
+    
     const itemsSource = (response?.data ?? response?.Data ?? []) as Record<string, unknown>[];
     const pagination = normalizePagination(
       (response?.pagination ?? response?.Pagination) as Record<string, unknown> | undefined,
     );
+
+    console.log("parentLeaveReportService.listReports - normalized items:", itemsSource.length, "pagination:", pagination);
 
     return {
       items: itemsSource.map(normalizeSummary),
