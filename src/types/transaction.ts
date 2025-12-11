@@ -47,7 +47,8 @@ export interface TransportFeeItemSummary {
   studentName: string;
   description: string;
   distanceKm: number;
-  unitPrice: number;
+  unitPrice?: number; // Optional to handle cases where it might not be present
+  unitPricePerKm?: number; // Backend field name
   amount: number;
   semesterName: string;
   academicYear: string;

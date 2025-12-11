@@ -6,6 +6,7 @@ import { TripDto } from '@/types';
 import { LocationUpdateData } from '@/store/slices/liveTripsSlice';
 import { FaTimes, FaMapMarkerAlt, FaBus, FaCheck, FaCrosshairs } from 'react-icons/fa'; // ✅ Added FaCrosshairs
 import LiveVehicleMap from './LiveVehicleMap';
+import { formatTime } from '@/utils/dateUtils';
 
 interface LiveVehicleMapModalProps {
   isOpen: boolean;
@@ -175,7 +176,7 @@ const LiveVehicleMapModal: React.FC<LiveVehicleMapModalProps> = ({
                                     {locationUpdate.isMoving ? ' • Moving' : ' • Stopped'}
                                   </div>
                                   <div className="text-xs text-gray-400">
-                                    Updated: {new Date(locationUpdate.timestamp).toLocaleTimeString()}
+                                    Updated: {formatTime(locationUpdate.timestamp)}
                                   </div>
                                 </>
                               ) : (

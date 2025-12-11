@@ -42,6 +42,25 @@ export const formatDateTime = (dateInput: string | Date | undefined | null): str
 };
 
 /**
+ * Format date with time (short, without year): "Dec 2, 10:30 AM"
+ * Useful for tables where space is limited
+ * @param dateInput - Date object, ISO date string, or any parseable date string
+ * @returns Formatted datetime string without year
+ */
+export const formatDateTimeShort = (dateInput: string | Date | undefined | null): string => {
+    if (!dateInput) return 'N/A';
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    if (isNaN(date.getTime())) return typeof dateInput === 'string' ? dateInput : 'Invalid Date';
+    return date.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+    });
+};
+
+/**
  * Format for input fields: "2025-12-02"
  * Converts UTC date strings to local date for proper timezone handling
  * @param dateInput - Date object, ISO date string, or any parseable date string

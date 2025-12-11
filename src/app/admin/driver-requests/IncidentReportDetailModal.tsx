@@ -10,6 +10,7 @@ import {
 } from "@/services/api/tripIncidents";
 import { useAppDispatch } from "@/store/hooks";
 import { updateIncidentInList } from "@/store/slices/driverRequestsSlice";
+import { formatDateTime } from "@/utils/dateUtils";
 
 interface IncidentReportDetailModalProps {
   incidentId: string;
@@ -191,17 +192,6 @@ export default function IncidentReportDetailModal({
     return reasonStr.replace(/([A-Z])/g, ' $1').trim();
   };
 
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const month = months[date.getMonth()];
-    const day = String(date.getDate()).padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${month} ${day}, ${year} ${hours}:${minutes}`;
-  };
-
   if (loading) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -291,7 +281,7 @@ export default function IncidentReportDetailModal({
                   <span className="text-sm font-medium">Service Date</span>
                 </div>
                 <p className="text-base font-semibold text-gray-900">
-                  {formatDate(incident.serviceDate)}
+                  {formatDateTime(incident.serviceDate)}
                 </p>
               </div>
             </div>
@@ -330,16 +320,16 @@ export default function IncidentReportDetailModal({
                   <p className="text-sm text-blue-800 whitespace-pre-wrap leading-relaxed">{incident.adminNote}</p>
                   {incident.handledAt && (
                     <p className="text-xs text-blue-600 mt-2">
-                      Handled at: {formatDate(incident.handledAt)}
+                      Handled at: {formatDateTime(incident.handledAt)}
                     </p>
                   )}
                 </div>
               )}
 
               <div className="text-sm text-gray-500 space-y-1">
-                <p>Reported at: {formatDate(incident.createdAt)}</p>
+                <p>Reported at: {formatDateTime(incident.createdAt)}</p>
                 {incident.updatedAt && incident.updatedAt !== incident.createdAt && (
-                  <p>Last updated: {formatDate(incident.updatedAt)}</p>
+                  <p>Last updated: {formatDateTime(incident.updatedAt)}</p>
                 )}
               </div>
             </div>

@@ -11,6 +11,7 @@ import {
     FaBus,
     FaRoute,
     FaDollarSign,
+    FaDownload,
 } from "react-icons/fa";
 import StatCard from "./StatCard";
 import TimelineCard from "./TimelineCard";
@@ -25,9 +26,9 @@ import { studentService } from "@/services/studentService/studentService.api";
 import { vehicleService } from "@/services/vehicleService";
 import { tripService } from "@/services/tripService";
 import { dashboardService } from "@/services/dashboardService";
-import { transactionService } from "@/services/transactionService";
-import { TransactionStatus } from "@/types/transaction";
 import { formatDate } from "@/utils/dateUtils";
+import * as XLSX from "xlsx";
+import { toast } from "react-toastify";
 
 export default function AdminDashboard() {
     // Fetch current semester (from dashboard-specific API)
@@ -176,7 +177,7 @@ export default function AdminDashboard() {
                     {unitPriceData.pricePerKm.toLocaleString()} VND/km
                 </motion.div>
                 <p className="text-gray-700 text-xs">
-                    Effective from {new Date(unitPriceData.effectiveFrom).toLocaleDateString()}
+                    Effective from {formatDate(unitPriceData.effectiveFrom)}
                 </p>
                 {unitPriceData.description && (
                     <p className="text-gray-600 text-[10px] mt-2 italic">{unitPriceData.description}</p>
@@ -187,6 +188,273 @@ export default function AdminDashboard() {
         unitPriceContent = <p className="text-gray-700">No active unit price</p>;
     }
 
+    const attendanceExport = attendanceRate || dashboardStats?.attendanceRate || null;
+    const dailyStudentsExport = dailyStudents || dashboardStats?.dailyStudents || null;
+    const vehicleRuntimeExport = vehicleRuntime || dashboardStats?.vehicleRuntime || null;
+    const routeStatisticsExport = routeStatistics || dashboardStats?.routeStatistics || null;
+
+    const buildSheet = (
+        workbook: XLSX.WorkBook,
+        data: Record<string, unknown>[],
+        name: string,
+        options?: { numberFormats?: Record<string, string> }
+    ) => {
+        const safeData = data.length > 0 ? data : [{ Note: "No data" }];
+        const worksheet = XLSX.utils.json_to_sheet(safeData);
+
+        // Auto width
+        const colWidths =
+            safeData.length > 0
+                ? Object.keys(safeData[0]).map((key) => ({
+                      wch: Math.max(key.length, ...safeData.map((row) => String(row[key] ?? "").length)) + 2,
+                  }))
+                : [{ wch: 10 }];
+        (worksheet as XLSX.WorkSheet)["!cols"] = colWidths;
+
+        // Number formatting by header
+        if (options?.numberFormats && safeData.length > 0 && worksheet["!ref"]) {
+            const range = XLSX.utils.decode_range(worksheet["!ref"]);
+            const headers = Object.keys(safeData[0]);
+            headers.forEach((header, idx) => {
+                const fmt = options.numberFormats?.[header];
+                if (!fmt) return;
+                for (let r = 1; r <= range.e.r; r++) {
+                    const cellAddr = XLSX.utils.encode_cell({ r, c: idx });
+                    const cell = worksheet[cellAddr];
+                    if (cell && typeof cell.v !== "undefined") {
+                        cell.z = fmt;
+                    }
+                }
+            });
+        }
+
+        // Autofilter for quick scan
+        if (worksheet["!ref"]) {
+            worksheet["!autofilter"] = { ref: worksheet["!ref"] };
+        }
+
+        XLSX.utils.book_append_sheet(workbook, worksheet, name);
+    };
+
+    const handleExport = () => {
+        try {
+            const workbook = XLSX.utils.book_new();
+            const todayIso = new Date().toISOString().slice(0, 10);
+            const semesterCode = semesterData?.semesterCode || "na";
+
+            // Summary sheet
+            buildSheet(workbook, [
+                {
+                    GeneratedAt: new Date().toISOString(),
+                    SemesterCode: semesterCode,
+                },
+                {
+                    Semester: semesterData?.semesterName ?? "N/A",
+                    AcademicYear: semesterData?.academicYear ?? "N/A",
+                    SemesterStart: semesterData?.semesterStartDate ?? "N/A",
+                    SemesterEnd: semesterData?.semesterEndDate ?? "N/A",
+                    UnitPriceVNDPerKm: unitPriceData?.pricePerKm ?? "N/A",
+                    UnitPriceEffectiveFrom: unitPriceData?.effectiveFrom ?? "N/A",
+                    UnitPriceNote: unitPriceData?.description ?? "",
+                    TotalUsers: totalUsers,
+                    Parents: parentData?.totalCount ?? 0,
+                    Drivers: driverData?.totalCount ?? 0,
+                    Supervisors: supervisorData?.totalCount ?? 0,
+                    Students: studentsData?.length ?? 0,
+                    ActiveStudents: activeStudents?.length ?? 0,
+                    InactiveStudents: inactiveStudents?.length ?? 0,
+                    Vehicles: vehiclesData?.totalCount ?? 0,
+                    Trips: tripsData?.total ?? 0,
+                    RevenuePaid: revenueStatistics?.totalRevenue ?? 0,
+                    RevenuePending: revenueStatistics?.pendingAmount ?? 0,
+                    RevenueFailed: revenueStatistics?.failedAmount ?? 0,
+                    Currency: revenueStatistics?.currency ?? "VND",
+                },
+            ], "Summary");
+
+            // Attendance sheet
+            buildSheet(workbook, attendanceExport ? [
+                {
+                    TodayRate: attendanceExport.todayRate,
+                    WeekRate: attendanceExport.weekRate,
+                    MonthRate: attendanceExport.monthRate,
+                    TotalStudents: attendanceExport.totalStudents,
+                    Present: attendanceExport.totalPresent,
+                    Late: attendanceExport.totalLate,
+                    Absent: attendanceExport.totalAbsent,
+                    Excused: attendanceExport.totalExcused,
+                    Pending: attendanceExport.totalPending,
+                },
+            ] : [], "Attendance");
+
+            // Daily students sheet
+            buildSheet(workbook, dailyStudentsExport ? [
+                {
+                    Today: dailyStudentsExport.today,
+                    Yesterday: dailyStudentsExport.yesterday,
+                    ThisWeek: dailyStudentsExport.thisWeek,
+                    ThisMonth: dailyStudentsExport.thisMonth,
+                },
+                ...dailyStudentsExport.last7Days.map((d) => ({
+                    Date: d.date,
+                    Count: d.count,
+                })),
+            ] : [], "Daily Students");
+
+            // Vehicle runtime sheet
+            buildSheet(workbook, vehicleRuntimeExport ? [
+                {
+                    TotalHoursToday: vehicleRuntimeExport.totalHoursToday,
+                    AverageHoursPerTrip: vehicleRuntimeExport.averageHoursPerTrip,
+                    TotalTripsToday: vehicleRuntimeExport.totalTripsToday,
+                },
+                ...(vehicleRuntimeExport.topVehicles ?? []).map((v, idx) => ({
+                    Rank: idx + 1,
+                    LicensePlate: v.licensePlate,
+                    TotalHours: v.totalHours,
+                    TripCount: v.tripCount,
+                })),
+            ] : [], "Vehicle Runtime");
+
+            // Route statistics sheet
+            buildSheet(
+                workbook,
+                routeStatisticsExport
+                    ? [
+                          ...routeStatisticsExport.map((r) => ({
+                              RouteName: r.routeName,
+                              TotalTrips: r.totalTrips,
+                              TotalStudents: r.totalStudents,
+                              AttendanceRate: r.attendanceRate / 100,
+                              AttendanceColor:
+                                  r.attendanceRate >= 95
+                                      ? "Green"
+                                      : r.attendanceRate >= 85
+                                      ? "Yellow"
+                                      : "Red",
+                              AverageRuntimeHours: r.averageRuntime,
+                              ActiveVehicles: r.activeVehicles,
+                          })),
+                          {
+                              RouteName: "Totals",
+                              TotalTrips: routeStatisticsExport.reduce((sum, r) => sum + r.totalTrips, 0),
+                              TotalStudents: routeStatisticsExport.reduce((sum, r) => sum + r.totalStudents, 0),
+                              AttendanceRate:
+                                  routeStatisticsExport.length > 0
+                                      ? routeStatisticsExport.reduce((sum, r) => sum + r.attendanceRate, 0) /
+                                        routeStatisticsExport.length /
+                                        100
+                                      : 0,
+                              AttendanceColor: "Summary",
+                              AverageRuntimeHours:
+                                  routeStatisticsExport.length > 0
+                                      ? routeStatisticsExport.reduce((sum, r) => sum + r.averageRuntime, 0) /
+                                        routeStatisticsExport.length
+                                      : 0,
+                              ActiveVehicles: routeStatisticsExport.reduce((sum, r) => sum + r.activeVehicles, 0),
+                          },
+                      ]
+                    : [],
+                "Route Stats",
+                { numberFormats: { AttendanceRate: "0.0%", AverageRuntimeHours: "0.0", TotalTrips: "0", TotalStudents: "0", ActiveVehicles: "0" } }
+            );
+
+            // Revenue timeline sheet
+            buildSheet(
+                workbook,
+                revenueStatistics
+                    ? [
+                          {
+                              TotalRevenue: revenueStatistics.totalRevenue,
+                              PendingAmount: revenueStatistics.pendingAmount,
+                              FailedAmount: revenueStatistics.failedAmount,
+                              PaidTransactionCount: revenueStatistics.paidTransactionCount ?? "",
+                              PendingTransactionCount: revenueStatistics.pendingTransactionCount ?? "",
+                              FailedTransactionCount: revenueStatistics.failedTransactionCount ?? "",
+                              Currency: revenueStatistics.currency ?? "VND",
+                          },
+                          ...(revenueTimeline ?? []).map((p) => ({
+                              Date: p.date,
+                              Amount: p.amount,
+                              Count: p.count,
+                              AmountColor: p.amount >= 0 ? "Green" : "Red",
+                          })),
+                          {
+                              Date: "Totals",
+                              Amount:
+                                  revenueTimeline?.reduce((sum, p) => sum + p.amount, 0) ??
+                                  revenueStatistics.totalRevenue +
+                                      (revenueStatistics.pendingAmount ?? 0) +
+                                      (revenueStatistics.failedAmount ?? 0),
+                              Count: revenueTimeline?.reduce((sum, p) => sum + p.count, 0) ?? "",
+                              AmountColor: "Summary",
+                          },
+                      ]
+                    : [],
+                "Revenue",
+                {
+                    numberFormats: {
+                        TotalRevenue: '#,##0" VND"',
+                        PendingAmount: '#,##0" VND"',
+                        FailedAmount: '#,##0" VND"',
+                        Amount: '#,##0" VND"',
+                    },
+                }
+            );
+
+            // Charts data sheet (prepared series for quick charting)
+            const chartsRows: Record<string, unknown>[] = [];
+            chartsRows.push({ Section: "Revenue Timeline", Note: "Use Date vs Amount" });
+            (revenueTimeline ?? []).forEach((p) =>
+                chartsRows.push({
+                    Date: p.date,
+                    Amount: p.amount,
+                    Transactions: p.count,
+                })
+            );
+            chartsRows.push({});
+            chartsRows.push({ Section: "Daily Students (7 days)", Note: "Use Date vs Count" });
+            (dailyStudentsExport?.last7Days ?? []).forEach((d) =>
+                chartsRows.push({
+                    Date: d.date,
+                    Count: d.count,
+                })
+            );
+            chartsRows.push({});
+            chartsRows.push({ Section: "Attendance Rate", Note: "Use Today/Week/Month" });
+            if (attendanceExport) {
+                chartsRows.push({
+                    TodayRate: attendanceExport.todayRate / 100,
+                    WeekRate: attendanceExport.weekRate / 100,
+                    MonthRate: attendanceExport.monthRate / 100,
+                });
+            }
+            chartsRows.push({});
+            chartsRows.push({ Section: "Route Attendance", Note: "RouteName vs AttendanceRate" });
+            (routeStatisticsExport ?? []).forEach((r) =>
+                chartsRows.push({
+                    RouteName: r.routeName,
+                    AttendanceRate: r.attendanceRate / 100,
+                    TotalTrips: r.totalTrips,
+                    TotalStudents: r.totalStudents,
+                })
+            );
+            buildSheet(
+                workbook,
+                chartsRows,
+                "Charts Data",
+                { numberFormats: { Amount: '#,##0" VND"', TodayRate: "0.0%", WeekRate: "0.0%", MonthRate: "0.0%", AttendanceRate: "0.0%" } }
+            );
+
+            const filename = `dashboard-export-${semesterCode}-${todayIso}.xlsx`;
+            XLSX.writeFile(workbook, filename);
+            toast.success("Đã xuất Excel cho Dashboard");
+        } catch (error) {
+            console.error("Export dashboard failed", error);
+            toast.error("Xuất Excel thất bại");
+        }
+    };
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -195,8 +463,18 @@ export default function AdminDashboard() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
             >
-                <h1 className="text-3xl font-bold text-[#463B3B] mb-1">Admin Dashboard</h1>
-                <p className="text-sm text-gray-600">Welcome back! Here&apos;s what&apos;s happening with your school shuttle system.</p>
+                <div className="flex items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold text-[#463B3B] mb-1">Admin Dashboard</h1>
+                        <p className="text-sm text-gray-600">Welcome back! Here&apos;s what&apos;s happening with your school shuttle system.</p>
+                    </div>
+                    <button
+                        onClick={handleExport}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-[#F5D565] text-[#463B3B] font-semibold rounded-lg shadow hover:bg-[#fad23c] transition"
+                    >
+                        <FaDownload /> Export Dashboard
+                    </button>
+                </div>
             </motion.div>
 
             {/* Timeline and Unit Price Section */}

@@ -13,7 +13,7 @@ import {
 } from "@/services/api/driverLeaveRequests";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchLeaveRequests, setCurrentPage, updateLeaveInList } from "@/store/slices/driverRequestsSlice";
-import { formatDateTime } from "@/utils/dateUtils";
+import { formatDate, formatDateTime } from "@/utils/dateUtils";
 
 export default function LeaveRequestsTab() {
   const dispatch = useAppDispatch();
@@ -463,11 +463,11 @@ export default function LeaveRequestsTab() {
                     <td className="px-6 py-4">
                       <div className="max-w-xs">
                         <div className="text-sm font-medium text-gray-900">
-                          {new Date(leave.startDate).toLocaleDateString('en-US')}
+                          {formatDate(leave.startDate)}
                         </div>
                         <div className="text-sm text-gray-900">
                           <span className="font-normal">to </span>
-                          <span className="font-medium">{new Date(leave.endDate).toLocaleDateString('en-US')}</span>
+                          <span className="font-medium">{formatDate(leave.endDate)}</span>
                         </div>
                       </div>
                     </td>

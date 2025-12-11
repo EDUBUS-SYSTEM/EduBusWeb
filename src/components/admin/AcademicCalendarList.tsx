@@ -13,7 +13,7 @@ import {
 import { academicCalendarService } from "@/services/api/academicCalendarService";
 import { AcademicCalendar, AcademicCalendarQueryParams } from "@/types";
 import Pagination from "../ui/Pagination";
-import { formatDate } from "@/utils/dateUtils";
+import { formatDate, formatMonthYear } from "@/utils/dateUtils";
 
 interface AcademicSemester {
   name: string;
@@ -610,7 +610,7 @@ export default function AcademicCalendarList({
                             {/* Month Header */}
                             <div className="text-center mb-3">
                               <h5 className="text-lg font-semibold text-gray-800">
-                                {month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                                {formatMonthYear(month)}
                               </h5>
                             </div>
 
@@ -1134,7 +1134,7 @@ export default function AcademicCalendarList({
                         <div className="flex-1">
                           <div className="font-medium text-gray-800">{semester.name}</div>
                           <div className="text-sm text-gray-600">
-                            {semester.code} • {new Date(semester.startDate).toLocaleDateString()} - {new Date(semester.endDate).toLocaleDateString()}
+                            {semester.code} • {formatDate(semester.startDate)} - {formatDate(semester.endDate)}
                           </div>
                         </div>
                         <div className="flex gap-2">
@@ -1185,7 +1185,7 @@ export default function AcademicCalendarList({
                         <div className="flex-1">
                           <div className="font-medium text-gray-800">{holiday.name}</div>
                           <div className="text-sm text-gray-600">
-                            {new Date(holiday.startDate).toLocaleDateString()} - {new Date(holiday.endDate).toLocaleDateString()}
+                            {formatDate(holiday.startDate)} - {formatDate(holiday.endDate)}
                             {holiday.description && ` • ${holiday.description}`}
                           </div>
                         </div>

@@ -7,6 +7,7 @@ import { TripDto, TripStopDto } from '@/types';
 import { LocationUpdateData } from '@/store/slices/liveTripsSlice';
 import { vietmapService } from '@/services/vietmapService';
 import { FaBus, FaUser, FaMapMarkerAlt } from 'react-icons/fa';
+import { formatTime } from '@/utils/dateUtils';
 
 interface LiveVehicleMapProps {
   trips: TripDto[];
@@ -681,7 +682,7 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
                 </div>
                 ${locationUpdate ? `
                   <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; font-size: 11px; color: #999;">
-                    Updated: ${new Date(locationUpdate.timestamp).toLocaleTimeString()}
+                    Updated: ${formatTime(locationUpdate.timestamp)}
                     ${locationUpdate.speed ? `<br/>Speed: ${locationUpdate.speed.toFixed(1)} km/h` : ''}
                     ${locationUpdate.isMoving ? '<br/>🟢 Moving' : '<br/>🔴 Stopped'}
                   </div>

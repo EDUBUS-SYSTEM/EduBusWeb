@@ -38,6 +38,7 @@ import {
   setSearchText,
   setStatusFilter,
 } from "@/store/slices/parentLeaveReportsSlice";
+import { formatDate, formatDateTime } from "@/utils/dateUtils";
 
 const DATE_RANGE_OPTIONS: Array<{ label: string; value: DateRangeOption }> = [
   { label: "Today", value: "today" },
@@ -771,30 +772,6 @@ function buildParentContactChips(report: {
   }
 
   return chips;
-}
-
-function formatDate(value?: string) {
-  if (!value) return "--";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "--";
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "2-digit",
-    year: "numeric",
-  }).format(date);
-}
-
-function formatDateTime(value?: string) {
-  if (!value) return "--";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "--";
-  return new Intl.DateTimeFormat("en-US", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
 }
 
 function calculateTotalDays(start?: string, end?: string) {

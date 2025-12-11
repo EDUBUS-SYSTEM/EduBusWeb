@@ -17,7 +17,7 @@ import { Schedule, ScheduleTimeOverride } from "@/types";
 import TimeOverrideModal from "./TimeOverrideModal";
 import ExceptionModal from "./ExceptionModal";
 import Pagination from "../ui/Pagination";
-import { formatDate, formatDateForInput } from "@/utils/dateUtils";
+import { formatDate, formatDateForInput, formatTime } from "@/utils/dateUtils";
 
 interface ScheduleListProps {
   searchTerm: string;
@@ -211,15 +211,17 @@ export default function ScheduleList({
     }
   };
 
-  const formatTime = (time: string) => {
-    return new Date(`2000-01-01T${time}`).toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
+  // Using centralized formatDate, formatDateForInput, and formatTime from @/utils/dateUtils
+  // Helper to format time string (HH:mm) to display format
+  const formatTimeString = (time: string) => {
+    if (!time) return 'N/A';
+    // If time is already in HH:mm format, convert to Date object
+    if (/^\d{2}:\d{2}$/.test(time)) {
+      return formatTime(`2000-01-01T${time}`);
+    }
+    // Otherwise use formatTime directly
+    return formatTime(time);
   };
-
-  // Using centralized formatDate and formatDateForInput from @/utils/dateUtils
 
   const handleDeleteSchedule = async (scheduleId: string) => {
     if (!confirm("Are you sure you want to delete this schedule?")) {
@@ -487,8 +489,8 @@ export default function ScheduleList({
                     <div className="flex items-center gap-2 text-gray-600">
                       <FaClock className="w-4 h-4 text-[#fad23c]" />
                       <span className="text-sm">
-                        {formatTime(schedule.startTime)} -{" "}
-                        {formatTime(schedule.endTime)}
+                        {formatTimeString(schedule.startTime)} -{" "}
+                        {formatTimeString(schedule.endTime)}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
@@ -642,9 +644,9 @@ export default function ScheduleList({
                       Time Range
                     </p>
                     <p className="text-gray-900">
-                      {formatTime(selectedSchedule.startTime)}
+                      {formatTimeString(selectedSchedule.startTime)}
                       <span className="mx-1 text-gray-400">—</span>
-                      {formatTime(selectedSchedule.endTime)}
+                      {formatTimeString(selectedSchedule.endTime)}
                     </p>
                   </div>
 

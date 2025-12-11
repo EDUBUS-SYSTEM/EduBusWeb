@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { CalendarEvent } from '@/types';
+import { formatTime } from '@/utils/dateUtils';
 
 interface EventCardProps {
   event: CalendarEvent;
@@ -82,13 +83,7 @@ export default function EventCard({ event, onClick, className = '' }: EventCardP
     }
   };
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
+  // Using centralized formatTime from @/utils/dateUtils
 
   return (
     <div
