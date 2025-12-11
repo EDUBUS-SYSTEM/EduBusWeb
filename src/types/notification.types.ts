@@ -44,7 +44,7 @@ export interface NotificationResponse {
     relatedEntityType?: string;
     actionRequired: boolean;
     actionUrl?: string;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
     isExpired?: boolean;
     isRead?: boolean;
 }

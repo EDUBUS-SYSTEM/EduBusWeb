@@ -147,11 +147,11 @@ export default function NotificationBell() {
                                     <FaBell className="text-5xl text-gray-400" />
                                 </div>
                                 <h4 className="text-base font-semibold text-gray-700 mb-1">No notifications</h4>
-                                <p className="text-sm text-gray-500 text-center">You're all caught up! Check back later for updates.</p>
+                                <p className="text-sm text-gray-500 text-center">You are all caught up! Check back later for updates.</p>
                             </div>
                         ) : (
                             <div className="py-2">
-                                {notifications.map((notification, index) => (
+                                {notifications.map((notification) => (
                                     <div
                                         key={notification.id}
                                         onClick={() => handleNotificationClick(notification)}
