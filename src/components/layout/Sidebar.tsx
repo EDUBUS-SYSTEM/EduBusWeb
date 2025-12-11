@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useRef, useEffect, useLayoutEffect } from "react";
+import NotificationBell from "@/components/admin/NotificationBell";
 import {
   FaHome,
   FaUsers,
@@ -102,17 +103,20 @@ export default function Sidebar() {
   }, [pathname]);
 
   return (
-    <aside className="bg-[#FEFCE8] w-64 h-screen flex flex-col fixed left-0 top-0 shadow-md">
+    <aside className="bg-[#FEFCE8] w-64 h-screen flex flex-col fixed left-0 top-0 shadow-md z-50">
       {/* Header admin avatar */}
-      <div className="flex items-center gap-3 px-5 py-4 bg-[#fad23c]">
-        <Image
-          src="/images/admin_avt_default.png"
-          alt="avatar"
-          width={40}
-          height={40}
-          className="rounded-full"
-        />
-        <h1 className="text-xl font-bold text-[#463B3B]">Admin</h1>
+      <div className="flex items-center justify-between gap-3 px-5 py-4 bg-[#fad23c]">
+        <div className="flex items-center gap-3">
+          <Image
+            src="/images/admin_avt_default.png"
+            alt="avatar"
+            width={40}
+            height={40}
+            className="rounded-full"
+          />
+          <h1 className="text-xl font-bold text-[#463B3B]">Admin</h1>
+        </div>
+        <NotificationBell />
       </div>
 
       {/* Menu */}
