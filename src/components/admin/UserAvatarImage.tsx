@@ -9,6 +9,7 @@ interface UserAvatarImageProps {
   lastName: string;
   size?: number;
   className?: string;
+  userPhotoFileId?: string | null;
 }
 
 export function UserAvatarImage({
@@ -17,12 +18,20 @@ export function UserAvatarImage({
   lastName,
   size = 48,
   className = "",
+  userPhotoFileId,
 }: UserAvatarImageProps) {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    // If user doesn't have a photo, skip fetching
+    if (!userPhotoFileId) {
+      setLoading(false);
+      setError(true);
+      return;
+    }
+
     let blobUrl: string | null = null;
     let isMounted = true;
 
@@ -83,7 +92,7 @@ export function UserAvatarImage({
         URL.revokeObjectURL(blobUrl);
       }
     };
-  }, [userId]);
+  }, [userId, userPhotoFileId]);
 
   // Show initials if no avatar or error
   if (error || !avatarUrl) {

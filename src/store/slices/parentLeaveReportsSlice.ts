@@ -47,7 +47,7 @@ const initialState: ParentLeaveReportsState = {
   filters: {
     searchText: "",
     statusFilter: "",
-    dateRange: "thisWeek",
+    dateRange: "all",
   },
   loading: false,
   error: null,
@@ -143,6 +143,9 @@ export const fetchParentLeaveReports = createAsyncThunk<
       sort: "Newest",
     });
 
+    console.log("fetchParentLeaveReports response:", response);
+    console.log("Date range:", { dateRange, startDateParam, endDateParam });
+    
     return response;
   } catch (error) {
     console.error("fetchParentLeaveReports", error);
