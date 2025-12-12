@@ -195,6 +195,7 @@ export default function ApproveStep2Modal({
               </h4>
               <div className="text-sm text-green-700">
                 <p><strong>Name:</strong> {selectedDriver.fullName}</p>
+                <p><strong>Email:</strong> {selectedDriver.email}</p>
                 <p><strong>Phone:</strong> {selectedDriver.phoneNumber}</p>
                 <p><strong>License:</strong> {selectedDriver.licenseNumber || 'Not specified'}</p>
               </div>
