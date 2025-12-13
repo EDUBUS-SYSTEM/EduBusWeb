@@ -114,14 +114,38 @@ export const getAvailableDrivers = async (
   startDate: Date,
   endDate: Date
 ): Promise<GetAvailableDriverDto[]> => {
+  // Normalize to date-only boundaries to avoid timezone shifts
+  const start = new Date(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    startDate.getDate(),
+    0, 0, 0, 0
+  );
+  const end = new Date(
+    endDate.getFullYear(),
+    endDate.getMonth(),
+    endDate.getDate(),
+    23, 59, 59, 999
+  );
+
+  const formatDateTime = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+      d.getDate()
+    ).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(
+      d.getMinutes()
+    ).padStart(2, "0")}:${String(d.getSeconds()).padStart(
+      2,
+      "0"
+    )}.${String(d.getMilliseconds()).padStart(3, "0")}0000`;
+
   const params = new URLSearchParams({
-    startDate: startDate.toISOString(),
-    endDate: endDate.toISOString(),
+    startDate: formatDateTime(start),
+    endDate: formatDateTime(end),
   });
 
   const result = await apiService.get<GetAvailableDriverDto[]>(
     `/DriverVehicle/drivers/available?${params.toString()}`
   );
-  
+
   return result as unknown as GetAvailableDriverDto[];
 };
