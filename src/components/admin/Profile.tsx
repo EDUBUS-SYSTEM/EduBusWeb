@@ -25,7 +25,6 @@ export default function Profile() {
       <h2 className="text-2xl font-bold mb-10 text-[#463B3B]">Personal Profile</h2>
 
       <div className="flex gap-12 justify-center items-center">
-        {/* Avatar + name */}
         <div className="flex flex-col items-center w-[220px]">
           <UserAvatarImage
             userId={user.id}
@@ -41,7 +40,6 @@ export default function Profile() {
           <p className="text-sm text-[#d97706] text-center">{user.email}</p>
         </div>
 
-        {/* Information Form */}
         <form className="bg-[#FEFCE8] p-5 rounded-lg shadow-md w-[550px]">
           <h4 className="font-semibold mb-3 text-center text-[#463B3B] text-sm">
             Information detail
@@ -61,7 +59,6 @@ export default function Profile() {
             ))}
           </div>
 
-          {/* Buttons */}
           <div className="flex gap-3 mt-4 justify-center">
             <button
               type="button"

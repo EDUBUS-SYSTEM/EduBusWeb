@@ -58,7 +58,6 @@ export default function DailyStudentsChart({ data, loading }: DailyStudentsChart
             whileHover={{ scale: 1.005 }}
             className="bg-white rounded-2xl p-6 shadow-soft hover:shadow-lg transition-all duration-300 border border-gray-100"
         >
-            {/* Header */}
             <div className="flex items-start justify-between mb-6">
                 <div>
                     <motion.h3
@@ -87,7 +86,6 @@ export default function DailyStudentsChart({ data, loading }: DailyStudentsChart
                 </motion.div>
             </div>
 
-            {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
@@ -142,7 +140,6 @@ export default function DailyStudentsChart({ data, loading }: DailyStudentsChart
                 </motion.div>
             </div>
 
-            {/* Chart */}
             <div className="space-y-2">
                 <p className="text-xs font-medium text-gray-600 mb-3">Last 7 Days Trend</p>
                 <div className="flex items-end justify-between gap-2 h-48">

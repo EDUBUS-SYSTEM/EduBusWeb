@@ -39,13 +39,13 @@ const Modal: React.FC<ModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
+
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
-      
-      {/* Modal */}
+
+
       <div
         className={`
           relative w-full ${sizeClasses[size]}
@@ -54,7 +54,7 @@ const Modal: React.FC<ModalProps> = ({
           animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-4
         `}
       >
-        {/* Header */}
+
         {title && (
           <div className="flex items-center justify-between p-6 border-b border-gray-100">
             <h2 className="text-xl font-semibold text-gray-800 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
@@ -84,8 +84,8 @@ const Modal: React.FC<ModalProps> = ({
             </button>
           </div>
         )}
-        
-        {/* Content */}
+
+
         <div className="p-6">
           {children}
         </div>

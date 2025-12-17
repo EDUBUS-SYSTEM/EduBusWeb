@@ -1,4 +1,4 @@
-// components/admin/PickupPointManagement/DeadlinesTab.tsx
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -15,7 +15,6 @@ import {
   FaTimesCircle
 } from 'react-icons/fa';
 import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import { enrollmentSemesterSettingsService, EnrollmentSemesterSettingsDto, EnrollmentSemesterSettingsCreateDto, EnrollmentSemesterSettingsUpdateDto } from '@/services/api/enrollmentSemesterSettingsService';
 import { academicCalendarService } from '@/services/api/academicCalendarService';
 import { AcademicCalendar, AcademicSemester } from '@/types';
@@ -29,23 +28,22 @@ const DeadlinesTab: React.FC = () => {
   const [page, setPage] = useState(1);
   const [perPage] = useState(20);
 
-  // Filters
+
   const [filterAcademicYear, setFilterAcademicYear] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<boolean | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Modals
+
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedDeadline, setSelectedDeadline] = useState<EnrollmentSemesterSettingsDto | null>(null);
 
-  // Academic Calendar data
   const [academicCalendars, setAcademicCalendars] = useState<AcademicCalendar[]>([]);
   const [selectedCalendar, setSelectedCalendar] = useState<AcademicCalendar | null>(null);
   const [availableSemesters, setAvailableSemesters] = useState<AcademicSemester[]>([]);
 
-  // Create form
+
   const [createForm, setCreateForm] = useState<EnrollmentSemesterSettingsCreateDto>({
     semesterName: '',
     academicYear: '',
@@ -58,7 +56,7 @@ const DeadlinesTab: React.FC = () => {
     description: '',
   });
 
-  // Validation errors
+
   const [createFormErrors, setCreateFormErrors] = useState<{
     academicCalendar?: string;
     semester?: string;
@@ -67,7 +65,7 @@ const DeadlinesTab: React.FC = () => {
     description?: string;
   }>({});
 
-  // Update form (only 4 fields)
+ 
   const [updateForm, setUpdateForm] = useState<EnrollmentSemesterSettingsUpdateDto>({
     registrationStartDate: '',
     registrationEndDate: '',
@@ -75,7 +73,7 @@ const DeadlinesTab: React.FC = () => {
     description: '',
   });
 
-  // Load deadlines
+
   const loadDeadlines = async () => {
     try {
       setLoading(true);
@@ -102,7 +100,6 @@ const DeadlinesTab: React.FC = () => {
     }
   };
 
-  // Load academic calendars
   const loadAcademicCalendars = async () => {
     try {
       const calendars = await academicCalendarService.getActiveAcademicCalendars();
@@ -131,8 +128,7 @@ const DeadlinesTab: React.FC = () => {
     setAvailableSemesters(filterEligibleSemesters(selectedCalendar, deadlines));
   }, [selectedCalendar, deadlines]);
 
-  // Check if form is valid (for button disable state)
-  // This checks basic required fields, full validation happens on submit
+  
   const isCreateFormValid = (): boolean => {
     const hasRequiredFields = !!(
       selectedCalendar &&
@@ -141,23 +137,21 @@ const DeadlinesTab: React.FC = () => {
       createForm.registrationEndDate
     );
 
-    // If required fields are filled, check if there are any errors
     if (hasRequiredFields) {
-      // Quick validation check without setting errors
+    
       const startDate = parseDateString(createForm.registrationStartDate);
       const endDate = parseDateString(createForm.registrationEndDate);
       const semesterStart = parseDateString(createForm.semesterStartDate);
       const today = parseDateString(getTodayInputDate());
       if (!startDate || !endDate || !today) return false;
 
-      // Check date relationships
-      // Both dates must be BEFORE semester start date
+     
       if (startDate < today) return false;
       if (endDate <= startDate) return false;
       if (semesterStart && startDate >= semesterStart) return false;
       if (semesterStart && endDate >= semesterStart) return false;
 
-      // Check description length
+    
       if (createForm.description && createForm.description.length > 500) return false;
 
       return true;
@@ -166,22 +160,21 @@ const DeadlinesTab: React.FC = () => {
     return false;
   };
 
-  // Validate create form
+
   const validateCreateForm = (): boolean => {
     const errors: typeof createFormErrors = {};
 
-    // Validate Academic Calendar
+   
     if (!selectedCalendar) {
       errors.academicCalendar = 'Please select an academic calendar';
     }
 
-    // Validate Semester
+ 
     if (!createForm.semesterCode) {
       errors.semester = 'Please select a semester';
     }
 
-    // Validate Registration Start Date
-    // Must be BEFORE semester start date (this is deadline for registration BEFORE semester begins)
+    
     if (!createForm.registrationStartDate) {
       errors.registrationStartDate = 'Registration start date is required';
     } else {
@@ -200,8 +193,7 @@ const DeadlinesTab: React.FC = () => {
       }
     }
 
-    // Validate Registration End Date
-    // Must be BEFORE semester start date and AFTER registration start date
+ 
     if (!createForm.registrationEndDate) {
       errors.registrationEndDate = 'Registration end date is required';
     } else {
@@ -220,7 +212,6 @@ const DeadlinesTab: React.FC = () => {
       }
     }
 
-    // Validate Description (optional but check length if provided)
     if (createForm.description && createForm.description.length > 500) {
       errors.description = 'Description must be less than 500 characters';
     }
@@ -229,7 +220,6 @@ const DeadlinesTab: React.FC = () => {
     return Object.keys(errors).length === 0;
   };
 
-  // Handle semester selection in create form
   const handleSemesterSelect = (semesterCode: string) => {
     if (!selectedCalendar) return;
 
@@ -243,20 +233,16 @@ const DeadlinesTab: React.FC = () => {
         semesterStartDate: formatDateForInput(semester.startDate),
         semesterEndDate: formatDateForInput(semester.endDate),
       }));
-      // Clear semester error when selected
       setCreateFormErrors(prev => ({ ...prev, semester: undefined }));
     }
   };
 
-  // Handle academic calendar selection
   const handleCalendarSelect = async (academicYear: string) => {
     try {
       const calendar = await academicCalendarService.getAcademicCalendarByYear(academicYear);
       setSelectedCalendar(calendar);
       setAvailableSemesters(filterEligibleSemesters(calendar, deadlines));
-      // Clear academic calendar error when selected
       setCreateFormErrors(prev => ({ ...prev, academicCalendar: undefined }));
-      // Reset semester selection when calendar changes
       setCreateForm(prev => ({
         ...prev,
         semesterCode: '',
@@ -269,9 +255,7 @@ const DeadlinesTab: React.FC = () => {
     }
   };
 
-  // Create deadline
   const handleCreate = async () => {
-    // Validate form before submitting
     if (!validateCreateForm()) {
       toast.error('Please fix all validation errors before submitting');
       return;
@@ -291,7 +275,6 @@ const DeadlinesTab: React.FC = () => {
     }
   };
 
-  // Update deadline
   const handleUpdate = async () => {
     if (!selectedDeadline) return;
     const { registrationStartDate, registrationEndDate } = updateForm;
@@ -346,7 +329,6 @@ const DeadlinesTab: React.FC = () => {
     }
   };
 
-  // Delete deadline
   const handleDelete = async () => {
     if (!selectedDeadline) return;
 
@@ -363,7 +345,6 @@ const DeadlinesTab: React.FC = () => {
     }
   };
 
-  // Open update modal
   const openUpdateModal = (deadline: EnrollmentSemesterSettingsDto) => {
     setSelectedDeadline(deadline);
     setUpdateForm({
@@ -375,13 +356,11 @@ const DeadlinesTab: React.FC = () => {
     setShowUpdateModal(true);
   };
 
-  // Open delete modal
   const openDeleteModal = (deadline: EnrollmentSemesterSettingsDto) => {
     setSelectedDeadline(deadline);
     setShowDeleteModal(true);
   };
 
-  // Reset create form
   const resetCreateForm = () => {
     setCreateForm({
       semesterName: '',
@@ -397,7 +376,6 @@ const DeadlinesTab: React.FC = () => {
     setCreateFormErrors({});
   };
 
-  // Date helpers to avoid timezone shifts when dealing with date-only values
   function parseDateString(dateString: string): Date | null {
     if (!dateString) return null;
     if (dateString.includes('T')) {
@@ -449,7 +427,6 @@ const DeadlinesTab: React.FC = () => {
     return `${year}-${month}-${day}`;
   }
 
-  // Format date for input
   function formatDateForInput(dateString: string): string {
     const date = parseDateString(dateString);
     if (!date) return '';
@@ -467,7 +444,6 @@ const DeadlinesTab: React.FC = () => {
     return formatDateValue(new Date());
   }
 
-  // Format date for display - using centralized formatDate
   const formatDateForDisplay = formatDateCentral;
 
   return (
@@ -491,14 +467,12 @@ const DeadlinesTab: React.FC = () => {
         </button>
       </div>
 
-      {/* Filters */}
       <div className="bg-white rounded-lg p-4 mb-6 border border-gray-200">
         <div className="flex items-center gap-2 mb-4">
           <FaFilter className="text-[#fad23c]" />
           <h3 className="font-semibold text-[#463B3B]">Filters</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-          {/* Search by academic year */}
           <div className="relative">
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
@@ -513,7 +487,6 @@ const DeadlinesTab: React.FC = () => {
             />
           </div>
 
-          {/* Academic Year Filter */}
           <select
             value={filterAcademicYear}
             onChange={(e) => {
@@ -530,7 +503,6 @@ const DeadlinesTab: React.FC = () => {
             ))}
           </select>
 
-          {/* Status Filter */}
           <select
             value={filterStatus === null ? '' : filterStatus.toString()}
             onChange={(e) => {
@@ -545,7 +517,6 @@ const DeadlinesTab: React.FC = () => {
             <option value="false">Inactive</option>
           </select>
 
-          {/* Clear Filters */}
           {(filterAcademicYear || filterStatus !== null || searchTerm) && (
             <button
               onClick={() => {
@@ -563,7 +534,6 @@ const DeadlinesTab: React.FC = () => {
         </div>
       </div>
 
-      {/* Deadlines List */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         {loading ? (
           <div className="p-8 text-center">
@@ -641,7 +611,6 @@ const DeadlinesTab: React.FC = () => {
               </table>
             </div>
 
-            {/* Pagination */}
             {totalCount > perPage && (
               <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
                 <Pagination
@@ -661,7 +630,6 @@ const DeadlinesTab: React.FC = () => {
         )}
       </div>
 
-      {/* Create Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -673,7 +641,6 @@ const DeadlinesTab: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              {/* Academic Calendar Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Academic Calendar *
@@ -701,7 +668,6 @@ const DeadlinesTab: React.FC = () => {
                 )}
               </div>
 
-              {/* Semester Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Semester *
@@ -734,7 +700,6 @@ const DeadlinesTab: React.FC = () => {
                 ) : null}
               </div>
 
-              {/* Registration Start Date */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Registration Start Date *
@@ -745,11 +710,10 @@ const DeadlinesTab: React.FC = () => {
                   onChange={(e) => {
                     const newStartDate = e.target.value;
                     setCreateForm(prev => ({ ...prev, registrationStartDate: newStartDate }));
-                    // Clear errors when user starts typing
                     setCreateFormErrors(prev => ({
                       ...prev,
                       registrationStartDate: undefined,
-                      registrationEndDate: undefined // Also clear end date error as relationship may change
+                      registrationEndDate: undefined 
                     }));
                     const startDate = parseDateString(newStartDate);
                     const semesterStart = parseDateString(createForm.semesterStartDate);
@@ -774,7 +738,6 @@ const DeadlinesTab: React.FC = () => {
                     }
                   }}
                   onBlur={() => {
-                    // Validate on blur
                     if (createForm.registrationStartDate) {
                       validateCreateForm();
                     }
@@ -799,7 +762,6 @@ const DeadlinesTab: React.FC = () => {
                 )}
               </div>
 
-              {/* Registration End Date */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Registration End Date *
@@ -810,7 +772,6 @@ const DeadlinesTab: React.FC = () => {
                   onChange={(e) => {
                     const newEndDate = e.target.value;
                     setCreateForm(prev => ({ ...prev, registrationEndDate: newEndDate }));
-                    // Clear error when user starts typing
                     setCreateFormErrors(prev => ({ ...prev, registrationEndDate: undefined }));
                     const startDate = parseDateString(createForm.registrationStartDate);
                     const endDate = parseDateString(newEndDate);
@@ -829,7 +790,6 @@ const DeadlinesTab: React.FC = () => {
                     }
                   }}
                   onBlur={() => {
-                    // Validate on blur
                     if (createForm.registrationEndDate) {
                       validateCreateForm();
                     }
@@ -854,7 +814,6 @@ const DeadlinesTab: React.FC = () => {
                 )}
               </div>
 
-              {/* Status */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Status *
@@ -869,7 +828,6 @@ const DeadlinesTab: React.FC = () => {
                 </select>
               </div>
 
-              {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Description
@@ -879,13 +837,11 @@ const DeadlinesTab: React.FC = () => {
                   value={createForm.description}
                   onChange={(e) => {
                     setCreateForm(prev => ({ ...prev, description: e.target.value }));
-                    // Clear error when user starts typing
                     if (e.target.value.length <= 500) {
                       setCreateFormErrors(prev => ({ ...prev, description: undefined }));
                     }
                   }}
                   onBlur={() => {
-                    // Validate on blur
                     if (createForm.description) {
                       validateCreateForm();
                     }
@@ -937,7 +893,6 @@ const DeadlinesTab: React.FC = () => {
         </div>
       )}
 
-      {/* Update Modal */}
       {showUpdateModal && selectedDeadline && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
@@ -958,7 +913,6 @@ const DeadlinesTab: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              {/* Registration Start Date */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Registration Start Date *
@@ -973,7 +927,6 @@ const DeadlinesTab: React.FC = () => {
                 />
               </div>
 
-              {/* Registration End Date */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Registration End Date *
@@ -988,7 +941,6 @@ const DeadlinesTab: React.FC = () => {
                 />
               </div>
 
-              {/* Status */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Status *
@@ -1003,7 +955,6 @@ const DeadlinesTab: React.FC = () => {
                 </select>
               </div>
 
-              {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Description
@@ -1037,7 +988,6 @@ const DeadlinesTab: React.FC = () => {
         </div>
       )}
 
-      {/* Delete Modal */}
       {showDeleteModal && selectedDeadline && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">

@@ -27,7 +27,7 @@ export default function EventCard({ event, onClick, className = '' }: EventCardP
     if (type === 'trip' && status) {
       return colorMap.trip[status];
     }
-    
+
     return colorMap[type] || colorMap.other;
   };
 
@@ -83,7 +83,7 @@ export default function EventCard({ event, onClick, className = '' }: EventCardP
     }
   };
 
-  // Using centralized formatTime from @/utils/dateUtils
+
 
   return (
     <div
@@ -104,24 +104,24 @@ export default function EventCard({ event, onClick, className = '' }: EventCardP
           {formatTime(event.start)}
         </span>
       </div>
-      
+
       <div className="font-semibold text-sm leading-tight">
         {event.title}
       </div>
-      
+
       {event.description && (
         <div className="text-xs opacity-80 mt-1 line-clamp-2">
           {event.description}
         </div>
       )}
-      
+
       {event.type === 'trip' && event.status && (
         <div className="absolute top-1 right-1">
           <div className={`
             w-2 h-2 rounded-full
-            ${event.status === 'in-progress' ? 'bg-green-300' : 
+            ${event.status === 'in-progress' ? 'bg-green-300' :
               event.status === 'completed' ? 'bg-gray-300' :
-              event.status === 'cancelled' ? 'bg-red-300' : 'bg-blue-300'}
+                event.status === 'cancelled' ? 'bg-red-300' : 'bg-blue-300'}
           `} />
         </div>
       )}

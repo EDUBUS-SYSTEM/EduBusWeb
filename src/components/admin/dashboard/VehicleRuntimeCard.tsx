@@ -14,7 +14,7 @@ const VehicleRuntimeCard: React.FC<VehicleRuntimeCardProps> = ({ data, loading }
 
     if (!data) return <Card title="Vehicle Runtime" className="h-full"><div>No data available</div></Card>;
 
-    // Sort top vehicles by hours descending just in case
+
     const chartData = [...(data.topVehicles || [])].sort((a, b) => b.totalHours - a.totalHours).slice(0, 5);
 
     return (

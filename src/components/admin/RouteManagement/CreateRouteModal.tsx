@@ -1,4 +1,3 @@
-// src/components/admin/CreateRouteModal.tsx
 import React, { useState, useEffect } from 'react';
 import { FaTimes, FaBus } from 'react-icons/fa';
 import { vehicleService } from '@/services/vehicleService';
@@ -10,7 +9,7 @@ import { toast } from 'react-toastify';
 interface CreateRouteModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onRouteCreated: (newRoute: RouteDto) => void; // Updated to pass the created route
+  onRouteCreated: (newRoute: RouteDto) => void; 
 }
 
 const extractVehiclesFromResponse = (response: unknown): VehicleDto[] => {
@@ -85,18 +84,17 @@ const CreateRouteModal: React.FC<CreateRouteModalProps> = ({ isOpen, onClose, on
       const createRequest: CreateRouteRequest = {
         routeName: routeName.trim(),
         vehicleId: selectedVehicleId,
-        pickupPoints: [] // Start with empty pickup points
+        pickupPoints: [] 
       };
 
       const newRoute = await routeService.create(createRequest);
-      // Fetch vehicle capacity and update the route
       const vehicle = vehicles.find(v => v.id === selectedVehicleId);
       if (vehicle) {
         newRoute.vehicleCapacity = vehicle.capacity;
         newRoute.vehicleNumberPlate = vehicle.licensePlate;
       }
       toast.success('Route created successfully!');
-      onRouteCreated(newRoute); // Pass the created route to the parent
+      onRouteCreated(newRoute); 
       handleClose();
     } catch (error: unknown) {
       console.error('Failed to create route:', error);
@@ -113,7 +111,6 @@ const CreateRouteModal: React.FC<CreateRouteModalProps> = ({ isOpen, onClose, on
           const errorData = axiosError.response.data;
 
           if (errorData && typeof errorData === 'object') {
-            // Check if it's ModelState validation errors
             if ('RouteName' in errorData || 'VehicleId' in errorData) {
               const validationErrors = errorData as Record<string, string[]>;
               setErrors({

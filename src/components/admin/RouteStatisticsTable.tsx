@@ -47,7 +47,6 @@ export default function RouteStatisticsTable({ data, loading }: RouteStatisticsT
             whileHover={{ scale: 1.005 }}
             className="bg-white rounded-2xl p-6 shadow-soft hover:shadow-lg transition-all duration-300 border border-gray-100"
         >
-            {/* Header */}
             <div className="flex items-start justify-between mb-6">
                 <div>
                     <motion.h3
@@ -76,7 +75,6 @@ export default function RouteStatisticsTable({ data, loading }: RouteStatisticsT
                 </motion.div>
             </div>
 
-            {/* Table */}
             <div className="overflow-x-auto">
                 <table className="w-full">
                     <thead>
@@ -163,7 +161,6 @@ export default function RouteStatisticsTable({ data, loading }: RouteStatisticsT
                 </table>
             </div>
 
-            {/* Summary */}
             {data.length > 0 && (
                 <motion.div
                     initial={{ opacity: 0 }}

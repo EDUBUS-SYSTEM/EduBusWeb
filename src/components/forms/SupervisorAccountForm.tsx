@@ -45,7 +45,7 @@ const SupervisorAccountForm: React.FC<SupervisorAccountFormProps> = ({
   const handleFileChange = (field: keyof SupervisorAccountData, files: File[]) => {
     if (field === 'supervisorPhoto' && files.length > 0) {
       const file = files[0];
-      if (file.size > 2 * 1024 * 1024) { // 2MB
+      if (file.size > 2 * 1024 * 1024) {
         alert('File size must not exceed 2MB');
         return;
       }

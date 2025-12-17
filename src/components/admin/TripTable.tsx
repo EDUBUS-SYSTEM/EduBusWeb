@@ -10,7 +10,7 @@ interface TripTableProps {
   currentPage: number;
   totalPages: number;
   perPage: number;
-  totalItems: number; // ADD THIS PROP
+  totalItems: number;
   onPageChange: (page: number) => void;
   onPerPageChange: (perPage: number) => void;
   onView: (trip: TripDto) => void;
@@ -21,7 +21,7 @@ interface TripTableProps {
   onSort?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
 }
 
-// Tooltip component
+
 const Tooltip: React.FC<{
   children: React.ReactNode;
   content: string;
@@ -80,10 +80,10 @@ export default function TripTable({
     );
   };
 
-  // Using centralized formatDate and formatDateTime from @/utils/dateUtils
+
 
   const getScheduleTime = (trip: TripDto, timeType: 'start' | 'end') => {
-    // Use schedule snapshot time if available
+
     if (trip.scheduleSnapshot) {
       const timeStr = timeType === 'start' ? trip.scheduleSnapshot.startTime : trip.scheduleSnapshot.endTime;
       if (timeStr) {
@@ -94,7 +94,7 @@ export default function TripTable({
         return formatDateTimeShort(date.toISOString());
       }
     }
-    // Fallback to planned time
+
     return formatDateTimeShort(timeType === 'start' ? trip.plannedStartAt : trip.plannedEndAt);
   };
 
@@ -109,7 +109,7 @@ export default function TripTable({
     return sortOrder === 'asc' ? '↑' : '↓';
   };
 
-  // Truncate route name helper
+
   const truncateRouteName = (routeName: string, maxLength: number = 20): string => {
     if (!routeName) return 'N/A';
     if (routeName.length <= maxLength) return routeName;
@@ -206,9 +206,9 @@ export default function TripTable({
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${trip.status === 'Scheduled' ? 'bg-blue-100 text-blue-800' :
-                          trip.status === 'InProgress' ? 'bg-green-100 text-green-800' :
-                            trip.status === 'Completed' ? 'bg-gray-100 text-gray-800' :
-                              'bg-red-100 text-red-800'
+                        trip.status === 'InProgress' ? 'bg-green-100 text-green-800' :
+                          trip.status === 'Completed' ? 'bg-gray-100 text-gray-800' :
+                            'bg-red-100 text-red-800'
                         }`}>
                         {trip.status === 'InProgress' ? 'In Progress' : trip.status}
                       </span>
@@ -249,7 +249,7 @@ export default function TripTable({
         </table>
       </div>
 
-      {/* Pagination */}
+
       <div className="bg-gray-50 px-4 py-4 border-t border-gray-200 flex flex-col items-center justify-center text-sm gap-3">
         <div className="text-gray-700">
           Showing <span className="font-semibold">{totalItems > 0 ? (currentPage - 1) * perPage + 1 : 0}</span> to{" "}

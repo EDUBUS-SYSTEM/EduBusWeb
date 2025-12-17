@@ -1,12 +1,9 @@
-// EduBusWeb/src/components/admin/RouteManagement/RouteManagement.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { FaPlus, FaSave, FaMagic, FaTimes, FaCheck, FaBus } from 'react-icons/fa';
 import { routeService } from '@/services/routeService/routeService.api';
 import { RouteDto, PickupPointInfoDto, UpdateBulkRouteRequest, ReplaceAllRoutesRequest, RoutePickupPointRequest, UpdateBulkRouteItem, RouteSuggestionDto } from '@/services/routeService/routeService.types';
 import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import '@/styles/route-management.css';
 import CreateRouteModal from './CreateRouteModal';
 import EditRouteModal from './EditRouteModal';
 import ApplySuggestionsModal from './ApplySuggestionsModal'
@@ -19,29 +16,29 @@ import RouteScheduleModal from './RouteScheduleModal';
 
 const getGenerateRouteErrorMessage = (message?: string) => {
   if (!message) {
-    return "Không thể tạo lộ trình. Vui lòng kiểm tra lại dữ liệu.";
+    return "Unable to generate route. Please check the data again.";
   }
 
   const normalized = message.toLowerCase();
 
   if (normalized.includes("no active students")) {
-    return "Không tìm thấy học sinh đang hoạt động có gán điểm đón. Hãy đảm bảo học sinh được kích hoạt và gán pickup point.";
+    return "No active students with assigned pickup points found. Please ensure students are activated and assigned pickup points.";
   }
 
   if (normalized.includes("no pickup points")) {
-    return "Không tìm thấy điểm đón nào. Hãy nhập dữ liệu pickup point trước khi tạo lộ trình.";
+    return "No pickup points found. Please enter pickup point data before generating routes.";
   }
 
   if (normalized.includes("no available vehicles")) {
-    return "Không có xe hoạt động. Vui lòng kiểm tra bảng xe và đảm bảo xe có trạng thái Active.";
+    return "No active vehicles. Please check the vehicle table and ensure vehicles are set to Active status.";
   }
 
   if (normalized.includes("insufficient vehicle capacity")) {
-    return "Sức chứa của đội xe không đủ so với số học sinh. Cần thêm xe hoặc tăng sức chứa.";
+    return "Vehicle fleet capacity is insufficient for the number of students. Need to add vehicles or increase capacity.";
   }
 
   if (normalized.includes("largest pickup point")) {
-    return "Có điểm đón có số học sinh vượt sức chứa xe lớn nhất. Hãy điều chỉnh phân bổ học sinh.";
+    return "There is a pickup point with the number of students exceeding the capacity of the largest vehicle. Please adjust the student allocation.";
   }
 
   return message;
@@ -57,7 +54,7 @@ const RouteManagement: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [hasSuggestions, setHasSuggestions] = useState(false); // Track if current routes are suggestions
+  const [hasSuggestions, setHasSuggestions] = useState(false);
   const [isApplySuggestionsModalOpen, setIsApplySuggestionsModalOpen] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
   const [selectedRouteIds, setSelectedRouteIds] = useState<string[]>([]);
@@ -65,12 +62,11 @@ const RouteManagement: React.FC = () => {
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [schoolLocation, setSchoolLocation] = useState<{ lat: number; lng: number } | undefined>(undefined);
 
-  // Store original routes for comparison
   const originalRoutesRef = useRef<RouteDto[]>([]);
 
   const convertToPickupPointInfo = (unassignedPoint: PickupPointDto): PickupPointInfoDto => ({
     pickupPointId: unassignedPoint.id,
-    sequenceOrder: 0, // Will be set when added to a route
+    sequenceOrder: 0,
     location: {
       latitude: unassignedPoint.latitude,
       longitude: unassignedPoint.longitude,
@@ -81,7 +77,7 @@ const RouteManagement: React.FC = () => {
 
   const convertSuggestionToRoute = (suggestion: RouteSuggestionDto, index: number): RouteDto => {
     return {
-      id: `generated-route-${index + 1}-${Date.now()}`, // Temporary ID for UI
+      id: `generated-route-${index + 1}-${Date.now()}`,
       routeName: `Generated Route ${index + 1}`,
       isActive: true,
       vehicleId: suggestion.vehicle?.vehicleId || '',
@@ -122,21 +118,18 @@ const RouteManagement: React.FC = () => {
       try {
         setIsLoading(true);
 
-        // Fetch routes, unassigned pickup points, and school location in parallel
         const [routesData, unassignedData, schoolData] = await Promise.all([
           routeService.getAll(),
           pickupPointService.getUnassignedPickupPoints(),
-          schoolService.getForAdmin().catch(() => null) // Don't fail if school data is not available
+          schoolService.getForAdmin().catch(() => null)
         ]);
 
         setRoutes(routesData);
-        originalRoutesRef.current = JSON.parse(JSON.stringify(routesData)); // Deep copy
+        originalRoutesRef.current = JSON.parse(JSON.stringify(routesData));
 
-        // Convert unassigned pickup points to PickupPointInfoDto format
         const lobbyPickupPoints = unassignedData.pickupPoints.map(convertToPickupPointInfo);
         setLobby(lobbyPickupPoints);
 
-        // Set school location if available
         if (schoolData?.latitude && schoolData?.longitude) {
           setSchoolLocation({
             lat: schoolData.latitude,
@@ -144,7 +137,6 @@ const RouteManagement: React.FC = () => {
           });
         }
 
-        // Clear any existing modifications when fetching fresh data
         setModifiedRoutes(new Set());
       } catch (error) {
         console.error('Failed to fetch data:', error);
@@ -165,15 +157,12 @@ const RouteManagement: React.FC = () => {
     );
   };
 
-  // Helper function to compare pickup points arrays
   const arePickupPointsEqual = (a: PickupPointInfoDto[], b: PickupPointInfoDto[]): boolean => {
     if (a.length !== b.length) return false;
 
-    // Create maps for easier comparison
     const mapA = new Map(a.map(point => [point.pickupPointId, point.sequenceOrder]));
     const mapB = new Map(b.map(point => [point.pickupPointId, point.sequenceOrder]));
 
-    // Check if all pickup points have the same sequence order
     for (const [pickupPointId, sequenceOrder] of mapA) {
       if (mapB.get(pickupPointId) !== sequenceOrder) {
         return false;
@@ -183,7 +172,6 @@ const RouteManagement: React.FC = () => {
     return true;
   };
 
-  // Check if a route has been modified by comparing with original
   const isRouteModified = (routeId: string): boolean => {
     const currentRoute = routes.find(r => r.id === routeId);
     const originalRoute = originalRoutesRef.current.find(r => r.id === routeId);
@@ -193,7 +181,6 @@ const RouteManagement: React.FC = () => {
     return !arePickupPointsEqual(currentRoute.pickupPoints, originalRoute.pickupPoints);
   };
 
-  // Update modified routes based on current state
   const updateModifiedRoutes = () => {
     const newModifiedRoutes = new Set<string>();
 
@@ -206,14 +193,12 @@ const RouteManagement: React.FC = () => {
     setModifiedRoutes(newModifiedRoutes);
   };
 
-  // Call this whenever routes change to update modification status
   useEffect(() => {
     updateModifiedRoutes();
   }, [routes]);
 
   const handleRouteCreated = (newRoute: RouteDto) => {
     setRoutes(prevRoutes => [...prevRoutes, newRoute]);
-    // Add to original routes as well
     originalRoutesRef.current = [...originalRoutesRef.current, newRoute];
   };
 
@@ -232,11 +217,10 @@ const RouteManagement: React.FC = () => {
       if (route.id === updatedRoute.id) {
         return {
           ...route,
-          routeName: updatedRoute.routeName,        // Update name
-          vehicleId: updatedRoute.vehicleId,       // Update vehicle
+          routeName: updatedRoute.routeName,
+          vehicleId: updatedRoute.vehicleId,
           vehicleCapacity: updatedRoute.vehicleCapacity,
           vehicleNumberPlate: updatedRoute.vehicleNumberPlate
-          // ✅ IMPORTANT: Do NOT update pickupPoints - keep original!
         };
       }
       return route;
@@ -280,10 +264,10 @@ const RouteManagement: React.FC = () => {
         if (axiosError.response?.data?.message) {
           toast.error(getGenerateRouteErrorMessage(axiosError.response.data.message));
         } else {
-          toast.error('Không thể tạo lộ trình. Vui lòng thử lại.');
+          toast.error('Unable to create route. Please try again.');
         }
       } else {
-        toast.error('Không thể tạo lộ trình. Vui lòng thử lại.');
+        toast.error('Unable to create route. Please try again.');
       }
     } finally {
       setIsGenerating(false);
@@ -294,11 +278,9 @@ const RouteManagement: React.FC = () => {
     setIsApplySuggestionsModalOpen(true);
   };
 
-  // ✅ NEW: Handle applying the suggestions (calls replace-all API and refetches)
   const handleConfirmApplySuggestions = async () => {
     setIsApplying(true);
     try {
-      // Convert current UI routes to CreateRouteRequest format
       const routesToCreate = routes.map((route) => ({
         routeName: route.routeName,
         vehicleId: route.vehicleId,
@@ -316,11 +298,9 @@ const RouteManagement: React.FC = () => {
       const response = await routeService.replaceAll(replaceRequest);
 
       if (response.success) {
-        // ✅ Close modal and clear suggestions flag
         setIsApplySuggestionsModalOpen(false);
         setHasSuggestions(false);
 
-        // ✅ Refetch routes to get the latest data from database
         const [routesData, unassignedData] = await Promise.all([
           routeService.getAll(),
           pickupPointService.getUnassignedPickupPoints()
@@ -329,11 +309,9 @@ const RouteManagement: React.FC = () => {
         setRoutes(routesData);
         originalRoutesRef.current = JSON.parse(JSON.stringify(routesData));
 
-        // Convert unassigned pickup points to PickupPointInfoDto format
         const lobbyPickupPoints = unassignedData.pickupPoints.map(convertToPickupPointInfo);
         setLobby(lobbyPickupPoints);
 
-        // Clear any existing modifications
         setModifiedRoutes(new Set());
 
         toast.success(`Successfully applied suggestions! Deleted ${response.deletedRoutes} old routes and created ${response.successfulRoutes} new routes.`);
@@ -364,19 +342,16 @@ const RouteManagement: React.FC = () => {
     }
   };
 
-  // ✅ NEW: Handle closing the apply suggestions modal
   const handleCloseApplySuggestionsModal = () => {
     if (!isApplying) {
       setIsApplySuggestionsModalOpen(false);
     }
   };
 
-  // ✅ NEW: Handle discarding suggestions (refetch original routes)
   const handleDiscardChanges = async () => {
     try {
       setIsLoading(true);
 
-      // Refetch original routes from database
       const [routesData, unassignedData] = await Promise.all([
         routeService.getAll(),
         pickupPointService.getUnassignedPickupPoints()
@@ -385,11 +360,9 @@ const RouteManagement: React.FC = () => {
       setRoutes(routesData);
       originalRoutesRef.current = JSON.parse(JSON.stringify(routesData));
 
-      // Convert unassigned pickup points to PickupPointInfoDto format
       const lobbyPickupPoints = unassignedData.pickupPoints.map(convertToPickupPointInfo);
       setLobby(lobbyPickupPoints);
 
-      // Clear modifications and suggestions flag
       setModifiedRoutes(new Set());
       setHasSuggestions(false);
 
@@ -407,7 +380,6 @@ const RouteManagement: React.FC = () => {
 
     const { source, destination } = result;
 
-    // Create deep copies to avoid mutations
     const updatedRoutes = routes.map(route => ({
       ...route,
       pickupPoints: [...route.pickupPoints]
@@ -415,7 +387,6 @@ const RouteManagement: React.FC = () => {
 
     const updatedLobby = [...lobby];
 
-    // Get the lists to work with
     const sourceList = source.droppableId === 'lobby'
       ? updatedLobby
       : updatedRoutes.find(route => route.id === source.droppableId)!.pickupPoints;
@@ -424,10 +395,8 @@ const RouteManagement: React.FC = () => {
       ? updatedLobby
       : updatedRoutes.find(route => route.id === destination.droppableId)!.pickupPoints;
 
-    // Perform the move
     const [moved] = sourceList.splice(source.index, 1);
 
-    // Validate capacity if moving to a route
     if (destination.droppableId !== 'lobby') {
       const destinationRoute = updatedRoutes.find(route => route.id === destination.droppableId)!;
       const totalStudents = destinationList.reduce((sum, point) => sum + point.studentCount, 0) + moved.studentCount;
@@ -440,7 +409,6 @@ const RouteManagement: React.FC = () => {
 
     destinationList.splice(destination.index, 0, moved);
 
-    // Update sequence orders for affected routes
     if (source.droppableId !== 'lobby') {
       const sourceRoute = updatedRoutes.find(route => route.id === source.droppableId)!;
       sourceRoute.pickupPoints.forEach((point, index) => {
@@ -455,7 +423,6 @@ const RouteManagement: React.FC = () => {
       });
     }
 
-    // Single state updates
     setRoutes(updatedRoutes);
     setLobby(updatedLobby);
   };
@@ -465,45 +432,38 @@ const RouteManagement: React.FC = () => {
 
     setIsSaving(true);
     try {
-      // Prepare bulk update data
       const bulkUpdateData: UpdateBulkRouteRequest = {
         routes: Array.from(modifiedRoutes).map(routeId => {
           const route = routes.find(r => r.id === routeId);
           if (!route) return null;
 
-          // Convert PickupPointInfoDto to RoutePickupPointRequest
           const pickupPointsRequest: RoutePickupPointRequest[] = route.pickupPoints.map((point, index) => ({
             pickupPointId: point.pickupPointId,
-            sequenceOrder: index + 1 // Update sequence order based on new position
+            sequenceOrder: index + 1
           }));
 
           return {
             routeId: routeId,
             pickupPoints: pickupPointsRequest
           };
-        }).filter(Boolean) as UpdateBulkRouteItem[] // Remove null entries
+        }).filter(Boolean) as UpdateBulkRouteItem[] 
       };
 
       console.log(`Bulk updating ${bulkUpdateData.routes.length} routes:`, bulkUpdateData);
 
-      // Use bulk update method (all or nothing)
       const response = await routeService.bulkUpdate(bulkUpdateData);
 
       if (response.success) {
-        // Update original routes with the saved data
         const freshRoutes = await routeService.getAll();
         setRoutes(freshRoutes);
         originalRoutesRef.current = JSON.parse(JSON.stringify(freshRoutes));
 
-        // Clear modified routes
         setModifiedRoutes(new Set());
 
         toast.success(`Successfully saved ${modifiedRoutes.size} route(s)`);
       } else {
-        // Handle bulk update failure
         toast.error(response.errorMessage || 'Failed to save changes. All changes were reverted.');
 
-        // Refresh routes to revert any changes
         const freshRoutes = await routeService.getAll();
         setRoutes(freshRoutes);
         originalRoutesRef.current = JSON.parse(JSON.stringify(freshRoutes));
@@ -513,7 +473,6 @@ const RouteManagement: React.FC = () => {
       console.error('Failed to save changes:', error);
       toast.error('Failed to save changes. Please try again.');
 
-      // Refresh routes to revert any changes
       try {
         const freshRoutes = await routeService.getAll();
         setRoutes(freshRoutes);
@@ -545,7 +504,6 @@ const RouteManagement: React.FC = () => {
       <ToastContainer />
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="p-6 bg-[#FEFCE8] min-h-screen">
-          {/* Header with Save and Create Buttons */}
           <div className="sticky top-16 z-40 bg-gradient-to-r from-[#FEF3C7] to-[#FDE68A] rounded-2xl p-6 shadow-lg mb-6 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-[#fad23c]/10 via-transparent to-[#fad23c]/5"></div>
             <div className="flex justify-between items-center relative z-10">
@@ -558,7 +516,6 @@ const RouteManagement: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-3">
-                {/* Save Changes Button */}
                 {modifiedRoutes.size > 0 && !hasSuggestions &&(
                   <button
                     onClick={handleSaveChanges}
@@ -611,7 +568,6 @@ const RouteManagement: React.FC = () => {
                   </button>
                 )}
 
-                {/* Create Route Button */}
                 <button
                   onClick={() => setIsCreateModalOpen(true)}
                   className="bg-gradient-to-r from-[#fad23c] to-[#F59E0B] hover:from-[#F59E0B] hover:to-[#D97706] text-[#463B3B] px-4 py-2 rounded-full flex items-center transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg relative overflow-hidden group font-semibold"
@@ -625,7 +581,6 @@ const RouteManagement: React.FC = () => {
           </div>
 
           <div className="space-y-5">
-            {/* Render Route Rows */}
             {routes.map(route => (
               <RouteRow
                 key={route.id}
@@ -639,13 +594,11 @@ const RouteManagement: React.FC = () => {
               />
             ))}
 
-            {/* Render Lobby Area */}
             <LobbyArea lobby={lobby} />
           </div>
         </div>
       </DragDropContext>
       
-      {/* Mini Route Map */}
       <MiniRouteMap
         routes={routes}
         selectedRouteIds={selectedRouteIds}
@@ -655,14 +608,12 @@ const RouteManagement: React.FC = () => {
         schoolLocation={schoolLocation}
       />
 
-      {/* Create Route Modal */}
       <CreateRouteModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onRouteCreated={handleRouteCreated}
       />
 
-      {/* Edit Route Modal */}
       <EditRouteModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
@@ -671,7 +622,6 @@ const RouteManagement: React.FC = () => {
         onRouteDeleted={handleRouteDeleted}
       />
 
-      {/* Apply Suggestions Modal */}
       <ApplySuggestionsModal
         isOpen={isApplySuggestionsModalOpen}
         onClose={handleCloseApplySuggestionsModal}
@@ -680,7 +630,6 @@ const RouteManagement: React.FC = () => {
         suggestedRoutesCount={routes.length}
       />
 
-      {/* Route Schedule Management Modal */}
       {isScheduleModalOpen && selectedRouteForSchedule && (
         <RouteScheduleModal
           route={selectedRouteForSchedule}

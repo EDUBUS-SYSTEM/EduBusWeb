@@ -6,7 +6,6 @@ import {
   FaTag,
   FaSave,
   FaGraduationCap,
-  // FaEye,
 } from "react-icons/fa";
 import {
   scheduleService,
@@ -38,7 +37,7 @@ export default function CreateScheduleModal({
     effectiveTo: "",
     description: "",
     isActive: true,
-    rRule: "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR", // Default RRule for school days
+    rRule: "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR",
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -55,7 +54,6 @@ export default function CreateScheduleModal({
     errors: [],
   });
 
-  // Track if form has unsaved changes
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [initialFormData, setInitialFormData] = useState(formData);
   const handleRruleValidationChange = useCallback(
@@ -65,7 +63,6 @@ export default function CreateScheduleModal({
     []
   );
 
-  // Handle modal close with unsaved changes warning
   const handleClose = () => {
     if (hasUnsavedChanges) {
       const confirmed = window.confirm(
@@ -119,7 +116,6 @@ export default function CreateScheduleModal({
     },
   ];
 
-  // Load academic years on component mount
   useEffect(() => {
     const loadAcademicYears = async () => {
       try {
@@ -127,7 +123,6 @@ export default function CreateScheduleModal({
         const years = await academicCalendarService.getAcademicYears();
         setAcademicYears(years);
 
-        // Auto-select current academic year if available
         const currentYear =
           await academicCalendarService.getCurrentAcademicYear();
         if (currentYear) {
@@ -150,14 +145,12 @@ export default function CreateScheduleModal({
     loadAcademicYears();
   }, []);
 
-  // Track form changes to detect unsaved changes
   useEffect(() => {
     const hasChanges =
       JSON.stringify(formData) !== JSON.stringify(initialFormData);
     setHasUnsavedChanges(hasChanges);
   }, [formData, initialFormData]);
 
-  // Handle beforeunload event to warn about unsaved changes
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
@@ -172,7 +165,6 @@ export default function CreateScheduleModal({
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
-  // Helper function to format date for input fields (avoiding timezone issues)
   const formatDateForInput = (date: string) => {
     const d = new Date(date);
     const year = d.getFullYear();
@@ -181,7 +173,6 @@ export default function CreateScheduleModal({
     return `${year}-${month}-${day}`;
   };
 
-  // Load semesters when academic year is selected
   useEffect(() => {
     const loadSemesters = async () => {
       if (formData.academicYear) {
@@ -196,7 +187,6 @@ export default function CreateScheduleModal({
           );
           setSemesters(activeSemesters);
 
-          // Reset semester code when academic year changes
           setFormData((prev) => ({
             ...prev,
             semesterCode: "",
@@ -215,7 +205,6 @@ export default function CreateScheduleModal({
     loadSemesters();
   }, [formData.academicYear]);
 
-  // Auto-fill effective dates when academic year or semester is selected
   useEffect(() => {
     const loadEffectiveDates = async () => {
       if (formData.academicYear) {
@@ -225,7 +214,6 @@ export default function CreateScheduleModal({
               formData.academicYear
             );
 
-          // If semester is selected, use semester dates; otherwise use academic year dates
           if (formData.semesterCode) {
             const semester = academicCalendar.semesters.find(
               (s) => s.code === formData.semesterCode && s.isActive
@@ -240,7 +228,6 @@ export default function CreateScheduleModal({
             }
           }
 
-          // Fallback to academic year dates
           setFormData((prev) => ({
             ...prev,
             effectiveFrom: academicCalendar.startDate
@@ -262,7 +249,6 @@ export default function CreateScheduleModal({
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    // Simple but effective validation
     if (!formData.name.trim()) {
       newErrors.name = "Schedule name is required";
     } else if (formData.name.trim().length < 3) {
@@ -283,7 +269,6 @@ export default function CreateScheduleModal({
       newErrors.endTime = "End time is required";
     }
 
-    // Validate time order
     if (
       formData.startTime &&
       formData.endTime &&
@@ -292,9 +277,7 @@ export default function CreateScheduleModal({
       newErrors.endTime = "End time must be after start time";
     }
 
-    // Trip type validation removed - Unknown option no longer available
 
-    // Validate effective dates only if no academic year
     if (!formData.academicYear) {
       if (!formData.effectiveFrom) {
         newErrors.effectiveFrom = "Effective from date is required";
@@ -304,7 +287,6 @@ export default function CreateScheduleModal({
       }
     }
 
-    // Validate date order
     if (
       formData.effectiveFrom &&
       formData.effectiveTo &&
@@ -314,7 +296,6 @@ export default function CreateScheduleModal({
         "Effective to date must be after effective from date";
     }
 
-    // Validate RRule
     if (!rruleValidation.isValid) {
       newErrors.rRule = "Please configure a valid recurrence rule";
     } else if (!formData.rRule || !formData.rRule.includes("FREQ=")) {
@@ -336,15 +317,10 @@ export default function CreateScheduleModal({
     setSubmitError("");
 
     try {
-      // Convert date strings to ISO format for backend DateTime
-      // Parse date as local date first, then convert to UTC to avoid timezone shift
       const effectiveFromDate = formData.effectiveFrom
         ? (() => {
-          // Parse as local date (YYYY-MM-DD format)
           const [year, month, day] = formData.effectiveFrom.split('-').map(Number);
           console.log(`Parsing effectiveFrom: ${formData.effectiveFrom} -> year=${year}, month=${month}, day=${day}`);
-          // Use UTC noon (12:00) instead of midnight to avoid timezone conversion issues
-          // This ensures the date part stays correct even if backend converts to local timezone
           const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
           const isoString = date.toISOString();
           console.log(`Created UTC date: ${isoString}, UTC date part: ${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`);
@@ -354,43 +330,37 @@ export default function CreateScheduleModal({
 
       const effectiveToDate = formData.effectiveTo
         ? (() => {
-          // Parse as local date (YYYY-MM-DD format)
           const [year, month, day] = formData.effectiveTo.split('-').map(Number);
-          // Use UTC noon (12:00) for consistency - backend will extract date part correctly
           const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
           return date.toISOString();
         })()
         : undefined;
 
-      // TripType should be sent as number (enum value)
-      // 0 = Unknown, 1 = Departure, 2 = Return
-      const tripTypeValue = formData.tripType; // Already a number from enum
+      const tripTypeValue = formData.tripType;
 
-      // Prepare CreateScheduleDto matching backend CreateScheduleDto
       const createScheduleDto: CreateScheduleDto = {
         name: formData.name.trim(),
         scheduleType: formData.scheduleType,
-        tripType: tripTypeValue, // Number enum: 0, 1, or 2
+        tripType: tripTypeValue,
         startTime: formData.startTime,
         endTime: formData.endTime,
         rRule: formData.rRule,
         timezone: "UTC",
         academicYear: formData.academicYear,
         semesterCode: formData.semesterCode || undefined,
-        effectiveFrom: effectiveFromDate, // ISO string for DateTime
-        effectiveTo: effectiveToDate, // ISO string for DateTime?
-        exceptions: [], // Empty array of ISO date strings
+        effectiveFrom: effectiveFromDate,
+        effectiveTo: effectiveToDate,
+        exceptions: [],
         isActive: formData.isActive,
       };
 
       console.log("Submitting schedule:", JSON.stringify(createScheduleDto, null, 2));
       await scheduleService.createSchedule(createScheduleDto);
-      setHasUnsavedChanges(false); // Reset unsaved changes flag
+      setHasUnsavedChanges(false);
       onSuccess();
     } catch (error: unknown) {
       console.error("Error creating schedule:", error);
 
-      // Enhanced error handling
       let errorMessage = "Failed to create schedule. Please try again.";
 
       if (error && typeof error === "object" && "response" in error) {
@@ -423,7 +393,6 @@ export default function CreateScheduleModal({
   const handleInputChange = (field: string, value: string | boolean | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
@@ -433,7 +402,6 @@ export default function CreateScheduleModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden flex flex-col">
         <div className="p-6 overflow-y-auto flex-1">
-          {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <h3 className="text-2xl font-bold text-gray-800">
@@ -453,13 +421,11 @@ export default function CreateScheduleModal({
             </button>
           </div>
 
-          {/* Form */}
           <form
             id="schedule-form"
             onSubmit={handleSubmit}
             className="space-y-6"
           >
-            {/* Schedule Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Schedule Name *
@@ -477,7 +443,6 @@ export default function CreateScheduleModal({
               )}
             </div>
 
-            {/* Schedule Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <FaTag className="inline w-4 h-4 mr-2" />
@@ -505,7 +470,6 @@ export default function CreateScheduleModal({
               </p>
             </div>
 
-            {/* Trip Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <FaTag className="inline w-4 h-4 mr-2" />
@@ -517,8 +481,8 @@ export default function CreateScheduleModal({
                   handleInputChange("tripType", Number(e.target.value))
                 }
                 className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${errors.tripType
-                    ? "border-red-300 bg-red-50"
-                    : "border-gray-200"
+                  ? "border-red-300 bg-red-50"
+                  : "border-gray-200"
                   }`}
               >
                 {tripTypes.map((type) => (
@@ -541,7 +505,6 @@ export default function CreateScheduleModal({
               )}
             </div>
 
-            {/* Academic Year */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <FaGraduationCap className="inline w-4 h-4 mr-2" />
@@ -553,8 +516,8 @@ export default function CreateScheduleModal({
                   handleInputChange("academicYear", e.target.value)
                 }
                 className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${errors.academicYear
-                    ? "border-red-300 bg-red-50"
-                    : "border-gray-200"
+                  ? "border-red-300 bg-red-50"
+                  : "border-gray-200"
                   }`}
                 disabled={loadingAcademicYears}
               >
@@ -576,7 +539,6 @@ export default function CreateScheduleModal({
               )}
             </div>
 
-            {/* Semester (Optional) */}
             {formData.academicYear && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -610,7 +572,6 @@ export default function CreateScheduleModal({
               </div>
             )}
 
-            {/* Time Range */}
             <TimeSlotSelector
               selectedStartTime={formData.startTime}
               selectedEndTime={formData.endTime}
@@ -622,7 +583,6 @@ export default function CreateScheduleModal({
               }}
             />
 
-            {/* Effective Period */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -642,10 +602,10 @@ export default function CreateScheduleModal({
                   }
                   disabled={!!formData.academicYear}
                   className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${errors.effectiveFrom
-                      ? "border-red-300 bg-red-50"
-                      : formData.academicYear
-                        ? "border-gray-200 bg-gray-50"
-                        : "border-gray-200"
+                    ? "border-red-300 bg-red-50"
+                    : formData.academicYear
+                      ? "border-gray-200 bg-gray-50"
+                      : "border-gray-200"
                     }`}
                 />
                 {errors.effectiveFrom && (
@@ -680,10 +640,10 @@ export default function CreateScheduleModal({
                   }
                   disabled={!!formData.academicYear}
                   className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${errors.effectiveTo
-                      ? "border-red-300 bg-red-50"
-                      : formData.academicYear
-                        ? "border-gray-200 bg-gray-50"
-                        : "border-gray-200"
+                    ? "border-red-300 bg-red-50"
+                    : formData.academicYear
+                      ? "border-gray-200 bg-gray-50"
+                      : "border-gray-200"
                     }`}
                 />
                 {errors.effectiveTo && (
@@ -701,7 +661,6 @@ export default function CreateScheduleModal({
               </div>
             </div>
 
-            {/* Description */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Description
@@ -717,7 +676,6 @@ export default function CreateScheduleModal({
               />
             </div>
 
-            {/* RRule Builder */}
             <div className="border-t pt-6">
               <h4 className="text-lg font-semibold text-gray-800 mb-4">
                 Schedule Configuration
@@ -734,7 +692,6 @@ export default function CreateScheduleModal({
               )}
             </div>
 
-            {/* Preview Button */}
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <input
@@ -753,10 +710,8 @@ export default function CreateScheduleModal({
                   Active Schedule
                 </label>
               </div>
-              {/* Removed duplicate Preview Dates button; RRuleBuilder has its own Preview */}
             </div>
 
-            {/* Submit Error */}
             {submitError && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <div className="flex">
@@ -780,38 +735,10 @@ export default function CreateScheduleModal({
               </div>
             )}
 
-            {/* Actions */}
-            <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
-              <button
-                type="button"
-                onClick={handleClose}
-                className="px-6 py-3 text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors duration-200"
-                disabled={loading}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-6 py-3 bg-gradient-to-r from-[#fad23c] to-[#FDC700] text-[#463B3B] rounded-xl hover:from-[#FDC700] hover:to-[#D08700] transition-all duration-300 flex items-center gap-2 shadow-soft hover:shadow-soft-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-semibold"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-[#463B3B] border-t-transparent rounded-full animate-spin"></div>
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <FaSave className="w-4 h-4" />
-                    Create Schedule
-                  </>
-                )}
-              </button>
-            </div>
+
           </form>
         </div>
 
-        {/* Fixed Actions Bar */}
         <div className="border-t border-gray-200 bg-gray-50 p-4 rounded-b-2xl">
           <div className="flex justify-end gap-3">
             <button

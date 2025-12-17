@@ -26,29 +26,13 @@ export default function CalendarGrid({
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Generate time slots from 12 AM to 11 PM
   const timeSlots = Array.from({ length: 24 }, (_, i) => i);
 
-  // Helper function for future use (filtering events by time slot)
-  // const getEventsForTimeSlot = (date: Date, hour: number) => {
-  //   return events.filter(event => {
-  //     const eventStart = new Date(event.start);
-  //     const eventEnd = new Date(event.end);
-  //     const slotStart = new Date(date);
-  //     slotStart.setHours(hour, 0, 0, 0);
-  //     const slotEnd = new Date(date);
-  //     slotEnd.setHours(hour + 1, 0, 0, 0);
-  //     
-  //     // Check if event overlaps with this time slot
-  //     return eventStart < slotEnd && eventEnd > slotStart;
-  //   });
-  // };
 
   const calculateEventPosition = (event: CalendarEvent, date: Date) => {
     const eventStart = new Date(event.start);
     const eventEnd = new Date(event.end);
 
-    // Check if event is on this date
     if (eventStart.toDateString() !== date.toDateString()) {
       return { top: 0, height: 0 };
     }
@@ -56,14 +40,12 @@ export default function CalendarGrid({
     const dayStart = new Date(date);
     dayStart.setHours(0, 0, 0, 0);
 
-    // Calculate position in minutes from start of day
     const startMinutes = eventStart.getHours() * 60 + eventStart.getMinutes();
     const endMinutes = eventEnd.getHours() * 60 + eventEnd.getMinutes();
     const duration = endMinutes - startMinutes;
 
-    // Height per minute (60px per hour = 1px per minute)
     const top = startMinutes;
-    const height = Math.max(duration, 30); // Minimum 30 minutes height
+    const height = Math.max(duration, 30);
 
     return { top, height };
   };
@@ -99,7 +81,7 @@ export default function CalendarGrid({
 
     const rect = containerRef.current.getBoundingClientRect();
     const y = e.clientY - rect.top;
-    const hourHeight = 60; // 60px per hour
+    const hourHeight = 60;
     const totalOffset = y - (hour * hourHeight);
     const minutes = Math.max(0, Math.min(59, Math.floor(totalOffset / (hourHeight / 60))));
 
@@ -121,7 +103,6 @@ export default function CalendarGrid({
       newStart.setHours(hour, 0, 0, 0);
     }
 
-    // Calculate duration from original event
     const originalDuration = new Date(draggedEvent.end).getTime() - new Date(draggedEvent.start).getTime();
     const newEnd = new Date(newStart.getTime() + originalDuration);
 
@@ -155,16 +136,13 @@ export default function CalendarGrid({
 
     return (
       <div className="bg-white rounded-2xl shadow-soft-lg overflow-hidden border border-gray-100">
-        {/* Header */}
         <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-yellow-50 to-orange-50">
           <h2 className="text-2xl font-bold text-[#463B3B]">{dayName}</h2>
           <p className="text-gray-600">{dayDate}</p>
         </div>
 
-        {/* Calendar Grid */}
         <div className="relative overflow-y-auto max-h-[calc(100vh-400px)]" ref={containerRef}>
           <div className="flex">
-            {/* Time column */}
             <div className="w-24 flex-shrink-0 border-r border-gray-200 bg-gray-50">
               {timeSlots.map((hour) => (
                 <div
@@ -178,7 +156,6 @@ export default function CalendarGrid({
               ))}
             </div>
 
-            {/* Events column */}
             <div className="flex-1 relative">
               {timeSlots.map((hour) => (
                 <div
@@ -188,7 +165,6 @@ export default function CalendarGrid({
                   onDrop={(e) => handleDrop(e, day, hour)}
                   onClick={() => handleCellClick(day, hour)}
                 >
-                  {/* Drop indicator */}
                   {dragOverSlot && dragOverSlot.hour === hour && draggedEvent && (
                     <div
                       className="absolute left-0 right-0 bg-blue-200 opacity-50 border-2 border-blue-400 border-dashed z-10"
@@ -201,7 +177,6 @@ export default function CalendarGrid({
                 </div>
               ))}
 
-              {/* Render events */}
               {dayEvents.map((event) => {
                 const { top, height } = calculateEventPosition(event, day);
                 if (height === 0) return null;
@@ -253,7 +228,6 @@ export default function CalendarGrid({
 
     return (
       <div className="bg-white rounded-2xl shadow-soft-lg overflow-hidden border border-gray-100">
-        {/* Header */}
         <div className="flex border-b border-gray-100">
           <div className="w-24 flex-shrink-0 p-4 border-r border-gray-100 bg-gray-50"></div>
           {weekDays.map((day, index) => (
@@ -274,10 +248,8 @@ export default function CalendarGrid({
           ))}
         </div>
 
-        {/* Calendar Grid */}
         <div className="relative overflow-y-auto max-h-[calc(100vh-400px)]" ref={containerRef}>
           <div className="flex">
-            {/* Time column */}
             <div className="w-24 flex-shrink-0 border-r border-gray-200 bg-gray-50">
               {timeSlots.map((hour) => (
                 <div
@@ -291,7 +263,6 @@ export default function CalendarGrid({
               ))}
             </div>
 
-            {/* Days columns */}
             <div className="flex-1 flex">
               {weekDays.map((day, dayIndex) => {
                 const dayEvents = events.filter(event => {
@@ -312,7 +283,6 @@ export default function CalendarGrid({
                         onDrop={(e) => handleDrop(e, day, hour)}
                         onClick={() => handleCellClick(day, hour)}
                       >
-                        {/* Drop indicator */}
                         {dragOverSlot &&
                           dragOverSlot.date.toDateString() === day.toDateString() &&
                           dragOverSlot.hour === hour &&
@@ -328,7 +298,6 @@ export default function CalendarGrid({
                       </div>
                     ))}
 
-                    {/* Render events for this day */}
                     {dayEvents.map((event) => {
                       const { top, height } = calculateEventPosition(event, day);
                       if (height === 0) return null;
@@ -408,7 +377,6 @@ export default function CalendarGrid({
           ))}
         </div>
 
-        {/* Calendar grid */}
         <div className="grid grid-cols-7 gap-0">
           {days.map((day, index) => {
             const dayTripsCount = day ? getEventsForDate(day).length : 0;
@@ -426,7 +394,6 @@ export default function CalendarGrid({
                   if (dayTripsCount > 0) {
                     setSelectedDate(day);
                   } else {
-                    // No trips - open create trip modal with this date
                     onEventCreate?.(day);
                   }
                 }}
@@ -458,12 +425,10 @@ export default function CalendarGrid({
     );
   };
 
-  // Modal component for showing trips of selected date
   const DayTripsModal = ({ date, trips }: { date: Date; trips: CalendarEvent[] }) => {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col border border-gray-200">
-          {/* Header */}
           <div className="bg-gradient-to-r from-[#fad23c] to-[#FDC700] px-6 py-5 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <FaBus className="w-6 h-6 text-[#463B3B]" />
@@ -482,7 +447,6 @@ export default function CalendarGrid({
             </button>
           </div>
 
-          {/* Content */}
           <div className="overflow-y-auto flex-1 p-6 bg-gradient-to-b from-white to-gray-50">
             {trips.length === 0 ? (
               <p className="text-gray-500 text-center py-8">No trips for this date</p>
@@ -498,18 +462,15 @@ export default function CalendarGrid({
                     }}
                   >
                     <div className="flex items-start gap-4">
-                      {/* Bus Icon */}
                       <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-[#fad23c] to-[#FDC700] rounded-lg flex items-center justify-center">
                         <FaBus className="w-5 h-5 text-[#463B3B]" />
                       </div>
 
-                      {/* Trip Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
                           <h3 className="font-semibold text-[#463B3B] text-base">
                             {trip.title}
                           </h3>
-                          {/* Shift Badge */}
                           {(() => {
                             const startHour = new Date(trip.start).getHours();
                             const ismorning = startHour < 12;
@@ -539,7 +500,6 @@ export default function CalendarGrid({
                         </div>
                       </div>
 
-                      {/* Status Badge */}
                       <div
                         className={`px-3 py-1.5 rounded-full text-xs font-semibold flex-shrink-0 ${trip.status === 'planned'
                           ? 'bg-blue-100 text-blue-800'
@@ -571,7 +531,6 @@ export default function CalendarGrid({
     );
   };
 
-  // Always render month view
   const monthView = renderMonthView();
 
   return (

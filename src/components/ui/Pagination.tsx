@@ -25,7 +25,7 @@ const Pagination: React.FC<PaginationProps> = ({
 
   const getPageNumbers = () => {
     const pageNumbers = [];
-    const maxPagesToShow = 5; // Number of page buttons to show (e.g., 1 ... 4 5 6 ... 10)
+    const maxPagesToShow = 5;
 
     if (totalPages <= maxPagesToShow) {
       for (let i = 1; i <= totalPages; i++) {
@@ -103,11 +103,10 @@ const Pagination: React.FC<PaginationProps> = ({
                 <button
                   key={index}
                   onClick={() => onPageChange(pageNumber as number)}
-                  className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition-colors duration-200 ${
-                    currentPage === pageNumber
+                  className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition-colors duration-200 ${currentPage === pageNumber
                       ? "bg-[#FAD23C] text-gray-800 shadow-sm"
                       : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
+                    }`}
                 >
                   {pageNumber}
                 </button>

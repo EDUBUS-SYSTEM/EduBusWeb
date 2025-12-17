@@ -32,7 +32,7 @@ export default function TimeOverrideModal({
   updatedAt,
 }: TimeOverrideModalProps) {
   const [formData, setFormData] = useState({
-    date: "", // Override date
+    date: "",
     startTime: "",
     endTime: "",
     reason: "",
@@ -44,7 +44,7 @@ export default function TimeOverrideModal({
     "standalone"
   );
   const [selectedExceptionDate, setSelectedExceptionDate] =
-    useState<string>(""); // Exception date
+    useState<string>("");
   const [undoStack, setUndoStack] = useState<
     Array<{ action: string; data: ScheduleTimeOverride }>
   >([]);
@@ -72,13 +72,13 @@ export default function TimeOverrideModal({
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    // Validate date based on override type
+
     if (overrideType === "standalone") {
       if (!formData.date) {
         newErrors.date = "Date is required";
       }
 
-      // Check date within schedule effective range
+
       if (formData.date) {
         const date = new Date(formData.date);
         const from = effectiveFrom ? new Date(effectiveFrom) : null;
@@ -91,14 +91,14 @@ export default function TimeOverrideModal({
         }
       }
     } else {
-      // Exception override type
+
       if (!selectedExceptionDate) {
         newErrors.exceptionDate = "Please select an exception date";
       }
       if (!formData.date) {
         newErrors.date = "Override date is required";
       } else {
-        // Check override date within schedule effective range
+
         const date = new Date(formData.date);
         const from = effectiveFrom ? new Date(effectiveFrom) : null;
         const to = effectiveTo ? new Date(effectiveTo) : null;
@@ -147,20 +147,20 @@ export default function TimeOverrideModal({
 
     try {
       const timeOverrideData: ScheduleTimeOverride = {
-        date: new Date(formData.date), // Override date (ngày học bù)
+        date: new Date(formData.date),
         exceptionDate:
           overrideType === "exception" && selectedExceptionDate
             ? new Date(selectedExceptionDate)
-            : undefined, // Exception date (ngày nghỉ)
+            : undefined,
         startTime: formData.startTime,
         endTime: formData.endTime,
         reason: formData.reason,
-        createdBy: "admin", // TODO: Get from auth context
+        createdBy: "admin",
         createdAt: new Date(),
         isCancelled: formData.isCancelled,
       };
 
-      // Add to undo stack
+
       setUndoStack((prev) => [
         ...prev,
         {
@@ -170,10 +170,10 @@ export default function TimeOverrideModal({
       ]);
 
       if (override) {
-        // Update existing override: upsert by date
+
         await scheduleService.updateTimeOverride(scheduleId, timeOverrideData);
       } else {
-        // Add new override
+
         await scheduleService.addTimeOverride(
           scheduleId,
           timeOverrideData,
@@ -186,7 +186,7 @@ export default function TimeOverrideModal({
     } catch (error: unknown) {
       console.error("Error saving time override:", error);
 
-      // Enhanced error handling
+
       let errorMessage = "Failed to save time override. Please try again.";
 
       if (error && typeof error === "object" && "response" in error) {
@@ -213,7 +213,7 @@ export default function TimeOverrideModal({
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
+
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
@@ -227,14 +227,14 @@ export default function TimeOverrideModal({
 
     try {
       if (lastAction.action === "add") {
-        // Undo add by removing the override
+
         await scheduleService.removeTimeOverride(
           scheduleId,
           lastAction.data.date.toISOString().split("T")[0],
           updatedAt
         );
       } else if (lastAction.action === "update") {
-        // Undo update by restoring previous data
+
         await scheduleService.updateTimeOverride(scheduleId, lastAction.data);
       }
 
@@ -247,7 +247,7 @@ export default function TimeOverrideModal({
 
   const handleExport = async () => {
     try {
-      // Fetch current schedule to get time overrides
+
       const currentSchedule = await scheduleService.getScheduleById(scheduleId);
       const timeOverrides = currentSchedule.timeOverrides || [];
 
@@ -310,7 +310,7 @@ export default function TimeOverrideModal({
         aria-describedby="time-override-description"
       >
         <div className="p-6">
-          {/* Header */}
+
           <div className="flex items-center justify-between mb-6">
             <h3
               id="time-override-title"
@@ -349,7 +349,7 @@ export default function TimeOverrideModal({
             </p>
           </div>
 
-          {/* Override Type Selection */}
+
           {!override && (
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -360,8 +360,8 @@ export default function TimeOverrideModal({
                   type="button"
                   onClick={() => setOverrideType("standalone")}
                   className={`p-4 rounded-xl border-2 transition-all duration-200 ${overrideType === "standalone"
-                      ? "border-blue-500 bg-blue-50 text-blue-800"
-                      : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                    ? "border-blue-500 bg-blue-50 text-blue-800"
+                    : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                     }`}
                 >
                   <div className="text-center">
@@ -377,8 +377,8 @@ export default function TimeOverrideModal({
                   type="button"
                   onClick={() => setOverrideType("exception")}
                   className={`p-4 rounded-xl border-2 transition-all duration-200 ${overrideType === "exception"
-                      ? "border-orange-500 bg-orange-50 text-orange-800"
-                      : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                    ? "border-orange-500 bg-orange-50 text-orange-800"
+                    : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                     }`}
                 >
                   <div className="text-center">
@@ -394,9 +394,9 @@ export default function TimeOverrideModal({
             </div>
           )}
 
-          {/* Form */}
+
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Date Selection */}
+
             {overrideType === "standalone" ? (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -425,7 +425,7 @@ export default function TimeOverrideModal({
               </div>
             ) : (
               <div className="space-y-4">
-                {/* Exception Date Selection */}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Exception Date *
@@ -440,8 +440,8 @@ export default function TimeOverrideModal({
                         }
                       }}
                       className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${errors.exceptionDate
-                          ? "border-red-300 bg-red-50"
-                          : "border-gray-200"
+                        ? "border-red-300 bg-red-50"
+                        : "border-gray-200"
                         }`}
                     >
                       <option value="">Select an exception date...</option>
@@ -471,7 +471,7 @@ export default function TimeOverrideModal({
                   )}
                 </div>
 
-                {/* Override Date Selection */}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Override Date *
@@ -491,8 +491,8 @@ export default function TimeOverrideModal({
                     }
                     onChange={(e) => handleInputChange("date", e.target.value)}
                     className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${errors.date
-                        ? "border-red-300 bg-red-50"
-                        : "border-gray-200"
+                      ? "border-red-300 bg-red-50"
+                      : "border-gray-200"
                       }`}
                   />
                   {errors.date && (
@@ -502,7 +502,7 @@ export default function TimeOverrideModal({
               </div>
             )}
 
-            {/* Time Range */}
+
             <TimeSlotSelector
               selectedStartTime={formData.startTime}
               selectedEndTime={formData.endTime}
@@ -514,7 +514,7 @@ export default function TimeOverrideModal({
               }}
             />
 
-            {/* Reason */}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Reason *
@@ -532,7 +532,7 @@ export default function TimeOverrideModal({
               )}
             </div>
 
-            {/* Status */}
+
             <div>
               <label className="flex items-center">
                 <input
@@ -549,7 +549,7 @@ export default function TimeOverrideModal({
               </label>
             </div>
 
-            {/* Action Buttons */}
+
             <div className="flex justify-between items-center pt-6 border-t border-gray-200">
               <div className="flex gap-3">
                 {undoStack.length > 0 && (

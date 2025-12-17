@@ -68,7 +68,7 @@ export default function TimelineCard({ semesterData, loading }: TimelineCardProp
             whileHover={{ scale: 1.005 }}
             className="bg-gradient-to-br from-[#FEFCE8] to-[#FFF6D8] rounded-2xl p-6 shadow-soft hover:shadow-lg transition-all duration-300 border border-[#FDC700]/20"
         >
-            {/* Header */}
+
             <div className="flex items-start justify-between mb-4">
                 <div>
                     <motion.h2
@@ -97,7 +97,7 @@ export default function TimelineCard({ semesterData, loading }: TimelineCardProp
                 </motion.div>
             </div>
 
-            {/* Dates */}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
@@ -138,7 +138,7 @@ export default function TimelineCard({ semesterData, loading }: TimelineCardProp
                 </motion.div>
             </div>
 
-            {/* Progress Bar */}
+
             <div className="space-y-2">
                 <div className="flex justify-between items-center text-xs">
                     <span className="font-medium text-gray-600">Semester Progress</span>
@@ -157,7 +157,7 @@ export default function TimelineCard({ semesterData, loading }: TimelineCardProp
                 </p>
             </div>
 
-            {/* Description */}
+
             {semesterData.description && (
                 <motion.div
                     initial={{ opacity: 0 }}

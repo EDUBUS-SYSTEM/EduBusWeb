@@ -1,4 +1,3 @@
-// components/admin/PickupPointManagement/PickupPointManagement.tsx
 "use client";
 
 import React, { useState } from 'react';
@@ -25,7 +24,6 @@ const PickupPointManagement: React.FC = () => {
         <p className="text-gray-600">Manage pickup points, enrollment deadlines, and semester resets</p>
       </div>
 
-      {/* Tabs */}
       <div className="bg-white rounded-lg shadow-sm mb-6">
         <div className="border-b border-gray-200">
           <nav className="flex -mb-px">
@@ -49,7 +47,6 @@ const PickupPointManagement: React.FC = () => {
           </nav>
         </div>
 
-        {/* Tab Content */}
         <div className="p-6">
           {activeTab === 'pickup-points' && <PickupPointsTab />}
           {activeTab === 'deadlines' && <DeadlinesTab />}

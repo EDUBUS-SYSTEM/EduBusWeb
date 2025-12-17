@@ -15,16 +15,13 @@ interface EditTripModalProps {
   trip: TripDto | null;
 }
 
-// Extract YYYY-MM-DD from an ISO string without timezone conversion
 function extractDate(iso?: string): string {
   if (!iso) return "";
   return iso.split("T")[0] || "";
 }
 
-// Extract HH:mm from an ISO string without timezone conversion
 function extractTime(iso?: string): string {
   if (!iso) return "";
-  // Expecting format YYYY-MM-DDTHH:mm[:ss]
   const timePart = iso.split("T")[1];
   if (!timePart) return "";
   return timePart.slice(0, 5);
@@ -58,7 +55,6 @@ export default function EditTripModal({
       setFormData({
         id: trip.id,
         routeId: trip.routeId,
-        // Keep raw ISO strings but derive date/time for inputs separately
         serviceDate: extractDate(trip.serviceDate),
         plannedStartAt: trip.plannedStartAt,
         plannedEndAt: trip.plannedEndAt,
@@ -73,9 +69,7 @@ export default function EditTripModal({
         stops: trip.stops
       });
       
-      // Auto-select schedule if trip has scheduleSnapshot
       if (trip.scheduleSnapshot?.scheduleId) {
-        // Schedule will be auto-selected when schedules are loaded
       }
     }
   }, [trip]);
@@ -89,12 +83,10 @@ export default function EditTripModal({
     }
   }, [formData?.routeId, routes]);
 
-  // Auto-select schedule when schedules are loaded and trip has scheduleSnapshot
   useEffect(() => {
     if (schedules.length > 0 && formData?.scheduleSnapshot?.scheduleId && !formData.scheduleSnapshot.name) {
       const schedule = schedules.find(s => s.id === formData.scheduleSnapshot?.scheduleId);
       if (schedule) {
-        // Parse schedule times and update form
         const [startHours, startMinutes] = schedule.startTime.split(':').map(Number);
         const [endHours, endMinutes] = schedule.endTime.split(':').map(Number);
         
@@ -163,14 +155,11 @@ export default function EditTripModal({
   const handleScheduleChange = (id: string) => {
     const schedule = schedules.find(s => s.id === id);
     if (schedule && formData) {
-      // Parse schedule times (format: HH:mm)
       const [startHours, startMinutes] = schedule.startTime.split(':').map(Number);
       const [endHours, endMinutes] = schedule.endTime.split(':').map(Number);
       
-      // Format as HH:mm strings
       const startTimeStr = `${String(startHours).padStart(2, '0')}:${String(startMinutes).padStart(2, '0')}`;
       const endTimeStr = `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
-      // Combine with current service date for ISO-like storage
       const serviceDate = formData.serviceDate || extractDate(trip?.serviceDate);
       const plannedStartAtIso = serviceDate ? `${serviceDate}T${startTimeStr}` : formData.plannedStartAt;
       const plannedEndAtIso = serviceDate ? `${serviceDate}T${endTimeStr}` : formData.plannedEndAt;
@@ -230,7 +219,6 @@ export default function EditTripModal({
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
 
-          {/* Route */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Route <span className="text-red-500">*</span>
@@ -261,7 +249,6 @@ export default function EditTripModal({
             )}
           </div>
 
-          {/* Schedule */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Schedule <span className="text-red-500">*</span>
@@ -285,7 +272,6 @@ export default function EditTripModal({
             )}
           </div>
 
-          {/* Service Date */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Service Date <span className="text-red-500">*</span>
@@ -302,7 +288,6 @@ export default function EditTripModal({
             )}
           </div>
 
-          {/* Planned Start Time */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Planned Start Time <span className="text-red-500">*</span>
@@ -328,7 +313,6 @@ export default function EditTripModal({
             )}
           </div>
 
-          {/* Planned End Time */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Planned End Time <span className="text-red-500">*</span>
@@ -354,7 +338,6 @@ export default function EditTripModal({
             )}
           </div>
 
-          {/* Status */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Status <span className="text-red-500">*</span>
@@ -377,7 +360,6 @@ export default function EditTripModal({
             </div>
           )}
 
-          {/* Footer */}
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
             <button
               type="button"

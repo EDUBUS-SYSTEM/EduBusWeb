@@ -1,4 +1,3 @@
-// src/components/admin/EditRouteModal.tsx
 import React, { useState, useEffect } from 'react';
 import { FaTimes, FaBus, FaTrash } from 'react-icons/fa';
 import { vehicleService } from '@/services/vehicleService';
@@ -85,7 +84,6 @@ const EditRouteModal: React.FC<EditRouteModalProps> = ({
         routeName: routeName.trim()
       }
       
-      // Fetch vehicle capacity and update the route
       const vehicle = vehicles.find(v => v.id === selectedVehicleId);
       if (vehicle) {
         updatedRoute.vehicleCapacity = vehicle.capacity;
@@ -239,7 +237,6 @@ const EditRouteModal: React.FC<EditRouteModalProps> = ({
             )}
           </div>
 
-          {/* Route Info Display */}
           <div className="bg-gray-50 p-3 rounded-md">
             <h4 className="text-sm font-medium text-gray-700 mb-2">Route Information</h4>
             <div className="text-sm text-gray-600 space-y-1">
@@ -250,7 +247,6 @@ const EditRouteModal: React.FC<EditRouteModalProps> = ({
           </div>
 
           <div className="flex justify-between pt-4">
-            {/* Delete Button */}
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
@@ -261,7 +257,6 @@ const EditRouteModal: React.FC<EditRouteModalProps> = ({
               Delete Route
             </button>
 
-            {/* Update and Cancel Buttons */}
             <div className="flex space-x-3">
               <button
                 type="button"
@@ -289,7 +284,6 @@ const EditRouteModal: React.FC<EditRouteModalProps> = ({
           </div>
         </form>
 
-        {/* Delete Confirmation Modal */}
         {showDeleteConfirm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60">
             <div className="bg-white rounded-lg p-6 w-full max-w-sm mx-4">

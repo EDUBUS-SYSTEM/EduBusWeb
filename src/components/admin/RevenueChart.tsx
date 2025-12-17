@@ -81,12 +81,10 @@ export default function RevenueChart({ data, loading, currency = "VND" }: Revenu
             whileHover={{ scale: 1.005 }}
             className="bg-gradient-to-br from-white to-[#FFF4DB] rounded-2xl p-6 shadow-[0_8px_20px_rgba(0,0,0,0.05)] hover:shadow-lg transition-all duration-300 text-[#463B3B] relative overflow-hidden"
         >
-            {/* Background decoration */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#F5D565]/25 rounded-full -mr-16 -mt-16" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#F5D565]/25 rounded-full -ml-12 -mb-12" />
 
             <div className="relative z-10">
-                {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                     <div>
                         <motion.h3
@@ -115,7 +113,6 @@ export default function RevenueChart({ data, loading, currency = "VND" }: Revenu
                     </motion.div>
                 </div>
 
-                {/* Total Revenue */}
                 <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
@@ -126,38 +123,53 @@ export default function RevenueChart({ data, loading, currency = "VND" }: Revenu
                     <p className="text-3xl font-bold text-[#B57300]">{formatCurrency(data.totalRevenue)}</p>
                 </motion.div>
 
-                {/* Timeline Chart */}
-                <div className="bg-white/10 rounded-xl p-3 mb-6">
+                <div className="bg-[#F5D565]/20 rounded-xl p-3 mb-6 border border-[#F5D565]/30">
                     {chartData.length > 0 ? (
                         <div className="h-48">
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#ffffff" stopOpacity={0.8} />
-                                            <stop offset="95%" stopColor="#ffffff" stopOpacity={0} />
+                                            <stop offset="5%" stopColor="#B57300" stopOpacity={0.6} />
+                                            <stop offset="95%" stopColor="#B57300" stopOpacity={0.1} />
                                         </linearGradient>
                                     </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
-                                    <XAxis dataKey="date" tick={{ fill: "white", fontSize: 10 }} />
-                                    <YAxis tick={{ fill: "white", fontSize: 10 }} tickFormatter={(v) => `${(v / 1_000_000).toFixed(0)}m`} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(181,115,0,0.2)" />
+                                    <XAxis 
+                                        dataKey="date" 
+                                        tick={{ fill: "#463B3B", fontSize: 10 }} 
+                                        axisLine={{ stroke: "#B57300", strokeWidth: 1 }}
+                                    />
+                                    <YAxis 
+                                        tick={{ fill: "#463B3B", fontSize: 10 }} 
+                                        tickFormatter={(v) => `${(v / 1_000_000).toFixed(0)}m`}
+                                        axisLine={{ stroke: "#B57300", strokeWidth: 1 }}
+                                    />
                                     <Tooltip
                                         formatter={(value: number) => formatCurrency(value)}
                                         labelStyle={{ color: "#111" }}
-                                        contentStyle={{ borderRadius: "12px" }}
+                                        contentStyle={{ 
+                                            borderRadius: "12px",
+                                            backgroundColor: "#fff",
+                                            border: "1px solid #F5D565"
+                                        }}
                                     />
-                                    <Area type="monotone" dataKey="amount" stroke="#fff" fill="url(#colorRevenue)" strokeWidth={2} />
+                                    <Area 
+                                        type="monotone" 
+                                        dataKey="amount" 
+                                        stroke="#B57300" 
+                                        fill="url(#colorRevenue)" 
+                                        strokeWidth={2} 
+                                    />
                                 </AreaChart>
                             </ResponsiveContainer>
                         </div>
                     ) : (
-                        <p className="text-white/80 text-xs">No timeline data</p>
+                        <p className="text-[#463B3B]/80 text-xs text-center py-8">No timeline data</p>
                     )}
                 </div>
 
-                {/* Breakdown */}
                 <div className="space-y-3">
-                    {/* Completed */}
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -180,7 +192,6 @@ export default function RevenueChart({ data, loading, currency = "VND" }: Revenu
                         </div>
                     </motion.div>
 
-                    {/* Pending */}
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -203,7 +214,6 @@ export default function RevenueChart({ data, loading, currency = "VND" }: Revenu
                         </div>
                     </motion.div>
 
-                    {/* Failed */}
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}

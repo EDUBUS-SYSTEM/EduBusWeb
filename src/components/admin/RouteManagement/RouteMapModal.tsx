@@ -16,24 +16,21 @@ interface RouteMapModalProps {
   schoolLocation?: { lat: number; lng: number };
 }
 
-// Stable color assignment - same as VietMapComponent
 const ROUTE_COLORS = [
   '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
   '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
 ];
 
-// Hash function for stable color assignment based on route ID
 const hashString = (str: string): number => {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32-bit integer
+    hash = hash & hash; 
   }
   return Math.abs(hash);
 };
 
-// Get stable color for a route based on its ID
 const getRouteColor = (routeId: string): string => {
   const hash = hashString(routeId);
   return ROUTE_COLORS[hash % ROUTE_COLORS.length];
@@ -54,7 +51,6 @@ const RouteMapModal: React.FC<RouteMapModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg w-[95vw] h-[90vh] max-w-7xl flex flex-col">
-        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-xl font-bold text-gray-800 flex items-center">
             <FaMapMarkerAlt className="mr-2 text-blue-500" />
@@ -68,9 +64,7 @@ const RouteMapModal: React.FC<RouteMapModalProps> = ({
           </button>
         </div>
 
-        {/* Content */}
         <div className="flex flex-1 overflow-hidden">
-          {/* Map */}
           <div className="flex-1 relative">
             <VietMapComponent
               routes={routes}
@@ -83,12 +77,10 @@ const RouteMapModal: React.FC<RouteMapModalProps> = ({
             />
           </div>
 
-          {/* Route Selection Panel */}
           <div className="w-80 border-l bg-gray-50 overflow-y-auto">
             <div className="p-4">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Route Selection</h3>
               
-              {/* Quick Actions */}
               <div className="flex space-x-2 mb-4">
                 <button
                   onClick={onSelectAllRoutes}
@@ -104,14 +96,12 @@ const RouteMapModal: React.FC<RouteMapModalProps> = ({
                 </button>
               </div>
 
-              {/* Route List */}
               <div className="space-y-2">
                 <h4 className="text-sm font-medium text-gray-600 mb-2">
                   Available Routes ({routes.length})
                 </h4>
                 {routes.map((route) => {
                   const isSelected = selectedRouteIds.includes(route.id);
-                  // Use stable color based on route ID - same as map
                   const color = getRouteColor(route.id);
                   const totalStudents = route.pickupPoints.reduce((sum, point) => sum + point.studentCount, 0);
                   
@@ -156,7 +146,6 @@ const RouteMapModal: React.FC<RouteMapModalProps> = ({
                 })}
               </div>
 
-              {/* Selected Routes Summary */}
               {selectedRouteIds.length > 0 && (
                 <div className="mt-6 p-3 bg-green-50 rounded-lg">
                   <h4 className="text-sm font-medium text-green-800 mb-2">
@@ -166,7 +155,6 @@ const RouteMapModal: React.FC<RouteMapModalProps> = ({
                     {selectedRouteIds.map((routeId) => {
                       const route = routes.find(r => r.id === routeId);
                       if (!route) return null;
-                      // Use stable color based on route ID - same as map
                       const color = getRouteColor(routeId);
                       return (
                         <div key={routeId} className="flex items-center text-xs">

@@ -45,7 +45,6 @@ export default function ExceptionModal({
         newErrors.date = "Exception date cannot be in the past";
       }
 
-      // Enforce within schedule effective range
       const effFrom = schedule.effectiveFrom
         ? new Date(schedule.effectiveFrom)
         : null;
@@ -65,7 +64,6 @@ export default function ExceptionModal({
         }
       }
 
-      // Check if date already exists
       const dateExists = schedule.exceptions.some(
         (exception) =>
           new Date(exception as unknown as string | Date).toDateString() ===
@@ -94,7 +92,6 @@ export default function ExceptionModal({
       const newException = new Date(newExceptionDate);
       const updatedExceptions = [...schedule.exceptions, newException];
 
-      // Add to undo stack
       setUndoStack((prev) => [
         ...prev,
         {
@@ -103,8 +100,6 @@ export default function ExceptionModal({
         },
       ]);
 
-      // Build full UpdateScheduleDto using existing schedule fields
-      // Convert exceptions Date[] to ISO string[] for backend
       const exceptionsAsStrings = updatedExceptions.map((ex: Date | string) =>
         typeof ex === 'string' ? ex : new Date(ex).toISOString()
       );
@@ -126,7 +121,7 @@ export default function ExceptionModal({
         exceptions: exceptionsAsStrings,
         isActive: schedule.isActive,
         timeOverrides: schedule.timeOverrides || [],
-        updatedAt: schedule.updatedAt, // Send current timestamp for optimistic locking
+        updatedAt: schedule.updatedAt, 
       });
 
       onSuccess();
@@ -135,7 +130,6 @@ export default function ExceptionModal({
     } catch (error: unknown) {
       console.error("Error adding exception:", error);
 
-      // Enhanced error handling
       let errorMessage = "Failed to add exception. Please try again.";
 
       if (error && typeof error === "object" && "response" in error) {
@@ -172,7 +166,6 @@ export default function ExceptionModal({
         dateToRemove as unknown as string | Date
       ).toDateString();
 
-      // Add to undo stack
       setUndoStack((prev) => [
         ...prev,
         {
@@ -187,7 +180,6 @@ export default function ExceptionModal({
           removeKey
       );
 
-      // Update schedule with updated exceptions
       await scheduleService.updateSchedule(schedule.id, {
         id: schedule.id,
         name: schedule.name,
@@ -207,14 +199,13 @@ export default function ExceptionModal({
         tripType: schedule.tripType ?? 0,
         isActive: schedule.isActive,
         timeOverrides: schedule.timeOverrides || [],
-        updatedAt: schedule.updatedAt, // Send current timestamp for optimistic locking
+        updatedAt: schedule.updatedAt, 
       });
 
       onSuccess();
     } catch (error: unknown) {
       console.error("Error removing exception:", error);
 
-      // Enhanced error handling
       let errorMessage = "Failed to remove exception. Please try again.";
 
       if (error && typeof error === "object" && "response" in error) {
@@ -241,7 +232,6 @@ export default function ExceptionModal({
 
   const handleInputChange = (value: string) => {
     setNewExceptionDate(value);
-    // Clear error when user starts typing
     if (errors.date) {
       setErrors((prev) => ({ ...prev, date: "" }));
     }
@@ -255,7 +245,6 @@ export default function ExceptionModal({
 
     try {
       if (lastAction.action === "add") {
-        // Undo add by removing the exception
         const removeKey = new Date(lastAction.data.date).toDateString();
         const updatedExceptions = schedule.exceptions.filter(
           (exception) =>
@@ -282,10 +271,9 @@ export default function ExceptionModal({
           tripType: schedule.tripType ?? 0,
           isActive: schedule.isActive,
           timeOverrides: schedule.timeOverrides || [],
-          updatedAt: schedule.updatedAt, // Send current timestamp for optimistic locking
+          updatedAt: schedule.updatedAt, 
         });
       } else if (lastAction.action === "remove") {
-        // Undo remove by adding the exception back
         const updatedExceptions = [
           ...schedule.exceptions,
           lastAction.data.date,
@@ -310,7 +298,7 @@ export default function ExceptionModal({
           ),
           isActive: schedule.isActive,
           timeOverrides: schedule.timeOverrides || [],
-          updatedAt: schedule.updatedAt, // Send current timestamp for optimistic locking
+          updatedAt: schedule.updatedAt, 
         });
       }
 
@@ -333,7 +321,6 @@ export default function ExceptionModal({
         aria-describedby="exception-description"
       >
         <div className="p-6">
-          {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h3
               id="exception-title"
@@ -407,7 +394,6 @@ export default function ExceptionModal({
             </p>
           </div>
 
-          {/* Add New Exception Form */}
           <form onSubmit={handleAddException} className="mb-6">
             <div className="space-y-4">
               <div>
@@ -502,7 +488,6 @@ export default function ExceptionModal({
             )}
           </form>
 
-          {/* Current Exceptions List */}
           <div>
             <h4 className="text-lg font-semibold text-gray-800 mb-4">
               Current Exceptions ({schedule.exceptions.length})
@@ -567,7 +552,6 @@ export default function ExceptionModal({
             )}
           </div>
 
-          {/* Action Buttons */}
           <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200">
             <button
               onClick={onClose}

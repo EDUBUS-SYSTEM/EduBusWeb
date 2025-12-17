@@ -112,7 +112,6 @@ export default function SchoolManagement() {
     } catch (error) {
       console.error("Error loading school:", error);
       
-      // Debug information
       console.log("API Base URL:", process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api");
       
       const errorWithResponse = error as { response?: { status?: number; data?: { message?: string } }; message?: string; code?: string };
@@ -122,7 +121,6 @@ export default function SchoolManagement() {
         const message = errorWithResponse.response.data?.message || errorWithResponse.message;
         
         if (status === 404) {
-          // School not found - might need to create one
           alert("School information not found. You may need to create school information first.");
         } else if (status === 401) {
           alert("Authentication required. Please login again.");
@@ -152,26 +150,22 @@ export default function SchoolManagement() {
       [name]: newValue
     }));
 
-    // Real-time validation
     const error = validateFieldOnChange(name, newValue);
     setFieldErrors(prev => ({
       ...prev,
       [name]: error || ''
     }));
 
-    // Clear validation errors when user starts typing
     if (validationErrors.length > 0) {
       setValidationErrors(prev => prev.filter(err => err.field !== name));
     }
   };
 
   const handleSave = async () => {
-    // Validate form
     const validation = validateSchoolForm(formData);
     
     if (!validation.isValid) {
       setValidationErrors(validation.errors);
-      // Set individual field errors for UI
       const errors: Record<string, string> = {};
       validation.errors.forEach(error => {
         errors[error.field] = error.message;
@@ -207,7 +201,6 @@ export default function SchoolManagement() {
       console.error("Error updating school:", error);
       const errorWithResponse = error as { response?: { data?: { message?: string; errors?: Record<string, unknown> } } };
       
-      // Handle validation errors from backend
       if (errorWithResponse?.response?.data?.errors) {
         const backendErrors: ValidationError[] = [];
         const errors = errorWithResponse.response.data.errors;
@@ -240,7 +233,6 @@ export default function SchoolManagement() {
       return;
     }
 
-    // Validate location data
     const validation = validateLocationForm(location);
     if (!validation.isValid) {
       const errorMessages = validation.errors.map(err => err.message).join('\n');
@@ -259,7 +251,6 @@ export default function SchoolManagement() {
       console.error("Error updating location:", error);
       const errorWithResponse = error as { response?: { data?: { message?: string; errors?: Record<string, unknown> } } };
       
-      // Handle validation errors from backend
       if (errorWithResponse?.response?.data?.errors) {
         const errors = errorWithResponse.response.data.errors;
         const errorMessages = Object.keys(errors).map(field => {
@@ -311,7 +302,6 @@ export default function SchoolManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Homepage Preview */}
       {previewSchool && (
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 px-6 py-5">
@@ -344,9 +334,7 @@ export default function SchoolManagement() {
         </div>
       )}
 
-      {/* School Information Card */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-        {/* Header */}
         <div className="bg-gradient-to-r from-[#fad23c] to-[#FFF085] px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -370,15 +358,12 @@ export default function SchoolManagement() {
           </div>
         </div>
 
-        {/* Content */}
         <div className="p-6">
-          {/* Validation Summary */}
           {validationErrors.length > 0 && (
             <ValidationSummary errors={validationErrors} className="mb-6" />
           )}
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* School Name */}
             <div className="md:col-span-2">
               {isEditing ? (
                 <FormField
@@ -408,7 +393,6 @@ export default function SchoolManagement() {
               )}
             </div>
 
-            {/* Slogan */}
             <div className="md:col-span-2">
               {isEditing ? (
                 <FormField
@@ -445,7 +429,6 @@ export default function SchoolManagement() {
               )}
             </div>
 
-            {/* Email */}
             <div>
               {isEditing ? (
                 <FormField
@@ -484,7 +467,6 @@ export default function SchoolManagement() {
               )}
             </div>
 
-            {/* Phone Number */}
             <div>
               {isEditing ? (
                 <FormField
@@ -523,7 +505,6 @@ export default function SchoolManagement() {
               )}
             </div>
 
-            {/* Website */}
             <div>
               {isEditing ? (
                 <FormField
@@ -565,7 +546,6 @@ export default function SchoolManagement() {
               )}
             </div>
 
-            {/* Published Status */}
             <div>
               <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
                 <FaCheckCircle className="w-4 h-4 text-[#fad23c]" />
@@ -605,7 +585,6 @@ export default function SchoolManagement() {
               )}
             </div>
 
-            {/* Short Description */}
             <div className="md:col-span-2">
               {isEditing ? (
                 <FormField
@@ -642,7 +621,6 @@ export default function SchoolManagement() {
               )}
             </div>
 
-            {/* Full Description */}
             <div className="md:col-span-2">
               {isEditing ? (
                 <FormField
@@ -679,7 +657,6 @@ export default function SchoolManagement() {
               )}
             </div>
 
-            {/* Footer Text */}
             <div className="md:col-span-2">
               {isEditing ? (
                 <FormField
@@ -718,7 +695,6 @@ export default function SchoolManagement() {
           </div>
         </div>
 
-        {/* Action Buttons */}
         {isEditing && (
           <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
             <button
@@ -749,7 +725,6 @@ export default function SchoolManagement() {
         )}
       </div>
 
-      {/* Location Card */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-[#463B3B]">School Location</h2>
@@ -821,10 +796,8 @@ export default function SchoolManagement() {
         )}
       </div>
 
-      {/* Images Card - Only show if school exists */}
       {schoolId ? (
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          {/* Header */}
           <div className="sticky top-16 z-40 bg-gradient-to-r from-[#FEFCE8] to-[#FEF9C3] px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div>
@@ -836,7 +809,6 @@ export default function SchoolManagement() {
           </div>
 
           <div className="p-6 space-y-8">
-            {/* Logo & Banner Section */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-1 h-6 bg-[#fad23c] rounded-full"></div>
@@ -868,7 +840,6 @@ export default function SchoolManagement() {
               </div>
             </div>
 
-            {/* Section Images */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-1 h-6 bg-[#fad23c] rounded-full"></div>
@@ -900,7 +871,6 @@ export default function SchoolManagement() {
               </div>
             </div>
 
-            {/* Gallery Section */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-1 h-6 bg-[#fad23c] rounded-full"></div>
@@ -938,7 +908,6 @@ export default function SchoolManagement() {
         </div>
       )}
 
-      {/* Map Picker Modal */}
       {showMapPicker && (
         <SchoolMapPicker
           isOpen={showMapPicker}

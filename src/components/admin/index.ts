@@ -6,5 +6,4 @@ export { default as DeactivateStudentModal } from "./DeactivateStudentModal";
 export { default as DeleteStudentModal } from "./DeleteStudentModal";
 export { default as Profile } from "./Profile";
 
-// Export modals
 export * from "./modals";

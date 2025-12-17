@@ -15,24 +15,21 @@ interface MiniRouteMapProps {
   schoolLocation?: { lat: number; lng: number };
 }
 
-// Stable color assignment - same as VietMapComponent
 const ROUTE_COLORS = [
   '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
   '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
 ];
 
-// Hash function for stable color assignment based on route ID
 const hashString = (str: string): number => {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32-bit integer
+    hash = hash & hash; 
   }
   return Math.abs(hash);
 };
 
-// Get stable color for a route based on its ID
 const getRouteColor = (routeId: string): string => {
   const hash = hashString(routeId);
   return ROUTE_COLORS[hash % ROUTE_COLORS.length];
@@ -51,14 +48,12 @@ const MiniRouteMap: React.FC<MiniRouteMapProps> = ({
   return (
     <>
       <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg border w-80 h-60 z-50">
-        {/* Header */}
         <div className="flex items-center justify-between p-3 border-b">
           <h3 className="text-sm font-semibold text-gray-700 flex items-center">
             <FaMapMarkerAlt className="mr-2 text-blue-500" size={14} />
             Route Map
           </h3>
           <div className="flex items-center space-x-2">
-            {/* Quick select/deselect buttons */}
             {routes.length > 0 && (
               <>
                 <button
@@ -87,7 +82,6 @@ const MiniRouteMap: React.FC<MiniRouteMapProps> = ({
           </div>
         </div>
 
-        {/* Map Container */}
         <div className="relative">
           <VietMapComponent
             routes={routes}
@@ -99,14 +93,12 @@ const MiniRouteMap: React.FC<MiniRouteMapProps> = ({
             schoolLocation={schoolLocation}
           />
           
-          {/* Click overlay to open modal */}
           <div 
             className="absolute inset-0 cursor-pointer"
             onClick={() => setIsModalOpen(true)}
           />
         </div>
 
-        {/* Route Legend */}
         {selectedRouteIds.length > 0 && (
           <div className="p-3 border-t bg-gray-50">
             <div className="text-xs text-gray-600 mb-2">Showing routes:</div>
@@ -115,7 +107,6 @@ const MiniRouteMap: React.FC<MiniRouteMapProps> = ({
                 const route = routes.find(r => r.id === routeId);
                 if (!route) return null;
                 
-                // Use stable color based on route ID - same as map
                 const color = getRouteColor(routeId);
                 
                 return (
@@ -144,7 +135,6 @@ const MiniRouteMap: React.FC<MiniRouteMapProps> = ({
         )}
       </div>
 
-      {/* Full Map Modal */}
       <RouteMapModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

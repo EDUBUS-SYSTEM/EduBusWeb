@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FaTimes,
   FaCalendarAlt,
@@ -14,6 +14,7 @@ import {
   SchoolHoliday,
   SchoolDay,
   CreateAcademicCalendarDto,
+  AcademicCalendar,
 } from "@/types";
 
 interface CreateAcademicCalendarModalProps {
@@ -38,6 +39,38 @@ export default function CreateAcademicCalendarModal({
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string>("");
+  const [existingCalendars, setExistingCalendars] = useState<AcademicCalendar[]>([]);
+
+  useEffect(() => {
+    const loadExistingCalendars = async () => {
+      try {
+        const calendars = await academicCalendarService.getAcademicCalendars({
+          page: 1,
+          perPage: 100,
+          sortBy: "endDate",
+          sortOrder: "desc",
+        });
+        setExistingCalendars(calendars);
+      } catch (error) {
+        console.error("Error loading existing academic calendars:", error);
+      }
+    };
+    loadExistingCalendars();
+  }, []);
+
+  const getLatestEndDate = (): string | null => {
+    if (existingCalendars.length === 0) {
+      return null;
+    }
+    
+    const latestCalendar = existingCalendars.reduce((latest, current) => {
+      const latestEndDate = new Date(latest.endDate);
+      const currentEndDate = new Date(current.endDate);
+      return currentEndDate > latestEndDate ? current : latest;
+    });
+
+    return latestCalendar.endDate;
+  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -56,6 +89,19 @@ export default function CreateAcademicCalendarModal({
 
     if (!formData.endDate) {
       newErrors.endDate = "End date is required";
+    }
+
+    const latestEndDate = getLatestEndDate();
+    if (latestEndDate && formData.startDate) {
+      const latestEnd = new Date(latestEndDate);
+      const startDate = new Date(formData.startDate);
+      
+      latestEnd.setDate(latestEnd.getDate() + 1);
+      
+      if (startDate < latestEnd) {
+        const formattedDate = new Date(latestEndDate).toLocaleDateString("vi-VN");
+        newErrors.startDate = `Start date must be after the end date of the previous academic calendar (${formattedDate})`;
+      }
     }
 
     if (
@@ -121,23 +167,30 @@ export default function CreateAcademicCalendarModal({
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
-  // Helper function to get minimum date for End Date (must be after Start Date)
+  const getMinStartDate = () => {
+    const latestEndDate = getLatestEndDate();
+    if (latestEndDate) {
+      const latestEnd = new Date(latestEndDate);
+      latestEnd.setDate(latestEnd.getDate() + 1); 
+      return latestEnd.toISOString().split('T')[0];
+    }
+    return '';
+  };
+
   const getMinEndDate = () => {
     if (formData.startDate) {
       const startDate = new Date(formData.startDate);
-      startDate.setDate(startDate.getDate() + 1); // Add 1 day to start date
+      startDate.setDate(startDate.getDate() + 1); 
       return startDate.toISOString().split('T')[0];
     }
     return '';
   };
 
-  // Helper function to get date constraints for semesters and holidays
   const getAcademicYearDateConstraints = () => {
     return {
       minDate: formData.startDate || '',
@@ -145,16 +198,13 @@ export default function CreateAcademicCalendarModal({
     };
   };
 
-  // Helper function to get minimum start date for semester based on previous semesters
   const getMinSemesterStartDate = (semesterIndex: number) => {
     const constraints = getAcademicYearDateConstraints();
     
-    // If this is the first semester, use academic year start date
     if (semesterIndex === 0) {
       return constraints.minDate;
     }
     
-    // Find the latest end date from previous semesters
     let latestEndDate = constraints.minDate;
     for (let i = 0; i < semesterIndex; i++) {
       if (semesters[i]?.endDate) {
@@ -166,7 +216,6 @@ export default function CreateAcademicCalendarModal({
       }
     }
     
-    // Return the day after the latest end date
     if (latestEndDate) {
       const nextDay = new Date(latestEndDate);
       nextDay.setDate(nextDay.getDate() + 1);
@@ -176,16 +225,13 @@ export default function CreateAcademicCalendarModal({
     return constraints.minDate;
   };
 
-  // Helper function to get maximum end date for semester
   const getMaxSemesterEndDate = (semesterIndex: number) => {
     const constraints = getAcademicYearDateConstraints();
     
-    // If this is the last semester, use academic year end date
     if (semesterIndex === semesters.length - 1) {
       return constraints.maxDate;
     }
     
-    // Find the earliest start date from next semesters
     let earliestStartDate = constraints.maxDate;
     for (let i = semesterIndex + 1; i < semesters.length; i++) {
       if (semesters[i]?.startDate) {
@@ -197,7 +243,6 @@ export default function CreateAcademicCalendarModal({
       }
     }
     
-    // Return the day before the earliest start date
     if (earliestStartDate) {
       const prevDay = new Date(earliestStartDate);
       prevDay.setDate(prevDay.getDate() - 1);
@@ -207,7 +252,6 @@ export default function CreateAcademicCalendarModal({
     return constraints.maxDate;
   };
 
-  // Semester management
   const addSemester = () => {
     const newSemester: AcademicSemester = {
       name: "",
@@ -229,11 +273,9 @@ export default function CreateAcademicCalendarModal({
         i === index ? { ...semester, [field]: value } : semester
       );
 
-      // If updating start date, ensure end date is still valid
       if (field === 'startDate' && typeof value === 'string') {
         const currentSemester = updatedSemesters[index];
         if (currentSemester.endDate && value >= currentSemester.endDate) {
-          // Clear end date if it becomes invalid
           updatedSemesters[index] = { ...currentSemester, endDate: '' };
         }
       }
@@ -246,7 +288,6 @@ export default function CreateAcademicCalendarModal({
     setSemesters((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Holiday management
   const addHoliday = () => {
     const newHoliday: SchoolHoliday = {
       name: "",
@@ -268,11 +309,9 @@ export default function CreateAcademicCalendarModal({
         i === index ? { ...holiday, [field]: value } : holiday
       );
 
-      // If updating start date, ensure end date is still valid
       if (field === 'startDate' && typeof value === 'string') {
         const currentHoliday = updatedHolidays[index];
         if (currentHoliday.endDate && value > currentHoliday.endDate) {
-          // Clear end date if it becomes invalid
           updatedHolidays[index] = { ...currentHoliday, endDate: '' };
         }
       }
@@ -289,7 +328,6 @@ export default function CreateAcademicCalendarModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
-          {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-2xl font-bold text-[#463B3B] flex items-center">
               <FaGraduationCap className="w-6 h-6 mr-3 text-blue-600" />
@@ -303,9 +341,7 @@ export default function CreateAcademicCalendarModal({
             </button>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Basic Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -352,7 +388,6 @@ export default function CreateAcademicCalendarModal({
               </div>
             </div>
 
-            {/* Date Range */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -365,6 +400,7 @@ export default function CreateAcademicCalendarModal({
                   onChange={(e) =>
                     handleInputChange("startDate", e.target.value)
                   }
+                  min={getMinStartDate()}
                   className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
                     errors.startDate
                       ? "border-red-300 bg-red-50"
@@ -374,6 +410,11 @@ export default function CreateAcademicCalendarModal({
                 {errors.startDate && (
                   <p className="mt-1 text-sm text-red-600">
                     {errors.startDate}
+                  </p>
+                )}
+                {getMinStartDate() && !errors.startDate && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    Must be after the end date of the previous academic calendar
                   </p>
                 )}
               </div>
@@ -400,7 +441,6 @@ export default function CreateAcademicCalendarModal({
               </div>
             </div>
 
-            {/* Active Status */}
             <div className="flex items-center">
               <input
                 type="checkbox"
@@ -419,7 +459,6 @@ export default function CreateAcademicCalendarModal({
               </label>
             </div>
 
-            {/* Semesters Section */}
             <div className="border-t pt-6">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-lg font-semibold text-gray-800">
@@ -548,7 +587,6 @@ export default function CreateAcademicCalendarModal({
               </div>
             </div>
 
-            {/* Holidays Section */}
             <div className="border-t pt-6">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-lg font-semibold text-gray-800">
@@ -676,14 +714,12 @@ export default function CreateAcademicCalendarModal({
               </div>
             </div>
 
-            {/* Error Message */}
             {submitError && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <p className="text-red-800 text-sm">{submitError}</p>
               </div>
             )}
 
-            {/* Action Buttons */}
             <div className="flex items-center justify-end space-x-4 pt-6 border-t">
               <button
                 type="button"

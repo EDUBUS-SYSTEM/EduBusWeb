@@ -1,11 +1,9 @@
-// components/admin/PickupPointManagement/PickupPointsTab.tsx
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { pickupPointService, PickupPointWithStudentStatusDto } from '@/services/pickupPointService';
 import { FaMapMarkerAlt, FaUsers, FaCheckCircle, FaClock, FaTimesCircle, FaSpinner, FaEye, FaRedo } from 'react-icons/fa';
 import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import Pagination from '@/components/ui/Pagination';
 import { formatDate } from '@/utils/dateUtils';
 
@@ -14,7 +12,6 @@ const PickupPointsTab: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPickupPoint, setSelectedPickupPoint] = useState<PickupPointWithStudentStatusDto | null>(null);
 
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
@@ -29,7 +26,6 @@ const PickupPointsTab: React.FC = () => {
       const data = await pickupPointService.getPickupPointsWithStudentStatus();
       setTotalItems(data.length);
 
-      // Client-side pagination
       const startIndex = (currentPage - 1) * itemsPerPage;
       const endIndex = startIndex + itemsPerPage;
       const paginatedData = data.slice(startIndex, endIndex);
@@ -49,7 +45,6 @@ const PickupPointsTab: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Using centralized formatDate from @/utils/dateUtils
 
   if (isLoading && pickupPoints.length === 0) {
     return (
@@ -180,7 +175,6 @@ const PickupPointsTab: React.FC = () => {
               </table>
             </div>
 
-            {/* Pagination */}
             {totalPages > 1 && (
               <div className="bg-[#FFFEF0] px-6 py-4 border-t border-gray-200 flex justify-center">
                 <Pagination
@@ -197,7 +191,6 @@ const PickupPointsTab: React.FC = () => {
         </>
       )}
 
-      {/* Detail Modal */}
       {selectedPickupPoint && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
@@ -223,7 +216,6 @@ const PickupPointsTab: React.FC = () => {
             </div>
 
             <div className="p-6 space-y-6">
-              {/* Location Information */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Location Information</h4>
                 <div className="space-y-3">
@@ -248,7 +240,6 @@ const PickupPointsTab: React.FC = () => {
                 </div>
               </div>
 
-              {/* Assigned Students List */}
               {selectedPickupPoint.assignedStudents && selectedPickupPoint.assignedStudents.length > 0 && (
                 <div className="bg-gray-50 rounded-lg p-4">
                   <h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">

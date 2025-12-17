@@ -1,11 +1,9 @@
-// components/admin/PickupPointManagement/ResetSemesterTab.tsx
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { FaSyncAlt, FaSearch, FaCheckCircle, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
 import { pickupPointService, GetPickupPointsBySemesterRequest, ResetPickupPointBySemesterRequest, AvailableSemesterDto, GetPickupPointsBySemesterResponse, ResetPickupPointBySemesterResponse, PickupPointWithStudentsDto, StudentUpdateFailure } from '@/services/pickupPointService';
 import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import Pagination from '@/components/ui/Pagination';
 
 const ResetSemesterTab: React.FC = () => {
@@ -24,11 +22,9 @@ const ResetSemesterTab: React.FC = () => {
   const [isResetting, setIsResetting] = useState(false);
   const [resetResult, setResetResult] = useState<ResetPickupPointBySemesterResponse | null>(null);
   
-  // Pagination for preview list
   const [previewPage, setPreviewPage] = useState(1);
   const [previewItemsPerPage] = useState(10);
 
-  // Load available semesters on component mount
   useEffect(() => {
     loadAvailableSemesters();
   }, []);
@@ -62,12 +58,9 @@ const ResetSemesterTab: React.FC = () => {
     }
 
     setSelectedSemesterId(`${semester.semesterCode}-${semester.academicYear}-${semester.semesterStartDate}`);
-    // Convert ISO date string to YYYY-MM-DD format for date inputs
     const formatDateForInput = (dateStr: string): string => {
       if (!dateStr) return '';
-      // If already in YYYY-MM-DD format, return as is
       if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
-      // Otherwise, extract date part from ISO string
       return dateStr.split('T')[0];
     };
     
@@ -78,7 +71,6 @@ const ResetSemesterTab: React.FC = () => {
       semesterEndDate: formatDateForInput(semester.semesterEndDate),
       semesterName: semester.semesterName || '',
     });
-    // Clear preview and result when semester changes
     setPreviewData(null);
     setResetResult(null);
     setPreviewPage(1);
@@ -94,7 +86,7 @@ const ResetSemesterTab: React.FC = () => {
       setIsLoadingPreview(true);
       const data = await pickupPointService.getPickupPointsBySemester(formData);
       setPreviewData(data);
-      setPreviewPage(1); // Reset to first page when new preview loads
+      setPreviewPage(1); 
       toast.success(`Found ${data.totalPickupPoints} pickup points with ${data.totalStudents} students`);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to fetch preview data';
@@ -129,7 +121,6 @@ const ResetSemesterTab: React.FC = () => {
       setResetResult(result);
       toast.success(result.message);
       
-      // Clear preview after successful reset
       setPreviewData(null);
       setPreviewPage(1);
     } catch (error: unknown) {
@@ -142,7 +133,6 @@ const ResetSemesterTab: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Form */}
       <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
         <div className="flex items-end gap-3">
           <div className="flex-1">
@@ -200,7 +190,6 @@ const ResetSemesterTab: React.FC = () => {
         </div>
       </div>
 
-      {/* Preview Section */}
       {previewData && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
           <div className="flex items-center justify-between mb-3">
@@ -281,7 +270,6 @@ const ResetSemesterTab: React.FC = () => {
         </div>
       )}
 
-      {/* Reset Result */}
       {resetResult && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <h3 className="text-base font-semibold text-[#463B3B] mb-3 flex items-center gap-2">

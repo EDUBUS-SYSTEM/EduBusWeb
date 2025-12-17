@@ -46,7 +46,7 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
     }
   };
 
-  // Using centralized formatDate, formatDateTime, and formatTime from @/utils/dateUtils
+
 
   const calculateDuration = (start: string, end: string) => {
     const startTime = new Date(start).getTime();
@@ -60,7 +60,7 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
+
         <div className="bg-gradient-to-r from-[#fad23c] to-[#FDC700] px-6 py-5 flex justify-between items-start">
           <div>
             <h3 className="text-2xl font-bold text-[#463B3B] mb-2">
@@ -82,7 +82,7 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
           </button>
         </div>
 
-        {/* Non-Real-Time Notice */}
+
         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mx-6 mt-4">
           <div className="flex items-start">
             <FaInfoCircle className="text-yellow-400 mt-0.5 mr-3 flex-shrink-0" />
@@ -98,9 +98,9 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
           </div>
         </div>
 
-        {/* Content */}
+
         <div className="p-6 space-y-6">
-          {/* Basic Information */}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
               <h4 className="font-semibold text-blue-900 flex items-center gap-2 mb-3">
@@ -143,7 +143,7 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
             </div>
           </div>
 
-          {/* Driver Information */}
+
           {trip.driver && (
             <div className="border-t border-gray-200 pt-6">
               <h4 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
@@ -178,7 +178,7 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
             </div>
           )}
 
-          {/* Vehicle Information */}
+
           {trip.vehicle && (
             <div className="border-t border-gray-200 pt-6">
               <h4 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
@@ -207,7 +207,7 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
             </div>
           )}
 
-          {/* Actual Times */}
+
           <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
             <h4 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
               <FaCheckCircle className="text-green-600" />
@@ -237,7 +237,7 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
             </div>
           </div>
 
-          {/* Schedule Snapshot */}
+
           {trip.scheduleSnapshot && (
             <div className="border-t border-gray-200 pt-6">
               <h4 className="font-semibold text-gray-700 mb-4">Schedule Snapshot</h4>
@@ -272,7 +272,7 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
             </div>
           )}
 
-          {/* Enhanced Stops Section with Address and Student Attendance */}
+
           {trip.stops && trip.stops.length > 0 && (
             <div className="border-t border-gray-200 pt-6">
               <h4 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
@@ -281,26 +281,26 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
               </h4>
               <div className="space-y-4">
                 {trip.stops.map((stop, index) => {
-                  // Get stop address - prioritize stop.name, then location.address
+
                   const stopAddress = stop.name || stop.location?.address || `Stop ${index + 1}`;
 
                   return (
                     <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                       <div className="flex items-start gap-3">
-                        {/* Stop Number */}
+
                         <div className="flex-shrink-0 w-8 h-8 bg-[#fad23c] rounded-full flex items-center justify-center text-white font-bold text-sm">
                           {index + 1}
                         </div>
 
-                        {/* Stop Details */}
+
                         <div className="flex-1 min-w-0">
-                          {/* Stop Address */}
+
                           <div className="mb-3">
                             <div className="font-semibold text-gray-800 text-base mb-1 flex items-center gap-2">
                               <FaMapMarkerAlt className="text-[#fad23c] text-sm" />
                               {stopAddress}
                             </div>
-                            {/* Show additional address if name and location.address are different */}
+
                             {stop.name && stop.location?.address && stop.name !== stop.location.address && (
                               <div className="text-sm text-gray-600 mt-1 ml-6">
                                 {stop.location.address}
@@ -308,7 +308,7 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
                             )}
                           </div>
 
-                          {/* Students and Attendance */}
+
                           {stop.attendance && stop.attendance.length > 0 ? (
                             <div>
                               <div className="flex items-center gap-2 mb-3">
@@ -363,7 +363,7 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
           )}
         </div>
 
-        {/* Footer */}
+
         <div className="flex justify-end space-x-3 p-4 border-t border-gray-100 bg-gray-50 rounded-b-xl">
           <button
             onClick={onClose}

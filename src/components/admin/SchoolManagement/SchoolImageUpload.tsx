@@ -10,11 +10,11 @@ interface SchoolImageUploadProps {
   label?: string;
   currentImageUrl?: string;
   currentFileId?: string;
-  galleryImages?: Array<{ fileId: string; imageUrl: string; originalFileName: string }>; // For Gallery mode
+  galleryImages?: Array<{ fileId: string; imageUrl: string; originalFileName: string }>; 
   onUploadSuccess?: (fileId: string, imageUrl: string) => void;
   onDeleteSuccess?: () => void;
-  multiple?: boolean; // For Gallery - allow multiple images
-  maxImages?: number; // Max number of images for Gallery
+  multiple?: boolean; 
+  maxImages?: number; 
 }
 
 interface GalleryImage {
@@ -46,25 +46,22 @@ export default function SchoolImageUpload({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const galleryBlobUrlsRef = useRef<Map<string, string>>(new Map());
 
-  // Fetch image with authentication token and create blob URL
+ 
   useEffect(() => {
     let blobUrlToCleanup: string | null = null;
 
     const loadImageWithAuth = async (url: string) => {
       try {
-        // Cleanup previous blob URL if exists
         if (blobUrlToCleanup) {
           URL.revokeObjectURL(blobUrlToCleanup);
           blobUrlToCleanup = null;
         }
 
-        // If it's already a blob URL or data URL, use it directly
         if (url.startsWith('blob:') || url.startsWith('data:')) {
           setImageBlobUrl(url);
           return;
         }
 
-        // If it's a Next.js API route, fetch with token
         if (url.startsWith('/api/file/')) {
           const token = localStorage.getItem('token');
           if (!token) {
@@ -97,7 +94,6 @@ export default function SchoolImageUpload({
           setImageBlobUrl(blobUrl);
           console.log(`[SchoolImageUpload] Successfully loaded image, size: ${blob.size} bytes`);
         } else {
-          // For other URLs, use directly
           setImageBlobUrl(url);
         }
       } catch (error) {
@@ -112,7 +108,6 @@ export default function SchoolImageUpload({
       setImageBlobUrl(null);
     }
 
-    // Cleanup blob URL on unmount or when previewUrl changes
     return () => {
       if (blobUrlToCleanup) {
         URL.revokeObjectURL(blobUrlToCleanup);
@@ -120,21 +115,18 @@ export default function SchoolImageUpload({
     };
   }, [previewUrl]);
 
-  // Update preview URL when currentImageUrl changes
   useEffect(() => {
     if (currentImageUrl) {
       setPreviewUrl(currentImageUrl);
     }
   }, [currentImageUrl]);
 
-  // Update gallery images when initialGalleryImages changes
   useEffect(() => {
     if (multiple) {
       setGalleryImages(initialGalleryImages);
     }
   }, [multiple, initialGalleryImages]);
 
-  // Load gallery images with authentication
   useEffect(() => {
     if (!multiple || galleryImages.length === 0) {
       setGalleryBlobUrls(new Map());
@@ -151,24 +143,21 @@ export default function SchoolImageUpload({
       const newErrors = new Set<string>();
       const loadingSet = new Set<string>();
 
-      // Mark all images as loading
       galleryImages.forEach(img => loadingSet.add(img.fileId));
       if (isMounted) {
         setGalleryImageLoading(new Set(loadingSet));
       }
 
       for (const image of galleryImages) {
-        if (!isMounted) break; // Stop if component unmounted
+        if (!isMounted) break; 
         
         try {
-          // If it's already a blob URL or data URL, use it directly
           if (image.imageUrl.startsWith('blob:') || image.imageUrl.startsWith('data:')) {
             newBlobUrls.set(image.fileId, image.imageUrl);
             loadingSet.delete(image.fileId);
             continue;
           }
 
-          // If it's a Next.js API route, fetch with token
           if (image.imageUrl.startsWith('/api/file/')) {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -210,7 +199,7 @@ export default function SchoolImageUpload({
               const blobUrl = URL.createObjectURL(blob);
               newBlobUrls.set(image.fileId, blobUrl);
               cleanupUrls.push(blobUrl);
-              newErrors.delete(image.fileId); // Remove from errors if successful
+              newErrors.delete(image.fileId); 
               loadingSet.delete(image.fileId);
               console.log(`[SchoolImageUpload] Successfully loaded gallery image ${image.fileId}, size: ${blob.size} bytes`);
             } catch (error) {
@@ -221,7 +210,6 @@ export default function SchoolImageUpload({
               continue;
             }
           } else {
-            // For other URLs, use directly
             newBlobUrls.set(image.fileId, image.imageUrl);
             loadingSet.delete(image.fileId);
           }
@@ -233,7 +221,6 @@ export default function SchoolImageUpload({
       }
 
       if (isMounted) {
-        // Cleanup previous blob URLs before setting new ones
         galleryBlobUrlsRef.current.forEach((url) => {
           if (url.startsWith('blob:')) {
             URL.revokeObjectURL(url);
@@ -245,7 +232,6 @@ export default function SchoolImageUpload({
         setGalleryImageErrors(newErrors);
         setGalleryImageLoading(new Set(loadingSet));
       } else {
-        // Component unmounted, cleanup immediately
         cleanupUrls.forEach(url => {
           if (url.startsWith('blob:')) {
             URL.revokeObjectURL(url);
@@ -256,7 +242,6 @@ export default function SchoolImageUpload({
 
     loadGalleryImages();
 
-    // Cleanup function
     return () => {
       isMounted = false;
       cleanupUrls.forEach(url => {
@@ -272,15 +257,12 @@ export default function SchoolImageUpload({
     if (!files || files.length === 0) return;
 
     if (multiple) {
-      // Handle multiple files for Gallery
       const filesArray = Array.from(files).slice(0, maxImages - galleryImages.length);
       await uploadMultipleFiles(filesArray);
     } else {
-      // Handle single file for Logo/Banner
       await uploadSingleFile(files[0]);
     }
 
-    // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -315,8 +297,6 @@ export default function SchoolImageUpload({
       );
       const responses = await Promise.all(uploadPromises);
       
-      // Don't update local state - let parent reload from server to ensure consistency
-      // This prevents duplicate images if user uploads multiple times quickly
       onUploadSuccess?.(responses[0].fileId, fileService.getFileUrl(responses[0].fileId));
     } catch (error) {
       console.error("Error uploading files:", error);
@@ -339,10 +319,8 @@ export default function SchoolImageUpload({
       await fileService.delete(fileIdToDelete);
       
       if (multiple && fileId) {
-        // Remove from gallery
         setGalleryImages((prev) => prev.filter((img) => img.fileId !== fileId));
       } else {
-        // Clear single image
         setPreviewUrl(null);
       }
       
@@ -384,7 +362,6 @@ export default function SchoolImageUpload({
   const isWideImage = fileType === "Banner" || fileType === "StayConnected" || fileType === "FeatureHighlight";
 
   if (isGallery) {
-    // Gallery mode - show multiple images
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between mb-3">
@@ -396,7 +373,6 @@ export default function SchoolImageUpload({
           </span>
         </div>
         
-        {/* Gallery Grid */}
         {galleryImages.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
             {galleryImages.map((image) => {
@@ -440,7 +416,6 @@ export default function SchoolImageUpload({
                         }}
                       />
                     )}
-                    {/* Overlay on hover */}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
                   </div>
                   <button
@@ -459,7 +434,6 @@ export default function SchoolImageUpload({
               );
             })}
             
-            {/* Upload Button */}
             {galleryImages.length < maxImages && (
               <div
                 onDragOver={handleDragOver}
@@ -492,7 +466,6 @@ export default function SchoolImageUpload({
           </div>
         )}
         
-        {/* Empty State */}
         {galleryImages.length === 0 && (
           <div
             onDragOver={handleDragOver}
@@ -534,7 +507,6 @@ export default function SchoolImageUpload({
     );
   }
 
-  // Single image mode - for Logo and Banner
   return (
     <div className="space-y-3">
       <label className="block text-sm font-semibold text-gray-800 mb-3">
@@ -575,7 +547,6 @@ export default function SchoolImageUpload({
                 }}
               />
             )}
-            {/* Overlay on hover */}
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300"></div>
           </div>
           <div className="absolute top-3 right-3 flex gap-2 z-10">

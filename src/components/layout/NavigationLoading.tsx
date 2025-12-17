@@ -9,12 +9,12 @@ export default function NavigationLoading() {
   const prevPathnameRef = useRef(pathname);
 
   useEffect(() => {
-    // Only show loading if pathname actually changed
+
     if (prevPathnameRef.current !== pathname) {
       setIsLoading(true);
       prevPathnameRef.current = pathname;
-      
-      // Hide loading after page transition completes
+
+
       const timer = setTimeout(() => {
         setIsLoading(false);
       }, 300);

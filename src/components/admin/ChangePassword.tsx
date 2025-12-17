@@ -70,7 +70,6 @@ export default function ChangePassword() {
         }
     };
 
-    // Eye icon components (same as login page)
     const EyeIcon = () => (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -87,12 +86,10 @@ export default function ChangePassword() {
     return (
         <div className="ml-64 mt-10 pt-24 px-6 flex justify-center">
             <div className="bg-[#FFFDF5] rounded-2xl shadow-lg p-8 w-[420px] border border-[#f5e6a3]">
-                {/* Header */}
                 <h1 className="text-2xl font-bold text-gray-800 text-center mb-8">
                     Change Password
                 </h1>
 
-                {/* Message */}
                 {message && (
                     <div
                         className={`p-3 rounded-lg mb-5 text-sm text-center ${message.type === "success"
@@ -104,9 +101,7 @@ export default function ChangePassword() {
                     </div>
                 )}
 
-                {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-5">
-                    {/* Old Password */}
                     <div>
                         <label className="block text-sm text-gray-600 mb-2">
                             Old Password
@@ -130,7 +125,6 @@ export default function ChangePassword() {
                         </div>
                     </div>
 
-                    {/* New Password */}
                     <div>
                         <label className="block text-sm text-gray-600 mb-2">
                             New Password
@@ -154,7 +148,6 @@ export default function ChangePassword() {
                         </div>
                     </div>
 
-                    {/* Confirm New Password */}
                     <div>
                         <label className="block text-sm text-gray-600 mb-2">
                             Confirm New Password
@@ -178,7 +171,6 @@ export default function ChangePassword() {
                         </div>
                     </div>
 
-                    {/* Submit Button */}
                     <div className="pt-2">
                         <button
                             type="submit"

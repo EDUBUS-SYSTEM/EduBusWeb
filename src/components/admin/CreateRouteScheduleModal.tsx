@@ -36,7 +36,6 @@ export default function CreateRouteScheduleModal({
   const [routes, setRoutes] = useState<Route[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
 
-  // Load routes and schedules from API
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -48,7 +47,6 @@ export default function CreateRouteScheduleModal({
         setSchedules(schedulesData);
       } catch (error) {
         console.error("Error loading routes and schedules:", error);
-        // Fallback to empty arrays on error
         setRoutes([]);
         setSchedules([]);
       }
@@ -112,7 +110,6 @@ export default function CreateRouteScheduleModal({
       onSuccess();
     } catch (error) {
       console.error("Error creating route schedule:", error);
-      // You might want to show an error message to the user here
     } finally {
       setLoading(false);
     }
@@ -120,7 +117,6 @@ export default function CreateRouteScheduleModal({
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
@@ -135,7 +131,6 @@ export default function CreateRouteScheduleModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
-          {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-2xl font-bold text-gray-800">
               Create New Route Schedule
@@ -148,9 +143,7 @@ export default function CreateRouteScheduleModal({
             </button>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Route Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <FaRoute className="inline w-4 h-4 mr-2" />
@@ -177,7 +170,6 @@ export default function CreateRouteScheduleModal({
               )}
             </div>
 
-            {/* Schedule Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <FaClock className="inline w-4 h-4 mr-2" />
@@ -206,7 +198,6 @@ export default function CreateRouteScheduleModal({
               )}
             </div>
 
-            {/* Preview */}
             {(selectedRoute || selectedSchedule) && (
               <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 border border-yellow-200 rounded-xl p-4">
                 <h4 className="font-semibold text-gray-800 mb-2">
@@ -234,7 +225,6 @@ export default function CreateRouteScheduleModal({
               </div>
             )}
 
-            {/* Effective Period */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -284,7 +274,6 @@ export default function CreateRouteScheduleModal({
               </div>
             </div>
 
-            {/* Notes */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Notes
@@ -298,7 +287,6 @@ export default function CreateRouteScheduleModal({
               />
             </div>
 
-            {/* Active Status */}
             <div className="flex items-center">
               <input
                 type="checkbox"
@@ -317,7 +305,6 @@ export default function CreateRouteScheduleModal({
               </label>
             </div>
 
-            {/* Actions */}
             <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
               <button
                 type="button"

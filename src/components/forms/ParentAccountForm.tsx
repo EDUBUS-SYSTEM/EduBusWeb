@@ -38,7 +38,7 @@ const ParentAccountForm: React.FC<ParentAccountFormProps> = ({
   loading = false,
   errors = {},
 }) => {
-  // Basic parent info
+
   const [formData, setFormData] = useState<ParentAccountData>({
     email: "",
     firstName: "",
@@ -84,7 +84,7 @@ const ParentAccountForm: React.FC<ParentAccountFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      {/* Parent Information Section */}
+
       <div className="bg-[#F9F7E3] rounded-2xl p-6 shadow-sm border border-gray-100">
         <h3 className="text-lg font-semibold text-gray-800 mb-6">
           Parent Information
@@ -159,7 +159,7 @@ const ParentAccountForm: React.FC<ParentAccountFormProps> = ({
       </div>
 
 
-      {/* Submit Button */}
+
       <div className="flex justify-center">
         <button
           type="submit"

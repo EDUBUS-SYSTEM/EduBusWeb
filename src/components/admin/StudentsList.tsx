@@ -49,7 +49,7 @@ export default function StudentsList() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Pagination state
+
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(6);
 
@@ -70,7 +70,7 @@ export default function StudentsList() {
     }
   };
 
-  // Fetch students with optional status filter
+
   const fetchStudents = useCallback(async (status?: StudentStatus | "all") => {
     try {
       setLoading(true);
@@ -94,13 +94,13 @@ export default function StudentsList() {
     }
   }, []);
 
-  // Fetch students when status filter changes
+
   useEffect(() => {
     fetchStudents(statusFilter);
-    setCurrentPage(1); // Reset to first page when filtering
+    setCurrentPage(1);
   }, [statusFilter, fetchStudents]);
 
-  // Search (only one useEffect, null-safe)
+
   useEffect(() => {
     const term = (searchTerm || "").toLowerCase().trim();
 
@@ -117,10 +117,10 @@ export default function StudentsList() {
     });
 
     setFilteredStudents(filtered);
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1);
   }, [searchTerm, students]);
 
-  // Sort functionality
+
   const handleSort = (field: "firstName" | "createdAt") => {
     if (sortBy === field) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -128,12 +128,12 @@ export default function StudentsList() {
       setSortBy(field);
       setSortOrder("asc");
     }
-    setCurrentPage(1); // Reset to first page when sorting
+    setCurrentPage(1);
   };
 
   const sortedStudents = [...filteredStudents].sort((a, b) => {
     if (sortBy === "createdAt") {
-      // Sort by date
+
       const aDate = new Date(a.createdAt).getTime();
       const bDate = new Date(b.createdAt).getTime();
 
@@ -143,7 +143,7 @@ export default function StudentsList() {
         return bDate - aDate;
       }
     } else {
-      // Sort by string fields
+
       const aValue = ((a[sortBy] as string) ?? "").toLowerCase();
       const bValue = ((b[sortBy] as string) ?? "").toLowerCase();
 
@@ -153,13 +153,13 @@ export default function StudentsList() {
     }
   });
 
-  // Pagination logic
+
   const totalPages = Math.ceil(sortedStudents.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedStudents = sortedStudents.slice(startIndex, endIndex);
 
-  // Pagination handlers
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -179,7 +179,7 @@ export default function StudentsList() {
   const handleAddStudent = async (newStudent: CreateStudentRequest) => {
     try {
       await studentService.create(newStudent);
-      // Refresh the students list
+
       await fetchStudents();
       setIsAddModalOpen(false);
       setSuccessMessage("Student added successfully!");
@@ -195,7 +195,7 @@ export default function StudentsList() {
   ) => {
     try {
       await studentService.update(id, updateData);
-      // Refresh the students list
+
       await fetchStudents();
       setIsEditModalOpen(false);
       setSelectedStudent(null);
@@ -216,7 +216,7 @@ export default function StudentsList() {
     setIsViewModalOpen(true);
   };
 
-  // Status management handlers
+
   const handleActivateStudent = async (id: string) => {
     try {
       await studentService.activate(id);
@@ -298,7 +298,7 @@ export default function StudentsList() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Check if file is Excel
+
     const fileExtension = file.name.split(".").pop()?.toLowerCase();
     if (fileExtension !== "xlsx" && fileExtension !== "xls") {
       alert("Please upload an Excel file (.xlsx or .xls)");
@@ -324,21 +324,21 @@ export default function StudentsList() {
         console.warn("Failed imports:", result.failedStudents);
       }
 
-      // Refresh the students list
+
       await fetchStudents();
     } catch (err) {
       console.error("Error importing students:", err);
       setError("Failed to import students");
     } finally {
       setUploading(false);
-      // Reset file input
+
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
     }
   };
 
-  // Function to trigger file input
+
   const handleImportClick = () => {
     if (fileInputRef.current && !uploading) {
       fileInputRef.current.click();
@@ -376,7 +376,7 @@ export default function StudentsList() {
 
   return (
     <div className="bg-gradient-to-br from-[#FEFCE8] to-[#FEF9E7] rounded-3xl shadow-xl p-6">
-      {/* Header */}
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-gray-200">
         <div>
           <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
@@ -387,7 +387,7 @@ export default function StudentsList() {
           </p>
         </div>
         <div className="flex gap-3">
-          {/* Export Button */}
+
           <button
             onClick={handleExportStudents}
             disabled={exporting}
@@ -405,7 +405,7 @@ export default function StudentsList() {
           </button>
 
           <label className="relative">
-            {/* Hidden file input */}
+
             <input
               ref={fileInputRef}
               type="file"
@@ -415,7 +415,7 @@ export default function StudentsList() {
               disabled={uploading}
             />
 
-            {/* Import Excel Button */}
+
             <button
               onClick={handleImportClick}
               disabled={uploading}
@@ -441,7 +441,7 @@ export default function StudentsList() {
         </div>
       </div>
 
-      {/* Error Message */}
+
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
           <div className="flex">
@@ -483,7 +483,7 @@ export default function StudentsList() {
         </div>
       )}
 
-      {/* Success Message */}
+
       {successMessage && (
         <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
           <div className="flex">
@@ -525,7 +525,7 @@ export default function StudentsList() {
         </div>
       )}
 
-      {/* Search and Sort */}
+
       <div className="bg-white rounded-2xl shadow-md p-4 mb-6">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="relative flex-1">
@@ -540,7 +540,7 @@ export default function StudentsList() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {/* Status Filter */}
+
             <select
               value={statusFilter}
               onChange={(e) =>
@@ -585,7 +585,7 @@ export default function StudentsList() {
         </div>
       </div>
 
-      {/* Students Table */}
+
       <div className="bg-white rounded-2xl shadow-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -677,7 +677,7 @@ export default function StudentsList() {
                         <FaEdit className="w-4 h-4" />
                       </button>
 
-                      {/* Status-specific actions */}
+
                       {student.status === StudentStatus.Available && (
                         <button
                           onClick={() => handleActivateStudent(student.id)}
@@ -758,11 +758,11 @@ export default function StudentsList() {
         )}
       </div>
 
-      {/* Pagination Controls */}
+
       {sortedStudents.length > 0 && (
         <div className="flex justify-center mt-6">
           <div className="flex items-center space-x-2 bg-white rounded-2xl px-6 py-3 shadow-md border border-gray-200">
-            {/* Previous Button */}
+
             <button
               onClick={handlePreviousPage}
               disabled={currentPage === 1 || totalPages <= 1}
@@ -774,17 +774,17 @@ export default function StudentsList() {
               &lt;
             </button>
 
-            {/* Page Numbers */}
+
             <div className="flex space-x-1">
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                // Show first page, last page, current page, and pages around current page
+
                 const shouldShow =
                   page === 1 ||
                   page === totalPages ||
                   (page >= currentPage - 1 && page <= currentPage + 1);
 
                 if (!shouldShow) {
-                  // Show ellipsis for gaps
+
                   if (page === currentPage - 2 || page === currentPage + 2) {
                     return (
                       <span key={page} className="w-8 h-8 flex items-center justify-center text-sm text-gray-500">
@@ -810,7 +810,7 @@ export default function StudentsList() {
               })}
             </div>
 
-            {/* Next Button */}
+
             <button
               onClick={handleNextPage}
               disabled={currentPage === totalPages || totalPages <= 1}
@@ -825,14 +825,14 @@ export default function StudentsList() {
         </div>
       )}
 
-      {/* Add Student Modal */}
+
       <AddStudentModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSubmit={handleAddStudent}
       />
 
-      {/* Edit Student Modal */}
+
       <EditStudentModal
         isOpen={isEditModalOpen}
         onClose={() => {
@@ -843,7 +843,7 @@ export default function StudentsList() {
         student={selectedStudent}
       />
 
-      {/* View Student Modal */}
+
       <ViewStudentModal
         isOpen={isViewModalOpen}
         onClose={() => {
@@ -853,7 +853,7 @@ export default function StudentsList() {
         student={selectedStudent}
       />
 
-      {/* Deactivate Student Modal */}
+
       <DeactivateStudentModal
         isOpen={isDeactivateModalOpen}
         onClose={() => {
@@ -864,7 +864,7 @@ export default function StudentsList() {
         studentName={studentToDeactivate?.name || ""}
       />
 
-      {/* Delete Student Modal */}
+
       <DeleteStudentModal
         isOpen={isDeleteModalOpen}
         onClose={() => {

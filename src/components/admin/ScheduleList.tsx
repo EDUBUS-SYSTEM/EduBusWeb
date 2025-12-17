@@ -51,11 +51,9 @@ export default function ScheduleList({
   );
   const [showUpdateConfirmation, setShowUpdateConfirmation] = useState(false);
 
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(5); // Reduced to 5 for pagination testing
+  const [itemsPerPage] = useState(5);
 
-  // Helper function to handle error responses
   const getErrorMessage = (error: unknown, defaultMessage: string): string => {
     if (error && typeof error === "object" && "response" in error) {
       const axiosError = error as {
@@ -93,7 +91,7 @@ export default function ScheduleList({
     return defaultMessage;
   };
 
-  // Load schedules from API
+
   const loadSchedules = async () => {
     try {
       setLoading(true);
@@ -102,7 +100,7 @@ export default function ScheduleList({
     } catch (error: unknown) {
       console.error("Error loading schedules:", error);
 
-      // Debug information
+
       console.log(
         "API Base URL:",
         process.env.NEXT_PUBLIC_API_URL || "http://localhost:7061/api"
@@ -116,7 +114,7 @@ export default function ScheduleList({
         console.log("Error status:", axiosError.response?.status);
         console.log("Error code:", axiosError.code);
 
-        // Show user-friendly error message
+
         if (
           axiosError.response?.status === 404 ||
           axiosError.code === "ECONNREFUSED"
@@ -124,7 +122,7 @@ export default function ScheduleList({
           console.log(
             "Backend server is not running. Please start the backend server."
           );
-          // You could show a toast notification here
+
         }
       }
 
@@ -132,7 +130,7 @@ export default function ScheduleList({
         console.log("Error message:", (error as { message: string }).message);
       }
 
-      // Fallback to empty array on error
+
       setSchedules([]);
     } finally {
       setLoading(false);
@@ -143,12 +141,12 @@ export default function ScheduleList({
     loadSchedules();
   }, [refreshTrigger]);
 
-  // Reset to first page when search term or filter changes
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filterActive]);
 
-  // When opening details, fetch time overrides to enrich selectedSchedule
+
   useEffect(() => {
     const loadOverridesForDetails = async () => {
       if (!showDetails || !selectedSchedule) return;
@@ -160,12 +158,12 @@ export default function ScheduleList({
           prev ? { ...prev, timeOverrides: overrides } : prev
         );
       } catch (err) {
-        // Silently ignore; details can still render without overrides
+
         console.error("Error loading overrides for details:", err);
       }
     };
     loadOverridesForDetails();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [showDetails, selectedSchedule?.id]);
 
   const filteredSchedules = useMemo(() => {
@@ -185,7 +183,7 @@ export default function ScheduleList({
     });
   }, [schedules, searchTerm, filterActive]);
 
-  // Pagination logic
+
   const totalPages = Math.ceil(filteredSchedules.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -211,15 +209,14 @@ export default function ScheduleList({
     }
   };
 
-  // Using centralized formatDate, formatDateForInput, and formatTime from @/utils/dateUtils
-  // Helper to format time string (HH:mm) to display format
+
   const formatTimeString = (time: string) => {
     if (!time) return 'N/A';
-    // If time is already in HH:mm format, convert to Date object
+
     if (/^\d{2}:\d{2}$/.test(time)) {
       return formatTime(`2000-01-01T${time}`);
     }
-    // Otherwise use formatTime directly
+
     return formatTime(time);
   };
 
@@ -231,7 +228,7 @@ export default function ScheduleList({
     setDeletingScheduleId(scheduleId);
     try {
       await scheduleService.deleteSchedule(scheduleId);
-      // Refresh the list after deletion
+
       loadSchedules();
     } catch (error: unknown) {
       console.error("Error deleting schedule:", error);
@@ -282,7 +279,7 @@ export default function ScheduleList({
           selectedSchedule.id
         );
         setTimeOverrides(overrides);
-        // Also update the details view if it's open
+
         setSelectedSchedule((prev) =>
           prev ? { ...prev, timeOverrides: overrides } : prev
         );
@@ -304,7 +301,7 @@ export default function ScheduleList({
           selectedSchedule.id
         );
         setSelectedSchedule(updatedSchedule);
-        // Refresh the schedules list
+
         loadSchedules();
       } catch (error) {
         console.error("Error refreshing schedule:", error);
@@ -316,7 +313,7 @@ export default function ScheduleList({
     e.preventDefault();
     if (!selectedSchedule) return;
 
-    // Simple validation
+
     const errors: Record<string, string> = {};
 
     if (!selectedSchedule.name.trim()) {
@@ -345,7 +342,7 @@ export default function ScheduleList({
       return;
     }
 
-    // Show custom confirmation modal instead of browser confirm
+
     setShowUpdateConfirmation(true);
   };
 
@@ -356,15 +353,15 @@ export default function ScheduleList({
 
     try {
       const updateScheduleDto = {
-        id: selectedSchedule.id || "", // Backend will convert string to Guid
-        name: selectedSchedule.name.trim(), // Simple trim instead of sanitization
+        id: selectedSchedule.id || "",
+        name: selectedSchedule.name.trim(),
         scheduleType: selectedSchedule.scheduleType || "",
-        tripType: selectedSchedule.tripType ?? 0, // TripType enum number
+        tripType: selectedSchedule.tripType ?? 0,
         startTime: selectedSchedule.startTime || "",
         endTime: selectedSchedule.endTime || "",
-        rRule: selectedSchedule.rRule || "", // Use actual RRule from schedule
+        rRule: selectedSchedule.rRule || "",
         timezone: selectedSchedule.timezone || "UTC",
-        academicYear: selectedSchedule.academicYear || "", // Include academic year
+        academicYear: selectedSchedule.academicYear || "",
         effectiveFrom: selectedSchedule.effectiveFrom
           ? new Date(selectedSchedule.effectiveFrom).toISOString()
           : new Date().toISOString(),
@@ -375,30 +372,30 @@ export default function ScheduleList({
           ? selectedSchedule.exceptions.map((ex: Date | string) =>
             typeof ex === 'string' ? ex : new Date(ex).toISOString()
           )
-          : [], // Convert Date[] to ISO string[]
+          : [],
         isActive:
           selectedSchedule.isActive !== undefined
             ? selectedSchedule.isActive
             : true,
         timeOverrides: selectedSchedule.timeOverrides
           ? selectedSchedule.timeOverrides
-          : [], // Preserve overrides
-        updatedAt: selectedSchedule.updatedAt, // Send current timestamp for optimistic locking
+          : [],
+        updatedAt: selectedSchedule.updatedAt,
       };
 
-      console.log("Sending update request:", updateScheduleDto); // Debug log
+      console.log("Sending update request:", updateScheduleDto);
 
       await scheduleService.updateSchedule(
         selectedSchedule.id,
         updateScheduleDto
       );
       setShowEditForm(false);
-      // Refresh the list after update
+
       loadSchedules();
     } catch (error: unknown) {
       console.error("Error updating schedule:", error);
 
-      // Simple error handling with concurrent update detection
+
       let errorMessage = "Failed to update schedule. Please try again.";
 
       if (error && typeof error === "object" && "response" in error) {
@@ -409,11 +406,11 @@ export default function ScheduleList({
           };
         };
 
-        // Handle concurrent update conflicts (409 Conflict)
+
         if (axiosError.response?.status === 409) {
           errorMessage =
             "This schedule was modified by another user. Please refresh and try again.";
-          // Refresh the schedule list to get latest data
+
           await loadSchedules();
         } else if (axiosError.response?.data?.message) {
           errorMessage = axiosError.response.data.message;
@@ -483,7 +480,6 @@ export default function ScheduleList({
                     </span>
                   </div>
 
-                  {/* Description field removed as it's not in the Schedule type */}
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="flex items-center gap-2 text-gray-600">
@@ -566,7 +562,7 @@ export default function ScheduleList({
         </div>
       )}
 
-      {/* Pagination - Always show */}
+
       <div className="mt-6">
         <div className="text-sm text-gray-500 mb-2 text-center">
           Showing {startIndex + 1}-
@@ -580,7 +576,7 @@ export default function ScheduleList({
         />
       </div>
 
-      {/* Schedule Details Modal */}
+
       {showDetails && selectedSchedule && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -598,7 +594,7 @@ export default function ScheduleList({
               </div>
 
               <div className="space-y-6">
-                {/* Header card */}
+
                 <div className="rounded-2xl bg-gradient-to-r from-white to-yellow-50 border border-yellow-100 p-5 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div>
@@ -626,7 +622,7 @@ export default function ScheduleList({
                   </div>
                 </div>
 
-                {/* Info grid */}
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
                     <p className="text-xs font-medium text-gray-500 mb-1">
@@ -668,7 +664,7 @@ export default function ScheduleList({
                   </div>
                 </div>
 
-                {/* RRule box */}
+
                 <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4">
                   <p className="text-sm font-semibold text-gray-800 mb-2">
                     Recurrence Rule (RRULE)
@@ -678,7 +674,7 @@ export default function ScheduleList({
                   </div>
                 </div>
 
-                {/* Quick stats */}
+
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                     <FaCalendarAlt className="w-3 h-3" /> Exceptions:{" "}
@@ -691,7 +687,7 @@ export default function ScheduleList({
                 </div>
               </div>
 
-              {/* Additional Information */}
+
               <div className="mt-6 p-4 bg-gray-50 rounded-xl">
                 <h4 className="text-lg font-semibold text-gray-800 mb-4">
                   Additional Information
@@ -759,7 +755,7 @@ export default function ScheduleList({
         </div>
       )}
 
-      {/* Edit Schedule Form Modal */}
+
       {showEditForm && selectedSchedule && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -975,7 +971,7 @@ export default function ScheduleList({
         </div>
       )}
 
-      {/* Time Overrides Modal */}
+
       {showTimeOverrides && selectedSchedule && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -1110,7 +1106,7 @@ export default function ScheduleList({
         </div>
       )}
 
-      {/* Time Override Modal */}
+
       {showTimeOverrideModal && selectedSchedule && (
         <TimeOverrideModal
           isOpen={showTimeOverrideModal}
@@ -1134,7 +1130,7 @@ export default function ScheduleList({
         />
       )}
 
-      {/* Exception Modal */}
+
       {showExceptionModal && selectedSchedule && (
         <ExceptionModal
           isOpen={showExceptionModal}
@@ -1144,12 +1140,12 @@ export default function ScheduleList({
         />
       )}
 
-      {/* Update Confirmation Modal */}
+
       {showUpdateConfirmation && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl">
             <div className="p-6">
-              {/* Header */}
+
               <div className="flex items-start gap-4 mb-6">
                 <div className="flex-shrink-0 w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
                   <FaExclamationTriangle className="w-6 h-6 text-yellow-600" />
@@ -1172,7 +1168,7 @@ export default function ScheduleList({
                 </div>
               </div>
 
-              {/* Actions */}
+
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setShowUpdateConfirmation(false)}

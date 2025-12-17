@@ -24,13 +24,11 @@ export default function RouteScheduleModal({ route, onClose, onSuccess }: RouteS
   const [error, setError] = useState<string>('');
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
 
-  // Load schedules and route schedules on mount
   useEffect(() => {
     loadData();
-    // Set default effective from to today
     const today = new Date();
-    today.setHours(today.getHours() + 1); // At least 1 hour from now
-    setEffectiveFrom(today.toISOString().slice(0, 16)); // Format for datetime-local input
+    today.setHours(today.getHours() + 1);
+    setEffectiveFrom(today.toISOString().slice(0, 16));
   }, [route.id]);
 
   const loadData = async () => {
@@ -38,11 +36,9 @@ export default function RouteScheduleModal({ route, onClose, onSuccess }: RouteS
       setLoading(true);
       setError('');
 
-      // Load all active schedules
       const schedulesData = await scheduleService.getSchedules({ activeOnly: true });
       setSchedules(schedulesData);
 
-      // Load route schedules for this route
       const routeSchedulesData = await routeScheduleService.getByRoute(route.id);
       setRouteSchedules(routeSchedulesData);
     } catch (err) {
@@ -94,7 +90,6 @@ export default function RouteScheduleModal({ route, onClose, onSuccess }: RouteS
       return;
     }
 
-    // Check if schedule is already linked
     const alreadyLinked = routeSchedules.some(rs => rs.scheduleId === selectedScheduleId);
     if (alreadyLinked) {
       setError('This schedule is already linked to this route');
@@ -116,10 +111,8 @@ export default function RouteScheduleModal({ route, onClose, onSuccess }: RouteS
 
       await routeScheduleService.create(createDto);
 
-      // Refresh data
       await loadData();
 
-      // Reset form
       setSelectedScheduleId('');
       setEffectiveFrom('');
       setEffectiveTo('');
@@ -161,7 +154,6 @@ export default function RouteScheduleModal({ route, onClose, onSuccess }: RouteS
 
       await routeScheduleService.delete(routeScheduleId);
 
-      // Refresh data
       await loadData();
       onSuccess();
     } catch (error: unknown) {
@@ -189,22 +181,17 @@ export default function RouteScheduleModal({ route, onClose, onSuccess }: RouteS
     }
   };
 
-  // Get schedule details for display
   const getScheduleDetails = (scheduleId: string) => {
     return schedules.find(s => s.id === scheduleId);
   };
 
-  // Filter out already linked schedules
   const availableSchedules = schedules.filter(schedule =>
     !routeSchedules.some(rs => rs.scheduleId === schedule.id)
   );
 
-  // Using centralized formatDate and formatDateTime from @/utils/dateUtils
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
-        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
@@ -222,9 +209,7 @@ export default function RouteScheduleModal({ route, onClose, onSuccess }: RouteS
           </button>
         </div>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {/* Error Message with Close Button */}
           {error && (
             <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -240,7 +225,6 @@ export default function RouteScheduleModal({ route, onClose, onSuccess }: RouteS
             </div>
           )}
 
-          {/* Add New Schedule Section */}
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <FaPlus className="text-green-600" />
@@ -248,7 +232,6 @@ export default function RouteScheduleModal({ route, onClose, onSuccess }: RouteS
             </h3>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Left Column - Schedule Selection */}
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -311,7 +294,6 @@ export default function RouteScheduleModal({ route, onClose, onSuccess }: RouteS
                 </div>
               </div>
 
-              {/* Right Column - Date Selection */}
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -375,7 +357,6 @@ export default function RouteScheduleModal({ route, onClose, onSuccess }: RouteS
             </div>
           </div>
 
-          {/* Linked Schedules Section */}
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <FaCalendarAlt className="text-blue-600" />
@@ -401,7 +382,6 @@ export default function RouteScheduleModal({ route, onClose, onSuccess }: RouteS
                       className="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:bg-gray-100 transition-colors"
                     >
                       <div className="flex items-start justify-between">
-                        {/* Left Side - Schedule Info */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-3 mb-2">
                             <h4 className="font-semibold text-gray-900 truncate">
@@ -430,7 +410,6 @@ export default function RouteScheduleModal({ route, onClose, onSuccess }: RouteS
                           )}
                         </div>
 
-                        {/* Right Side - Effective Dates and Priority */}
                         <div className="text-right text-xs text-gray-500 ml-4 flex-shrink-0">
                           <div className="space-y-1">
                             <div>Effective: {formatDateTime(routeSchedule.effectiveFrom)}</div>
@@ -442,7 +421,6 @@ export default function RouteScheduleModal({ route, onClose, onSuccess }: RouteS
                         </div>
                       </div>
 
-                      {/* Delete Button - Bottom Right */}
                       <div className="flex justify-end mt-3">
                         <button
                           onClick={() => handleUnlinkSchedule(routeSchedule.id)}
@@ -462,7 +440,6 @@ export default function RouteScheduleModal({ route, onClose, onSuccess }: RouteS
           </div>
         </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 bg-gray-50">
           <button
             onClick={onClose}

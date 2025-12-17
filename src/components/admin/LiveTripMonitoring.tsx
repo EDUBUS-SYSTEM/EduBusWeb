@@ -19,7 +19,7 @@ export default function LiveTripMonitoring() {
     ongoingTrips,
     locationUpdates,
     attendanceUpdates,
-    selectedTripIds, // ✅ Get from Redux via hook
+    selectedTripIds, 
     stats,
     loading,
     getLocationUpdate,
@@ -32,7 +32,6 @@ export default function LiveTripMonitoring() {
   const [loadingTripDetails, setLoadingTripDetails] = useState(false);
   const [schoolLocation, setSchoolLocation] = useState<{ lat: number; lng: number } | undefined>(undefined);
 
-  // Load school location for map center and school marker
   useEffect(() => {
     let isMounted = true;
 
@@ -47,7 +46,6 @@ export default function LiveTripMonitoring() {
         }
       } catch (error) {
         console.error('Error loading school location for live map:', error);
-        // Nếu lỗi thì map sẽ tự dùng default location trong LiveVehicleMap
       }
     };
 
@@ -58,7 +56,6 @@ export default function LiveTripMonitoring() {
     };
   }, []);
 
-  // ✅ Use Redux actions for trip selection
   const handleTripToggle = (tripId: string) => {
     dispatch(toggleTripSelection(tripId));
   };
@@ -164,7 +161,6 @@ export default function LiveTripMonitoring() {
 
   return (
     <div className="space-y-4">
-      {/* Connection Status */}
       <div className="flex items-center justify-between bg-white rounded-lg shadow-sm p-3 border border-gray-100">
         <div className="flex items-center gap-2">
           <div className={`w-3 h-3 rounded-full ${connectionStatus === 'connected' ? 'bg-green-500' :
@@ -197,7 +193,6 @@ export default function LiveTripMonitoring() {
         </div>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
           <div className="flex items-center justify-between">
@@ -228,19 +223,8 @@ export default function LiveTripMonitoring() {
             <FaCheckCircle className="w-5 h-5 text-blue-500" />
           </div>
         </div>
-
-        {/* <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-gray-600">Issues</p>
-              <p className="text-lg font-bold text-red-600">{stats.issues}</p>
-            </div>
-            <FaExclamationTriangle className="w-5 h-5 text-red-500" />
-          </div>
-        </div> */}
       </div>
 
-      {/* Trip Cards */}
       {ongoingTrips.length === 0 ? (
         <div className="text-center py-8 text-gray-500 bg-white rounded-lg shadow-sm border border-gray-100">
           <FaMapMarkerAlt className="w-12 h-12 text-gray-300 mx-auto mb-2" />
@@ -316,24 +300,20 @@ export default function LiveTripMonitoring() {
         </div>
       )}
 
-      {/* Map Modal */}
       <LiveVehicleMapModal
         isOpen={isMapModalOpen}
         onClose={() => {
           setIsMapModalOpen(false);
-          // Optional: Reset selection when modal closes
-          // dispatch(deselectAllTrips());
         }}
         trips={ongoingTrips}
         locationUpdates={locationUpdates}
-        selectedTripIds={selectedTripIds} // ✅ Pass from Redux
-        onTripToggle={handleTripToggle} // ✅ Pass Redux action
-        onSelectAllTrips={handleSelectAllTrips} // ✅ Pass Redux action
-        onDeselectAllTrips={handleDeselectAllTrips} // ✅ Pass Redux action
+        selectedTripIds={selectedTripIds}
+        onTripToggle={handleTripToggle} 
+        onSelectAllTrips={handleSelectAllTrips} 
+        onDeselectAllTrips={handleDeselectAllTrips} 
         schoolLocation={schoolLocation}
       />
 
-      {/* Trip Details Modal */}
       {isDetailsModalOpen && selectedTrip && (
         <TripDetails
           trip={selectedTrip}
@@ -344,7 +324,6 @@ export default function LiveTripMonitoring() {
         />
       )}
 
-      {/* Loading Overlay */}
       {loadingTripDetails && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 shadow-xl">

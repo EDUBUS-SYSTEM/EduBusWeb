@@ -31,19 +31,16 @@ import * as XLSX from "xlsx";
 import { toast } from "react-toastify";
 
 export default function AdminDashboard() {
-    // Fetch current semester (from dashboard-specific API)
     const { data: semesterData, isLoading: semesterLoading } = useQuery({
         queryKey: ["currentSemester"],
         queryFn: () => dashboardService.getCurrentSemester(),
     });
 
-    // Fetch current unit price
     const { data: unitPriceData, isLoading: unitPriceLoading } = useQuery({
         queryKey: ["currentUnitPrice"],
         queryFn: () => unitPriceService.getCurrentEffective(),
     });
 
-    // Fetch user counts by role
     const { data: parentData } = useQuery({
         queryKey: ["users", "parent"],
         queryFn: () => userAccountService.getUsers({ role: "Parent", perPage: 1 }),
@@ -59,31 +56,26 @@ export default function AdminDashboard() {
         queryFn: () => userAccountService.getUsers({ role: "Supervisor", perPage: 1 }),
     });
 
-    // Fetch students count
     const { data: studentsData } = useQuery({
         queryKey: ["students"],
         queryFn: () => studentService.getAll(),
     });
 
-    // Fetch active students
     const { data: activeStudents } = useQuery({
         queryKey: ["students", "active"],
-        queryFn: () => studentService.getByStatus(2), // Active = 2
+        queryFn: () => studentService.getByStatus(2),
     });
 
-    // Fetch inactive students  
     const { data: inactiveStudents } = useQuery({
         queryKey: ["students", "inactive"],
-        queryFn: () => studentService.getByStatus(3), // Inactive = 3
+        queryFn: () => studentService.getByStatus(3),
     });
 
-    // Fetch vehicles count
     const { data: vehiclesData } = useQuery({
         queryKey: ["vehicles"],
         queryFn: () => vehicleService.getVehicles({ page: 1, perPage: 1 }),
     });
 
-    // Fetch trips for current semester
     const { data: tripsData } = useQuery({
         queryKey: ["trips", semesterData?.semesterCode],
         queryFn: () => {
@@ -97,7 +89,6 @@ export default function AdminDashboard() {
         enabled: !!semesterData,
     });
 
-    // Fetch revenue statistics based on paid transactions
     const { data: revenueStatistics, isLoading: revenueLoading } = useQuery({
         queryKey: ["revenue", semesterData?.semesterCode],
         queryFn: () => {
@@ -111,7 +102,6 @@ export default function AdminDashboard() {
         refetchInterval: 30000,
     });
 
-    // Fetch revenue timeline
     const { data: revenueTimeline } = useQuery({
         queryKey: ["revenueTimeline", semesterData?.semesterCode],
         queryFn: () => {
@@ -125,39 +115,34 @@ export default function AdminDashboard() {
         refetchInterval: 30000,
     });
 
-    // Fetch Dashboard Statistics
     const { data: dashboardStats, isLoading: dashboardLoading } = useQuery({
         queryKey: ["dashboardStatistics"],
         queryFn: () => dashboardService.getDashboardStatistics(),
-        refetchInterval: 30000, // Refetch every 30 seconds
+        refetchInterval: 30000,
     });
 
-    // Fetch Daily Students
     const { data: dailyStudents, isLoading: dailyStudentsLoading } = useQuery({
         queryKey: ["dailyStudents"],
         queryFn: () => dashboardService.getDailyStudents(),
         refetchInterval: 30000,
     });
 
-    // Fetch Attendance Rate
     const { data: attendanceRate, isLoading: attendanceRateLoading } = useQuery({
         queryKey: ["attendanceRate"],
         queryFn: () => dashboardService.getAttendanceRate("today"),
         refetchInterval: 30000,
     });
 
-    // Fetch Vehicle Runtime
     const { data: vehicleRuntime, isLoading: vehicleRuntimeLoading } = useQuery({
         queryKey: ["vehicleRuntime"],
         queryFn: () => dashboardService.getVehicleRuntime(),
         refetchInterval: 30000,
     });
 
-    // Fetch Route Statistics
     const { data: routeStatistics, isLoading: routeStatisticsLoading } = useQuery({
         queryKey: ["routeStatistics"],
         queryFn: () => dashboardService.getRouteStatistics(),
-        refetchInterval: 60000, // Refetch every minute
+        refetchInterval: 60000,
     });
 
     const totalUsers = (parentData?.totalCount || 0) + (driverData?.totalCount || 0) + (supervisorData?.totalCount || 0);
@@ -202,7 +187,6 @@ export default function AdminDashboard() {
         const safeData = data.length > 0 ? data : [{ Note: "No data" }];
         const worksheet = XLSX.utils.json_to_sheet(safeData);
 
-        // Auto width
         const colWidths =
             safeData.length > 0
                 ? Object.keys(safeData[0]).map((key) => ({
@@ -211,7 +195,6 @@ export default function AdminDashboard() {
                 : [{ wch: 10 }];
         (worksheet as XLSX.WorkSheet)["!cols"] = colWidths;
 
-        // Number formatting by header
         if (options?.numberFormats && safeData.length > 0 && worksheet["!ref"]) {
             const range = XLSX.utils.decode_range(worksheet["!ref"]);
             const headers = Object.keys(safeData[0]);
@@ -228,7 +211,6 @@ export default function AdminDashboard() {
             });
         }
 
-        // Autofilter for quick scan
         if (worksheet["!ref"]) {
             worksheet["!autofilter"] = { ref: worksheet["!ref"] };
         }
@@ -242,7 +224,6 @@ export default function AdminDashboard() {
             const todayIso = new Date().toISOString().slice(0, 10);
             const semesterCode = semesterData?.semesterCode || "na";
 
-            // Summary sheet
             buildSheet(workbook, [
                 {
                     GeneratedAt: new Date().toISOString(),
@@ -272,7 +253,6 @@ export default function AdminDashboard() {
                 },
             ], "Summary");
 
-            // Attendance sheet
             buildSheet(workbook, attendanceExport ? [
                 {
                     TodayRate: attendanceExport.todayRate,
@@ -287,7 +267,6 @@ export default function AdminDashboard() {
                 },
             ] : [], "Attendance");
 
-            // Daily students sheet
             buildSheet(workbook, dailyStudentsExport ? [
                 {
                     Today: dailyStudentsExport.today,
@@ -301,7 +280,6 @@ export default function AdminDashboard() {
                 })),
             ] : [], "Daily Students");
 
-            // Vehicle runtime sheet
             buildSheet(workbook, vehicleRuntimeExport ? [
                 {
                     TotalHoursToday: vehicleRuntimeExport.totalHoursToday,
@@ -316,7 +294,6 @@ export default function AdminDashboard() {
                 })),
             ] : [], "Vehicle Runtime");
 
-            // Route statistics sheet
             buildSheet(
                 workbook,
                 routeStatisticsExport
@@ -359,7 +336,6 @@ export default function AdminDashboard() {
                 { numberFormats: { AttendanceRate: "0.0%", AverageRuntimeHours: "0.0", TotalTrips: "0", TotalStudents: "0", ActiveVehicles: "0" } }
             );
 
-            // Revenue timeline sheet
             buildSheet(
                 workbook,
                 revenueStatistics
@@ -402,7 +378,6 @@ export default function AdminDashboard() {
                 }
             );
 
-            // Charts data sheet (prepared series for quick charting)
             const chartsRows: Record<string, unknown>[] = [];
             chartsRows.push({ Section: "Revenue Timeline", Note: "Use Date vs Amount" });
             (revenueTimeline ?? []).forEach((p) =>
@@ -457,7 +432,6 @@ export default function AdminDashboard() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -477,13 +451,11 @@ export default function AdminDashboard() {
                 </div>
             </motion.div>
 
-            {/* Timeline and Unit Price Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div className="lg:col-span-2">
                     <TimelineCard semesterData={semesterData || null} loading={semesterLoading} />
                 </div>
 
-                {/* Unit Price Card */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -528,7 +500,6 @@ export default function AdminDashboard() {
                 </motion.div>
             </div>
 
-            {/* Statistics Cards */}
             <div>
                 <motion.h2
                     initial={{ opacity: 0, x: -20 }}
@@ -574,7 +545,6 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            {/* User Breakdown */}
             <div>
                 <motion.h2
                     initial={{ opacity: 0, x: -20 }}
@@ -612,7 +582,6 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            {/* Dashboard Analytics Section */}
             <div>
                 <motion.h2
                     initial={{ opacity: 0, x: -20 }}
@@ -624,20 +593,17 @@ export default function AdminDashboard() {
                 </motion.h2>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-                    {/* Attendance Rate Card */}
                     <AttendanceRateCard 
                         data={attendanceRate || dashboardStats?.attendanceRate || null} 
                         loading={attendanceRateLoading || dashboardLoading} 
                     />
 
-                    {/* Daily Students Chart */}
                     <DailyStudentsChart 
                         data={dailyStudents || dashboardStats?.dailyStudents || null} 
                         loading={dailyStudentsLoading || dashboardLoading} 
                     />
                 </div>
 
-                {/* Vehicle Runtime Card */}
                 <div className="mb-6">
                     <VehicleRuntimeCard 
                         data={vehicleRuntime || dashboardStats?.vehicleRuntime || null} 
@@ -645,7 +611,6 @@ export default function AdminDashboard() {
                     />
                 </div>
 
-                {/* Route Statistics Table */}
                 <div className="mb-6">
                     <RouteStatisticsTable 
                         data={routeStatistics || dashboardStats?.routeStatistics || null} 
@@ -654,7 +619,6 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            {/* Revenue Statistics */}
             <div>
                 <motion.h2
                     initial={{ opacity: 0, x: -20 }}

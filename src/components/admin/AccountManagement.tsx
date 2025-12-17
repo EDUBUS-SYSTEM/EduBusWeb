@@ -25,7 +25,6 @@ import {
 } from "@/services/userAccountService/userAccountService.type";
 import { formatDate } from "@/utils/dateUtils";
 
-// Memoized User Row Component
 const UserRow = memo(({
   user,
   onLockClick,
@@ -59,7 +58,6 @@ const UserRow = memo(({
 
   return (
     <tr className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 transition-all duration-200">
-      {/* User Information */}
       <td className="px-6 py-6">
         <div className="flex items-center">
           <div className="flex-shrink-0 h-12 w-12 relative">
@@ -88,7 +86,6 @@ const UserRow = memo(({
         </div>
       </td>
 
-      {/* Contact Details */}
       <td className="px-6 py-6">
         <div className="space-y-1">
           <div className="text-sm text-gray-900 font-medium">{user.email}</div>
@@ -96,7 +93,6 @@ const UserRow = memo(({
         </div>
       </td>
 
-      {/* Role & Status */}
       <td className="px-6 py-6">
         <div className="space-y-2">
           <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800">
@@ -121,7 +117,6 @@ const UserRow = memo(({
         </div>
       </td>
 
-      {/* Account Info */}
       <td className="px-6 py-6">
         <div className="text-sm text-gray-900">
           Created: {formatDate(user.createdAt)}
@@ -133,7 +128,6 @@ const UserRow = memo(({
         )}
       </td>
 
-      {/* Actions */}
       <td className="px-6 py-6">
         <div className="flex items-center gap-3">
           <button
@@ -184,21 +178,18 @@ export default function AccountManagement() {
   const [lockValidationError, setLockValidationError] = useState<string | null>(null);
   const [reasonValidationError, setReasonValidationError] = useState<string | null>(null);
 
-  // Debounce search
   React.useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 300);
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Reset to page 1 when filters change
   React.useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearch, statusFilter, roleFilter, sortBy, sortOrder]);
 
-  // Build query params for server-side filtering
   const queryParams = useMemo<GetUsersParams>(() => ({
     page: currentPage,
-    perPage: 20, // Server-side pagination
+    perPage: 20,
     sortBy,
     sortOrder,
     search: debouncedSearch || undefined,
@@ -206,16 +197,14 @@ export default function AccountManagement() {
     role: roleFilter || undefined,
   }), [currentPage, sortBy, sortOrder, debouncedSearch, statusFilter, roleFilter]);
 
-  // Fetch users with React Query (server-side pagination)
   const { data, isLoading, isFetching, error: queryError } = useQuery<UserListResponse, Error>({
     queryKey: ['users', queryParams],
     queryFn: () => userAccountService.getUsers(queryParams),
-    staleTime: 1000 * 30, // 30 seconds - data is fresh for 30 seconds
+    staleTime: 1000 * 30,
     refetchOnWindowFocus: false,
     refetchOnMount: 'always',
   });
 
-  // Lock user mutation
   const lockMutation = useMutation({
     mutationFn: ({ userId, request }: { userId: string; request: LockUserRequest }) =>
       userAccountService.lockUser(userId, request),
@@ -233,7 +222,6 @@ export default function AccountManagement() {
     },
   });
 
-  // Unlock user mutation
   const unlockMutation = useMutation({
     mutationFn: (userId: string) => userAccountService.unlockUser(userId),
     onSuccess: () => {
@@ -326,7 +314,6 @@ export default function AccountManagement() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Scroll to top when page changes
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -356,7 +343,7 @@ export default function AccountManagement() {
 
   return (
     <div className="space-y-8">
-      {/* Header Section */}
+
       <div className="bg-[#fdc600bd] rounded-2xl p-4 shadow-lg">
         <div className="flex items-center justify-between">
           <div>
@@ -381,7 +368,6 @@ export default function AccountManagement() {
         </div>
       </div>
 
-      {/* Alert Messages */}
       {error && (
         <div className="bg-gradient-to-r from-red-50 to-red-100 border-l-4 border-red-500 p-4 rounded-lg shadow-md">
           <div className="flex items-center gap-3">
@@ -416,9 +402,9 @@ export default function AccountManagement() {
         </div>
       )}
 
-      {/* Main Content Card */}
+
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden relative">
-        {/* Search and Filter Section */}
+
         <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-6 border-b border-gray-200">
           <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
             <div className="flex flex-col sm:flex-row gap-4 items-center">
@@ -491,7 +477,6 @@ export default function AccountManagement() {
           </div>
         </div>
 
-        {/* Table Section */}
         <div className="overflow-x-auto">
           {isLoading && users.length === 0 ? (
             <TableSkeleton rows={5} cols={5} />
@@ -530,7 +515,6 @@ export default function AccountManagement() {
           )}
         </div>
 
-        {/* Small fetching overlay to indicate background loading without losing focus */}
         {isFetching && !isLoading && (
           <div className="absolute inset-x-0 top-0 flex justify-end p-3 pointer-events-none">
             <div className="flex items-center gap-2 bg-white/80 rounded-full px-3 py-1 text-xs text-gray-500 shadow-sm">
@@ -540,7 +524,6 @@ export default function AccountManagement() {
           </div>
         )}
 
-        {/* Pagination */}
         {users.length > 0 && (
           <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
             <div className="flex items-center justify-between">
@@ -564,7 +547,6 @@ export default function AccountManagement() {
         )}
       </div>
 
-      {/* Lock Modal */}
       {showLockModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">

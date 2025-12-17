@@ -12,8 +12,8 @@ interface UploadButtonProps {
   multiple?: boolean;
 }
 
-const UploadButton: React.FC<UploadButtonProps> = ({ 
-  onFileSelect, 
+const UploadButton: React.FC<UploadButtonProps> = ({
+  onFileSelect,
   onDownloadTemplate,
   className = '',
   showDownloadTemplate = false,
@@ -35,7 +35,7 @@ const UploadButton: React.FC<UploadButtonProps> = ({
 
   return (
     <div className="flex items-center space-x-3">
-      {/* Hidden file input */}
+
       <input
         ref={fileInputRef}
         type="file"
@@ -44,7 +44,7 @@ const UploadButton: React.FC<UploadButtonProps> = ({
         onChange={handleFileSelect}
         className="hidden"
       />
-      
+
       <button
         onClick={openFileDialog}
         className={`
@@ -57,7 +57,7 @@ const UploadButton: React.FC<UploadButtonProps> = ({
         <Upload className="w-4 h-4" />
         <span className="text-sm font-medium">Import files</span>
       </button>
-      
+
       {showDownloadTemplate && onDownloadTemplate && (
         <button
           onClick={onDownloadTemplate}

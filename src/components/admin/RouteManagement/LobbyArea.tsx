@@ -1,4 +1,3 @@
-// EduBusWeb/src/components/admin/RouteManagement/LobbyArea.tsx
 import React from 'react';
 import { Droppable } from '@hello-pangea/dnd';
 import { FaMapMarkerAlt } from 'react-icons/fa';
@@ -15,7 +14,6 @@ const LobbyArea: React.FC<LobbyAreaProps> = ({ lobby }) => {
       {(provided, snapshot) => (
         <div className="bg-white border-2 border-[#FDE68A] hover:border-[#fad23c] rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
           <div className="flex items-stretch min-h-[120px]">
-            {/* Header Section */}
             <div className="w-52 flex-shrink-0 bg-gradient-to-br from-[#FEF3C7] to-[#FDE68A] p-5 flex flex-col justify-center border-r border-[#FDE68A] relative">
               <div className="absolute inset-0 bg-gradient-to-br from-[#fad23c]/10 to-[#fad23c]/5"></div>
               <div className="relative z-10">
@@ -36,7 +34,6 @@ const LobbyArea: React.FC<LobbyAreaProps> = ({ lobby }) => {
               </div>
             </div>
 
-            {/* Scrollable pickup points (actual droppable area) */}
             <div
               {...provided.droppableProps}
               ref={provided.innerRef}

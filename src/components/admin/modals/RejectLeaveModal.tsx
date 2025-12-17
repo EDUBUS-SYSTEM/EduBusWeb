@@ -31,7 +31,7 @@ export default function RejectLeaveModal({
   };
 
   const handleReject = async () => {
-    // Validate reason
+
     if (!reason.trim()) {
       setError("Please provide a rejection reason");
       return;
@@ -42,7 +42,7 @@ export default function RejectLeaveModal({
       return;
     }
 
-    setError(""); // Clear error
+    setError(""); 
     await onReject(leave.id, reason.trim());
   };
 
@@ -68,7 +68,7 @@ export default function RejectLeaveModal({
             value={reason}
             onChange={(e) => {
               setReason(e.target.value);
-              setError(""); // Clear error when typing
+              setError(""); 
             }}
             placeholder="Enter rejection reason (required, minimum 10 characters)..."
             className={`w-full px-3 py-2 border ${

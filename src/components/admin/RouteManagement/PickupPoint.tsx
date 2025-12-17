@@ -1,4 +1,3 @@
-// EduBusWeb/src/components/admin/RouteManagement/PickupPoint.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Draggable } from '@hello-pangea/dnd';
@@ -11,7 +10,6 @@ interface PickupPointProps {
   className?: string;
 }
 
-// Portal-based Tooltip Component
 const Tooltip: React.FC<{ 
   children: React.ReactNode; 
   content: React.ReactNode; 
@@ -58,7 +56,6 @@ const Tooltip: React.FC<{
       }}
     >
       {content}
-      {/* Tooltip arrow */}
       <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
     </div>,
     document.body
@@ -78,17 +75,14 @@ const Tooltip: React.FC<{
 };
 
 const PickupPoint: React.FC<PickupPointProps> = ({ point, index, className = "" }) => {
-  // Helper function to truncate text
   const truncateText = (text: string, maxLength: number = 12): string => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
   };
 
-  // Create meaningful display text
   const displayText = point.location.address || point.pickupPointId;
   const truncatedText = truncateText(displayText);
 
-  // Tooltip content with full information
   const tooltipContent = (
     <div className="text-left">
       <div className="font-semibold mb-1">{point.location.address}</div>
@@ -116,12 +110,10 @@ const PickupPoint: React.FC<PickupPointProps> = ({ point, index, className = "" 
               snapshot.isDragging ? 'opacity-70 rotate-6 scale-125 shadow-xl ring-3 ring-[#0EA5E9]' : ''
             }`}
           >
-            {/* Passenger Icon */}
             <div className="w-6 h-6 bg-[#0EA5E9] rounded-full flex items-center justify-center mb-1">
               <FaUser className="text-white text-xs" />
             </div>
             
-            {/* Student Count */}
             <div className="text-xs font-bold text-[#0284C7] bg-white/90 rounded-full px-2 py-0.5 min-w-[24px] text-center">
               {point.studentCount}
             </div>

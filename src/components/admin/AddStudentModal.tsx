@@ -28,7 +28,6 @@ export default function AddStudentModal({
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -46,12 +45,10 @@ export default function AddStudentModal({
     if (!formData.parentEmail.trim()) {
       newErrors.parentEmail = 'Parent email is required';
     } else {
-      // Email format validation with strict domain check
       const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
       if (!emailRegex.test(formData.parentEmail)) {
         newErrors.parentEmail = "Please enter a valid email address";
       } else {
-        // Check for common domains only
         const domain = formData.parentEmail.split('@')[1];
         const commonDomains = [
           'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'live.com',
@@ -60,7 +57,6 @@ export default function AddStudentModal({
           'company.com', 'business.com', 'org.com', 'net.com'
         ];
         
-        // Only allow common domains
         if (!commonDomains.includes(domain.toLowerCase())) {
           newErrors.parentEmail = "Please use a valid email domain (e.g., @gmail.com, @fpt.edu.vn)";
         }
@@ -89,7 +85,6 @@ export default function AddStudentModal({
 
       await onSubmit(newStudent);
 
-      // Reset form
       setFormData({
         firstName: '',
         lastName: '',
@@ -108,7 +103,6 @@ export default function AddStudentModal({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-[#FEFCE8] rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        {/* Header */}
         <div className="flex justify-between items-center p-4 border-b border-gray-200">
           <h2 className="text-lg font-bold text-gray-800">Add New Student</h2>
           <button
@@ -119,9 +113,7 @@ export default function AddStudentModal({
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* First Name */}
           <div>
             <label
               htmlFor="firstName"
@@ -145,7 +137,6 @@ export default function AddStudentModal({
             )}
           </div>
 
-          {/* Last Name */}
           <div>
             <label
               htmlFor="lastName"
@@ -169,7 +160,6 @@ export default function AddStudentModal({
             )}
           </div>
 
-          {/* Parent Email */}
           <div>
             <label htmlFor="parentEmail" className="block text-sm font-medium text-gray-700 mb-2">
               Parent Email *
@@ -190,7 +180,6 @@ export default function AddStudentModal({
             )}
           </div>
 
-          {/* Actions */}
           <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
             <button
               type="button"

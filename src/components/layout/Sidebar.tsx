@@ -1,4 +1,4 @@
-// components/layout/Sidebar.tsx
+
 "use client";
 import Link from "next/link";
 import Image from "next/image";
@@ -68,7 +68,7 @@ export default function Sidebar() {
     { href: "/admin/school", label: "School Management", icon: <FaSchool /> },
   ];
 
-  // Save scroll position when scrolling (but not when we're restoring)
+
   useEffect(() => {
     const nav = navRef.current;
     if (!nav) return;
@@ -83,7 +83,7 @@ export default function Sidebar() {
     return () => nav.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Restore scroll position after navigation - use useLayoutEffect to prevent flickering
+
   useLayoutEffect(() => {
     const nav = navRef.current;
     if (!nav || typeof window === 'undefined') return;
@@ -91,11 +91,11 @@ export default function Sidebar() {
     const savedScrollPosition = sessionStorage.getItem(SIDEBAR_SCROLL_KEY);
     if (savedScrollPosition) {
       const scrollPosition = parseInt(savedScrollPosition, 10);
-      // Set flag to prevent saving scroll during restoration
+
       isRestoringRef.current = true;
-      // Set immediately without animation to prevent jumping
+
       nav.scrollTop = scrollPosition;
-      // Reset flag after a short delay
+
       setTimeout(() => {
         isRestoringRef.current = false;
       }, 100);
@@ -104,7 +104,7 @@ export default function Sidebar() {
 
   return (
     <aside className="bg-[#FEFCE8] w-64 h-screen flex flex-col fixed left-0 top-0 shadow-md z-50">
-      {/* Header admin avatar */}
+
       <div className="flex items-center justify-between gap-3 px-5 py-4 bg-[#fad23c]">
         <div className="flex items-center gap-3">
           <Image
@@ -119,7 +119,7 @@ export default function Sidebar() {
         <NotificationBell />
       </div>
 
-      {/* Menu */}
+
       <nav
         ref={navRef}
         className="flex-1 overflow-y-auto mt-2 text-[#463B3B] text-sm font-medium pr-1"
@@ -135,7 +135,7 @@ export default function Sidebar() {
                 : "hover:bg-[#FFF085]"
               }`}
             onClick={() => {
-              // Save current scroll position before navigation
+
               if (navRef.current && typeof window !== 'undefined') {
                 sessionStorage.setItem(SIDEBAR_SCROLL_KEY, navRef.current.scrollTop.toString());
               }

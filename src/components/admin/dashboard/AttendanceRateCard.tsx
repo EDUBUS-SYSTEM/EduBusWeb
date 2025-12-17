@@ -10,12 +10,12 @@ interface AttendanceRateCardProps {
     onPeriodChange: (period: 'today' | 'week' | 'month') => void;
 }
 
-const COLORS = ['#22c55e', '#ef4444', '#eab308', '#3b82f6', '#9ca3af']; // Present, Absent, Late, Excused, Pending
+const COLORS = ['#22c55e', '#ef4444', '#eab308', '#3b82f6', '#9ca3af']; 
 
 const AttendanceRateCard: React.FC<AttendanceRateCardProps> = ({ data, loading, period, onPeriodChange }) => {
     if (loading) return <Card title="Attendance Rate" className="h-full min-h-[400px] animate-pulse"><div className="h-full bg-gray-100 rounded-xl" /></Card>;
 
-    // Handle case where data is undefined or null
+
     if (!data) return <Card title="Attendance Rate" className="h-full min-h-[400px]"><div>No data available</div></Card>;
 
     const chartData = [

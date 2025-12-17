@@ -1,4 +1,3 @@
-// EduBusWeb/src/components/admin/LiveVehicleMapModal.tsx
 'use client';
 
 import React from 'react';
@@ -20,7 +19,6 @@ interface LiveVehicleMapModalProps {
   schoolLocation?: { lat: number; lng: number };
 }
 
-// Helper function (same as in LiveVehicleMap)
 const VEHICLE_COLORS = [
   '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
   '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
@@ -52,13 +50,10 @@ const LiveVehicleMapModal: React.FC<LiveVehicleMapModalProps> = ({
   onDeselectAllTrips,
   schoolLocation
 }) => {
-  // ✅ Added: State to track which trip to focus on
   const [focusTripId, setFocusTripId] = React.useState<string | null>(null);
 
-  // ✅ Added: Handler to focus on a trip
   const handleFocusTrip = (tripId: string) => {
     setFocusTripId(tripId);
-    // Reset after a short delay so it can be triggered again
     setTimeout(() => setFocusTripId(null), 100);
   };
 
@@ -67,7 +62,6 @@ const LiveVehicleMapModal: React.FC<LiveVehicleMapModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg w-[95vw] h-[90vh] max-w-7xl flex flex-col">
-        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-xl font-bold text-gray-800 flex items-center">
             <FaMapMarkerAlt className="mr-2 text-blue-500" />
@@ -81,22 +75,19 @@ const LiveVehicleMapModal: React.FC<LiveVehicleMapModalProps> = ({
           </button>
         </div>
 
-        {/* Content */}
         <div className="flex flex-1 overflow-hidden">
-          {/* Map */}
           <div className="flex-1 relative">
             <LiveVehicleMap
               trips={trips}
               locationUpdates={locationUpdates}
               selectedTripIds={selectedTripIds}
-              focusTripId={focusTripId} // ✅ Pass focus trip ID
+              focusTripId={focusTripId} 
               className="w-full h-full"
               showControls={true}
               schoolLocation={schoolLocation}
             />
           </div>
 
-          {/* Trip Selection Panel */}
           <div className="w-80 border-l bg-gray-50 overflow-y-auto">
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
@@ -186,7 +177,6 @@ const LiveVehicleMapModal: React.FC<LiveVehicleMapModalProps> = ({
                               )}
                             </div>
                           </div>
-                          {/* ✅ Added: Focus button for selected trips */}
                           {isSelected && (
                             <button
                               onClick={(e) => {
@@ -206,7 +196,6 @@ const LiveVehicleMapModal: React.FC<LiveVehicleMapModalProps> = ({
                 </div>
               )}
 
-              {/* Route Legend */}
               {selectedTripIds.length > 0 && (
                 <div className="mt-6 p-3 border-t bg-white rounded-lg">
                   <div className="text-xs text-gray-600 mb-2 font-medium">
@@ -231,7 +220,6 @@ const LiveVehicleMapModal: React.FC<LiveVehicleMapModalProps> = ({
                             </span>
                           </div>
                           <div className="flex items-center gap-1">
-                            {/* ✅ Added: Focus button in legend */}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();

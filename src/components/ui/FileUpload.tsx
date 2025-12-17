@@ -51,9 +51,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
           {label}
         </label>
       )}
-      
+
       <div className="space-y-3">
-        {/* File Input */}
+
         <input
           ref={fileInputRef}
           type="file"
@@ -62,8 +62,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
           onChange={handleFileSelect}
           className="hidden"
         />
-        
-                 {/* Select File Button */}
+
+
         <button
           type="button"
           onClick={openFileDialog}
@@ -76,15 +76,15 @@ const FileUpload: React.FC<FileUploadProps> = ({
           <span className="font-medium">Select file</span>
         </button>
 
-        {/* Selected Files Display */}
+
         {selectedFiles.length > 0 && (
           <div className="space-y-2">
             {selectedFiles.map((file, index) => (
-                                                                                                                       <div
-                   key={index}
-                   className="flex items-center justify-between p-3 bg-white 
+              <div
+                key={index}
+                className="flex items-center justify-between p-3 bg-white 
                               rounded-xl border border-gray-200"
-                 >
+              >
                 <span className="text-sm text-gray-700 truncate flex-1">
                   {file.name}
                 </span>
@@ -118,7 +118,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
           {error}
         </p>
       )}
-      
+
       {helperText && !error && (
         <p className="mt-1 text-sm text-gray-500">{helperText}</p>
       )}

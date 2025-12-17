@@ -1,4 +1,3 @@
-// EduBusWeb/src/components/admin/RouteManagement/ApplySuggestionsModal.tsx
 import React from 'react';
 import { FaTimes, FaExclamationTriangle } from 'react-icons/fa';
 
@@ -22,7 +21,6 @@ const ApplySuggestionsModal: React.FC<ApplySuggestionsModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-        {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-800">Apply Route Suggestions</h2>
           <button
@@ -34,7 +32,6 @@ const ApplySuggestionsModal: React.FC<ApplySuggestionsModalProps> = ({
           </button>
         </div>
 
-        {/* Warning Content */}
         <div className="mb-6">
           <div className="flex items-center mb-3">
             <FaExclamationTriangle className="text-orange-500 mr-2" size={20} />
@@ -57,7 +54,6 @@ const ApplySuggestionsModal: React.FC<ApplySuggestionsModalProps> = ({
           </p>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex space-x-3">
           <button
             onClick={onClose}

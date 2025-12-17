@@ -1,4 +1,3 @@
-// EduBusWeb/src/components/admin/RouteManagement/RouteRow.tsx
 import React, { useState } from 'react';
 import { Droppable } from '@hello-pangea/dnd';
 import { FaBus, FaMapMarkerAlt, FaEdit, FaCalendarAlt } from 'react-icons/fa';
@@ -8,14 +7,13 @@ import PickupPoint from './PickupPoint';
 interface RouteRowProps {
   route: RouteDto;
   onRouteClick: (route: RouteDto) => void;
-  onRouteMapToggle: (routeId: string) => void; // ✅ ADDED: Separate handler for map toggle
+  onRouteMapToggle: (routeId: string) => void;
   onScheduleClick: (route: RouteDto) => void;
   isModified: boolean;
   isDraft: boolean;
   isSelectedInMap?: boolean;
 }
 
-// Simple Tooltip Component
 const Tooltip: React.FC<{
   children: React.ReactNode;
   content: React.ReactNode;
@@ -33,7 +31,6 @@ const Tooltip: React.FC<{
       {isVisible && (
         <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg z-50 whitespace-nowrap">
           {content}
-          {/* Tooltip arrow */}
           <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
         </div>
       )}
@@ -50,7 +47,6 @@ const RouteRow: React.FC<RouteRowProps> = ({
   isDraft = false,
   isSelectedInMap = false
 }) => {
-  // Helper function to truncate text
   const truncateText = (text: string, maxLength: number = 11): string => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
@@ -68,8 +64,7 @@ const RouteRow: React.FC<RouteRowProps> = ({
 
   const currentStudents = route.pickupPoints.reduce((sum, point) => sum + point.studentCount, 0);
   const utilizationPercentage = route.vehicleCapacity > 0 ? (currentStudents / route.vehicleCapacity) * 100 : 0;
-  
-  // Determine utilization color
+
   const getUtilizationColor = (percentage: number) => {
     if (percentage >= 90) return 'text-red-600 bg-red-50';
     if (percentage >= 70) return 'text-orange-600 bg-orange-50';
@@ -81,34 +76,28 @@ const RouteRow: React.FC<RouteRowProps> = ({
       {(provided) => (
         <div className={`bg-gradient-to-r from-[#FEF3C7] to-[#FDE68A] border-2 border-[#fad23c] rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 flex items-center relative overflow-hidden bus-container ${isModified ? 'ring-2 ring-red-400 border-red-300' : ''} ${isSelectedInMap ? 'ring-4 ring-[#fad23c]/50 border-[#fad23c] shadow-2xl' : ''}`}>
           
-          {/* Bus Body Background */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#fad23c]/20 via-[#FEF3C7]/80 to-[#fad23c]/20 pointer-events-none rounded-3xl"></div>
           
-          {/* Bus Windows Effect */}
           <div className="absolute top-2 left-8 right-8 h-3 bg-gradient-to-r from-[#87CEEB]/30 to-[#87CEEB]/50 rounded-full opacity-60"></div>
           <div className="absolute top-6 left-8 right-8 h-2 bg-gradient-to-r from-[#87CEEB]/20 to-[#87CEEB]/40 rounded-full opacity-40"></div>
           
-          {/* Modification Indicator */}
           {isModified && (
             <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-lg z-10">
               <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
             </div>
           )}
 
-          {/* Map Selection Indicator */}
           {isSelectedInMap && (
             <div className="absolute -top-2 -left-2 w-6 h-6 bg-[#fad23c] rounded-full flex items-center justify-center shadow-lg z-10">
               <FaMapMarkerAlt className="text-[#463B3B]" size={10} />
             </div>
           )}
 
-          {/* Route Info Section */}
           <Tooltip content={tooltipContent}>
             <div
               className="w-48 flex-shrink-0 cursor-pointer hover:scale-105 transition-transform duration-200 relative z-10"
               onClick={() => onRouteMapToggle(route.id)}
             >
-              {/* Route Header */}
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-lg font-bold text-[#463B3B] leading-tight">
                   {truncateText(route.routeName, 15)}
@@ -118,7 +107,6 @@ const RouteRow: React.FC<RouteRowProps> = ({
                 </div>
               </div>
 
-              {/* Capacity Info */}
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
                   <div className="w-8 h-8 bg-[#FEF3C7] rounded-full flex items-center justify-center">
@@ -133,7 +121,6 @@ const RouteRow: React.FC<RouteRowProps> = ({
                 </div>
               </div>
 
-              {/* Capacity Progress Bar */}
               <div className="w-full bg-gray-200 rounded-full h-2 mb-1">
                 <div 
                   className={`h-2 rounded-full transition-all duration-300 ${
@@ -144,7 +131,6 @@ const RouteRow: React.FC<RouteRowProps> = ({
                 ></div>
               </div>
               
-              {/* Pickup Points Count */}
               <div className="text-xs text-[#463B3B]/60 flex items-center">
                 <FaMapMarkerAlt className="mr-1 text-[#fad23c]" size={10} />
                 {route.pickupPoints.length} pickup points
@@ -152,10 +138,8 @@ const RouteRow: React.FC<RouteRowProps> = ({
             </div>
           </Tooltip>
 
-          {/* Action Buttons */}
           <div className="flex-shrink-0 ml-4 flex gap-2 relative z-10"
             style={{ visibility: isDraft ? 'hidden' : 'visible' }}>
-            {/* Schedule Management Button */}
             <button
               onClick={() => onScheduleClick(route)}
               className="p-3 text-[#463B3B]/60 hover:text-green-600 hover:bg-green-50 rounded-xl transition-all duration-200 hover:scale-110 shadow-sm hover:shadow-md"
@@ -164,7 +148,6 @@ const RouteRow: React.FC<RouteRowProps> = ({
               <FaCalendarAlt size={16} />
             </button>
 
-            {/* Edit Button */}
             <button
               onClick={() => onRouteClick(route)}
               className="p-3 text-[#463B3B]/60 hover:text-[#fad23c] hover:bg-[#FEF3C7] rounded-xl transition-all duration-200 hover:scale-110 shadow-sm hover:shadow-md"
@@ -174,7 +157,6 @@ const RouteRow: React.FC<RouteRowProps> = ({
             </button>
           </div>
 
-          {/* Bus Interior - Pickup Points Area */}
           <div
             {...provided.droppableProps}
             ref={provided.innerRef}
@@ -183,7 +165,6 @@ const RouteRow: React.FC<RouteRowProps> = ({
               backgroundImage: `repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(70, 59, 59, 0.1) 40px, rgba(70, 59, 59, 0.1) 42px)`
             }}
           >
-            {/* Bus Seats Pattern */}
             <div className="absolute inset-0 opacity-20 pointer-events-none">
               <div className="flex h-full items-center justify-around">
                 {[...Array(8)].map((_, i) => (

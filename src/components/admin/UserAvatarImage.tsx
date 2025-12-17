@@ -25,7 +25,7 @@ export function UserAvatarImage({
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    // If user doesn't have a photo, skip fetching
+
     if (!userPhotoFileId) {
       setLoading(false);
       setError(true);
@@ -40,7 +40,7 @@ export function UserAvatarImage({
         setLoading(true);
         setError(false);
 
-        // Fetch image with authentication token
+
         const imageUrl = userAccountService.getAvatarUrl(userId);
         const token = localStorage.getItem("token");
 
@@ -59,7 +59,7 @@ export function UserAvatarImage({
         });
 
         if (!response.ok) {
-          // Silently handle 404 or other errors - just show initials
+
           if (isMounted) {
             setError(true);
           }
@@ -72,7 +72,7 @@ export function UserAvatarImage({
         blobUrl = URL.createObjectURL(blob);
         setAvatarUrl(blobUrl);
       } catch {
-        // Silently handle errors - just show initials
+
         if (isMounted) {
           setError(true);
         }
@@ -85,7 +85,7 @@ export function UserAvatarImage({
 
     loadAvatar();
 
-    // Cleanup blob URL on unmount
+
     return () => {
       isMounted = false;
       if (blobUrl) {
@@ -94,7 +94,7 @@ export function UserAvatarImage({
     };
   }, [userId, userPhotoFileId]);
 
-  // Show initials if no avatar or error
+
   if (error || !avatarUrl) {
     return (
       <div
@@ -121,7 +121,7 @@ export function UserAvatarImage({
   }
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
+
     <img
       key={`user-avatar-${userId}-${avatarUrl}`}
       src={avatarUrl}
@@ -129,7 +129,7 @@ export function UserAvatarImage({
       className={`rounded-full object-cover border-2 border-[#fad23c] ${className}`}
       style={{ width: size, height: size }}
       onError={() => {
-        // Silently handle image load errors - just show initials
+
         setError(true);
       }}
     />

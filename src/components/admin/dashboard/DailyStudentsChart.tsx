@@ -21,7 +21,7 @@ const DailyStudentsChart: React.FC<DailyStudentsChartProps> = ({ data, loading }
     return (
         <Card title="Daily Students" className="h-full" shadow="sm">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-                {/* Stats Column */}
+          
                 <div className="lg:col-span-1 grid grid-cols-2 lg:grid-cols-1 gap-4 content-center">
                     <StatBox label="Today" value={data?.today || 0} color="text-yellow-600" />
                     <StatBox label="Yesterday" value={data?.yesterday || 0} color="text-gray-500" />
@@ -29,7 +29,6 @@ const DailyStudentsChart: React.FC<DailyStudentsChartProps> = ({ data, loading }
                     <StatBox label="This Month (Avg)" value={data?.thisMonth || 0} color="text-purple-600" />
                 </div>
 
-                {/* Chart Column */}
                 <div className="lg:col-span-2 min-h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>

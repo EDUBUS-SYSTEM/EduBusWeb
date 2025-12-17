@@ -29,7 +29,7 @@ export default function ViewStudentModal({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-[#FEFCE8] rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        {/* Header */}
+
         <div className="flex justify-between items-center p-4 border-b border-gray-200">
           <h2 className="text-lg font-bold text-gray-800">Student Details</h2>
           <button
@@ -40,9 +40,9 @@ export default function ViewStudentModal({
           </button>
         </div>
 
-        {/* Content */}
+
         <div className="p-6 space-y-6">
-          {/* Full Name */}
+
           <div>
             <label className="block text-sm font-medium text-gray-500 mb-2">
               Full Name
@@ -58,7 +58,7 @@ export default function ViewStudentModal({
             </div>
           </div>
 
-          {/* Parent Email */}
+
           <div>
             <label className="block text-sm font-medium text-gray-500 mb-1">
               Parent Email
@@ -69,7 +69,7 @@ export default function ViewStudentModal({
             </div>
           </div>
 
-          {/* Parent Status */}
+
           <div>
             <label className="block text-sm font-medium text-gray-500 mb-1">
               Parent Status
@@ -82,27 +82,27 @@ export default function ViewStudentModal({
             </div>
           </div>
 
-          {/* Student Status */}
+
           <div>
             <label className="block text-sm font-medium text-gray-500 mb-1">
               Student Status
             </label>
             <div className="flex items-center space-x-2">
-              {student.status === 2 ? ( // StudentStatus.Active = 2
+              {student.status === 2 ? (
                 <>
                   <FaCheck className="text-green-500 w-4 h-4" />
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     Active
                   </span>
                 </>
-              ) : student.status === 0 ? ( // StudentStatus.Available = 0
+              ) : student.status === 0 ? (
                 <>
                   <FaCheck className="text-blue-500 w-4 h-4" />
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     Available
                   </span>
                 </>
-              ) : student.status === 1 ? ( // StudentStatus.Pending = 1
+              ) : student.status === 1 ? (
                 <>
                   <FaCheck className="text-yellow-500 w-4 h-4" />
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
@@ -120,7 +120,7 @@ export default function ViewStudentModal({
             </div>
           </div>
 
-          {/* Registration Date */}
+
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-center space-x-2 mb-2">
               <FaCalendarAlt className="text-blue-500 w-4 h-4" />
@@ -133,7 +133,7 @@ export default function ViewStudentModal({
             </p>
           </div>
 
-          {/* Last Updated */}
+
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
             <div className="flex items-center space-x-2 mb-2">
               <FaCalendarAlt className="text-gray-500 w-4 h-4" />
@@ -147,7 +147,7 @@ export default function ViewStudentModal({
           </div>
         </div>
 
-        {/* Actions */}
+
         <div className="flex justify-end p-4 border-t border-gray-200">
           <button
             onClick={onClose}

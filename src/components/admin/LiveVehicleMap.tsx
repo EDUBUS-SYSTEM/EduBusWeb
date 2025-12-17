@@ -1,4 +1,3 @@
-// EduBusWeb/src/components/admin/LiveVehicleMap.tsx
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
@@ -15,23 +14,20 @@ interface LiveVehicleMapProps {
   selectedTripIds?: string[];
   className?: string;
   showControls?: boolean;
-  focusTripId?: string | null; // ✅ Added: Trip ID to focus on
-  schoolLocation?: { lat: number; lng: number }; // ✅ Dynamic school location from API
+  focusTripId?: string | null; 
+  schoolLocation?: { lat: number; lng: number };
 }
 
-// Default fallback school location (HCMC)
 const DEFAULT_SCHOOL_LOCATION = {
   lat: 10.8412,
   lng: 106.8098
 };
 
-// Colors for different trips (same as route management)
 const VEHICLE_COLORS = [
   '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
   '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
 ];
 
-// Hash function for stable color assignment
 const hashString = (str: string): number => {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -47,7 +43,6 @@ const getVehicleColor = (tripId: string): string => {
   return VEHICLE_COLORS[hash % VEHICLE_COLORS.length];
 };
 
-// Decode polyline string to coordinates array
 const decodePolyline = (encoded: string): number[][] => {
   const points: number[][] = [];
   let index = 0;
@@ -83,7 +78,6 @@ const decodePolyline = (encoded: string): number[][] => {
   return points;
 };
 
-// Get route coordinates for a trip (School → Stops → School)
 const getTripRouteCoordinates = async (
   trip: TripDto,
   schoolLocation: { lat: number; lng: number }
@@ -94,10 +88,8 @@ const getTripRouteCoordinates = async (
       return [];
     }
 
-    // Sort stops by sequence
     const sortedStops = [...trip.stops].sort((a, b) => a.sequence - b.sequence);
     
-    // Filter stops that have location data
     const stopsWithLocation = sortedStops.filter(
       stop => stop.location && stop.location.latitude && stop.location.longitude
     );
@@ -112,7 +104,6 @@ const getTripRouteCoordinates = async (
     const allCoordinates: number[][] = [];
     let currentPoint = schoolLocation;
 
-    // Route from school to first stop
     const firstStop = stopsWithLocation[0];
     if (firstStop.location) {
       console.log(`[getTripRouteCoordinates] Getting route: School → Stop 1 (${firstStop.location.latitude}, ${firstStop.location.longitude})`);
@@ -130,7 +121,6 @@ const getTripRouteCoordinates = async (
       }
     }
 
-    // Route between stops
     for (let i = 0; i < stopsWithLocation.length - 1; i++) {
       const currentStop = stopsWithLocation[i];
       const nextStop = stopsWithLocation[i + 1];
@@ -145,14 +135,12 @@ const getTripRouteCoordinates = async (
         
         if (routeResult.paths && routeResult.paths.length > 0) {
           const decodedPoints = decodePolyline(routeResult.paths[0].points);
-          // Skip first point to avoid duplication
           allCoordinates.push(...decodedPoints.slice(1));
           console.log(`[getTripRouteCoordinates] Added ${decodedPoints.length - 1} points between stops ${i + 1} and ${i + 2}`);
         }
       }
     }
 
-    // Route from last stop back to school
     const lastStop = stopsWithLocation[stopsWithLocation.length - 1];
     if (lastStop.location) {
       console.log(`[getTripRouteCoordinates] Getting route: Last stop → School`);
@@ -164,7 +152,6 @@ const getTripRouteCoordinates = async (
       
       if (routeResult.paths && routeResult.paths.length > 0) {
         const decodedPoints = decodePolyline(routeResult.paths[0].points);
-        // Skip first point to avoid duplication
         allCoordinates.push(...decodedPoints.slice(1));
         console.log(`[getTripRouteCoordinates] Added ${decodedPoints.length - 1} points from last stop to school`);
       }
@@ -175,7 +162,6 @@ const getTripRouteCoordinates = async (
   } catch (error) {
     console.error(`[getTripRouteCoordinates] Error getting route coordinates for trip ${trip.id}:`, error);
     
-    // Fallback to straight line if routing fails
     const sortedStops = [...trip.stops].sort((a, b) => a.sequence - b.sequence);
     const stopsWithLocation = sortedStops.filter(
       stop => stop.location && stop.location.latitude && stop.location.longitude
@@ -193,7 +179,6 @@ const getTripRouteCoordinates = async (
   }
 };
 
-// Create bus icon HTML
 const createBusIcon = (color: string): string => {
   return `
     <div style="
@@ -234,18 +219,14 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [error, setError] = useState('');
 
-  // ✅ Use API-provided school location when available
   const effectiveSchoolLocation = useMemo(
     () => schoolLocation || DEFAULT_SCHOOL_LOCATION,
     [schoolLocation]
   );
   
-  // ✅ Track which vehicle we're following (only when focused)
   const followingVehicleRef = useRef<string | null>(null);
-  // ✅ Track if initial fit has been done
   const initialFitDoneRef = useRef(false);
 
-  // ✅ Focus on a specific trip's vehicle
   const focusOnTrip = useCallback((tripId: string) => {
     if (!mapInstanceRef.current || !isMapLoaded) {
       console.warn('[focusOnTrip] Map not ready');
@@ -262,7 +243,6 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
     let lat: number;
     let lng: number;
 
-    // Get vehicle position (same logic as updateVehicleMarkers)
     if (locationUpdate) {
       lat = locationUpdate.latitude;
       lng = locationUpdate.longitude;
@@ -270,12 +250,10 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
       lat = trip.stops[0].location.latitude;
       lng = trip.stops[0].location.longitude;
     } else {
-      // Fallback to school location from API (or default)
       lat = effectiveSchoolLocation.lat;
       lng = effectiveSchoolLocation.lng;
     }
 
-    // Focus map on vehicle with smooth animation
     mapInstanceRef.current.flyTo({
       center: [lng, lat],
       zoom: 15,
@@ -283,10 +261,8 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
       essential: true
     });
 
-    // ✅ Enable following for this vehicle
     followingVehicleRef.current = tripId;
 
-    // Optionally open the vehicle's popup
     const marker = vehicleMarkersRef.current.get(tripId);
     if (marker) {
       setTimeout(() => {
@@ -295,17 +271,14 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
     }
   }, [trips, locationUpdates, isMapLoaded]);
 
-  // ✅ Focus when focusTripId changes
   useEffect(() => {
     if (focusTripId && isMapLoaded) {
       focusOnTrip(focusTripId);
     } else if (!focusTripId) {
-      // Stop following when focus is cleared
       followingVehicleRef.current = null;
     }
   }, [focusTripId, isMapLoaded, focusOnTrip]);
 
-  // ✅ Follow vehicle movement (only when focused)
   useEffect(() => {
     if (!followingVehicleRef.current || !isMapLoaded || !mapInstanceRef.current) {
       return;
@@ -318,14 +291,12 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
       return;
     }
 
-    // Only update if vehicle has moved significantly (to avoid jitter)
     const currentCenter = mapInstanceRef.current.getCenter();
     const distance = Math.sqrt(
       Math.pow(currentCenter.lng - locationUpdate.longitude, 2) +
       Math.pow(currentCenter.lat - locationUpdate.latitude, 2)
     );
     
-    // Only follow if vehicle moved more than ~100 meters (roughly 0.001 degrees)
     if (distance > 0.001) {
       mapInstanceRef.current.easeTo({
         center: [locationUpdate.longitude, locationUpdate.latitude],
@@ -335,7 +306,6 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
     }
   }, [locationUpdates, isMapLoaded]);
 
-  // Clear route polylines and stop markers
   const clearRoutePolylines = useCallback(() => {
     console.log('[clearRoutePolylines] Clearing all route elements...');
     if (!mapInstanceRef.current) {
@@ -343,7 +313,6 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
       return;
     }
 
-    // Clear stop markers
     console.log(`[clearRoutePolylines] Removing ${stopMarkersRef.current.length} stop markers`);
     stopMarkersRef.current.forEach((marker, index) => {
       try {
@@ -354,7 +323,6 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
     });
     stopMarkersRef.current = [];
 
-    // Remove layers first
     console.log(`[clearRoutePolylines] Removing ${polylinesRef.current.length} layers`);
     polylinesRef.current.forEach(layerId => {
       try {
@@ -367,7 +335,6 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
     });
     polylinesRef.current = [];
 
-    // Remove sources
     console.log(`[clearRoutePolylines] Removing ${sourcesRef.current.length} sources`);
     sourcesRef.current.forEach(sourceId => {
       try {
@@ -382,7 +349,6 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
     console.log('[clearRoutePolylines] Finished clearing');
   }, []);
 
-  // Add route polylines and stop markers for selected trips
   const addRoutePolylines = useCallback(async () => {
     console.log('\n=== [addRoutePolylines] START ===');
     console.log('[addRoutePolylines] Map ready check:', {
@@ -413,7 +379,6 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
       }))
     });
     
-    // Clear existing routes and markers
     clearRoutePolylines();
 
     if (selectedTrips.length === 0) {
@@ -421,14 +386,12 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
       return;
     }
 
-    // Process trips sequentially to avoid API rate limits
     for (const trip of selectedTrips) {
       const color = getVehicleColor(trip.id);
       console.log(`\n[addRoutePolylines] Processing trip: ${trip.routeName || trip.id} (${trip.id})`);
       console.log(`[addRoutePolylines] Trip color: ${color}`);
       console.log(`[addRoutePolylines] Trip stops count: ${trip.stops?.length || 0}`);
       
-      // ✅ Add stop markers (like route management)
       if (trip.stops && trip.stops.length > 0) {
         console.log(`[addRoutePolylines] Trip has ${trip.stops.length} stops, processing...`);
         const sortedStops = [...trip.stops].sort((a, b) => a.sequence - b.sequence);
@@ -453,7 +416,6 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
         if (stopsWithLocation.length === 0) {
           console.warn(`[addRoutePolylines] ⚠️ Trip ${trip.id} has NO stops with location data!`);
           console.warn(`[addRoutePolylines] All stops data:`, sortedStops);
-          // Continue to next trip
         } else {
           stopsWithLocation.forEach((stop, index) => {
             if (!stop.location) {
@@ -465,7 +427,6 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
             console.log(`[addRoutePolylines] Stop location: (${stop.location.latitude}, ${stop.location.longitude})`);
 
             try {
-              // Add the main stop marker (bus icon)
               const stopMarker = new vietmapgl.Marker({
                 element: (() => {
                   const el = document.createElement('div');
@@ -485,7 +446,6 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
                 .setLngLat([stop.location.longitude, stop.location.latitude])
                 .addTo(mapInstanceRef.current!);
 
-              // Add sequence number marker
               const orderMarker = new vietmapgl.Marker({
                 element: (() => {
                   const el = document.createElement('div');
@@ -510,7 +470,6 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
                 .setLngLat([stop.location.longitude, stop.location.latitude])
                 .addTo(mapInstanceRef.current!);
 
-              // Add popup
               const popup = new vietmapgl.Popup({ 
                 offset: 25,
                 closeButton: true,
@@ -527,7 +486,6 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
               
               stopMarker.setPopup(popup);
               
-              // Store markers for cleanup
               stopMarkersRef.current.push(stopMarker);
               stopMarkersRef.current.push(orderMarker);
               
@@ -543,7 +501,6 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
         console.warn(`[addRoutePolylines] ⚠️ Trip ${trip.id} has no stops or stops array is empty`);
       }
       
-      // Add route polyline
       try {
         console.log(`[addRoutePolylines] Getting route coordinates for trip ${trip.id}...`);
         const coordinates = await getTripRouteCoordinates(trip, effectiveSchoolLocation);
@@ -557,9 +514,7 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
         const sourceId = `trip-route-${trip.id}`;
         const layerId = `trip-route-layer-${trip.id}`;
 
-        // Check if source already exists
         if (!mapInstanceRef.current.getSource(sourceId)) {
-          // Add source
           mapInstanceRef.current.addSource(sourceId, {
             type: 'geojson',
             data: {
@@ -574,7 +529,6 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
           sourcesRef.current.push(sourceId);
           console.log(`[addRoutePolylines] ✅ Added source: ${sourceId}`);
 
-          // Add layer
           mapInstanceRef.current.addLayer({
             id: layerId,
             type: 'line',
@@ -604,16 +558,13 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
     console.log(`[addRoutePolylines] Total sources: ${sourcesRef.current.length}`);
   }, [trips, selectedTripIds, isMapLoaded, clearRoutePolylines]);
 
-  // Update vehicle markers when trips or location updates change
   const updateVehicleMarkers = useCallback(() => {
     if (!mapInstanceRef.current || !isMapLoaded) return;
 
-    // Only show markers for selected trips (or all if none selected)
     const tripsToShow = selectedTripIds.length > 0 
       ? trips.filter(t => selectedTripIds.includes(t.id))
       : trips;
 
-    // Remove markers for trips that no longer exist or are not selected
     const currentTripIds = new Set(tripsToShow.map(t => t.id));
     vehicleMarkersRef.current.forEach((marker, tripId) => {
       if (!currentTripIds.has(tripId)) {
@@ -622,11 +573,9 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
       }
     });
 
-    // Add or update markers for current trips
     tripsToShow.forEach(trip => {
       const locationUpdate = locationUpdates[trip.id];
 
-      // Use real-time location if available, otherwise use trip's current location or first stop
       let lat: number;
       let lng: number;
 
@@ -637,7 +586,6 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
         lat = trip.stops[0].location.latitude;
         lng = trip.stops[0].location.longitude;
       } else {
-        // Fallback to school location
         lat = effectiveSchoolLocation.lat;
         lng = effectiveSchoolLocation.lng;
       }
@@ -646,10 +594,8 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
       const existingMarker = vehicleMarkersRef.current.get(trip.id);
 
       if (existingMarker) {
-        // Update existing marker position
         existingMarker.setLngLat([lng, lat]);
       } else {
-        // Create new marker
         const el = document.createElement('div');
         el.innerHTML = createBusIcon(color);
         el.style.cursor = 'pointer';
@@ -663,7 +609,6 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
           .setLngLat([lng, lat])
           .addTo(mapInstanceRef.current);
 
-        // Create popup with trip info
         const popup = new vietmapgl.Popup({ offset: 25 })
           .setHTML(`
             <div style="min-width: 200px;">
@@ -696,14 +641,8 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
       }
     });
 
-    // ✅ REMOVED: Automatic fitBounds - this was causing the map to constantly move
-    // The map should only adjust when:
-    // 1. Initial load (handled separately below)
-    // 2. User focuses on a specific vehicle (handled in focusOnTrip)
-    // 3. User manually interacts with the map
   }, [trips, locationUpdates, selectedTripIds, isMapLoaded]);
 
-  // ✅ Initial fit to bounds (only once on first load)
   useEffect(() => {
     if (!isMapLoaded || !mapInstanceRef.current || initialFitDoneRef.current) return;
     
@@ -733,13 +672,11 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
     }
   }, [isMapLoaded, trips, selectedTripIds]);
 
-  // ✅ Reset initial fit when selection changes significantly
   useEffect(() => {
     initialFitDoneRef.current = false;
-    followingVehicleRef.current = null; // Stop following when selection changes
+    followingVehicleRef.current = null; 
   }, [selectedTripIds.length]);
 
-  // Initialize map
   useEffect(() => {
     let isMounted = true;
 
@@ -766,7 +703,6 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
           map.addControl(new vietmapgl.NavigationControl(), 'top-right');
         }
 
-        // Add school marker
         const schoolEl = document.createElement('div');
         schoolEl.innerHTML = `
           <div style="
@@ -846,12 +782,10 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
     };
   }, [showControls, clearRoutePolylines, addRoutePolylines]);
 
-  // Update markers when trips or locations change
   useEffect(() => {
     updateVehicleMarkers();
   }, [updateVehicleMarkers]);
 
-  // Update routes when selection changes - FIXED: Wait for style to load
   useEffect(() => {
     console.log('\n=== [useEffect] Selection Changed ===');
     console.log('[useEffect] isMapLoaded:', isMapLoaded);
@@ -865,24 +799,20 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
       return;
     }
 
-    // Wait for style to load
     const checkAndAddRoutes = () => {
       if (mapInstanceRef.current?.isStyleLoaded()) {
         console.log('[useEffect] Map style ready, calling addRoutePolylines...');
         addRoutePolylines();
       } else {
         console.log('[useEffect] Map style not ready yet, retrying in 200ms...');
-        // Wait a bit and try again (max 10 attempts = 2 seconds)
         setTimeout(checkAndAddRoutes, 200);
       }
     };
 
-    // If style is already loaded, call immediately
     if (mapInstanceRef.current.isStyleLoaded()) {
       console.log('[useEffect] Map style already loaded, calling addRoutePolylines immediately...');
       addRoutePolylines();
     } else {
-      // Otherwise, wait for it with retry mechanism
       console.log('[useEffect] Waiting for map style to load...');
       let retryCount = 0;
       const maxRetries = 10;
@@ -901,7 +831,6 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
       
       const timeoutId = setTimeout(retryCheck, 200);
       
-      // Also listen for styledata event as backup
       const handleStyleData = () => {
         if (mapInstanceRef.current?.isStyleLoaded()) {
           console.log('[useEffect] Map style loaded via styledata event');

@@ -15,36 +15,31 @@ interface VietMapComponentProps {
   schoolLocation?: { lat: number; lng: number };
 }
 
-// Default fallback location (Đà Nẵng)
 const DEFAULT_SCHOOL_LOCATION = {
   lat: 15.9796,
   lng: 108.2605
 };
 
-// Stable color assignment - colors will remain consistent regardless of route order
 const ROUTE_COLORS = [
   '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
   '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
 ];
 
-// Hash function for stable color assignment based on route ID
 const hashString = (str: string): number => {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32-bit integer
+    hash = hash & hash;
   }
   return Math.abs(hash);
 };
 
-// Get stable color for a route based on its ID
 const getRouteColor = (routeId: string): string => {
   const hash = hashString(routeId);
   return ROUTE_COLORS[hash % ROUTE_COLORS.length];
 };
 
-// Decode polyline string to coordinates array
 const decodePolyline = (encoded: string): number[][] => {
   const points: number[][] = [];
   let index = 0;
@@ -80,7 +75,6 @@ const decodePolyline = (encoded: string): number[][] => {
   return points;
 };
 
-// Get actual route coordinates using VietMap Routing API
 const getRouteCoordinates = async (
   route: RouteDto,
   schoolLocation: { lat: number; lng: number }
@@ -92,11 +86,9 @@ const getRouteCoordinates = async (
       return [];
     }
 
-    // Start from school
     let currentPoint = schoolLocation;
     const allCoordinates: number[][] = [];
 
-    // Route from school to first pickup point
     if (sortedPoints.length > 0) {
       const firstPoint = sortedPoints[0].location;
       const routeResult = await vietmapService.getRoute(
@@ -112,7 +104,6 @@ const getRouteCoordinates = async (
       }
     }
 
-    // Route between pickup points
     for (let i = 0; i < sortedPoints.length - 1; i++) {
       const currentPickupPoint = sortedPoints[i].location;
       const nextPickupPoint = sortedPoints[i + 1].location;
@@ -125,12 +116,10 @@ const getRouteCoordinates = async (
       
       if (routeResult.paths && routeResult.paths.length > 0) {
         const decodedPoints = decodePolyline(routeResult.paths[0].points);
-        // Skip first point to avoid duplication
         allCoordinates.push(...decodedPoints.slice(1));
       }
     }
 
-    // Route from last pickup point back to school
     if (sortedPoints.length > 0) {
       const lastPoint = sortedPoints[sortedPoints.length - 1].location;
       const routeResult = await vietmapService.getRoute(
@@ -141,7 +130,6 @@ const getRouteCoordinates = async (
       
       if (routeResult.paths && routeResult.paths.length > 0) {
         const decodedPoints = decodePolyline(routeResult.paths[0].points);
-        // Skip first point to avoid duplication
         allCoordinates.push(...decodedPoints.slice(1));
       }
     }
@@ -150,7 +138,6 @@ const getRouteCoordinates = async (
   } catch (error) {
     console.error(`Error getting route coordinates for ${route.routeName}:`, error);
     
-    // Fallback to straight line if routing fails
     const sortedPoints = route.pickupPoints.sort((a, b) => a.sequenceOrder - b.sequenceOrder);
     const coordinates = [
       [schoolLocation.lng, schoolLocation.lat],
@@ -175,13 +162,12 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
   const markersRef = useRef<vietmapgl.Marker[]>([]);
   const schoolMarkerRef = useRef<vietmapgl.Marker | null>(null);
   const polylinesRef = useRef<string[]>([]);
-  const sourcesRef = useRef<string[]>([]); // Track sources separately
+  const sourcesRef = useRef<string[]>([]); 
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [error, setError] = useState('');
 
-  // Marker sizes
   const markerSizes = {
     small: { size: 20, fontSize: 10 },
     medium: { size: 24, fontSize: 12 },
@@ -190,12 +176,10 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
 
   const currentMarkerSize = markerSizes[markerSize];
 
-  // Clear existing markers and polylines
   const clearMapElements = useCallback(() => {
     try {
       console.log('Clearing map elements...');
 
-      // Clear markers
       markersRef.current.forEach(marker => {
         if (marker) {
           marker.remove();
@@ -203,9 +187,7 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
       });
       markersRef.current = [];
 
-      // Clear polylines and sources properly
       if (mapInstanceRef.current) {
-        // Remove layers first
         polylinesRef.current.forEach(layerId => {
           try {
             if (mapInstanceRef.current?.getLayer(layerId)) {
@@ -218,7 +200,6 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
         });
         polylinesRef.current = [];
 
-        // Remove sources using correct source IDs
         sourcesRef.current.forEach(sourceId => {
           try {
             if (mapInstanceRef.current?.getSource(sourceId)) {
@@ -236,7 +217,6 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
     }
   }, []);
 
-  // Add route markers and polylines
   const addRouteElements = useCallback(async () => {
     if (!mapInstanceRef.current || !isMapLoaded) {
       console.log('Map not ready:', {
@@ -246,7 +226,6 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
       return;
     }
 
-    // Check if map style is loaded
     if (!mapInstanceRef.current.isStyleLoaded()) {
       console.warn('Map style not loaded yet, skipping route elements');
       return;
@@ -259,18 +238,13 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
       selectedRouteIds
     });
 
-    // Process routes sequentially to avoid API rate limits
     for (const route of selectedRoutes) {
-      // Use stable color based on route ID
       const color = getRouteColor(route.id);
       console.log(`Processing route ${route.routeName} (${route.id}) with color ${color}`);
 
-      // Add pickup point markers
-      // Add pickup point markers using symbol markers
       route.pickupPoints
         .sort((a, b) => a.sequenceOrder - b.sequenceOrder)
         .forEach((point, pointIndex) => {
-    // Add the main bus marker
     const busMarker = new vietmapgl.Marker({
       element: (() => {
         const el = document.createElement('div');
@@ -290,7 +264,6 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
       .setLngLat([point.location.longitude, point.location.latitude])
       .addTo(mapInstanceRef.current!);
 
-    // Add order number marker slightly offset
     const orderMarker = new vietmapgl.Marker({
       element: (() => {
         const el = document.createElement('div');
@@ -310,12 +283,11 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
         return el;
       })(),
       anchor: 'center',
-      offset: [12, -12] // Offset to position near the bus icon
+      offset: [12, -12]
     })
       .setLngLat([point.location.longitude, point.location.latitude])
       .addTo(mapInstanceRef.current!);
 
-    // Add popup to the main marker
     const popup = new vietmapgl.Popup({ 
       offset: 25,
       closeButton: true,
@@ -332,12 +304,10 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
     
     busMarker.setPopup(popup);
     
-    // Store both markers for cleanup
     markersRef.current.push(busMarker);
     markersRef.current.push(orderMarker);
   });
 
-      // Add route polyline using actual road routes
       if (route.pickupPoints.length > 0) {
         try {
           const currentSchoolLocation = schoolLocation || DEFAULT_SCHOOL_LOCATION;
@@ -348,10 +318,8 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
         const sourceId = `route-${route.id}`;
         const layerId = `route-layer-${route.id}`;
 
-        // Check if source already exists
         if (mapInstanceRef.current && !mapInstanceRef.current.getSource(sourceId)) {
           try {
-            // Add source
             mapInstanceRef.current.addSource(sourceId, {
               type: 'geojson',
               data: {
@@ -366,7 +334,6 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
             sourcesRef.current.push(sourceId);
             console.log(`Added source: ${sourceId}`);
 
-            // Add layer
             mapInstanceRef.current.addLayer({
               id: layerId,
               type: 'line',
@@ -397,7 +364,6 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
     }
   }, [routes, selectedRouteIds, isMapLoaded, currentMarkerSize.size, strokeWeight, schoolLocation]);
 
-  // Initialize map
   useEffect(() => {
     let isMounted = true;
 
@@ -413,7 +379,6 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
 
         const currentSchoolLocation = schoolLocation || DEFAULT_SCHOOL_LOCATION;
 
-        // Initialize map
         const map = new vietmapgl.Map({
           container: mapRef.current,
           style: `https://maps.vietmap.vn/maps/styles/tm/style.json?apikey=${apiKey}`,
@@ -423,12 +388,10 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
 
         mapInstanceRef.current = map;
 
-        // Add navigation controls if enabled
         if (showControls) {
           map.addControl(new vietmapgl.NavigationControl(), 'top-right');
         }
 
-        // Add school marker with custom icon
         const schoolIcon = document.createElement('div');
         schoolIcon.innerHTML = '🏫';
         schoolIcon.style.fontSize = '20px';
@@ -442,7 +405,6 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
           .setLngLat([currentSchoolLocation.lng, currentSchoolLocation.lat])
           .addTo(map);
 
-        // Add school popup
         const schoolPopup = new vietmapgl.Popup({ offset: 25 })
           .setHTML(`
             <div class="p-2">
@@ -454,7 +416,6 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
         schoolMarker.setPopup(schoolPopup);
         schoolMarkerRef.current = schoolMarker;
 
-        // Handle map load
         map.on('load', () => {
           if (isMounted) {
             console.log('Map loaded successfully');
@@ -463,11 +424,9 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
           }
         });
 
-        // Handle style load - redraw route elements if needed
         map.on('styledata', () => {
           if (isMounted && map.isStyleLoaded()) {
             console.log('Map style loaded, redrawing route elements');
-            // Redraw route elements when style is loaded
             setTimeout(async () => {
               if (mapInstanceRef.current && mapInstanceRef.current.isStyleLoaded()) {
                 clearMapElements();
@@ -497,12 +456,10 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
     return () => {
       isMounted = false;
 
-      // Cancel any ongoing requests
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
 
-      // Clean up map elements first
       try {
         clearMapElements();
         if (schoolMarkerRef.current) {
@@ -513,7 +470,6 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
         console.warn('Error cleaning up map elements:', err);
       }
 
-      // Clean up map instance last
       try {
         if (mapInstanceRef.current) {
           mapInstanceRef.current.remove();
@@ -525,7 +481,6 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
     };
   }, [clearMapElements, showControls, schoolLocation]);
 
-  // Update map elements when routes or selection changes
   useEffect(() => {
     if (!isMapLoaded) return;
 
@@ -534,12 +489,10 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
       totalRoutes: routes.length
     });
 
-    // Cancel any ongoing requests
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
 
-    // Create new AbortController
     abortControllerRef.current = new AbortController();
 
     const timeoutId = setTimeout(async () => {

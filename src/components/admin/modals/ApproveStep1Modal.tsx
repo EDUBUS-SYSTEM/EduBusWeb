@@ -53,9 +53,7 @@ export default function ApproveStep1Modal({
           </div>
         </div>
 
-        {/* Content */}
         <div className="p-6">
-          {/* Leave Request Info */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               📋 Leave Request Information
@@ -88,7 +86,7 @@ export default function ApproveStep1Modal({
             </div>
           </div>
 
-          {/* Notes */}
+  
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               📝 Approval Notes
@@ -102,7 +100,7 @@ export default function ApproveStep1Modal({
             />
           </div>
 
-          {/* Replacement Driver Option */}
+  
           <div className="mb-6">
             <div className="flex items-center mb-3">
               <input
@@ -159,7 +157,6 @@ export default function ApproveStep1Modal({
           </div>
         </div>
 
-        {/* Footer */}
         <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 rounded-b-2xl">
           <div className="flex justify-end space-x-3">
             <button

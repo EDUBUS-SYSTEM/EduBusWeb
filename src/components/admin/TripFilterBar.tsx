@@ -20,11 +20,11 @@ interface TripFilterBarProps {
   routes?: { id: string; routeName: string }[];
 }
 
-export default function TripFilterBar({ 
-  filters, 
-  onFiltersChange, 
+export default function TripFilterBar({
+  filters,
+  onFiltersChange,
   onReset,
-  routes = [] 
+  routes = []
 }: TripFilterBarProps) {
   const handleFilterChange = (key: keyof TripFilters, value: string | number | undefined) => {
     onFiltersChange({ ...filters, [key]: value });
@@ -46,7 +46,7 @@ export default function TripFilterBar({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Search */}
+
         <div className="lg:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Search
@@ -63,7 +63,7 @@ export default function TripFilterBar({
           </div>
         </div>
 
-        {/* Route Filter */}
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Route
@@ -82,7 +82,7 @@ export default function TripFilterBar({
           </select>
         </div>
 
-        {/* Status Filter */}
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Status
@@ -100,7 +100,7 @@ export default function TripFilterBar({
           </select>
         </div>
 
-        {/* Service Date */}
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Service Date
@@ -116,7 +116,7 @@ export default function TripFilterBar({
           </div>
         </div>
 
-        {/* Date Range */}
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Start Date
@@ -147,7 +147,7 @@ export default function TripFilterBar({
           </div>
         </div>
 
-        {/* Upcoming Days */}
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Upcoming Days

@@ -25,7 +25,6 @@ export default function RouteScheduleList({
   const [routeSchedules, setRouteSchedules] = useState<RouteSchedule[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Helper function to handle error responses
   const getErrorMessage = (error: unknown, defaultMessage: string): string => {
     if (error && typeof error === "object" && "response" in error) {
       const axiosError = error as {
@@ -66,7 +65,6 @@ export default function RouteScheduleList({
     useState<RouteSchedule | null>(null);
   const [showDetails, setShowDetails] = useState(false);
 
-  // Load route schedules from API
   const loadRouteSchedules = async () => {
     try {
       setLoading(true);
@@ -74,7 +72,6 @@ export default function RouteScheduleList({
       setRouteSchedules(routeSchedulesData);
     } catch (error) {
       console.error("Error loading route schedules:", error);
-      // Fallback to empty array on error
       setRouteSchedules([]);
     } finally {
       setLoading(false);
@@ -101,7 +98,6 @@ export default function RouteScheduleList({
     return matchesSearch && matchesFilter;
   });
 
-  // Using centralized formatDate from @/utils/dateUtils
 
   const handleDeleteRouteSchedule = async (routeScheduleId: string) => {
     if (!confirm("Are you sure you want to delete this route schedule?")) {
@@ -110,7 +106,6 @@ export default function RouteScheduleList({
 
     try {
       await scheduleService.deleteRouteSchedule(routeScheduleId);
-      // Refresh the list after deletion
       loadRouteSchedules();
     } catch (error: unknown) {
       console.error("Error deleting route schedule:", error);
@@ -240,7 +235,6 @@ export default function RouteScheduleList({
         </div>
       )}
 
-      {/* Route Schedule Details Modal */}
       {showDetails && selectedRouteSchedule && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">

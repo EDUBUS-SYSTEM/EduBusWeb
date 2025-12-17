@@ -39,7 +39,7 @@ const SidebarCreateAccount: React.FC<SidebarCreateAccountProps> = ({
 
   return (
     <div className="w-80 bg-yellow-50 min-h-screen p-6 flex flex-col">
-      {/* Back Button */}
+
       <button
         onClick={onBack}
         className="flex items-center text-gray-600 hover:text-gray-800 mb-8 transition-colors"
@@ -48,12 +48,12 @@ const SidebarCreateAccount: React.FC<SidebarCreateAccountProps> = ({
         <span className="font-medium">Back</span>
       </button>
 
-      {/* Account Type Navigation */}
+
       <div className="space-y-4">
         {accountTypes.map((accountType) => {
           const Icon = accountType.icon;
           const isActive = activeAccountType === accountType.type;
-          
+
           return (
             <button
               key={accountType.type}
@@ -61,16 +61,16 @@ const SidebarCreateAccount: React.FC<SidebarCreateAccountProps> = ({
               className={`
                 w-full p-4 rounded-xl transition-all duration-300
                 flex items-center space-x-3
-                                 ${isActive 
-                   ? 'bg-yellow-200 border-2 border-yellow-300 shadow-md' 
-                   : 'bg-[#F9F7E3] border-2 border-transparent hover:bg-yellow-100 hover:border-yellow-200'
-                 }
+                                 ${isActive
+                  ? 'bg-yellow-200 border-2 border-yellow-300 shadow-md'
+                  : 'bg-[#F9F7E3] border-2 border-transparent hover:bg-yellow-100 hover:border-yellow-200'
+                }
               `}
             >
               <div className={`
                 p-2 rounded-lg
-                ${isActive 
-                  ? 'bg-blue-500 text-white' 
+                ${isActive
+                  ? 'bg-blue-500 text-white'
                   : 'bg-gray-100 text-gray-600'
                 }
               `}>

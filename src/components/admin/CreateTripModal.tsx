@@ -27,12 +27,10 @@ export default function CreateTripModal({
 }: CreateTripModalProps) {
   console.log('CreateTripModal - existingTrips:', existingTrips);
 
-  // New: Schedules state
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const [routeScheduleIds, setRouteScheduleIds] = useState<string[]>([]);
 
-  // Existing: Routes state
   const [routes, setRoutes] = useState<RouteDto[]>([]);
   const [loadingRoutes, setLoadingRoutes] = useState(false);
 
@@ -57,13 +55,11 @@ export default function CreateTripModal({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // --- Load data on modal open ---
   useEffect(() => {
     if (isOpen) {
       loadRoutes();
       loadSchedules();
 
-      // Set initial service date if provided (from calendar click)
       if (initialServiceDate) {
         setFormData(prev => ({
           ...prev,
@@ -73,7 +69,6 @@ export default function CreateTripModal({
     }
   }, [isOpen, initialServiceDate]);
 
-  // Set vehicleId from route selection and load route schedules
   useEffect(() => {
     if (formData.routeId) {
       const selectedRoute = routes.find(r => r.id === formData.routeId);
@@ -83,7 +78,6 @@ export default function CreateTripModal({
           vehicleId: selectedRoute.vehicleId
         }));
 
-        // Load route schedules
         loadRouteSchedules(formData.routeId);
       }
     } else {
@@ -126,15 +120,12 @@ export default function CreateTripModal({
     }
   };
 
-  // Filter schedules to exclude those already used on the selected date
   const availableSchedules = useMemo(() => {
     if (!formData.serviceDate) return schedules;
 
-    // Get schedule IDs already used on this date
     const usedScheduleIds = existingTrips
       .filter(trip => {
-        // Normalize date format (YYYY-MM-DD)
-        const tripDate = trip.serviceDate.split('T')[0]; // Handle ISO format
+        const tripDate = trip.serviceDate.split('T')[0]; 
         return tripDate === formData.serviceDate;
       })
       .map(trip => trip.scheduleSnapshot?.scheduleId)
@@ -142,17 +133,14 @@ export default function CreateTripModal({
 
     console.log('Service Date:', formData.serviceDate, 'Used Schedules:', usedScheduleIds, 'Existing Trips:', existingTrips);
 
-    // Return schedules that are not used on this date
     return schedules.filter(s => !usedScheduleIds.includes(s.id));
   }, [schedules, formData.serviceDate, existingTrips]);
 
   const selectedRoute = routes.find(r => r.id === formData.routeId);
 
-  // Filter schedules based on selected route and exclude already used schedules on this date
   const filteredSchedules = useMemo(() => {
     if (!formData.routeId || routeScheduleIds.length === 0) return [];
 
-    // Filter schedules that are linked to this route AND not already used on this date
     return availableSchedules.filter(s => routeScheduleIds.includes(s.id));
   }, [formData.routeId, routeScheduleIds, availableSchedules]);
 
@@ -172,7 +160,6 @@ export default function CreateTripModal({
     if (!formData.vehicleId) newErrors.vehicleId = 'Vehicle ID is required (set from route)';
     if (!formData.scheduleSnapshot?.scheduleId) newErrors.scheduleSnapshot = 'Schedule is required';
 
-    // Validate service date is within schedule effective date range
     if (formData.serviceDate && formData.scheduleSnapshot?.scheduleId) {
       const selectedSchedule = schedules.find(s => s.id === formData.scheduleSnapshot?.scheduleId);
       if (selectedSchedule) {
@@ -197,7 +184,6 @@ export default function CreateTripModal({
     setSubmissionError(null);
     if (validate()) {
       try {
-        // Check for duplicate trip before submitting
         const tripExists = await checkTripExists(
           formData.routeId,
           formData.scheduleSnapshot?.scheduleId || '',
@@ -228,35 +214,27 @@ export default function CreateTripModal({
 
   const checkTripExists = async (routeId: string, scheduleId: string, serviceDate: string): Promise<boolean> => {
     try {
-      // Import tripService if not already imported
-      // For now, we'll do a simple check - in production, you'd call an API endpoint
-      // This is a placeholder - you may need to implement this in the backend
-      return false; // TODO: Implement actual duplicate check via API
+      return false; 
     } catch (error) {
       console.error('Error checking for duplicate trip:', error);
       return false;
     }
   };
 
-  // Auto-fill planned times when schedule is selected
   const handleScheduleChange = (id: string) => {
     const schedule = schedules.find(s => s.id === id);
     if (schedule && formData.serviceDate) {
-      // Parse schedule times and combine with service date
       const [startHours, startMinutes] = schedule.startTime.split(':').map(Number);
       const [endHours, endMinutes] = schedule.endTime.split(':').map(Number);
 
-      // Create date in local timezone (not UTC)
       const [year, month, day] = formData.serviceDate.split('-').map(Number);
 
       const plannedStart = new Date(year, month - 1, day, startHours, startMinutes, 0, 0);
       const plannedEnd = new Date(year, month - 1, day, endHours, endMinutes, 0, 0);
 
-      // Format as HH:mm for time input
       const startTimeStr = `${String(startHours).padStart(2, '0')}:${String(startMinutes).padStart(2, '0')}`;
       const endTimeStr = `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
 
-      // Format as ISO string for datetime-local compatibility (YYYY-MM-DDTHH:mm)
       const plannedStartAt = `${formData.serviceDate}T${startTimeStr}`;
       const plannedEndAt = `${formData.serviceDate}T${endTimeStr}`;
 
@@ -291,7 +269,6 @@ export default function CreateTripModal({
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
 
-          {/* Route */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Route <span className="text-red-500">*</span>
@@ -322,7 +299,6 @@ export default function CreateTripModal({
             )}
           </div>
 
-          {/* Schedule */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Schedule <span className="text-red-500">*</span>
@@ -356,7 +332,6 @@ export default function CreateTripModal({
             )}
           </div>
 
-          {/* Service Date */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Service Date <span className="text-red-500">*</span>
@@ -373,7 +348,6 @@ export default function CreateTripModal({
             )}
           </div>
 
-          {/* Planned Start Time */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Planned Start Time <span className="text-red-500">*</span>
@@ -395,7 +369,6 @@ export default function CreateTripModal({
             )}
           </div>
 
-          {/* Planned End Time */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Planned End Time <span className="text-red-500">*</span>
@@ -423,7 +396,6 @@ export default function CreateTripModal({
             </div>
           )}
 
-          {/* Footer */}
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
             <button
               type="button"

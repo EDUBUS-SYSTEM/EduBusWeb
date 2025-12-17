@@ -138,7 +138,7 @@ const LandingView: React.FC<LandingViewProps> = ({
   const startButtonEnabled = Boolean(onStartClick);
   return (
     <div className={`bg-white ${embedded ? "" : "min-h-screen"}`}>
-      {/* Header */}
+
       <motion.header
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
@@ -182,7 +182,7 @@ const LandingView: React.FC<LandingViewProps> = ({
         )}
       </motion.header>
 
-      {/* Hero section */}
+
       <section className="px-6 py-10 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -242,11 +242,10 @@ const LandingView: React.FC<LandingViewProps> = ({
                 onClick={onStartClick}
                 disabled={!startButtonEnabled}
                 aria-disabled={!startButtonEnabled}
-                className={`px-8 py-4 rounded-2xl font-semibold text-lg shadow-lg transition-all duration-300 ${
-                  startButtonEnabled
+                className={`px-8 py-4 rounded-2xl font-semibold text-lg shadow-lg transition-all duration-300 ${startButtonEnabled
                     ? "bg-[#FDC700] text-black hover:shadow-xl"
                     : "bg-gray-200 text-gray-500 cursor-not-allowed"
-                }`}
+                  }`}
               >
                 {previewMode && !startButtonEnabled ? "Preview button" : "Get Started"}
               </motion.button>
@@ -287,9 +286,8 @@ const LandingView: React.FC<LandingViewProps> = ({
                   <motion.div
                     key={dot}
                     whileHover={{ scale: 1.2 }}
-                    className={`w-3 h-3 rounded-full cursor-pointer ${
-                      dot === 0 ? "bg-[#D08700]" : "bg-[#FDC700]"
-                    }`}
+                    className={`w-3 h-3 rounded-full cursor-pointer ${dot === 0 ? "bg-[#D08700]" : "bg-[#FDC700]"
+                      }`}
                   ></motion.div>
                 ))}
               </motion.div>
@@ -298,7 +296,7 @@ const LandingView: React.FC<LandingViewProps> = ({
         </div>
       </section>
 
-      {/* Why choose */}
+
       <section className="px-6 py-16 bg-[#FEFCE8]">
         <div className="max-w-7xl mx-auto">
           <motion.h2
@@ -346,7 +344,7 @@ const LandingView: React.FC<LandingViewProps> = ({
         </div>
       </section>
 
-      {/* Stay Connected */}
+
       <section className="px-6 py-16">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -444,7 +442,7 @@ const LandingView: React.FC<LandingViewProps> = ({
         </div>
       </section>
 
-      {/* Features */}
+
       <section className="px-6 py-16 bg-[#FEFCE8]">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -505,7 +503,7 @@ const LandingView: React.FC<LandingViewProps> = ({
         </div>
       </section>
 
-      {/* Footer */}
+
       <motion.footer
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}

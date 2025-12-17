@@ -54,12 +54,10 @@ export default function AttendanceRateCard({ data, loading }: AttendanceRateCard
             whileHover={{ scale: 1.005 }}
             className="bg-gradient-to-br from-[#FEFCE8] to-[#FFF6D8] rounded-2xl p-6 shadow-soft hover:shadow-lg transition-all duration-300 border border-[#FDC700]/20 relative overflow-hidden"
         >
-            {/* Background decoration */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#FDC700]/10 rounded-full -mr-16 -mt-16" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#FDC700]/10 rounded-full -ml-12 -mb-12" />
 
             <div className="relative z-10">
-                {/* Header */}
                 <div className="flex items-start justify-between mb-4">
                     <div>
                         <motion.h3
@@ -88,7 +86,6 @@ export default function AttendanceRateCard({ data, loading }: AttendanceRateCard
                     </motion.div>
                 </div>
 
-                {/* Main Rate Display */}
                 <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
@@ -99,9 +96,7 @@ export default function AttendanceRateCard({ data, loading }: AttendanceRateCard
                     <p className="text-xs text-gray-600">Today&apos;s Attendance Rate</p>
                 </motion.div>
 
-                {/* Breakdown */}
                 <div className="space-y-3">
-                    {/* Present */}
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -126,7 +121,6 @@ export default function AttendanceRateCard({ data, loading }: AttendanceRateCard
                         </div>
                     </motion.div>
 
-                    {/* Late */}
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -151,7 +145,6 @@ export default function AttendanceRateCard({ data, loading }: AttendanceRateCard
                         </div>
                     </motion.div>
 
-                    {/* Absent */}
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -176,7 +169,6 @@ export default function AttendanceRateCard({ data, loading }: AttendanceRateCard
                         </div>
                     </motion.div>
 
-                    {/* Excused */}
                     {data.totalExcused > 0 && (
                         <motion.div
                             initial={{ opacity: 0, x: -20 }}
@@ -203,7 +195,6 @@ export default function AttendanceRateCard({ data, loading }: AttendanceRateCard
                         </motion.div>
                     )}
 
-                    {/* Pending */}
                     {data.totalPending > 0 && (
                         <motion.div
                             initial={{ opacity: 0, x: -20 }}
@@ -231,7 +222,6 @@ export default function AttendanceRateCard({ data, loading }: AttendanceRateCard
                     )}
                 </div>
 
-                {/* Total */}
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}

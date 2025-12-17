@@ -47,7 +47,7 @@ export default function VehicleRuntimeCard({ data, loading }: VehicleRuntimeCard
             whileHover={{ scale: 1.005 }}
             className="bg-white rounded-2xl p-6 shadow-soft hover:shadow-lg transition-all duration-300 border border-gray-100"
         >
-            {/* Header */}
+
             <div className="flex items-start justify-between mb-6">
                 <div>
                     <motion.h3
@@ -76,7 +76,7 @@ export default function VehicleRuntimeCard({ data, loading }: VehicleRuntimeCard
                 </motion.div>
             </div>
 
-            {/* Stats Grid */}
+
             <div className="grid grid-cols-3 gap-4 mb-6">
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
@@ -121,7 +121,7 @@ export default function VehicleRuntimeCard({ data, loading }: VehicleRuntimeCard
                 </motion.div>
             </div>
 
-            {/* Top Vehicles */}
+
             {data.topVehicles && data.topVehicles.length > 0 && (
                 <div className="space-y-2">
                     <motion.p

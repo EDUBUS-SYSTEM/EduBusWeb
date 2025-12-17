@@ -112,7 +112,6 @@ export default function NotificationBell() {
                     className="fixed left-[240px] top-[60px] w-[380px] bg-white rounded-2xl shadow-2xl border border-gray-200 z-[9999] overflow-hidden"
                     style={{ maxHeight: "640px" }}
                 >
-                    {/* Header with gradient */}
                     <div className="bg-gradient-to-r from-[#fad23c] to-[#f8c537] px-5 py-4 border-b border-gray-200">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -135,7 +134,6 @@ export default function NotificationBell() {
                         </div>
                     </div>
 
-                    {/* Notifications list */}
                     <div className="overflow-y-auto bg-gray-50" style={{ maxHeight: "560px" }}>
                         {isLoading ? (
                             <div className="flex flex-col items-center justify-center py-12">

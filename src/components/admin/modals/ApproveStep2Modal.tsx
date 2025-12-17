@@ -28,7 +28,7 @@ export default function ApproveStep2Modal({
   const [loadingDrivers, setLoadingDrivers] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Track component mount state để tránh duplicate calls
+
   const isMountedRef = useRef(false);
   const fetchStateRef = useRef({
     hasFetched: false,
@@ -37,14 +37,13 @@ export default function ApproveStep2Modal({
     endDate: ''
   });
 
-  // Fetch available drivers chỉ một lần duy nhất khi component mount
+
   useEffect(() => {
-    // Nếu component đã mount rồi thì skip
+ 
     if (isMountedRef.current) {
       return;
     }
 
-    // Mark component as mounted
     isMountedRef.current = true;
 
     const fetchAvailableDrivers = async () => {
@@ -57,7 +56,7 @@ export default function ApproveStep2Modal({
         const drivers = await getAvailableDrivers(startDate, endDate);
         setAvailableDrivers(drivers);
 
-        // Update fetch state
+ 
         fetchStateRef.current = {
           hasFetched: true,
           leaveId: leave.id,
@@ -85,7 +84,7 @@ export default function ApproveStep2Modal({
       alert("Please select a replacement driver");
       return;
     }
-    onApprove(replacementDriverId); // Can be undefined if no replacement needed
+    onApprove(replacementDriverId);
   };
 
   const selectedDriver = availableDrivers.find(d => d.id === replacementDriverId);
@@ -93,7 +92,7 @@ export default function ApproveStep2Modal({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-        {/* Header */}
+    
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900 flex items-center space-x-2">
@@ -114,7 +113,7 @@ export default function ApproveStep2Modal({
           </div>
         </div>
 
-        {/* Error Message */}
+      
         {error && (
           <div className="mx-6 mb-4">
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -129,9 +128,9 @@ export default function ApproveStep2Modal({
           </div>
         )}
 
-        {/* Content */}
+      
         <div className="p-6">
-          {/* Replacement Info */}
+         
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,7 +162,7 @@ export default function ApproveStep2Modal({
             </div>
           </div>
 
-          {/* Search */}
+        
           <div className="mb-6">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
@@ -184,7 +183,7 @@ export default function ApproveStep2Modal({
             </div>
           </div>
 
-          {/* Selected Driver Preview */}
+      
           {selectedDriver && (
             <div className="mb-6 bg-green-50 rounded-lg p-4 border border-green-200">
               <h4 className="font-medium text-green-800 mb-2 flex items-center space-x-2">
@@ -202,7 +201,7 @@ export default function ApproveStep2Modal({
             </div>
           )}
 
-          {/* Available Drivers */}
+        
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -269,7 +268,7 @@ export default function ApproveStep2Modal({
           </div>
         </div>
 
-        {/* Footer */}
+    
         <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 rounded-b-2xl">
           <div className="flex justify-between">
             <button

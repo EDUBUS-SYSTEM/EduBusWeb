@@ -37,7 +37,6 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const searchAbortControllerRef = useRef<AbortController | null>(null);
 
-  // Search for locations
   const handleSearch = useCallback(async (query: string) => {
     if (!query.trim()) {
       setSearchResults([]);
@@ -45,7 +44,6 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
       return;
     }
 
-    // Cancel previous search
     if (searchAbortControllerRef.current) {
       searchAbortControllerRef.current.abort();
     }
@@ -78,7 +76,6 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
     }
   }, [selectedLocation, currentLocation]);
 
-  // Handle search input change with debounce
   useEffect(() => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
@@ -100,7 +97,6 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
     };
   }, [searchQuery, handleSearch]);
 
-  // Close search results when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -117,7 +113,6 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
     }
   }, [showSearchResults]);
 
-  // Geocode coordinates to get address
   const geocodeLocation = useCallback(async (lat: number, lng: number, signal?: AbortSignal) => {
     try {
       const apiKey = process.env.NEXT_PUBLIC_VIETMAP_API_KEY;
@@ -126,13 +121,11 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
         return;
       }
 
-      // Use vietmapService for reverse geocoding
       const address = await vietmapService.reverseGeocode(lat, lng, signal);
       if (!signal?.aborted) {
         setAddress(address);
       }
     } catch (err) {
-      // Ignore abort errors - they're expected when component unmounts
       if (err instanceof Error && err.name === 'AbortError') {
         return;
       }
@@ -143,16 +136,13 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
     }
   }, []);
 
-  // Add marker to map
   const addMarker = useCallback((lat: number, lng: number) => {
     if (!mapInstanceRef.current || !mapInstanceRef.current.isStyleLoaded()) return;
 
-    // Remove existing marker
     if (markerRef.current) {
       markerRef.current.remove();
     }
 
-    // Create marker element
     const markerElement = document.createElement('div');
     markerElement.innerHTML = '🏫';
     markerElement.style.fontSize = '32px';
@@ -160,7 +150,6 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
     markerElement.style.lineHeight = '1';
     markerElement.style.cursor = 'pointer';
 
-    // Create marker
     const marker = new vietmapgl.Marker({
       element: markerElement,
       anchor: 'center',
@@ -169,7 +158,6 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
       .setLngLat([lng, lat])
       .addTo(mapInstanceRef.current);
 
-    // Handle marker drag
     marker.on('dragend', () => {
       const position = marker.getLngLat();
       const newLat = position.lat;
@@ -180,7 +168,6 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
       }
     });
 
-    // Add popup
     const popup = new vietmapgl.Popup({ offset: 25 })
       .setHTML(`
         <div class="p-2">
@@ -195,7 +182,6 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
     markerRef.current = marker;
     setSelectedLocation({ lat, lng });
 
-    // Center map on marker
     if (mapInstanceRef.current) {
       mapInstanceRef.current.flyTo({
         center: [lng, lat],
@@ -205,15 +191,12 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
     }
   }, [geocodeLocation]);
 
-  // Handle search result selection
   const handleSelectSearchResult = useCallback(async (result: VietMapAutocompleteResult) => {
     try {
       setIsSearching(true);
       
-      // Try to get coordinates from place details API
       let coords = await vietmapService.getPlaceDetails(result.ref_id);
       
-      // Fallback: If place details fails, try Nominatim geocoding
       if (!coords) {
         const searchText = result.display || result.address || result.name;
         if (searchText) {
@@ -229,14 +212,12 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
         setShowSearchResults(false);
       } else {
         console.warn('Could not get coordinates for selected location');
-        // Still update the address even if we can't get coordinates
         setAddress(result.display || result.address || result.name);
         setSearchQuery(result.display || result.address || result.name);
         setShowSearchResults(false);
       }
     } catch (err) {
       console.error('Error getting place details:', err);
-      // Still update the address on error
       setAddress(result.display || result.address || result.name);
       setSearchQuery(result.display || result.address || result.name);
       setShowSearchResults(false);
@@ -245,7 +226,6 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
     }
   }, [addMarker]);
 
-  // Initialize map
   useEffect(() => {
     if (!isOpen || !mapRef.current) return;
 
@@ -265,12 +245,10 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
 
         if (!isMounted || !mapRef.current) return;
 
-        // Default center (Da Nang)
         const defaultCenter: [number, number] = currentLocation
           ? [currentLocation.lng, currentLocation.lat]
           : [108.2605, 15.9796];
 
-        // Initialize map
         const map = new vietmapgl.Map({
           container: mapRef.current,
           style: `https://maps.vietmap.vn/maps/styles/tm/style.json?apikey=${apiKey}`,
@@ -280,16 +258,13 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
 
         mapInstanceRef.current = map;
 
-        // Add navigation controls
         map.addControl(new vietmapgl.NavigationControl(), 'top-right');
 
-        // Handle map load
         map.on('load', () => {
           if (!isMounted) return;
           setIsMapLoaded(true);
           setError('');
 
-          // Add initial marker if location exists
           if (currentLocation) {
             addMarker(currentLocation.lat, currentLocation.lng);
             geocodeLocation(currentLocation.lat, currentLocation.lng, abortController.signal);
@@ -297,7 +272,6 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
           }
         });
 
-        // Handle map click
         map.on('click', (e) => {
           if (!isMounted) return;
           setShowSearchResults(false);
@@ -306,7 +280,6 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
           geocodeLocation(lat, lng, abortController.signal);
         });
 
-        // Handle errors
         map.on('error', (e) => {
           console.error('Map error:', e);
           if (isMounted) {
@@ -327,13 +300,11 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
     return () => {
       isMounted = false;
       
-      // Abort any pending geocoding requests
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
         abortControllerRef.current = null;
       }
       
-      // Abort any pending search requests
       if (searchAbortControllerRef.current) {
         searchAbortControllerRef.current.abort();
         searchAbortControllerRef.current = null;
@@ -393,7 +364,6 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg w-[95vw] h-[90vh] max-w-6xl flex flex-col">
-        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
             <FaMapMarkerAlt className="text-blue-500" />
@@ -408,9 +378,7 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
           </button>
         </div>
 
-        {/* Content */}
         <div className="flex flex-1 overflow-hidden">
-          {/* Map */}
           <div className="flex-1 relative">
             {error && (
               <div className="absolute top-4 left-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-10">
@@ -418,7 +386,6 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
               </div>
             )}
             
-            {/* Search Box */}
             <div className="absolute top-4 left-4 right-4 z-20 max-w-md">
               <div className="relative search-container">
                 <div className="relative">
@@ -440,7 +407,6 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
                   )}
                 </div>
                 
-                {/* Search Results Dropdown */}
                 {showSearchResults && searchResults.length > 0 && (
                   <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-64 overflow-y-auto z-30">
                     {searchResults.map((result, index) => (
@@ -479,7 +445,6 @@ const SchoolMapPicker: React.FC<SchoolMapPickerProps> = ({
             )}
           </div>
 
-          {/* Info Panel */}
           <div className="w-96 border-l bg-gray-50 overflow-y-auto p-6">
             <div className="space-y-4">
               <div>

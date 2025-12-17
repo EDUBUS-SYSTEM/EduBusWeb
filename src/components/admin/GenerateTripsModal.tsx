@@ -26,11 +26,9 @@ export default function GenerateTripsModal({
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load schedules when modal opens
   useEffect(() => {
     if (isOpen) {
       loadSchedules();
-      // Set default dates (today and 7 days from now)
       const today = new Date();
       const nextWeek = new Date();
       nextWeek.setDate(today.getDate() + 7);
@@ -56,18 +54,15 @@ export default function GenerateTripsModal({
     }
   };
 
-  // Format time for display - handles time strings (HH:mm format)
   const formatTimeLocal = (isoTime: string): string => {
     try {
-      // Handle different time formats
       let timeStr = isoTime;
-      // If it's just time (HH:mm or HH:mm:ss), add date prefix
       if (isoTime && !isoTime.includes('T') && !isoTime.includes(' ')) {
         timeStr = `2000-01-01T${isoTime}`;
       }
       const date = new Date(timeStr);
       if (isNaN(date.getTime())) {
-        return isoTime; // Return original if can't parse
+        return isoTime; 
       }
       return formatTime(date.toISOString());
     } catch {
@@ -112,7 +107,6 @@ export default function GenerateTripsModal({
     setIsSubmitting(true);
     try {
       await onSubmit(scheduleId, startDate, endDate);
-      // Success - modal will be closed by parent
       setScheduleId('');
       setStartDate('');
       setEndDate('');
@@ -121,7 +115,6 @@ export default function GenerateTripsModal({
     } catch (error: unknown) {
       console.error('Error generating trips:', error);
 
-      // Extract error message - handle both axios errors and Error objects
       let errorMessage = 'Failed to generate trips. Please try again.';
 
       if (error && typeof error === 'object' && 'response' in error) {
@@ -155,7 +148,6 @@ export default function GenerateTripsModal({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
         <div className="flex justify-between items-start p-6 border-b border-gray-100">
           <div className="flex items-center gap-2">
             <FaMagic className="text-[#fad23c]" />
@@ -169,9 +161,7 @@ export default function GenerateTripsModal({
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Info Box */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-800">
               This will automatically generate trips based on the selected schedule&apos;s recurrence rules (RRule)
@@ -179,7 +169,6 @@ export default function GenerateTripsModal({
             </p>
           </div>
 
-          {/* Schedule Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Schedule <span className="text-red-500">*</span>
@@ -208,7 +197,6 @@ export default function GenerateTripsModal({
             )}
           </div>
 
-          {/* Start Date */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Start Date <span className="text-red-500">*</span>
@@ -225,7 +213,6 @@ export default function GenerateTripsModal({
             )}
           </div>
 
-          {/* End Date */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               End Date <span className="text-red-500">*</span>
@@ -242,7 +229,6 @@ export default function GenerateTripsModal({
             )}
           </div>
 
-          {/* Error Message */}
           {submissionError && (
             <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
               <p className="text-sm font-medium">Error:</p>
@@ -250,7 +236,6 @@ export default function GenerateTripsModal({
             </div>
           )}
 
-          {/* Footer */}
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
             <button
               type="button"

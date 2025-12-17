@@ -21,7 +21,7 @@ interface TimeSlotSelectorProps {
   };
 }
 
-// Predefined time slots for school bus schedules
+
 const TIME_SLOTS: TimeSlot[] = [
   {
     id: "morning-pickup",
@@ -65,10 +65,10 @@ export default function TimeSlotSelector({
 
   const handleSlotSelect = (slot: TimeSlot) => {
     setSelectedSlot(slot.id);
-    
+
     if (slot.id === "custom") {
       setShowCustomInputs(true);
-      // Don't change times for custom, let user input manually
+
     } else {
       setShowCustomInputs(false);
       onStartTimeChange(slot.startTime);
@@ -86,7 +86,7 @@ export default function TimeSlotSelector({
 
   return (
     <div className="space-y-4">
-      {/* Time Slot Selection */}
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-3">
           <FaClock className="inline w-4 h-4 mr-2" />
@@ -97,11 +97,10 @@ export default function TimeSlotSelector({
             <div
               key={slot.id}
               onClick={() => handleSlotSelect(slot)}
-              className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
-                selectedSlot === slot.id
+              className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${selectedSlot === slot.id
                   ? "border-[#FDC700] bg-yellow-50 shadow-lg"
                   : "border-gray-200 hover:border-[#FDC700] hover:shadow-md"
-              }`}
+                }`}
             >
               <div className="flex flex-col">
                 <h5 className="font-semibold text-gray-800 text-sm mb-1">
@@ -121,7 +120,7 @@ export default function TimeSlotSelector({
         </div>
       </div>
 
-      {/* Custom Time Inputs */}
+
       {showCustomInputs && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl">
           <div>
@@ -132,11 +131,10 @@ export default function TimeSlotSelector({
               type="time"
               value={selectedStartTime}
               onChange={(e) => handleCustomTimeChange('startTime', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
-                errors.startTime
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${errors.startTime
                   ? "border-red-300 bg-red-50"
                   : "border-gray-200"
-              }`}
+                }`}
             />
             {errors.startTime && (
               <p className="mt-1 text-sm text-red-600">
@@ -152,11 +150,10 @@ export default function TimeSlotSelector({
               type="time"
               value={selectedEndTime}
               onChange={(e) => handleCustomTimeChange('endTime', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${
-                errors.endTime
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#fad23c] focus:border-transparent transition-all duration-300 ${errors.endTime
                   ? "border-red-300 bg-red-50"
                   : "border-gray-200"
-              }`}
+                }`}
             />
             {errors.endTime && (
               <p className="mt-1 text-sm text-red-600">
@@ -167,7 +164,7 @@ export default function TimeSlotSelector({
         </div>
       )}
 
-      {/* Current Selection Display */}
+
       {selectedStartTime && selectedEndTime && !showCustomInputs && (
         <div className="p-3 bg-blue-50 rounded-lg">
           <p className="text-sm text-blue-800">

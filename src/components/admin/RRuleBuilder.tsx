@@ -24,8 +24,8 @@ interface RRuleBuilderProps {
   onChange: (rrule: string) => void;
   onValidationChange?: (isValid: boolean, errors: string[]) => void;
   className?: string;
-  previewStartDate?: string; // ISO YYYY-MM-DD or ISO string
-  previewEndDate?: string;   // optional upper bound
+  previewStartDate?: string; 
+  previewEndDate?: string;   
 }
 
 export default function RRuleBuilder({
@@ -51,14 +51,12 @@ export default function RRuleBuilder({
     errors: string[];
   }>({ isValid: true, errors: [] });
 
-  // Parse initial RRule value
   useEffect(() => {
     if (value) {
       const parsed = RRuleUtils.parseRRule(value);
       if (parsed.isValid) {
         setConfig(parsed.config);
 
-        // Check if it matches a predefined pattern
         const pattern = RRuleUtils.getPatternByRRule(value);
         if (pattern) {
           setSelectedPattern(pattern);
@@ -70,13 +68,11 @@ export default function RRuleBuilder({
     }
   }, [value]);
 
-  // Keep latest onValidationChange in a ref to avoid effect dependency loops
   const onValidationRef = useRef(onValidationChange);
   useEffect(() => {
     onValidationRef.current = onValidationChange;
   }, [onValidationChange]);
 
-  // Update validation when config changes (stable deps)
   useEffect(() => {
     const rrule = RRuleUtils.buildRRule(config);
     const nextValidation = RRuleUtils.validateRRule(rrule);
@@ -84,7 +80,6 @@ export default function RRuleBuilder({
     onValidationRef.current?.(nextValidation.isValid, nextValidation.errors);
   }, [config]);
 
-  // Generate preview dates (respect Effective From/To if provided)
   const generatePreview = () => {
     const rrule = RRuleUtils.buildRRule(config);
     const start = previewStartDate
@@ -99,7 +94,6 @@ export default function RRuleBuilder({
     setShowPreview(true);
   };
 
-  // Handle pattern selection
   const handlePatternSelect = (pattern: RRulePattern) => {
     setSelectedPattern(pattern);
     setIsCustomMode(false);
@@ -111,7 +105,6 @@ export default function RRuleBuilder({
     }
   };
 
-  // Handle custom mode toggle
   const handleCustomModeToggle = () => {
     setIsCustomMode(!isCustomMode);
     if (!isCustomMode) {
@@ -119,7 +112,6 @@ export default function RRuleBuilder({
     }
   };
 
-  // Handle config changes
   const handleConfigChange = (updates: Partial<RRuleConfig>) => {
     const newConfig = { ...config, ...updates };
     setConfig(newConfig);
@@ -128,7 +120,6 @@ export default function RRuleBuilder({
     onChange(rrule);
   };
 
-  // Handle day selection
   const handleDayToggle = (day: string) => {
     const currentDays = config.byDay || [];
     const newDays = currentDays.includes(day)
@@ -138,7 +129,6 @@ export default function RRuleBuilder({
     handleConfigChange({ byDay: newDays.length > 0 ? newDays : undefined });
   };
 
-  // Handle month selection
   const handleMonthToggle = (month: number) => {
     const currentMonths = config.byMonth || [];
     const newMonths = currentMonths.includes(month)
@@ -150,7 +140,6 @@ export default function RRuleBuilder({
     });
   };
 
-  // Handle month day selection
   const handleMonthDayToggle = (day: number) => {
     const currentDays = config.byMonthDay || [];
     const newDays = currentDays.includes(day)
@@ -164,7 +153,6 @@ export default function RRuleBuilder({
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Pattern Selection */}
       {!isCustomMode && (
         <div>
           <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
@@ -219,7 +207,6 @@ export default function RRuleBuilder({
         </div>
       )}
 
-      {/* Custom Configuration */}
       {isCustomMode && (
         <div>
           <div className="flex items-center justify-between mb-4">
@@ -237,7 +224,6 @@ export default function RRuleBuilder({
           </div>
 
           <div className="bg-gray-50 rounded-xl p-6 space-y-6">
-            {/* Frequency and Interval */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -280,7 +266,6 @@ export default function RRuleBuilder({
               </div>
             </div>
 
-            {/* Weekly Options */}
             {config.frequency === "WEEKLY" && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -306,7 +291,6 @@ export default function RRuleBuilder({
               </div>
             )}
 
-            {/* Monthly Options */}
             {config.frequency === "MONTHLY" && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -331,7 +315,6 @@ export default function RRuleBuilder({
               </div>
             )}
 
-            {/* Yearly Options */}
             {config.frequency === "YEARLY" && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -356,7 +339,6 @@ export default function RRuleBuilder({
               </div>
             )}
 
-            {/* Until Date */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 End Date (Optional)
@@ -371,11 +353,9 @@ export default function RRuleBuilder({
                 onChange={(e) => {
                   const selectedDate = e.target.value ? new Date(e.target.value) : undefined;
                   
-                  // Validate end date
                   if (selectedDate && previewStartDate) {
                     const startDate = new Date(previewStartDate);
                     if (selectedDate <= startDate) {
-                      // Show validation error
                       return;
                     }
                   }
@@ -394,7 +374,6 @@ export default function RRuleBuilder({
         </div>
       )}
 
-      {/* Validation Errors */}
       {!validation.isValid && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4">
           <h5 className="font-semibold text-red-800 mb-2">
@@ -408,7 +387,6 @@ export default function RRuleBuilder({
         </div>
       )}
 
-      {/* Description and Preview */}
       <div className="bg-yellow-50 rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
           <h5 className="font-semibold text-gray-800">Schedule Description:</h5>
@@ -431,7 +409,6 @@ export default function RRuleBuilder({
         </div>
       </div>
 
-      {/* Preview Dates */}
       {showPreview && previewDates.length > 0 && (
         <div className="bg-green-50 border border-green-200 rounded-xl p-4">
           <h5 className="font-semibold text-green-800 mb-3 flex items-center">

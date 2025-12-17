@@ -25,7 +25,7 @@ export function StudentAvatar({ studentId, studentName, onUploadSuccess }: Stude
 
     const initials = getInitials(studentName);
 
-    // Load avatar with authentication token
+
     useEffect(() => {
         let blobUrl: string | null = null;
         let isMounted = true;
@@ -101,12 +101,12 @@ export function StudentAvatar({ studentId, studentName, onUploadSuccess }: Stude
         try {
             await studentService.uploadPhoto(studentId, file);
             toast.success('Upload avatar student successfully');
-            setImageKey(Date.now()); // Trigger reload of avatar
+            setImageKey(Date.now());
             onUploadSuccess?.();
         } catch (error: unknown) {
             console.error('Error uploading photo:', error);
-            const errorMessage = (error as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message 
-                || (error as { message?: string })?.message 
+            const errorMessage = (error as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message
+                || (error as { message?: string })?.message
                 || 'Failed to upload photo';
             toast.error(`Failed to upload photo. Please try again: ${errorMessage}`);
         } finally {

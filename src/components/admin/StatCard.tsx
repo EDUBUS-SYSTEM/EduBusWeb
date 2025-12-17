@@ -79,12 +79,12 @@ export default function StatCard({
             whileHover={{ y: -2, scale: 1.005 }}
             className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${scheme.bg} p-4 ${scheme.shadow} hover:shadow-md transition-all duration-300`}
         >
-            {/* Background decoration */}
+
             <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10" />
             <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full -ml-8 -mb-8" />
 
             <div className="relative z-10">
-                {/* Icon */}
+
                 <motion.div
                     whileHover={{ rotate: 360, scale: 1.1 }}
                     transition={{ duration: 0.6 }}
@@ -93,10 +93,10 @@ export default function StatCard({
                     <Icon className={`w-5 h-5 ${scheme.iconColor}`} />
                 </motion.div>
 
-                {/* Title */}
+
                 <h3 className={`${scheme.textColor} text-[11px] font-medium mb-1.5`}>{title}</h3>
 
-                {/* Value */}
+
                 {loading ? (
                     <div className="h-7 w-16 bg-black/10 rounded-lg animate-pulse" />
                 ) : (
@@ -110,12 +110,12 @@ export default function StatCard({
                     </motion.div>
                 )}
 
-                {/* Subtitle */}
+
                 {subtitle && (
                     <p className={`${scheme.subtitleColor} text-[9px] leading-tight`}>{subtitle}</p>
                 )}
 
-                {/* Trend indicator */}
+
                 {trend && (
                     <div className="flex items-center gap-1 mt-1.5">
                         <span
