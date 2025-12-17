@@ -1,15 +1,12 @@
 import { apiService } from '@/lib/api';
 import { UnitPriceResponseDto, CreateUnitPriceDto, UpdateUnitPriceDto } from '@/types/unitPrice';
 
-// Re-export types for convenience
 export type { UnitPriceResponseDto, CreateUnitPriceDto, UpdateUnitPriceDto };
 
 export const unitPriceService = {
-  // Public endpoint to get current effective unit price
   getCurrentEffective: () =>
     apiService.get<UnitPriceResponseDto>('/UnitPrice/current-effective'),
   
-  // Admin endpoints
   getAllUnitPrices: () =>
     apiService.get<UnitPriceResponseDto[]>('/UnitPrice'),
   
@@ -19,7 +16,6 @@ export const unitPriceService = {
   getActive: () =>
     apiService.get<UnitPriceResponseDto[]>('/UnitPrice/active'),
   
-  // Additional admin methods (if needed)
   createUnitPrice: (data: CreateUnitPriceDto) =>
     apiService.post<UnitPriceResponseDto>('/UnitPrice', data),
   
@@ -29,7 +25,6 @@ export const unitPriceService = {
   deleteUnitPrice: (id: string) =>
     apiService.delete(`/UnitPrice/${id}`),
   
-  // Status toggles use PUT to match backend controller
   activateUnitPrice: (id: string) =>
     apiService.put(`/UnitPrice/${id}/activate`),
   

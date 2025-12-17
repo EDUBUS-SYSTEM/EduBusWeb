@@ -2,7 +2,6 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { driverLeaveRequestService, DriverLeaveRequest, DriverLeaveRequestFilters } from '@/services/api/driverLeaveRequests';
 import { tripIncidentService, TripIncidentListItem, TripIncidentFilters, TripIncidentStatus } from '@/services/api/tripIncidents';
 
-// Async thunk for fetch leave requests
 export const fetchLeaveRequests = createAsyncThunk(
     'driverRequests/fetchLeaveRequests',
     async (filters: DriverLeaveRequestFilters = {}) => {
@@ -11,7 +10,6 @@ export const fetchLeaveRequests = createAsyncThunk(
     }
 );
 
-// Async thunk for approve leave request
 export const approveLeaveRequest = createAsyncThunk(
     'driverRequests/approveLeaveRequest',
     async ({ id, data }: { id: string; data: { notes?: string } }) => {
@@ -20,7 +18,6 @@ export const approveLeaveRequest = createAsyncThunk(
     }
 );
 
-// Async thunk for reject leave request
 export const rejectLeaveRequest = createAsyncThunk(
     'driverRequests/rejectLeaveRequest',
     async ({ id, data }: { id: string; data: { rejectionReason?: string } }) => {
@@ -157,7 +154,6 @@ const driverRequestsSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            // Fetch leave requests
             .addCase(fetchLeaveRequests.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -172,7 +168,6 @@ const driverRequestsSlice = createSlice({
                 state.loading = false;
                 state.error = action.error.message || 'Failed to fetch leave requests';
             })
-            // Approve leave request
             .addCase(approveLeaveRequest.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -188,7 +183,6 @@ const driverRequestsSlice = createSlice({
                 state.loading = false;
                 state.error = action.error.message || 'Failed to approve leave request';
             })
-            // Reject leave request
             .addCase(rejectLeaveRequest.pending, (state) => {
                 state.loading = true;
                 state.error = null;

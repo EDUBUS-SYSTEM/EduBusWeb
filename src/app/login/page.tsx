@@ -17,7 +17,6 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Nếu đã đăng nhập (auth context đã load user) thì tự động chuyển vào dashboard
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
       router.replace("/admin/dashboard");
@@ -59,12 +58,10 @@ export default function AdminLoginPage() {
     setLoading(true);
     try {
       await login(formData);
-      // Use replace instead of push to avoid back button issues
       router.replace('/admin/dashboard');
     } catch (error: unknown) {
       let errMsg = "Something went wrong.";
       if (axios.isAxiosError(error)) {
-        // This will catch 401, 403, etc.
         const status = error.response?.status;
 
         if (status === 401) {
@@ -73,7 +70,6 @@ export default function AdminLoginPage() {
           errMsg = error.response?.data?.message || "Login failed. Please try again.";
         }
       } else if (error instanceof Error) {
-        // Non-Axios JS errors (like your manual `throw Error`)
         errMsg = error.message;
       }
       setErrors({ general: errMsg });
@@ -94,7 +90,6 @@ export default function AdminLoginPage() {
             className="mx-auto drop-shadow-lg"
           />
         </div>
-        {/* Login Card */}
         <div className="bg-gradient-to-b from-[#EDE091] to-[#F2ECBD] rounded-3xl shadow-soft-lg p-8 pt-40">
           <h2 className="text-4xl font-bold text-[#000000] mb-6 text-center">
             Hello, Sign in !
@@ -107,7 +102,6 @@ export default function AdminLoginPage() {
               </div>
             )}
 
-            {/* Email Input */}
             <div className="space-y-2">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email address
@@ -143,7 +137,6 @@ export default function AdminLoginPage() {
               )}
             </div>
 
-            {/* Password Input */}
             <div className="space-y-2">
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password
@@ -200,7 +193,6 @@ export default function AdminLoginPage() {
               </div>
             </div>
 
-            {/* Sign In Button */}
             <button
               type="submit"
               disabled={loading}

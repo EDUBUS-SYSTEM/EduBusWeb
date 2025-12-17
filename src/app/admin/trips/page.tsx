@@ -28,7 +28,7 @@ type ViewMode = 'table' | 'calendar' | 'live';
 
 export default function TripManagementPage() {
   const dispatch = useAppDispatch();
-  const { trips, loading, error, pagination, filters } = useAppSelector(state => state.trips);
+  const { trips, error, pagination, filters } = useAppSelector(state => state.trips);
 
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [calendarView, setCalendarView] = useState<CalendarView>({
@@ -36,19 +36,16 @@ export default function TripManagementPage() {
     date: new Date()
   });
 
-  // Filters - managed through Redux
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState('');
   const [routeFilter, setRouteFilter] = useState<string>('all');
 
-  // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<TripDto | null>(null);
 
-  // Stats
   const [stats, setStats] = useState({
     total: 0,
     scheduled: 0,
@@ -61,9 +58,7 @@ export default function TripManagementPage() {
     onTimePerformance: 0
   });
 
-  // Fetch trips with current filters
   const fetchTripsData = useCallback(() => {
-    // Use a large page size so we always retrieve the full list (past + present + future)
     const perPageAll = 1000;
     const params = {
       page: pagination.currentPage,
@@ -71,7 +66,6 @@ export default function TripManagementPage() {
       routeId: routeFilter !== 'all' ? routeFilter : undefined,
       status: statusFilter !== 'all' ? statusFilter : undefined,
       serviceDate: dateFilter || undefined,
-      // Keep date window wide so backend doesn't drop past trips
       startDate: '1900-01-01',
       endDate: '2100-12-31',
       sortBy: filters.sortBy || 'serviceDate',
@@ -81,12 +75,10 @@ export default function TripManagementPage() {
     dispatch(fetchTrips(params));
   }, [dispatch, pagination.currentPage, pagination.perPage, routeFilter, statusFilter, dateFilter, filters.sortBy, filters.sortOrder]);
 
-  // Load trips when filters or pagination changes
   useEffect(() => {
     fetchTripsData();
   }, [fetchTripsData]);
 
-  // Update stats when trips change
   useEffect(() => {
     if (trips && trips.length > 0) {
       const today = new Date();
@@ -101,14 +93,12 @@ export default function TripManagementPage() {
 
       const uniqueRoutes = new Set(trips.map(t => t.routeId));
 
-      // Calculate students transported (estimated from completed trips and stops)
       const studentsTransported = trips
         .filter(t => t.status === 'Completed')
         .reduce((sum, trip) => {
           return sum + (trip.stops?.length || 0);
         }, 0);
 
-      // Calculate on-time performance (trips that started within 5 minutes of planned time)
       const onTimeTrips = trips.filter(t => {
         if (!t.startTime) return false;
         const plannedStart = new Date(t.plannedStartAt);
@@ -149,9 +139,6 @@ export default function TripManagementPage() {
 
   const loadRoutes = async () => {
     try {
-      // TODO: Replace with actual route service
-      // const routesData = await routeService.getAllRoutes();
-      // setRoutes(routesData.map(r => ({ id: r.id, routeName: r.name })));
     } catch (error) {
       console.error('Error loading routes:', error);
     }
@@ -159,9 +146,6 @@ export default function TripManagementPage() {
 
   const loadSchedules = async () => {
     try {
-      // TODO: Replace with actual schedule service
-      // const schedulesData = await scheduleService.getAllSchedules();
-      // setSchedules(schedulesData.map(s => ({ id: s.id, name: s.name })));
     } catch (error) {
       console.error('Error loading schedules:', error);
     }
@@ -196,7 +180,7 @@ export default function TripManagementPage() {
         setShowDetailsModal(false);
         setSelectedTrip(null);
       }
-      fetchTripsData(); // Refresh trips
+      fetchTripsData(); 
     } catch (error) {
       console.error('Error deleting trip:', error);
       alert('Failed to delete trip. Please try again.');
@@ -205,27 +189,21 @@ export default function TripManagementPage() {
 
   const handleGenerateTrips = async (scheduleId: string, startDate: string, endDate: string) => {
     try {
-      // Convert dates to ISO format for API
       const startDateIso = new Date(startDate).toISOString();
       const endDateIso = new Date(endDate).toISOString();
 
-      // Dispatch the generate action
       const result = await dispatch(generateTripsFromSchedule({
         scheduleId,
         startDate: startDateIso,
         endDate: endDateIso
       })).unwrap();
 
-      // Refresh trips list after successful generation
       fetchTripsData();
 
-      // Show success message
       alert(`Successfully generated ${result.length} trip(s)!`);
 
-      // Close modal
       setShowGenerateModal(false);
     } catch (error: unknown) {
-      // Error is handled by Redux, but we need to extract it for the modal
       let errorMessage = 'Failed to generate trips. Please try again.';
 
       if (error && typeof error === 'object' && 'response' in error) {
@@ -250,7 +228,6 @@ export default function TripManagementPage() {
         errorMessage = error.message;
       }
 
-      // Re-throw so modal can display it
       throw new Error(errorMessage);
     }
   };
@@ -278,10 +255,8 @@ export default function TripManagementPage() {
     dispatch(setPerPage(value));
   };
 
-  // No client-side filtering needed since search is removed
   const filteredTrips = trips;
 
-  // Get unique routes from trips for dropdown
   const availableRoutes = useMemo(() => {
     const routeMap = new Map<string, string>();
     trips.forEach(trip => {
@@ -297,18 +272,14 @@ export default function TripManagementPage() {
       }));
   }, [trips]);
 
-  // Convert trips to calendar events
   const calendarEvents: CalendarEvent[] = useMemo(() => {
-    // Filter trips by route if routeFilter is set
     const tripsToShow = routeFilter === 'all'
       ? filteredTrips
       : filteredTrips.filter(trip => trip.routeId === routeFilter);
 
     return tripsToShow.map(trip => {
-      // Use schedule snapshot times if available, otherwise use planned times
       const serviceDate = new Date(trip.serviceDate);
 
-      // Parse schedule times (format: HH:mm or similar)
       const parseTimeString = (timeStr: string) => {
         const [hours, minutes] = timeStr.split(':').map(Number);
         return { hours, minutes };
@@ -331,7 +302,6 @@ export default function TripManagementPage() {
         endDate = new Date(trip.plannedEndAt);
       }
 
-      // Map status to calendar event status
       const statusMap: Record<string, "planned" | "in-progress" | "completed" | "cancelled"> = {
         'Scheduled': 'planned',
         'InProgress': 'in-progress',
@@ -339,12 +309,11 @@ export default function TripManagementPage() {
         'Cancelled': 'cancelled'
       };
 
-      // Color based on status
       const colorMap: Record<string, string> = {
-        'Scheduled': '#3B82F6', // blue
-        'InProgress': '#10B981', // green
-        'Completed': '#6B7280', // gray
-        'Cancelled': '#EF4444' // red
+        'Scheduled': '#3B82F6', 
+        'InProgress': '#10B981', 
+        'Completed': '#6B7280', 
+        'Cancelled': '#EF4444' 
       };
 
       return {
@@ -376,7 +345,6 @@ export default function TripManagementPage() {
   const [initialServiceDate, setInitialServiceDate] = useState<string>('');
 
   const handleCalendarEventCreate = (date: Date) => {
-    // Set the service date to the clicked date (YYYY-MM-DD format) in local timezone
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -418,7 +386,6 @@ export default function TripManagementPage() {
     setCalendarView({ ...calendarView, date });
   };
 
-  // Handle filter changes
   const handleStatusFilterChange = (value: string) => {
     setStatusFilter(value);
     dispatch(setCurrentPage(1));
@@ -440,14 +407,12 @@ export default function TripManagementPage() {
       <Header />
       <main className="ml-64 pt-16 p-6 bg-[#FEFCE8] min-h-screen">
         <div className="w-full">
-          {/* Error Display */}
           {error && (
             <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
               {error}
             </div>
           )}
 
-          {/* Page Header with Create Button */}
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-[#463B3B]">
               Trip Management
@@ -461,7 +426,6 @@ export default function TripManagementPage() {
             </button>
           </div>
 
-          {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
             <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
               <div className="flex items-center justify-between">
@@ -504,7 +468,6 @@ export default function TripManagementPage() {
             </div>
           </div>
 
-          {/* Filters and View Toggle for Table */}
           {viewMode === 'table' && (
             <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100 mb-4">
               <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
@@ -531,7 +494,6 @@ export default function TripManagementPage() {
                   />
                 </div>
 
-                {/* View Toggle */}
                 <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
                   <button
                     onClick={() => setViewMode('table')}
@@ -559,7 +521,6 @@ export default function TripManagementPage() {
             </div>
           )}
 
-          {/* View Toggle for Calendar */}
           {viewMode === 'calendar' && (
             <div className="mb-4 flex justify-end">
               <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
@@ -588,7 +549,6 @@ export default function TripManagementPage() {
             </div>
           )}
 
-          {/* View Toggle for Live */}
           {viewMode === 'live' && (
             <div className="mb-4 flex justify-end">
               <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
@@ -617,7 +577,6 @@ export default function TripManagementPage() {
             </div>
           )}
 
-          {/* Content */}
           {viewMode === 'table' ? (
             <TripTable
               trips={filteredTrips}
@@ -655,7 +614,6 @@ export default function TripManagementPage() {
         </div>
       </main>
 
-      {/* Modals */}
       {showCreateModal && (
         <CreateTripModal
           isOpen={showCreateModal}

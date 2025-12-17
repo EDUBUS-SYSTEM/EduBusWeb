@@ -1,7 +1,6 @@
 import { apiClient } from "@/lib/api";
 import { Schedule, ScheduleTimeOverride } from "@/types";
 
-// Legacy interface for backward compatibility - will be removed
 export interface LegacySchedule {
   id: string;
   name: string;
@@ -23,12 +22,12 @@ export interface CreateScheduleDto {
   endTime: string;
   rRule: string;
   timezone: string;
-  academicYear: string; // Added to match backend
-  semesterCode?: string; // Optional semester code for semester-based schedules
-  effectiveFrom: string; // ISO string format for DateTime
-  effectiveTo?: string; // ISO string format for DateTime?
-  exceptions: string[]; // Array of ISO string dates for List<DateTime>
-  tripType: number; // TripType enum: 0=Unknown, 1=Departure, 2=Return
+  academicYear: string; 
+  semesterCode?: string; 
+  effectiveFrom: string; 
+  effectiveTo?: string; 
+  exceptions: string[]; 
+  tripType: number; 
   isActive: boolean;
 }
 
@@ -40,15 +39,15 @@ export interface UpdateScheduleDto {
   endTime: string;
   rRule: string;
   timezone: string;
-  academicYear: string; // Added to match backend
-  semesterCode?: string; // Optional semester code for semester-based schedules
-  effectiveFrom: string; // ISO string format for DateTime
-  effectiveTo?: string; // ISO string format for DateTime?
-  exceptions: string[]; // Array of ISO string dates for List<DateTime>
-  tripType: number; // TripType enum: 0=Unknown, 1=Departure, 2=Return
+  academicYear: string; 
+  semesterCode?: string; 
+  effectiveFrom: string; 
+  effectiveTo?: string; 
+  exceptions: string[]; 
+  tripType: number; 
   isActive: boolean;
-  timeOverrides?: ScheduleTimeOverride[]; // Added to preserve overrides
-  updatedAt?: string; // Added for optimistic locking
+  timeOverrides?: ScheduleTimeOverride[]; 
+  updatedAt?: string; 
 }
 
 export interface ScheduleQueryParams {
@@ -128,7 +127,6 @@ export interface LocationInfo {
 }
 
 class ScheduleService {
-  // Test API connection
   async testConnection(): Promise<boolean> {
     try {
       const response = await apiClient.get("/schedule/active");
@@ -139,7 +137,6 @@ class ScheduleService {
     }
   }
 
-  // Schedule CRUD operations
   async getSchedules(params?: ScheduleQueryParams): Promise<Schedule[]> {
     try {
       const queryParams = new URLSearchParams();
@@ -229,7 +226,6 @@ class ScheduleService {
     }
   }
 
-  // Route Schedule CRUD operations
   async getRouteSchedules(
     params?: RouteScheduleQueryParams
   ): Promise<RouteSchedule[]> {
@@ -295,10 +291,7 @@ class ScheduleService {
     return response.data;
   }
 
-  // Helper methods for dropdowns
   async getRoutes(): Promise<Route[]> {
-    // TODO: Implement RouteController in backend
-    // For now, return mock data to avoid 404 error
     return [
       {
         id: "1",
@@ -325,11 +318,9 @@ class ScheduleService {
   }
 
   async getSchedulesForDropdown(): Promise<Schedule[]> {
-    // Get all active schedules for dropdown selection
     return this.getActiveSchedules();
   }
 
-  // Time Override management
   async addTimeOverride(
     scheduleId: string,
     timeOverride: ScheduleTimeOverride,
@@ -402,7 +393,6 @@ class ScheduleService {
     return response.data;
   }
 
-  // Schedule generation and validation
   async generateScheduleDates(
     scheduleId: string,
     startDate: string,
@@ -424,7 +414,6 @@ class ScheduleService {
     return response.data;
   }
 
-  // Academic Year integration
   async getSchedulesByAcademicYear(academicYear: string): Promise<Schedule[]> {
     const response = await apiClient.get(
       `/schedule?academicYear=${academicYear}`
@@ -432,7 +421,6 @@ class ScheduleService {
     return response.data;
   }
 
-  // Helper methods for date handling
   formatDateForBackend(date: Date): string {
     return date.toISOString();
   }
@@ -441,7 +429,6 @@ class ScheduleService {
     return new Date(dateString);
   }
 
-  // Validation helpers
   async validateScheduleDates(
     scheduleId: string,
     startDate: string,
@@ -461,7 +448,6 @@ class ScheduleService {
         ? new Date(schedule.effectiveTo)
         : null;
 
-      // Check if date range is within effective period
       if (start < effectiveStart) {
         conflicts.push(
           `Start date must be after effective from date: ${schedule.effectiveFrom}`
@@ -474,7 +460,6 @@ class ScheduleService {
         );
       }
 
-      // Check for exception conflicts
       for (const exception of schedule.exceptions) {
         const exceptionDate = new Date(exception);
         if (start <= exceptionDate && end >= exceptionDate) {

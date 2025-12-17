@@ -7,7 +7,6 @@ export default function StudentSelectionPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to /start which shows the disabled message
     router.replace('/start');
   }, [router]);
 

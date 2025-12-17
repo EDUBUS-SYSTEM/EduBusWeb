@@ -28,10 +28,8 @@ export default function EditAssignmentModal({
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
 
-    // Initialize dates when modal opens
     useEffect(() => {
         if (isOpen && assignmentData) {
-            // Convert UTC to local date for input (YYYY-MM-DD format) using centralized utility
             setStartDate(formatDateForInput(assignmentData.startTime));
 
             if (assignmentData.endTime) {
@@ -46,7 +44,6 @@ export default function EditAssignmentModal({
     const handleSave = async () => {
         if (!assignmentData) return;
 
-        // Validation
         if (!startDate) {
             setError("Start date is required");
             return;
@@ -61,7 +58,6 @@ export default function EditAssignmentModal({
         setError("");
 
         try {
-            // Convert to UTC ISO string
             const startTimeUtc = new Date(startDate + "T00:00:00").toISOString();
             const endTimeUtc = endDate ? new Date(endDate + "T23:59:59").toISOString() : undefined;
 

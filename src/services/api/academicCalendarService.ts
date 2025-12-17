@@ -10,7 +10,6 @@ import {
 } from "@/types";
 
 class AcademicCalendarService {
-  // Test API connection
   async testConnection(): Promise<boolean> {
     try {
       const response = await apiClient.get("/academiccalendar/active");
@@ -21,7 +20,6 @@ class AcademicCalendarService {
     }
   }
 
-  // Academic Calendar CRUD operations
   async getAcademicCalendars(
     params?: AcademicCalendarQueryParams
   ): Promise<AcademicCalendar[]> {
@@ -92,7 +90,6 @@ class AcademicCalendarService {
     return response.data;
   }
 
-  // Holiday management
   async getHolidays(academicCalendarId: string): Promise<SchoolHoliday[]> {
     const response = await apiClient.get(
       `/academiccalendar/${academicCalendarId}/holidays`
@@ -121,7 +118,6 @@ class AcademicCalendarService {
     return response.data;
   }
 
-  // School day management
   async getSchoolDays(academicCalendarId: string): Promise<SchoolDay[]> {
     const response = await apiClient.get(
       `/academiccalendar/${academicCalendarId}/schooldays`
@@ -150,7 +146,6 @@ class AcademicCalendarService {
     return response.data;
   }
 
-  // Utility methods
   async isSchoolDay(
     academicCalendarId: string,
     date: string
@@ -168,7 +163,6 @@ class AcademicCalendarService {
     return response.data;
   }
 
-  // Helper methods for dropdowns and selections
   async getAcademicYears(): Promise<string[]> {
     const calendars = await this.getActiveAcademicCalendars();
     return calendars.map((calendar) => calendar.academicYear);
@@ -195,7 +189,6 @@ class AcademicCalendarService {
     }
   }
 
-  // Semester management
   async getSemesters(academicCalendarId: string): Promise<AcademicSemester[]> {
     const calendar = await this.getAcademicCalendarById(academicCalendarId);
     return calendar.semesters;
@@ -208,7 +201,6 @@ class AcademicCalendarService {
     return semesters.filter((semester) => semester.isActive);
   }
 
-  // Validation helpers
   async validateDateRange(
     academicCalendarId: string,
     startDate: string,
@@ -226,14 +218,12 @@ class AcademicCalendarService {
       const calendarStart = new Date(calendar.startDate);
       const calendarEnd = new Date(calendar.endDate);
 
-      // Check if date range is within academic calendar period
       if (start < calendarStart || end > calendarEnd) {
         conflicts.push(
           `Date range must be within academic year ${calendar.academicYear} (${calendar.startDate} - ${calendar.endDate})`
         );
       }
 
-      // Check for holiday conflicts
       for (const holiday of calendar.holidays) {
         const holidayStart = new Date(holiday.startDate);
         const holidayEnd = new Date(holiday.endDate);

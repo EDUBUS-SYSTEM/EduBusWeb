@@ -3,10 +3,8 @@ import { useState, useEffect, useCallback } from "react";
 import { FaSearch, FaFilter, FaEye, FaTimes, FaFileAlt, FaUser, FaClock } from "react-icons/fa";
 import GeneralRequestDetailModal from "./GeneralRequestDetailModal";
 import { formatDateTime } from "@/utils/dateUtils";
-// TODO: Implement real API service for general driver requests
-// This will need to be created based on the backend API
 
-// General Driver Request Type
+
 export interface GeneralDriverRequest {
   id: string;
   driverId: string;
@@ -44,7 +42,6 @@ export default function GeneralRequestsTab() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Search and filter states
   const [searchDriverName, setSearchDriverName] = useState("");
   const [searchDriverEmail, setSearchDriverEmail] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -52,12 +49,10 @@ export default function GeneralRequestsTab() {
   const [priorityFilter, setPriorityFilter] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = 10;
 
-  // Action states
   const [selectedRequest, setSelectedRequest] = useState<GeneralDriverRequest | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
@@ -66,26 +61,12 @@ export default function GeneralRequestsTab() {
     setError(null);
 
     try {
-      // TODO: Replace with real API call
-      // Example: const response = await generalDriverRequestService.getRequests({...filters});
 
-      // For now, show empty state until API is implemented
+
       setRequests([]);
       setTotalItems(0);
 
-      // Remove this comment when API is ready:
-      // const params = {
-      //   status: statusFilter || undefined,
-      //   requestType: requestTypeFilter || undefined,
-      //   priority: priorityFilter || undefined,
-      //   searchDriverName: searchDriverName.trim() || undefined,
-      //   searchDriverEmail: searchDriverEmail.trim() || undefined,
-      //   page: currentPage,
-      //   perPage: itemsPerPage,
-      // };
-      // const response = await generalDriverRequestService.getRequests(params);
-      // setRequests(response.data);
-      // setTotalItems(response.totalCount);
+
 
     } catch (err: unknown) {
       const errorMessage = (err as { message?: string }).message ||
@@ -103,7 +84,6 @@ export default function GeneralRequestsTab() {
     fetchRequests();
   }, [fetchRequests]);
 
-  // Debounce search inputs
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       fetchRequests();
@@ -162,7 +142,6 @@ export default function GeneralRequestsTab() {
     }
   };
 
-  // Using centralized formatDateTime from @/utils/dateUtils
 
   if (loading) {
     return (
@@ -174,10 +153,8 @@ export default function GeneralRequestsTab() {
 
   return (
     <div className="space-y-6 pb-8">
-      {/* Search and Filter Section */}
       <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
         <div className="flex flex-col lg:flex-row gap-4">
-          {/* Search by Driver Name */}
           <div className="flex-1 relative">
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
@@ -190,7 +167,6 @@ export default function GeneralRequestsTab() {
             />
           </div>
 
-          {/* Search by Driver Email */}
           <div className="flex-1 relative">
             <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
@@ -203,7 +179,6 @@ export default function GeneralRequestsTab() {
             />
           </div>
 
-          {/* Clear Search */}
           {(searchDriverName || searchDriverEmail) && (
             <button
               onClick={() => {
@@ -217,7 +192,6 @@ export default function GeneralRequestsTab() {
             </button>
           )}
 
-          {/* Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
             className="flex items-center gap-2 px-4 py-3 bg-[#fad23c] text-[#463B3B] rounded-xl hover:bg-[#FFF085] transition-colors duration-200 font-medium"
@@ -227,7 +201,6 @@ export default function GeneralRequestsTab() {
           </button>
         </div>
 
-        {/* Filter Options */}
         {showFilters && (
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="flex flex-wrap gap-4">
@@ -287,14 +260,12 @@ export default function GeneralRequestsTab() {
         )}
       </div>
 
-      {/* Error Message */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4">
           <p className="text-red-800">{error}</p>
         </div>
       )}
 
-      {/* Requests List */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         {requests.length === 0 ? (
           <div className="text-center py-12">
@@ -408,7 +379,6 @@ export default function GeneralRequestsTab() {
         )}
       </div>
 
-      {/* Pagination */}
       {totalItems > itemsPerPage && (
         <div className="flex justify-center items-center space-x-2">
           <button
@@ -433,7 +403,6 @@ export default function GeneralRequestsTab() {
         </div>
       )}
 
-      {/* Detail Modal */}
       {showDetailModal && selectedRequest && (
         <GeneralRequestDetailModal
           request={selectedRequest}

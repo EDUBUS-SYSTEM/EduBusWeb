@@ -15,7 +15,6 @@ export interface VehicleListResponse {
   perPage: number;
   totalPages: number;
 }
-//export type VehicleListResponse = ApiResponse<VehicleDto[]>;
 export type VehicleGetResponse = ApiResponse<VehicleDto>;
 export type VehicleUpdateResponse = ApiResponse<VehicleDto>;
 
@@ -73,7 +72,6 @@ export interface VehicleFormErrors {
   status?: string;
 }
 
-// Driver Assignment Types
 export interface DriverAssignmentRequest {
   driverId: string;
   isPrimaryDriver: boolean;

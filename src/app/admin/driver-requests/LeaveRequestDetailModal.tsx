@@ -5,7 +5,7 @@ import { DriverLeaveRequest } from "@/services/api/driverLeaveRequests";
 import ApproveStep1Modal from "@/components/admin/modals/ApproveStep1Modal";
 import ApproveStep2Modal from "@/components/admin/modals/ApproveStep2Modal";
 import { RejectLeaveModal } from "@/components/admin";
-import { formatDate, formatDateTime } from "@/utils/dateUtils";
+import { formatDate,} from "@/utils/dateUtils";
 
 interface LeaveRequestDetailModalProps {
   leave: DriverLeaveRequest;
@@ -21,18 +21,14 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
   const [actionLoading, setActionLoading] = useState(false);
   const [approveNotes, setApproveNotes] = useState("");
 
-  // Using centralized formatDate from @/utils/dateUtils
 
-  // Kiểm tra xem ngày nghỉ đã hết hạn chưa
   const isLeaveExpired = (startDate: string, endDate: string) => {
     const today = new Date();
     const leaveEndDate = new Date(endDate);
 
-    // Set time to start of day to avoid timezone issues
     today.setHours(0, 0, 0, 0);
     leaveEndDate.setHours(0, 0, 0, 0);
 
-    // Leave đã hết hạn nếu endDate < today
     return leaveEndDate < today;
   };
 
@@ -101,7 +97,6 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
     const startDate = new Date(leave.startDate);
     const endDate = new Date(leave.endDate);
 
-    // Set time to start of day to avoid timezone issues
     startDate.setHours(0, 0, 0, 0);
     endDate.setHours(0, 0, 0, 0);
 
@@ -117,7 +112,6 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
       setShowApproveStep1Modal(false);
       setShowApproveStep2Modal(true);
     } else {
-      // Direct approval
       handleApproveDirect(notes);
     }
   };
@@ -127,9 +121,8 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
 
     setActionLoading(true);
     try {
-      await onApprove(leave.id, undefined, notes); // replacementDriverId = undefined
+      await onApprove(leave.id, undefined, notes); 
       setShowApproveStep1Modal(false);
-      // Don't close the detail modal - keep it open to show updated status
     } catch (error) {
       console.error("Error approving leave request:", error);
     } finally {
@@ -142,9 +135,8 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
 
     setActionLoading(true);
     try {
-      await onApprove(leave.id, replacementDriverId, approveNotes); // replacementDriverId can be undefined
+      await onApprove(leave.id, replacementDriverId, approveNotes); 
       setShowApproveStep2Modal(false);
-      // Don't close the detail modal - keep it open to show updated status
     } catch (error) {
       console.error("Error approving leave request:", error);
     } finally {
@@ -159,7 +151,6 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
     try {
       await onReject(leaveId, reason);
       setShowRejectModal(false);
-      // Don't close the detail modal - keep it open to show updated status
     } catch (error) {
       console.error("Error rejecting leave request:", error);
     } finally {
@@ -170,7 +161,6 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-        {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900">
@@ -185,9 +175,7 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
           </div>
         </div>
 
-        {/* Content */}
         <div className="p-6 space-y-6">
-          {/* Status and Type */}
           <div className="flex items-center space-x-4">
             <span className={getStatusBadge(leave.status)}>
               {getStatusText(leave.status)}
@@ -197,7 +185,6 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
             </span>
           </div>
 
-          {/* Driver Information */}
           <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
             <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
               <FaUser className="mr-2 h-5 w-5" />
@@ -252,7 +239,6 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
             </div>
           </div>
 
-          {/* Leave Information */}
           <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
             <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
               <FaCalendarAlt className="mr-2 h-5 w-5" />
@@ -295,7 +281,6 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
             </div>
           </div>
 
-          {/* Admin Actions */}
           {(leave.status === 2 || leave.status === 3) && (
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -355,25 +340,23 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
             </div>
           )}
 
-          {/* Expired Leave Notice */}
           {leave.status === 1 && isLeaveExpired(leave.startDate, leave.endDate) && (
             <div className="bg-red-50 rounded-xl p-6 border border-red-200">
               <h3 className="text-lg font-semibold text-red-900 mb-4 flex items-center">
                 <FaClock className="mr-2 h-5 w-5" />
-                Thông báo hết hạn
+                Expired Leave Request
               </h3>
               <div className="bg-white p-4 rounded-lg border border-red-200">
                 <p className="text-red-800 font-medium">
-                  Đã quá hạn duyệt
+                  This leave request has expired.
                 </p>
                 <p className="text-red-700 text-sm mt-2">
-                  Yêu cầu nghỉ phép này đã hết hạn và không thể được duyệt nữa.
+                  The end date of the leave has already passed. You can no longer approve or reject this request.
                 </p>
               </div>
             </div>
           )}
 
-          {/* Attachments */}
           {leave.attachments && leave.attachments.length > 0 && (
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -398,7 +381,6 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
           )}
         </div>
 
-        {/* Footer */}
         <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 rounded-b-2xl">
           <div className="flex justify-center">
             <div className="flex space-x-3">
@@ -427,7 +409,6 @@ export default function LeaveRequestDetailModal({ leave, onClose, onApprove, onR
         </div>
       </div>
 
-      {/* Modals */}
       {showApproveStep1Modal && (
         <ApproveStep1Modal
           leave={leave}

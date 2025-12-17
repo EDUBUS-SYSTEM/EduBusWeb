@@ -21,7 +21,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Build the VietMap API URL
     const params = new URLSearchParams({
       apikey: apiKey,
       ref_id: ref_id
@@ -31,12 +30,10 @@ export async function GET(request: NextRequest) {
 
     console.log(`[VietMap Proxy] Fetching place details for ref_id: ${ref_id}`);
 
-    // Create timeout controller
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
     try {
-      // Make the request from server-side (no CORS issues)
       const response = await fetch(vietmapUrl, {
         headers: {
           'Accept': 'application/json',
@@ -50,7 +47,6 @@ export async function GET(request: NextRequest) {
       if (!response.ok) {
         console.error(`[VietMap Proxy] API returned ${response.status} for ref_id: ${ref_id}`);
         
-        // Return null for client errors (4xx), but pass through server errors (5xx)
         if (response.status >= 400 && response.status < 500) {
           return NextResponse.json(null, { status: 200 });
         }
@@ -68,7 +64,6 @@ export async function GET(request: NextRequest) {
     } catch (error) {
       clearTimeout(timeoutId);
       
-      // Silently handle AbortError (timeout or user cancellation)
       if (error instanceof Error && error.name === 'AbortError') {
         return NextResponse.json(
           { error: 'Request timeout' },
@@ -76,7 +71,6 @@ export async function GET(request: NextRequest) {
         );
       }
       
-      // Only log non-abort errors
       console.error('[VietMap Proxy] Error:', error);
       return NextResponse.json(
         { error: 'Internal server error' },
@@ -84,7 +78,6 @@ export async function GET(request: NextRequest) {
       );
     }
   } catch (error) {
-    // Only log if not an AbortError
     if (!(error instanceof Error && error.name === 'AbortError')) {
       console.error('[VietMap Proxy] Error:', error);
     }

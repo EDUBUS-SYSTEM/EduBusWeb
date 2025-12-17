@@ -3,7 +3,7 @@ import { apiClient } from "@/lib/api";
 
 export interface CreateDriverLicensePayload {
   licenseNumber: string;
-  dateOfIssue: string; // ISO
+  dateOfIssue: string; 
   issuedBy: string;
   driverId: string;
 }

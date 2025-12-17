@@ -26,7 +26,7 @@ export default function AcademicCalendarManagementPage() {
       <Header />
       <main className="ml-64 pt-16 p-6 bg-[#FEFCE8] min-h-screen">
         <div className="w-full">
-          {/* Page Header */}
+          
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-[#463B3B] mb-2">
               Academic Calendar Management
@@ -37,9 +37,9 @@ export default function AcademicCalendarManagementPage() {
           </div>
 
 
-          {/* Compact Search and Filter Section */}
+          
           <div className="flex flex-col sm:flex-row gap-3 mb-6">
-            {/* Search */}
+            
             <div className="flex-1">
               <div className="relative">
                 <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -53,7 +53,6 @@ export default function AcademicCalendarManagementPage() {
               </div>
             </div>
 
-            {/* Filter Buttons */}
             <div className="flex gap-2">
               <button
                 onClick={() => setFilterActive(null)}
@@ -87,7 +86,7 @@ export default function AcademicCalendarManagementPage() {
               </button>
             </div>
 
-            {/* Create Button */}
+            
             <button
               onClick={() => setShowCreateModal(true)}
               className="bg-gradient-to-r from-[#fad23c] to-[#FDC700] text-[#463B3B] px-4 py-2 rounded-lg hover:from-[#FDC700] hover:to-[#D08700] transition-all duration-300 flex items-center font-medium text-sm"
@@ -97,7 +96,6 @@ export default function AcademicCalendarManagementPage() {
             </button>
           </div>
 
-          {/* Academic Calendar List */}
           <div className="bg-white rounded-2xl shadow-soft-lg overflow-hidden border border-gray-100">
             <AcademicCalendarList
               searchTerm={searchTerm}
@@ -108,7 +106,6 @@ export default function AcademicCalendarManagementPage() {
         </div>
       </main>
 
-      {/* Create Academic Calendar Modal */}
       {showCreateModal && (
         <CreateAcademicCalendarModal
           onClose={() => setShowCreateModal(false)}

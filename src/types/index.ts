@@ -1,4 +1,3 @@
-// User types
 export interface User {
   id: string;
   email: string;
@@ -8,14 +7,13 @@ export interface User {
   createdAt: string;
   updatedAt: string;
 }
-// UserAccount types (API /UserAccount)
 export interface UserAccount {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
   phoneNumber: string;
-  dateOfBirth?: string; // ISO string from backend
+  dateOfBirth?: string; 
   gender?: number;
   role: "admin";
   userPhotoFileId?: string;
@@ -24,7 +22,6 @@ export interface UserAccount {
   isDeleted: boolean;
 }
 
-// Auth types
 export interface LoginCredentials {
   email: string;
   password: string;
@@ -37,7 +34,6 @@ export interface AuthResponse {
   refreshToken: string;
 }
 
-// API Response types
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
@@ -55,21 +51,18 @@ export interface PaginatedResponse<T> {
   };
 }
 
-// Common types
 export interface BaseEntity {
   id: string;
   createdAt: string;
   updatedAt: string;
 }
 
-// Error types
 export interface ApiError {
   message: string;
   status: number;
   errors?: Record<string, string[]>;
 }
 
-// Form types
 export interface FormField {
   name: string;
   label: string;
@@ -83,7 +76,6 @@ export interface FormField {
     pattern?: string;
   };
 }
-// UI Component types
 export interface ButtonProps {
   variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
   size?: "sm" | "md" | "lg";
@@ -111,7 +103,6 @@ export interface ModalProps {
   size?: "sm" | "md" | "lg" | "xl";
 }
 
-// Table types
 export interface TableColumn<T> {
   key: keyof T;
   header: string;
@@ -133,7 +124,6 @@ export interface TableProps<T> {
   className?: string;
 }
 
-// Account Creation types
 export interface DriverAccountData {
   email: string;
   driverPhoto?: File[];
@@ -171,7 +161,6 @@ export interface StudentInfo {
   parentId?: string | null;
 }
 
-// Student types based on backend model
 export interface Student {
   id: string;
   parentId: string;
@@ -226,7 +215,6 @@ export interface BasicSuccessResponse {
   };
 }
 
-// Schedule and Calendar types based on backend models
 export enum TripType {
   Unknown = 0,
   Departure = 1,
@@ -238,23 +226,23 @@ export interface Schedule {
   name: string;
   startTime: string;
   endTime: string;
-  rRule: string; // Changed from rrule to match backend
+  rRule: string; 
   timezone: string;
-  academicYear: string; // Added to match backend
+  academicYear: string; 
   effectiveFrom: string;
   effectiveTo?: string;
-  exceptions: Date[]; // Changed from string[] to Date[] to match backend
+  exceptions: Date[]; 
   scheduleType: string;
-  tripType: TripType; // Added to match backend
+  tripType: TripType; 
   isActive: boolean;
-  timeOverrides: ScheduleTimeOverride[]; // Added to match backend
+  timeOverrides: ScheduleTimeOverride[]; 
   createdAt: string;
   updatedAt: string;
 }
 
 export interface ScheduleTimeOverride {
-  date: Date; // Override date
-  exceptionDate?: Date; // Exception date - optional for standalone overrides
+  date: Date; 
+  exceptionDate?: Date; 
   startTime: string;
   endTime: string;
   reason: string;
@@ -273,8 +261,6 @@ export interface RouteSchedule {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-  // Note: routeName and scheduleName are not in backend model
-  // They should be populated from related entities if needed
 }
 
 export interface Route {
@@ -319,7 +305,7 @@ export interface ScheduleSnapshot {
   name: string;
   startTime: string;
   endTime: string;
-  rRule: string; // Changed from rrule to match backend
+  rRule: string; 
 }
 
 export interface TripStop {
@@ -332,7 +318,6 @@ export interface TripStop {
   attendance: Attendance[];
 }
 
-// Trip DTOs matching backend API
 export interface ScheduleSnapshotDto {
   scheduleId: string;
   name: string;
@@ -379,10 +364,10 @@ export interface DriverSnapshotDto {
 export interface TripStopDto {
   id: string;
   name: string;
-  plannedArrival: string; // ISO datetime string
-  actualArrival?: string; // ISO datetime string
-  plannedDeparture: string; // ISO datetime string
-  actualDeparture?: string; // ISO datetime string
+  plannedArrival: string; 
+  actualArrival?: string; 
+  plannedDeparture: string; 
+  actualDeparture?: string; 
   sequence: number;
   location?: StopLocationDto;
   attendance?: ParentAttendanceDto[];
@@ -435,8 +420,8 @@ export interface UpdateTripDto {
 export interface GenerateTripsFromScheduleDto {
   scheduleId: string;
   routeId: string;
-  startDate: string; // ISO date string
-  endDate: string; // ISO date string
+  startDate: string; 
+  endDate: string; 
 }
 
 export interface Attendance {
@@ -445,7 +430,6 @@ export interface Attendance {
   state: string;
 }
 
-// Calendar UI types
 export interface CalendarEvent {
   id: string;
   title: string;
@@ -481,7 +465,6 @@ export interface CalendarProps {
   onRouteChange?: (routeId: string) => void;
 }
 
-// Academic Calendar types based on backend models
 export interface AcademicCalendar {
   id: string;
   academicYear: string;
@@ -518,7 +501,6 @@ export interface SchoolDay {
   description: string;
 }
 
-// DTOs for Academic Calendar operations
 export interface CreateAcademicCalendarDto {
   academicYear: string;
   name: string;

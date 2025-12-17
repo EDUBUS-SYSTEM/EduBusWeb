@@ -8,7 +8,6 @@ export const downloadTemplate = async (templateType: string) => {
   const blob = response.data as Blob;
   const url = window.URL.createObjectURL(blob);
 
-  // Try to extract filename from Content-Disposition
   const disposition = response.headers["content-disposition"] as
     | string
     | undefined;

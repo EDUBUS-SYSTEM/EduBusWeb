@@ -9,7 +9,6 @@ interface GeneralRequestDetailModalProps {
 }
 
 export default function GeneralRequestDetailModal({ request, onClose }: GeneralRequestDetailModalProps) {
-  // Using centralized formatDateTime from @/utils/dateUtils
 
   const getStatusBadge = (status: string) => {
     const baseClasses = "px-3 py-1 rounded-full text-sm font-medium";
@@ -110,7 +109,6 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-        {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900">Request Details</h2>
@@ -123,9 +121,7 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
           </div>
         </div>
 
-        {/* Content */}
         <div className="p-6 space-y-6">
-          {/* Status and Basic Info */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <span className={getStatusBadge(request.status)}>
@@ -149,7 +145,6 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
             </div>
           </div>
 
-          {/* Driver Information */}
           <div className="bg-[#FEFCE8] rounded-xl p-6 border border-[#fad23c]/20">
             <h3 className="text-lg font-semibold text-[#463B3B] mb-4 flex items-center">
               <FaUser className="mr-2" />
@@ -202,7 +197,6 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
             </div>
           </div>
 
-          {/* Request Information */}
           <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
             <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
               <FaFileAlt className="mr-2" />
@@ -226,7 +220,6 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
             </div>
           </div>
 
-          {/* Attachments */}
           {request.attachments && request.attachments.length > 0 && (
             <div className="bg-green-50 rounded-xl p-6 border border-green-200">
               <h3 className="text-lg font-semibold text-green-900 mb-4 flex items-center">
@@ -265,7 +258,6 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
             </div>
           )}
 
-          {/* Admin Review Information */}
           {(request.status === "Resolved" || request.status === "Rejected") && (
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Processing Information</h3>
@@ -299,7 +291,6 @@ export default function GeneralRequestDetailModal({ request, onClose }: GeneralR
           )}
         </div>
 
-        {/* Footer */}
         <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 rounded-b-2xl">
           <div className="flex justify-end">
             <button

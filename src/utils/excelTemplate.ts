@@ -5,13 +5,13 @@ const createWorkbook = (data: Record<string, unknown>[], sheetName: string) => {
   const worksheet = XLSX.utils.json_to_sheet(data);
 
   const columnWidths = [
-    { wch: 25 }, // Email
-    { wch: 15 }, // First Name
-    { wch: 15 }, // Last Name
-    { wch: 15 }, // Phone Number
-    { wch: 20 }, // Gender
-    { wch: 20 }, // Date of Birth
-    { wch: 30 }, // Address
+    { wch: 25 }, 
+    { wch: 15 }, 
+    { wch: 15 }, 
+    { wch: 15 }, 
+    { wch: 20 }, 
+    { wch: 20 }, 
+    { wch: 30 }, 
   ];
   worksheet["!cols"] = columnWidths;
 

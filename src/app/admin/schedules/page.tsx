@@ -18,7 +18,6 @@ export default function ScheduleManagementPage() {
       <Header />
       <main className="ml-64 pt-16 p-6 bg-[#FEFCE8] min-h-screen">
         <div className="w-full">
-          {/* Page Header with Create Button */}
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-3xl font-bold text-[#463B3B] mb-1">
@@ -37,7 +36,6 @@ export default function ScheduleManagementPage() {
             </button>
           </div>
 
-          {/* Search and Filter */}
           <div className="sticky top-16 z-40 bg-white rounded-2xl shadow-soft-lg p-4 mb-4 border border-gray-100">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1 relative">
@@ -71,7 +69,6 @@ export default function ScheduleManagementPage() {
             </div>
           </div>
 
-          {/* Content */}
           <div className="bg-white rounded-2xl shadow-soft-lg border border-gray-100 overflow-hidden">
             <ScheduleList
               searchTerm={searchTerm}
@@ -80,7 +77,6 @@ export default function ScheduleManagementPage() {
             />
           </div>
 
-          {/* Create Schedule Modal */}
           {showCreateSchedule && (
             <CreateScheduleModal
               onClose={() => setShowCreateSchedule(false)}
