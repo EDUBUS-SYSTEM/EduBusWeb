@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
@@ -20,24 +20,31 @@ import AttendanceRateCard from "./AttendanceRateCard";
 import DailyStudentsChart from "./DailyStudentsChart";
 import VehicleRuntimeCard from "./VehicleRuntimeCard";
 import RouteStatisticsTable from "./RouteStatisticsTable";
+import SemesterSelector from "./SemesterSelector";
 import { unitPriceService } from "@/services/unitPriceService";
 import { userAccountService } from "@/services/userAccountService/userAccountService.api";
 import { studentService } from "@/services/studentService/studentService.api";
 import { vehicleService } from "@/services/vehicleService";
 import { tripService } from "@/services/tripService";
-import { dashboardService } from "@/services/dashboardService";
+import { dashboardService, ActiveSemesterDto } from "@/services/dashboardService";
 import { formatDate } from "@/utils/dateUtils";
 import * as XLSX from "xlsx";
 import { toast } from "react-toastify";
 
 export default function AdminDashboard() {
-    // Fetch current semester (from dashboard-specific API)
+    const [selectedSemester, setSelectedSemester] = useState<ActiveSemesterDto | null>(null);
+
     const { data: semesterData, isLoading: semesterLoading } = useQuery({
         queryKey: ["currentSemester"],
         queryFn: () => dashboardService.getCurrentSemester(),
     });
 
-    // Fetch current unit price
+    useEffect(() => {
+        if (semesterData && !selectedSemester) {
+            setSelectedSemester(semesterData);
+        }
+    }, [semesterData, selectedSemester]);
+
     const { data: unitPriceData, isLoading: unitPriceLoading } = useQuery({
         queryKey: ["currentUnitPrice"],
         queryFn: () => unitPriceService.getCurrentEffective(),
@@ -85,43 +92,43 @@ export default function AdminDashboard() {
 
     // Fetch trips for current semester
     const { data: tripsData } = useQuery({
-        queryKey: ["trips", semesterData?.semesterCode],
+        queryKey: ["trips", selectedSemester?.semesterCode],
         queryFn: () => {
-            if (!semesterData) return null;
+            if (!selectedSemester) return null;
             return tripService.getAllTrips({
-                startDate: semesterData.semesterStartDate,
-                endDate: semesterData.semesterEndDate,
+                startDate: selectedSemester.semesterStartDate,
+                endDate: selectedSemester.semesterEndDate,
                 perPage: 1,
             });
         },
-        enabled: !!semesterData,
+        enabled: !!selectedSemester,
     });
 
     // Fetch revenue statistics based on paid transactions
     const { data: revenueStatistics, isLoading: revenueLoading } = useQuery({
-        queryKey: ["revenue", semesterData?.semesterCode],
+        queryKey: ["revenue", selectedSemester?.semesterCode],
         queryFn: () => {
-            if (!semesterData) return null;
+            if (!selectedSemester) return null;
             return dashboardService.getRevenueStatistics(
-                semesterData.semesterStartDate,
-                semesterData.semesterEndDate
+                selectedSemester.registrationStartDate || selectedSemester.semesterStartDate,
+                selectedSemester.registrationEndDate || selectedSemester.semesterEndDate
             );
         },
-        enabled: !!semesterData,
+        enabled: !!selectedSemester,
         refetchInterval: 30000,
     });
 
     // Fetch revenue timeline
     const { data: revenueTimeline } = useQuery({
-        queryKey: ["revenueTimeline", semesterData?.semesterCode],
+        queryKey: ["revenueTimeline", selectedSemester?.semesterCode],
         queryFn: () => {
-            if (!semesterData) return [];
+            if (!selectedSemester) return [];
             return dashboardService.getRevenueTimeline(
-                semesterData.semesterStartDate,
-                semesterData.semesterEndDate
+                selectedSemester.registrationStartDate || selectedSemester.semesterStartDate,
+                selectedSemester.registrationEndDate || selectedSemester.semesterEndDate
             );
         },
-        enabled: !!semesterData,
+        enabled: !!selectedSemester,
         refetchInterval: 30000,
     });
 
@@ -206,8 +213,8 @@ export default function AdminDashboard() {
         const colWidths =
             safeData.length > 0
                 ? Object.keys(safeData[0]).map((key) => ({
-                      wch: Math.max(key.length, ...safeData.map((row) => String(row[key] ?? "").length)) + 2,
-                  }))
+                    wch: Math.max(key.length, ...safeData.map((row) => String(row[key] ?? "").length)) + 2,
+                }))
                 : [{ wch: 10 }];
         (worksheet as XLSX.WorkSheet)["!cols"] = colWidths;
 
@@ -321,39 +328,39 @@ export default function AdminDashboard() {
                 workbook,
                 routeStatisticsExport
                     ? [
-                          ...routeStatisticsExport.map((r) => ({
-                              RouteName: r.routeName,
-                              TotalTrips: r.totalTrips,
-                              TotalStudents: r.totalStudents,
-                              AttendanceRate: r.attendanceRate / 100,
-                              AttendanceColor:
-                                  r.attendanceRate >= 95
-                                      ? "Green"
-                                      : r.attendanceRate >= 85
-                                      ? "Yellow"
-                                      : "Red",
-                              AverageRuntimeHours: r.averageRuntime,
-                              ActiveVehicles: r.activeVehicles,
-                          })),
-                          {
-                              RouteName: "Totals",
-                              TotalTrips: routeStatisticsExport.reduce((sum, r) => sum + r.totalTrips, 0),
-                              TotalStudents: routeStatisticsExport.reduce((sum, r) => sum + r.totalStudents, 0),
-                              AttendanceRate:
-                                  routeStatisticsExport.length > 0
-                                      ? routeStatisticsExport.reduce((sum, r) => sum + r.attendanceRate, 0) /
-                                        routeStatisticsExport.length /
-                                        100
-                                      : 0,
-                              AttendanceColor: "Summary",
-                              AverageRuntimeHours:
-                                  routeStatisticsExport.length > 0
-                                      ? routeStatisticsExport.reduce((sum, r) => sum + r.averageRuntime, 0) /
-                                        routeStatisticsExport.length
-                                      : 0,
-                              ActiveVehicles: routeStatisticsExport.reduce((sum, r) => sum + r.activeVehicles, 0),
-                          },
-                      ]
+                        ...routeStatisticsExport.map((r) => ({
+                            RouteName: r.routeName,
+                            TotalTrips: r.totalTrips,
+                            TotalStudents: r.totalStudents,
+                            AttendanceRate: r.attendanceRate / 100,
+                            AttendanceColor:
+                                r.attendanceRate >= 95
+                                    ? "Green"
+                                    : r.attendanceRate >= 85
+                                        ? "Yellow"
+                                        : "Red",
+                            AverageRuntimeHours: r.averageRuntime,
+                            ActiveVehicles: r.activeVehicles,
+                        })),
+                        {
+                            RouteName: "Totals",
+                            TotalTrips: routeStatisticsExport.reduce((sum, r) => sum + r.totalTrips, 0),
+                            TotalStudents: routeStatisticsExport.reduce((sum, r) => sum + r.totalStudents, 0),
+                            AttendanceRate:
+                                routeStatisticsExport.length > 0
+                                    ? routeStatisticsExport.reduce((sum, r) => sum + r.attendanceRate, 0) /
+                                    routeStatisticsExport.length /
+                                    100
+                                    : 0,
+                            AttendanceColor: "Summary",
+                            AverageRuntimeHours:
+                                routeStatisticsExport.length > 0
+                                    ? routeStatisticsExport.reduce((sum, r) => sum + r.averageRuntime, 0) /
+                                    routeStatisticsExport.length
+                                    : 0,
+                            ActiveVehicles: routeStatisticsExport.reduce((sum, r) => sum + r.activeVehicles, 0),
+                        },
+                    ]
                     : [],
                 "Route Stats",
                 { numberFormats: { AttendanceRate: "0.0%", AverageRuntimeHours: "0.0", TotalTrips: "0", TotalStudents: "0", ActiveVehicles: "0" } }
@@ -364,32 +371,32 @@ export default function AdminDashboard() {
                 workbook,
                 revenueStatistics
                     ? [
-                          {
-                              TotalRevenue: revenueStatistics.totalRevenue,
-                              PendingAmount: revenueStatistics.pendingAmount,
-                              FailedAmount: revenueStatistics.failedAmount,
-                              PaidTransactionCount: revenueStatistics.paidTransactionCount ?? "",
-                              PendingTransactionCount: revenueStatistics.pendingTransactionCount ?? "",
-                              FailedTransactionCount: revenueStatistics.failedTransactionCount ?? "",
-                              Currency: revenueStatistics.currency ?? "VND",
-                          },
-                          ...(revenueTimeline ?? []).map((p) => ({
-                              Date: p.date,
-                              Amount: p.amount,
-                              Count: p.count,
-                              AmountColor: p.amount >= 0 ? "Green" : "Red",
-                          })),
-                          {
-                              Date: "Totals",
-                              Amount:
-                                  revenueTimeline?.reduce((sum, p) => sum + p.amount, 0) ??
-                                  revenueStatistics.totalRevenue +
-                                      (revenueStatistics.pendingAmount ?? 0) +
-                                      (revenueStatistics.failedAmount ?? 0),
-                              Count: revenueTimeline?.reduce((sum, p) => sum + p.count, 0) ?? "",
-                              AmountColor: "Summary",
-                          },
-                      ]
+                        {
+                            TotalRevenue: revenueStatistics.totalRevenue,
+                            PendingAmount: revenueStatistics.pendingAmount,
+                            FailedAmount: revenueStatistics.failedAmount,
+                            PaidTransactionCount: revenueStatistics.paidTransactionCount ?? "",
+                            PendingTransactionCount: revenueStatistics.pendingTransactionCount ?? "",
+                            FailedTransactionCount: revenueStatistics.failedTransactionCount ?? "",
+                            Currency: revenueStatistics.currency ?? "VND",
+                        },
+                        ...(revenueTimeline ?? []).map((p) => ({
+                            Date: p.date,
+                            Amount: p.amount,
+                            Count: p.count,
+                            AmountColor: p.amount >= 0 ? "Green" : "Red",
+                        })),
+                        {
+                            Date: "Totals",
+                            Amount:
+                                revenueTimeline?.reduce((sum, p) => sum + p.amount, 0) ??
+                                revenueStatistics.totalRevenue +
+                                (revenueStatistics.pendingAmount ?? 0) +
+                                (revenueStatistics.failedAmount ?? 0),
+                            Count: revenueTimeline?.reduce((sum, p) => sum + p.count, 0) ?? "",
+                            AmountColor: "Summary",
+                        },
+                    ]
                     : [],
                 "Revenue",
                 {
@@ -463,24 +470,30 @@ export default function AdminDashboard() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
             >
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-bold text-[#463B3B] mb-1">Admin Dashboard</h1>
                         <p className="text-sm text-gray-600">Welcome back! Here&apos;s what&apos;s happening with your school shuttle system.</p>
                     </div>
-                    <button
-                        onClick={handleExport}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-[#F5D565] text-[#463B3B] font-semibold rounded-lg shadow hover:bg-[#fad23c] transition"
-                    >
-                        <FaDownload /> Export Dashboard
-                    </button>
+                    <div className="flex gap-3 items-center">
+                        <SemesterSelector
+                            value={selectedSemester?.semesterCode || ""}
+                            onChange={(semester) => setSelectedSemester(semester)}
+                        />
+                        <button
+                            onClick={handleExport}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-[#F5D565] text-[#463B3B] font-semibold rounded-lg shadow hover:bg-[#fad23c] transition whitespace-nowrap"
+                        >
+                            <FaDownload /> Export
+                        </button>
+                    </div>
                 </div>
             </motion.div>
 
             {/* Timeline and Unit Price Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div className="lg:col-span-2">
-                    <TimelineCard semesterData={semesterData || null} loading={semesterLoading} />
+                    <TimelineCard semesterData={selectedSemester || null} loading={semesterLoading} />
                 </div>
 
                 {/* Unit Price Card */}
@@ -625,31 +638,31 @@ export default function AdminDashboard() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
                     {/* Attendance Rate Card */}
-                    <AttendanceRateCard 
-                        data={attendanceRate || dashboardStats?.attendanceRate || null} 
-                        loading={attendanceRateLoading || dashboardLoading} 
+                    <AttendanceRateCard
+                        data={attendanceRate || dashboardStats?.attendanceRate || null}
+                        loading={attendanceRateLoading || dashboardLoading}
                     />
 
                     {/* Daily Students Chart */}
-                    <DailyStudentsChart 
-                        data={dailyStudents || dashboardStats?.dailyStudents || null} 
-                        loading={dailyStudentsLoading || dashboardLoading} 
+                    <DailyStudentsChart
+                        data={dailyStudents || dashboardStats?.dailyStudents || null}
+                        loading={dailyStudentsLoading || dashboardLoading}
                     />
                 </div>
 
                 {/* Vehicle Runtime Card */}
                 <div className="mb-6">
-                    <VehicleRuntimeCard 
-                        data={vehicleRuntime || dashboardStats?.vehicleRuntime || null} 
-                        loading={vehicleRuntimeLoading || dashboardLoading} 
+                    <VehicleRuntimeCard
+                        data={vehicleRuntime || dashboardStats?.vehicleRuntime || null}
+                        loading={vehicleRuntimeLoading || dashboardLoading}
                     />
                 </div>
 
                 {/* Route Statistics Table */}
                 <div className="mb-6">
-                    <RouteStatisticsTable 
-                        data={routeStatistics || dashboardStats?.routeStatistics || null} 
-                        loading={routeStatisticsLoading || dashboardLoading} 
+                    <RouteStatisticsTable
+                        data={routeStatistics || dashboardStats?.routeStatistics || null}
+                        loading={routeStatisticsLoading || dashboardLoading}
                     />
                 </div>
             </div>
