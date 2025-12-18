@@ -62,6 +62,8 @@ export interface ActiveSemesterDto {
     academicYear: string;
     semesterStartDate: string;
     semesterEndDate: string;
+    registrationStartDate?: string;
+    registrationEndDate?: string;
 }
 
 export interface RevenueStatisticsDto {
@@ -188,6 +190,16 @@ class DashboardService {
         }
 
         throw new Error('Failed to fetch current semester');
+    }
+
+    async getSemesters(): Promise<ActiveSemesterDto[]> {
+        const response = await apiService.get<{ success: boolean; data: ActiveSemesterDto[] }>('/Dashboard/semesters');
+
+        if (response.data) {
+            return response.data;
+        }
+
+        throw new Error('Failed to fetch semesters');
     }
 }
 

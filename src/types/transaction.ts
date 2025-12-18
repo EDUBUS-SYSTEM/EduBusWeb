@@ -95,9 +95,9 @@ export enum TransactionStatus {
 }
 
 export enum TransportFeeItemStatus {
-  Pending = 'Pending',
-  Approved = 'Approved',
-  Rejected = 'Rejected',
-  Paid = 'Paid'
+  Unbilled = 'Unbilled',
+  Invoiced = 'Invoiced',
+  Paid = 'Paid',
+  Cancelled = 'Cancelled'
 }
 
