@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
 import TripTable from "@/components/admin/TripTable";
@@ -9,6 +10,7 @@ import CreateTripModal from "@/components/admin/CreateTripModal";
 import EditTripModal from "@/components/admin/EditTripModal";
 import GenerateTripsModal from "@/components/admin/GenerateTripsModal";
 import Calendar from "@/components/calendar/Calendar";
+import SemesterSelector from "@/components/admin/SemesterSelector";
 import { TripDto, CreateTripDto, UpdateTripDto, CalendarEvent, CalendarView } from "@/types";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
@@ -23,12 +25,26 @@ import {
 } from "@/store/slices/tripsSlice";
 import { FaPlus, FaTable, FaCalendarAlt, FaMapMarkedAlt, FaUsers, FaClock } from 'react-icons/fa';
 import LiveTripMonitoring from "@/components/admin/LiveTripMonitoring";
+import { dashboardService, ActiveSemesterDto } from '@/services/dashboardService';
 
 type ViewMode = 'table' | 'calendar' | 'live';
 
 export default function TripManagementPage() {
   const dispatch = useAppDispatch();
   const { trips, error, pagination, filters } = useAppSelector(state => state.trips);
+
+  const [selectedSemester, setSelectedSemester] = useState<ActiveSemesterDto | null>(null);
+
+  const { data: currentSemester } = useQuery({
+    queryKey: ['currentSemester'],
+    queryFn: () => dashboardService.getCurrentSemester(),
+  });
+
+  useEffect(() => {
+    if (currentSemester && !selectedSemester) {
+      setSelectedSemester(currentSemester);
+    }
+  }, [currentSemester, selectedSemester]);
 
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [calendarView, setCalendarView] = useState<CalendarView>({
@@ -66,14 +82,14 @@ export default function TripManagementPage() {
       routeId: routeFilter !== 'all' ? routeFilter : undefined,
       status: statusFilter !== 'all' ? statusFilter : undefined,
       serviceDate: dateFilter || undefined,
-      startDate: '1900-01-01',
-      endDate: '2100-12-31',
+      startDate: selectedSemester?.semesterStartDate || '1900-01-01',
+      endDate: selectedSemester?.semesterEndDate || '2100-12-31',
       sortBy: filters.sortBy || 'serviceDate',
       sortOrder: filters.sortOrder || 'desc',
     };
 
     dispatch(fetchTrips(params));
-  }, [dispatch, pagination.currentPage, pagination.perPage, routeFilter, statusFilter, dateFilter, filters.sortBy, filters.sortOrder]);
+  }, [dispatch, pagination.currentPage, routeFilter, statusFilter, dateFilter, selectedSemester, filters.sortBy, filters.sortOrder]);
 
   useEffect(() => {
     fetchTripsData();
@@ -413,17 +429,23 @@ export default function TripManagementPage() {
             </div>
           )}
 
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
             <h1 className="text-2xl font-bold text-[#463B3B]">
               Trip Management
             </h1>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#fad23c] to-[#FDC700] text-[#463B3B] rounded-lg hover:from-[#FDC700] hover:to-[#D08700] transition-all duration-300 font-semibold"
-            >
-              <FaPlus />
-              Create Trip
-            </button>
+            <div className="flex gap-3 items-center">
+              <SemesterSelector
+                value={selectedSemester?.semesterCode || ""}
+                onChange={(semester) => setSelectedSemester(semester)}
+              />
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#fad23c] to-[#FDC700] text-[#463B3B] rounded-lg hover:from-[#FDC700] hover:to-[#D08700] transition-all duration-300 font-semibold whitespace-nowrap"
+              >
+                <FaPlus />
+                Create Trip
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">

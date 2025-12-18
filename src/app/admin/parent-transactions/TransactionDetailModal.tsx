@@ -81,17 +81,17 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
     const str = status.toString();
     switch (str) {
       case "0":
-      case "Pending":
-        return "Pending";
+      case "Unbilled":
+        return "Unbilled";
       case "1":
-      case "Approved":
-        return "Approved";
+      case "Invoiced":
+        return "Invoiced";
       case "2":
-      case "Rejected":
-        return "Rejected";
-      case "3":
       case "Paid":
         return "Paid";
+      case "3":
+      case "Cancelled":
+        return "Cancelled";
       default:
         return str;
     }
@@ -305,13 +305,12 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
                           {(() => {
                             const formattedStatus = formatItemStatus(item.status);
                             return (
-                              <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${
-                                formattedStatus === 'Paid' ? 'bg-green-100 text-green-800 border-green-200' :
-                                formattedStatus === 'Approved' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                                formattedStatus === 'Pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                                formattedStatus === 'Rejected' ? 'bg-red-100 text-red-800 border-red-200' :
-                                'bg-gray-100 text-gray-800 border-gray-200'
-                              }`}>
+                              <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${formattedStatus === 'Paid' ? 'bg-green-100 text-green-800 border-green-200' :
+                                formattedStatus === 'Invoiced' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                  formattedStatus === 'Unbilled' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                    formattedStatus === 'Cancelled' ? 'bg-red-100 text-red-800 border-red-200' :
+                                      'bg-gray-100 text-gray-800 border-gray-200'
+                                }`}>
                                 {formattedStatus}
                               </span>
                             );
