@@ -69,7 +69,7 @@ export default function RevenueChart({ data, loading, currency = "VND" }: Revenu
 
     const chartData =
         data.timeline?.map((p) => ({
-            date: new Date(p.date).toLocaleDateString("vi-VN"),
+            date: new Date(p.date).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }),
             amount: p.amount,
         })) || [];
 
