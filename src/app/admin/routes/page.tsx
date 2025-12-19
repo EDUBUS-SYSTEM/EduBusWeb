@@ -1,4 +1,3 @@
-// src/app/admin/routes/page.tsx
 "use client";
 
 import React from 'react';

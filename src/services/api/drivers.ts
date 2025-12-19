@@ -6,8 +6,8 @@ export interface CreateDriverPayload {
   firstName: string;
   lastName: string;
   phoneNumber: string;
-  gender: number; // 1: Male, 2: Female, 3: Other
-  dateOfBirth: string; // ISO string
+  gender: number; 
+  dateOfBirth: string; 
   address: string;
 }
 
@@ -54,22 +54,21 @@ export interface GetAvailableDriverDto {
   fullName: string;
   email: string;
   phoneNumber: string;
-  status: number; // DriverStatus enum
+  status: number; 
   licenseNumber?: string;
-  licenseExpiryDate?: string; // ISO string
+  licenseExpiryDate?: string; 
   hasValidLicense: boolean;
   hasHealthCertificate: boolean;
   yearsOfExperience: number;
-  lastActiveDate?: string; // ISO string
+  lastActiveDate?: string; 
   isAvailable: boolean;
   availabilityReason?: string;
-  checkedAt: string; // ISO string
+  checkedAt: string; 
 }
 
 export const createDriver = async (
   payload: CreateDriverPayload
 ): Promise<CreateUserResponse> => {
-  // Backend endpoint: POST /api/driver
   console.log("Calling createDriver with URL:", "/driver");
   console.log("Payload:", payload);
   const result = await apiService.post<CreateUserResponse>("/driver", payload);
@@ -114,7 +113,6 @@ export const getAvailableDrivers = async (
   startDate: Date,
   endDate: Date
 ): Promise<GetAvailableDriverDto[]> => {
-  // Normalize to date-only boundaries to avoid timezone shifts
   const start = new Date(
     startDate.getFullYear(),
     startDate.getMonth(),
@@ -146,6 +144,6 @@ export const getAvailableDrivers = async (
   const result = await apiService.get<GetAvailableDriverDto[]>(
     `/DriverVehicle/drivers/available?${params.toString()}`
   );
-
+  console.log("Get available drivers result:", result);
   return result as unknown as GetAvailableDriverDto[];
 };

@@ -1,6 +1,5 @@
 import { apiService } from "@/lib/api";
 
-// Driver Leave Request Types
 export interface DriverLeaveRequest {
   id: string;
   driverId: string;
@@ -10,11 +9,11 @@ export interface DriverLeaveRequest {
   driverLicenseNumber: string;
   primaryVehicleId?: string;
   primaryVehicleLicensePlate?: string;
-  leaveType: 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0: undefined, 1: Annual, 2: Sick, 3: Personal, 4: Emergency, 5: Training, 6: Other
+  leaveType: 0 | 1 | 2 | 3 | 4 | 5 | 6; 
   startDate: string;
   endDate: string;
   reason: string;
-  status: 0 | 1 | 2 | 3 | 4 | 5; // 0: undefined, 1: Pending, 2: Approved, 3: Rejected, 4: Cancelled, 5: Completed
+  status: 0 | 1 | 2 | 3 | 4 | 5; 
   requestedAt: string;
   approvedAt?: string;
   approvedByAdminId?: string;
@@ -56,10 +55,9 @@ export interface ApproveLeaveRequestData {
 
 export interface RejectLeaveRequestData {
   reason?: string;
-  rejectionReason?: string; // Alternative field name
+  rejectionReason?: string; 
 }
 
-// Replacement Info Response
 export interface ReplacementInfoResponse {
   id: string;
   driverId: string;
@@ -85,7 +83,6 @@ export interface ReplacementInfoResponse {
   suggestionGeneratedAt?: string;
 }
 
-// Replacement Match DTO
 export interface ReplacementMatchDto {
   driverId: string;
   vehicleId: string | null;
@@ -93,9 +90,7 @@ export interface ReplacementMatchDto {
   endDate: string;
 }
 
-// API Service for Driver Leave Requests
 export const driverLeaveRequestService = {
-  // Get all driver leave requests with filters
   getLeaveRequests: async (filters: DriverLeaveRequestFilters = {}): Promise<DriverLeaveRequestResponse> => {
     const params = {
       status: filters.status || undefined,
@@ -106,7 +101,6 @@ export const driverLeaveRequestService = {
       perPage: filters.perPage || 10,
     };
 
-    // Remove undefined values
     Object.keys(params).forEach(key => {
       if (params[key as keyof typeof params] === undefined) {
         delete params[key as keyof typeof params];
@@ -116,22 +110,18 @@ export const driverLeaveRequestService = {
     return apiService.get<DriverLeaveRequestResponse>("/Driver/leaves", params);
   },
 
-  // Get a single leave request by ID
   getLeaveRequestById: async (id: string): Promise<DriverLeaveRequest> => {
     return apiService.get<DriverLeaveRequest>(`/driver-leave-requests/${id}`);
   },
 
-  // Approve a leave request
   approveLeaveRequest: async (id: string, data: ApproveLeaveRequestData): Promise<DriverLeaveRequest> => {
     return apiService.patch<DriverLeaveRequest>(`/Driver/leaves/${id}/approve`, data);
   },
 
-  // Reject a leave request
   rejectLeaveRequest: async (id: string, data: RejectLeaveRequestData): Promise<DriverLeaveRequest> => {
     return apiService.patch<DriverLeaveRequest>(`/Driver/leaves/${id}/reject`, data);
   },
 
-  // Get leave request statistics
   getLeaveRequestStats: async (): Promise<{
     total: number;
     pending: number;
@@ -146,12 +136,10 @@ export const driverLeaveRequestService = {
     }>("/driver-leave-requests/stats");
   },
 
-  // Get active replacement info for a driver
   getReplacementInfo: async (driverId: string): Promise<ReplacementInfoResponse | null> => {
     try {
       const response = await apiService.get<ReplacementInfoResponse>(`/Driver/${driverId}/replacement-info`);
       
-      // Check if response has id (indicates valid replacement data)
       if (response && response.id) {
         return response;
       }
@@ -163,7 +151,6 @@ export const driverLeaveRequestService = {
     }
   },
 
-  // Get active replacement matches
   getActiveReplacementMatches: async (): Promise<ReplacementMatchDto[]> => {
     try {
       const response = await apiService.get<ReplacementMatchDto[]>("/Driver/active-replacement-matches");

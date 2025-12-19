@@ -1,21 +1,14 @@
 import { apiService } from "@/lib/api";
 import { CreateUserResponse } from "./parents";
 
-/**
- * Admin-specific services for creating parent accounts with full setup
- * These APIs need to be implemented by backend team
- */
 
-// Update students to link them with parent
 export const linkStudentsToParent = async (parentId: string, studentIds: string[]) => {
-  // Backend needs to implement: PATCH /api/Student/bulk-assign-parent
   return await apiService.patch(`/Student/bulk-assign-parent`, {
     parentId,
     studentIds
   });
 };
 
-// Create pickup point for admin (auto-approved)
 export const createPickupPointByAdmin = async (data: {
   parentId: string;
   studentIds: string[];
@@ -25,17 +18,15 @@ export const createPickupPointByAdmin = async (data: {
   distanceKm: number;
   description?: string;
 }) => {
-  // Backend needs to implement: POST /api/PickupPoint/admin/create
   return await apiService.post(`/PickupPoint/admin/create`, data);
 };
 
-// Create transaction for parent
 export const createTransactionByAdmin = async (data: {
   parentId: string;
   studentIds: string[];
   amount: number;
   description: string;
-  dueDate?: string; // Optional due date for payment
+  dueDate?: string; 
   metadata?: {
     distanceKm: number;
     perTripFee: number;
@@ -43,14 +34,9 @@ export const createTransactionByAdmin = async (data: {
     totalTrips: number;
   };
 }) => {
-  // Backend needs to implement: POST /api/Transaction/admin/create
   return await apiService.post(`/Transaction/admin/create`, data);
 };
 
-/**
- * Complete parent setup workflow
- * This is a convenience function that calls all required APIs in sequence
- */
 export const createParentWithFullSetup = async (
   parentData: {
     email: string;
@@ -77,19 +63,13 @@ export const createParentWithFullSetup = async (
     };
   }
 ) => {
-  // This function orchestrates the entire workflow
-  // In the future, backend might provide a single endpoint for this
-  // For now, we call multiple endpoints sequentially
 
   try {
-    // Step 1: Create parent account
     const parentResponse = await apiService.post<CreateUserResponse>(`/parent`, parentData);
     const parentId = parentResponse.id;
 
-    // Step 2: Link students to parent
     await linkStudentsToParent(parentId, setupData.studentIds);
 
-    // Step 3: Create pickup point (auto-approved by admin)
     await createPickupPointByAdmin({
       parentId,
       studentIds: setupData.studentIds,
@@ -100,10 +80,8 @@ export const createParentWithFullSetup = async (
       description: `Admin-created pickup point for ${parentData.firstName} ${parentData.lastName}`,
     });
 
-    // Step 4: Create transaction with semester fee
-    // Due date: 7 days before semester starts (example)
     const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + 14); // 2 weeks from now
+    dueDate.setDate(dueDate.getDate() + 14); 
 
     await createTransactionByAdmin({
       parentId,

@@ -3,13 +3,11 @@ import { useState, useEffect, useCallback } from "react";
 import { FaSearch, FaFilter, FaEye, FaCalendarAlt, FaFileAlt, FaUser, FaClock, FaTimes } from "react-icons/fa";
 import LeaveRequestDetailModal from "./LeaveRequestDetailModal";
 import GeneralRequestDetailModal from "./GeneralRequestDetailModal";
-// TODO: Implement real API service for combined requests
-// This will combine both leave requests and general requests from the backend
 import { DriverLeaveRequest } from "@/services/api/driverLeaveRequests";
 import { GeneralDriverRequest } from "./GeneralRequestsTab";
 import { formatDateTime } from "@/utils/dateUtils";
 
-// Combined request type
+
 type CombinedRequest =
   | { type: 'leave'; data: DriverLeaveRequest }
   | { type: 'general'; data: GeneralDriverRequest };
@@ -19,19 +17,16 @@ export default function AllRequestsTab() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Search and filter states
   const [searchDriverName, setSearchDriverName] = useState("");
   const [searchDriverEmail, setSearchDriverEmail] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = 10;
 
-  // Action states
   const [selectedRequest, setSelectedRequest] = useState<CombinedRequest | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
@@ -40,33 +35,10 @@ export default function AllRequestsTab() {
     setError(null);
 
     try {
-      // TODO: Replace with real API calls
-      // Example: 
-      // const [leaveRequestsResponse, generalRequestsResponse] = await Promise.all([
-      //   driverLeaveRequestService.getLeaveRequests({...leaveFilters}),
-      //   generalDriverRequestService.getRequests({...generalFilters})
-      // ]);
 
-      // For now, show empty state until APIs are implemented
       setRequests([]);
       setTotalItems(0);
 
-      // Remove this comment when APIs are ready:
-      // const leaveRequests: CombinedRequest[] = leaveRequestsResponse.data.map(leave => ({
-      //   type: 'leave' as const,
-      //   data: leave
-      // }));
-      // 
-      // const generalRequests: CombinedRequest[] = generalRequestsResponse.data.map(request => ({
-      //   type: 'general' as const,
-      //   data: request
-      // }));
-      // 
-      // let combinedData = [...leaveRequests, ...generalRequests];
-      // 
-      // // Apply filters and pagination as needed
-      // setRequests(combinedData);
-      // setTotalItems(combinedData.length);
 
     } catch (err: unknown) {
       const errorMessage = (err as { message?: string }).message ||
@@ -80,11 +52,10 @@ export default function AllRequestsTab() {
     }
   }, [currentPage, statusFilter, typeFilter, searchDriverName, searchDriverEmail, itemsPerPage]);
 
-  // Debounce search inputs and fetch requests
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       fetchRequests();
-    }, (searchDriverName || searchDriverEmail) ? 300 : 0); // No delay if search is empty
+    }, (searchDriverName || searchDriverEmail) ? 300 : 0); 
 
     return () => clearTimeout(timeoutId);
   }, [searchDriverName, searchDriverEmail, fetchRequests]);
@@ -92,7 +63,6 @@ export default function AllRequestsTab() {
   const getStatusBadge = (status: string | number) => {
     const baseClasses = "px-3 py-1 rounded-full text-sm font-medium";
 
-    // Handle number status (DriverLeaveRequest)
     if (typeof status === 'number') {
       switch (status) {
         case 1: // Pending
@@ -110,7 +80,6 @@ export default function AllRequestsTab() {
       }
     }
 
-    // Handle string status (GeneralDriverRequest)
     switch (status) {
       case "Pending":
         return `${baseClasses} bg-yellow-100 text-yellow-800`;
@@ -137,7 +106,6 @@ export default function AllRequestsTab() {
       : `${baseClasses} bg-purple-100 text-purple-800`;
   };
 
-  // Using centralized formatDateTime from @/utils/dateUtils
 
   if (loading) {
     return (
@@ -149,10 +117,8 @@ export default function AllRequestsTab() {
 
   return (
     <div className="space-y-6 pb-8">
-      {/* Search and Filter Section */}
       <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
         <div className="flex flex-col lg:flex-row gap-4">
-          {/* Search by Driver Name */}
           <div className="flex-1 relative">
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
@@ -165,7 +131,6 @@ export default function AllRequestsTab() {
             />
           </div>
 
-          {/* Search by Driver Email */}
           <div className="flex-1 relative">
             <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
@@ -178,7 +143,6 @@ export default function AllRequestsTab() {
             />
           </div>
 
-          {/* Clear Search */}
           {(searchDriverName || searchDriverEmail) && (
             <button
               onClick={() => {
@@ -192,7 +156,6 @@ export default function AllRequestsTab() {
             </button>
           )}
 
-          {/* Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
             className="flex items-center gap-2 px-4 py-3 bg-[#fad23c] text-[#463B3B] rounded-xl hover:bg-[#FFF085] transition-colors duration-200 font-medium"
@@ -202,7 +165,6 @@ export default function AllRequestsTab() {
           </button>
         </div>
 
-        {/* Filter Options */}
         {showFilters && (
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="flex flex-wrap gap-4">
@@ -243,14 +205,12 @@ export default function AllRequestsTab() {
         )}
       </div>
 
-      {/* Error Message */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4">
           <p className="text-red-800">{error}</p>
         </div>
       )}
 
-      {/* Requests List */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         {requests.length === 0 ? (
           <div className="text-center py-12">
@@ -383,7 +343,6 @@ export default function AllRequestsTab() {
         )}
       </div>
 
-      {/* Pagination */}
       {totalItems > itemsPerPage && (
         <div className="flex justify-center items-center space-x-2">
           <button
@@ -408,7 +367,6 @@ export default function AllRequestsTab() {
         </div>
       )}
 
-      {/* Detail Modal */}
       {showDetailModal && selectedRequest && (
         <>
           {selectedRequest.type === 'leave' ? (

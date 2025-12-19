@@ -30,17 +30,15 @@ export interface DriverListResponse {
 export class DriverService {
   async getDrivers(): Promise<DriverListResponse> {
     try {
-      // Use the real Driver API endpoint that's now available
       const response = await apiService.get<DriverResponse[]>('/Driver');
       
-      // Map the response to our Driver interface
       const drivers = response.map(driver => ({
         id: driver.id,
         firstName: driver.firstName,
         lastName: driver.lastName,
         phoneNumber: driver.phoneNumber,
-        licenseNumber: undefined, // Not available in DriverResponse
-        status: 'Active', // Default status
+        licenseNumber: undefined, 
+        status: 'Active', 
         email: driver.email
       }));
 
@@ -52,7 +50,7 @@ export class DriverService {
     } catch (error: unknown) {
       console.error('Error fetching drivers from Driver API:', error);
       
-      // Fallback: return mock data for development/testing
+      
       return this.getMockDrivers();
     }
   }
@@ -86,7 +84,7 @@ export class DriverService {
     }
   }
 
-  // Fallback mock data for development/testing
+  
   private getMockDrivers(): DriverListResponse {
     const mockDrivers: Driver[] = [
       {

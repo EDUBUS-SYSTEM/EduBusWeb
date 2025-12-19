@@ -1,4 +1,3 @@
-// app/admin/page.tsx
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
 import AdminDashboard from "@/components/admin/AdminDashboard";

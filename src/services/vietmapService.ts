@@ -63,14 +63,12 @@ class VietMapService {
     this.apiKey = process.env.NEXT_PUBLIC_VIETMAP_API_KEY || '';
   }
 
-  // Geocoding API v4 - Convert address to coordinates
   async geocode(query: string, location?: { lat: number; lng: number }): Promise<VietMapGeocodeResult[]> {
     if (!this.apiKey || this.apiKey === 'YOUR_API_KEY_HERE') {
       console.warn('VietMap API key not configured, using mock data for testing');
       return this.getMockGeocodeResults(query);
     }
 
-    // Use proxy route to avoid CORS issues
     const params = new URLSearchParams({
       text: query
     });
@@ -118,7 +116,6 @@ class VietMapService {
     return [];
   }
 
-  // Get place details by ref_id to get coordinates
   async getPlaceDetails(ref_id: string, signal?: AbortSignal): Promise<{ lat: number; lng: number } | null> {
     if (!this.apiKey || this.apiKey === 'YOUR_API_KEY_HERE') {
       console.warn('VietMap API key not configured, using mock coordinates');
@@ -129,7 +126,6 @@ class VietMapService {
     }
 
     try {
-      // Use proxy route to avoid CORS issues
       const params = new URLSearchParams({
         ref_id: ref_id
       });
@@ -142,7 +138,6 @@ class VietMapService {
       });
       
       if (!response.ok) {
-        // Don't throw for 404 or other client errors, just return null
         if (response.status >= 400 && response.status < 500) {
           console.warn(`Place details API returned ${response.status} for ref_id: ${ref_id}`);
           return null;
@@ -152,16 +147,13 @@ class VietMapService {
 
       const data = await response.json();
       
-      // Handle null response from proxy (when API returns 4xx)
       if (data === null) {
         return null;
       }
       
       console.log('VietMap Place Details API Response:', data);
       
-      // Extract coordinates from response
       if (data && typeof data === 'object') {
-        // Try different possible field names for coordinates
         const coords = data.coordinates || data.coord || data.location || data.geometry?.location || 
                       (data.geometry && data.geometry.coordinates ? 
                         { lng: data.geometry.coordinates[0], lat: data.geometry.coordinates[1] } : null);
@@ -177,12 +169,10 @@ class VietMapService {
 
       return null;
     } catch (error) {
-      // Ignore abort errors
       if (error instanceof Error && error.name === 'AbortError') {
         return null;
       }
       
-      // Handle network errors more gracefully
       if (error instanceof TypeError && error.message === 'Failed to fetch') {
         console.error('Network error getting place details. This might be due to network issues or API endpoint problems.');
         return null;
@@ -193,14 +183,13 @@ class VietMapService {
     }
   }
 
-  // Fallback geocoding using OpenStreetMap Nominatim
   async geocodeWithNominatim(query: string): Promise<{ lat: number; lng: number } | null> {
     try {
       const params = new URLSearchParams({
         q: query,
         format: 'json',
         limit: '1',
-        countrycodes: 'vn' // Limit to Vietnam
+        countrycodes: 'vn' 
       });
 
       const response = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
@@ -231,14 +220,12 @@ class VietMapService {
     }
   }
 
-  // Autocomplete API v3 - Get address suggestions
   async autocomplete(query: string, location?: { lat: number; lng: number }, signal?: AbortSignal): Promise<VietMapAutocompleteResult[]> {
     if (!this.apiKey || this.apiKey === 'YOUR_API_KEY_HERE') {
       console.warn('VietMap API key not configured, using mock data for testing');
       return this.getMockAutocompleteResults(query);
     }
 
-    // Use proxy route to avoid CORS issues
     const params = new URLSearchParams({
       text: query
     });
@@ -287,7 +274,6 @@ class VietMapService {
     return [];
   }
 
-  // Route API v1.1 - Calculate route between points
   async getRoute(
     origin: { lat: number; lng: number },
     destination: { lat: number; lng: number },
@@ -304,7 +290,6 @@ class VietMapService {
     console.log('API Key available:', this.apiKey.substring(0, 10) + '...');
 
     try {
-      // Build URL with multiple point parameters
       const baseUrl = 'https://maps.vietmap.vn/api/route';
       const params = new URLSearchParams({
         'api-version': '1.1',
@@ -313,7 +298,6 @@ class VietMapService {
         vehicle: vehicle
       });
       
-      // Add multiple point parameters
       params.append('point', `${origin.lat},${origin.lng}`);
       params.append('point', `${destination.lat},${destination.lng}`);
 
@@ -337,7 +321,6 @@ class VietMapService {
 
       return data;
     } catch (error) {
-      // Silently handle aborted requests so they don't spam the console
       if (error instanceof Error && error.name === 'AbortError') {
         console.warn('VietMap Route request was aborted');
         return { paths: [] };
@@ -347,7 +330,6 @@ class VietMapService {
     }
   }
 
-  // Reverse Geocoding API v3 - Convert coordinates to address
   async reverseGeocode(lat: number, lng: number, signal?: AbortSignal): Promise<string> {
     if (!this.apiKey) {
       throw new Error('VietMap API key not configured');
@@ -376,7 +358,6 @@ class VietMapService {
     return '';
   }
 
-  // Mock data for testing when API key is not available
   private getMockAutocompleteResults(query: string): VietMapAutocompleteResult[] {
     const mockResults: VietMapAutocompleteResult[] = [
       {
@@ -456,13 +437,11 @@ class VietMapService {
       }
     ];
 
-    // Filter results based on query
     return mockResults.filter(result => 
       result.display.toLowerCase().includes(query.toLowerCase())
     );
   }
 
-  // Mock data for geocode testing when API key is not available
   private getMockGeocodeResults(query: string): VietMapGeocodeResult[] {
     const mockResults: VietMapGeocodeResult[] = [
       {
@@ -542,7 +521,6 @@ class VietMapService {
       }
     ];
 
-    // Filter results based on query
     return mockResults.filter(result => 
       result.display.toLowerCase().includes(query.toLowerCase())
     );

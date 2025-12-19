@@ -19,7 +19,7 @@ export interface UserAccount {
   firstName: string;
   lastName: string;
   phoneNumber: string;
-  dateOfBirth?: string; // ISO string from backend
+  dateOfBirth?: string; 
   gender?: number;
   role: "admin" | "parent" | "driver" | "supervisor";
   userPhotoFileId?: string;
@@ -27,7 +27,6 @@ export interface UserAccount {
   updatedAt?: string;
   isDeleted: boolean;
   
-  // Lock information
   lockedUntil?: string;
   lockReason?: string;
   lockedAt?: string;

@@ -20,7 +20,6 @@ export const useParentImport = () => {
       setImportResult(result);
     } catch (error) {
       console.error("Error importing parents:", error);
-      // You might want to show an error message here
     } finally {
       setImportLoading(false);
     }

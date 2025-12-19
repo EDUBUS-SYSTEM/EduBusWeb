@@ -5,7 +5,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { email, password } = body;
 
-    // Simple validation
     if (!email || !password) {
       return NextResponse.json(
         { success: false, message: 'Email and password are required' },
@@ -13,7 +12,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Mock successful login for testing
     const token = `test-token-${Date.now()}`;
     const refreshToken = `test-refresh-${Date.now()}`;
 

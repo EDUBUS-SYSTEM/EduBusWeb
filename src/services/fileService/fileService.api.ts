@@ -19,7 +19,6 @@ export interface SchoolImageInfo {
 }
 
 export const fileService = {
-  // Upload file
   upload: async (
     file: File,
     entityType: string,
@@ -46,18 +45,14 @@ export const fileService = {
     return response.data;
   },
 
-  // Get file URL - use Next.js API route proxy for authenticated requests
   getFileUrl: (fileId: string): string => {
-    // Use Next.js API route proxy to handle authentication
     return `/api/file/${fileId}`;
   },
 
-  // Delete file
   delete: async (fileId: string): Promise<void> => {
     await apiService.delete(`/File/${fileId}`);
   },
 
-  // Get school images (Logo, Banner, Gallery)
   getSchoolImages: async (): Promise<SchoolImageInfo[]> => {
     return await apiService.get<SchoolImageInfo[]>("/School/images");
   },

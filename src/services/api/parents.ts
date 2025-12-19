@@ -6,8 +6,8 @@ export interface CreateParentPayload {
   firstName: string;
   lastName: string;
   phoneNumber: string;
-  gender: number; // 1: Male, 2: Female, 3: Other
-  dateOfBirth: string; // ISO string (yyyy-MM-dd)
+  gender: number; 
+  dateOfBirth: string; 
   address: string;
 }
 
@@ -52,7 +52,6 @@ export interface ImportParentsResponse {
 export const createParent = async (
   payload: CreateParentPayload
 ): Promise<CreateUserResponse> => {
-  // Backend endpoint: POST /api/parent
   console.log("Calling createParent with URL:", "/parent");
   console.log("Payload:", payload);
   const result = await apiService.post<CreateUserResponse>("/parent", payload);

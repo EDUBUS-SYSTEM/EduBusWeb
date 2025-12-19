@@ -37,7 +37,6 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
     }).format(amount);
   };
 
-  // Using centralized formatDateTime from @/utils/dateUtils
 
   const formatStatus = (status: string | number | null | undefined) => {
     if (status === null || status === undefined) return "Unknown";
@@ -82,17 +81,17 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
     const str = status.toString();
     switch (str) {
       case "0":
-      case "Pending":
-        return "Pending";
+      case "Unbilled":
+        return "Unbilled";
       case "1":
-      case "Approved":
-        return "Approved";
+      case "Invoiced":
+        return "Invoiced";
       case "2":
-      case "Rejected":
-        return "Rejected";
-      case "3":
       case "Paid":
         return "Paid";
+      case "3":
+      case "Cancelled":
+        return "Cancelled";
       default:
         return str;
     }
@@ -144,7 +143,6 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[95vh] overflow-y-auto border border-gray-100">
-        {/* Header */}
         <div className="bg-white border-b border-gray-100 p-6 rounded-t-xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -161,9 +159,7 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
         </div>
 
         <div className="p-6 space-y-6 bg-gray-50">
-          {/* Transaction Overview */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Transaction Information */}
             <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
               <div className="flex items-center space-x-2 mb-4">
                 <FaCreditCard className="w-5 h-5 text-[#8c6a00]" />
@@ -219,7 +215,6 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
               </div>
             </div>
 
-            {/* Parent & Student Information */}
             <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
               <div className="flex items-center space-x-2 mb-4">
                 <FaUser className="w-5 h-5 text-[#8c6a00]" />
@@ -258,7 +253,6 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
             </div>
           </div>
 
-          {/* Description */}
           {transaction.description && (
             <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
               <div className="flex items-center space-x-2 mb-4">
@@ -269,7 +263,6 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
             </div>
           )}
 
-          {/* Transport Fee Items */}
           {transaction.transportFeeItems && transaction.transportFeeItems.length > 0 && (
             <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
               <div className="flex items-center space-x-2 mb-4">
@@ -302,7 +295,6 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
                         <td className="px-4 py-3 text-[#444]">{item.academicYear || 'N/A'}</td>
                         <td className="px-4 py-3 text-[#444]">
                           {(() => {
-                            // Try both unitPrice and unitPricePerKm in case of field name mismatch
                             const price = (item as TransportFeeItemSummary & { unitPricePerKm?: number }).unitPricePerKm ?? item.unitPrice;
                             return price !== null && price !== undefined ? formatCurrency(price) : 'N/A';
                           })()}
@@ -313,13 +305,12 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
                           {(() => {
                             const formattedStatus = formatItemStatus(item.status);
                             return (
-                              <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${
-                                formattedStatus === 'Paid' ? 'bg-green-100 text-green-800 border-green-200' :
-                                formattedStatus === 'Approved' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                                formattedStatus === 'Pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                                formattedStatus === 'Rejected' ? 'bg-red-100 text-red-800 border-red-200' :
-                                'bg-gray-100 text-gray-800 border-gray-200'
-                              }`}>
+                              <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${formattedStatus === 'Paid' ? 'bg-green-100 text-green-800 border-green-200' :
+                                formattedStatus === 'Invoiced' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                  formattedStatus === 'Unbilled' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                    formattedStatus === 'Cancelled' ? 'bg-red-100 text-red-800 border-red-200' :
+                                      'bg-gray-100 text-gray-800 border-gray-200'
+                                }`}>
                                 {formattedStatus}
                               </span>
                             );
@@ -333,7 +324,6 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
             </div>
           )}
 
-          {/* Action Button */}
           <div className="flex justify-end pt-4">
             <button
               onClick={onClose}

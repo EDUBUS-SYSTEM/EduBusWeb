@@ -9,7 +9,6 @@ import Pagination from "@/components/ui/Pagination";
 import {
   driverLeaveRequestService,
   DriverLeaveRequest,
-  DriverLeaveRequestFilters
 } from "@/services/api/driverLeaveRequests";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchLeaveRequests, setCurrentPage, updateLeaveInList } from "@/store/slices/driverRequestsSlice";
@@ -20,14 +19,12 @@ export default function LeaveRequestsTab() {
   const { leaves, loading, error, pagination } = useAppSelector(state => state.driverRequests);
 
 
-  // Filter state
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [leaveTypeFilter, setLeaveTypeFilter] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<string>("desc");
   const [showFilters, setShowFilters] = useState(false);
 
-  // Modal state
   const [selectedLeave, setSelectedLeave] = useState<DriverLeaveRequest | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showApproveStep1Modal, setShowApproveStep1Modal] = useState(false);
@@ -35,10 +32,8 @@ export default function LeaveRequestsTab() {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
-  // Step 2 modal state
   const [approveNotes, setApproveNotes] = useState("");
   const itemsPerPage = 5;
-  // Single fetch function that handles all cases
   const fetchLeaves = useCallback(async () => {
     dispatch(fetchLeaveRequests({
       status: statusFilter || undefined,
@@ -50,7 +45,6 @@ export default function LeaveRequestsTab() {
     }));
   }, [dispatch, statusFilter, leaveTypeFilter, searchTerm, sortBy, pagination.currentPage]);
 
-  // Combined effect for all changes
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       fetchLeaves();
@@ -59,12 +53,10 @@ export default function LeaveRequestsTab() {
     return () => clearTimeout(timeoutId);
   }, [statusFilter, leaveTypeFilter, sortBy, pagination.currentPage, searchTerm, fetchLeaves]);
 
-  // Handle page change with Redux
   const handlePageChange = (page: number) => {
     dispatch(setCurrentPage(page));
   };
 
-  // Batch state updates to avoid multiple re-renders
   const handleApproveStep1 = (notes: string, needsReplacement: boolean) => {
     startTransition(() => {
       setApproveNotes(notes);
@@ -72,13 +64,11 @@ export default function LeaveRequestsTab() {
         setShowApproveStep1Modal(false);
         setShowApproveStep2Modal(true);
       } else {
-        // Direct approval without replacement driver
         handleApproveDirect(notes);
       }
     });
   };
 
-  // Add direct approval function
   const handleApproveDirect = async (notes: string) => {
     if (!selectedLeave) return;
 
@@ -89,12 +79,10 @@ export default function LeaveRequestsTab() {
         notes: notes
       });
 
-      // Update local state instead of refetching
       dispatch(updateLeaveInList(updatedLeave));
 
       setShowApproveStep1Modal(false);
 
-      // Only clear selectedLeave if not in detail modal
       if (!showDetailModal) {
         setSelectedLeave(null);
       }
@@ -118,15 +106,13 @@ export default function LeaveRequestsTab() {
     try {
       const updatedLeave = await driverLeaveRequestService.approveLeaveRequest(selectedLeave.id, {
         notes: approveNotes,
-        replacementDriverId: replacementDriverId // Can be undefined if no replacement needed
+        replacementDriverId: replacementDriverId 
       });
 
-      // Update local state instead of refetching
       dispatch(updateLeaveInList(updatedLeave));
 
       setShowApproveStep2Modal(false);
 
-      // Only clear selectedLeave if not in detail modal
       if (!showDetailModal) {
         setSelectedLeave(null);
       }
@@ -150,12 +136,10 @@ export default function LeaveRequestsTab() {
       const updatedLeave = await driverLeaveRequestService.rejectLeaveRequest(leaveId, { reason: reason });
       console.log("Updated leave after reject:", updatedLeave);
 
-      // Update local state instead of refetching
       dispatch(updateLeaveInList(updatedLeave));
 
       setShowRejectModal(false);
 
-      // Only clear selectedLeave if not in detail modal
       if (!showDetailModal) {
         setSelectedLeave(null);
       }
@@ -232,13 +216,11 @@ export default function LeaveRequestsTab() {
     }
   };
 
-  // Using centralized formatDateTime from @/utils/dateUtils
 
   const calculateLeaveDays = (startDate: string, endDate: string) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
 
-    // Set time to start of day to avoid timezone issues
     start.setHours(0, 0, 0, 0);
     end.setHours(0, 0, 0, 0);
 
@@ -248,25 +230,20 @@ export default function LeaveRequestsTab() {
     return diffDays;
   };
 
-  // Kiểm tra xem ngày nghỉ đã hết hạn chưa
   const isLeaveExpired = (startDate: string, endDate: string) => {
     const today = new Date();
     const leaveEndDate = new Date(endDate);
 
-    // Set time to start of day to avoid timezone issues
     today.setHours(0, 0, 0, 0);
     leaveEndDate.setHours(0, 0, 0, 0);
 
-    // Leave đã hết hạn nếu endDate < today
     return leaveEndDate < today;
   };
 
-  // Reset pagination when filters change
   useEffect(() => {
     dispatch(setCurrentPage(1));
   }, [statusFilter, leaveTypeFilter, searchTerm, sortBy, dispatch]);
 
-  // Memoize ApproveStep2Modal to avoid unnecessary re-render 
   const memoizedApproveStep2Modal = useMemo(() => {
     if (!showApproveStep2Modal || !selectedLeave) return null;
 
@@ -313,10 +290,8 @@ export default function LeaveRequestsTab() {
 
   return (
     <div className="space-y-6 pb-8">
-      {/* Search and Filter Section */}
       <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
         <div className="flex flex-col lg:flex-row gap-4 items-center">
-          {/* Search Input */}
           <div className="w-[70%] relative">
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
@@ -329,7 +304,6 @@ export default function LeaveRequestsTab() {
             />
           </div>
 
-          {/* Clear Search */}
           {searchTerm && (
             <button
               onClick={() => setSearchTerm("")}
@@ -340,7 +314,6 @@ export default function LeaveRequestsTab() {
             </button>
           )}
 
-          {/* Filter Toggle - Right aligned */}
           <div className="ml-auto">
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -352,7 +325,6 @@ export default function LeaveRequestsTab() {
           </div>
         </div>
 
-        {/* Filter Options */}
         {showFilters && (
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="flex flex-wrap gap-4">
@@ -411,7 +383,6 @@ export default function LeaveRequestsTab() {
         )}
       </div>
 
-      {/* Leave Requests List */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         {leaves.length === 0 ? (
           <div className="text-center py-12">
@@ -530,7 +501,6 @@ export default function LeaveRequestsTab() {
                           </>
                         )}
 
-                        {/* Hiển thị icon disabled cho trường hợp đã hết hạn */}
                         {leave.status === 1 && isLeaveExpired(leave.startDate, leave.endDate) && (
                           <div className="p-2 text-gray-300 cursor-not-allowed" title="Đã quá hạn duyệt">
                             <FaClock className="h-4 w-4" />
@@ -546,7 +516,6 @@ export default function LeaveRequestsTab() {
         )}
       </div>
 
-      {/* Pagination */}
       {pagination.totalPages > 1 && (
         <div className="px-6 py-6 border-t border-gray-200 bg-white">
           <Pagination
@@ -559,7 +528,6 @@ export default function LeaveRequestsTab() {
         </div>
       )}
 
-      {/* Modals */}
       {showDetailModal && selectedLeave && (
         <LeaveRequestDetailModal
           leave={selectedLeave}
@@ -576,14 +544,11 @@ export default function LeaveRequestsTab() {
                 replacementDriverId: replacementDriverId
               });
 
-              // Update local state
               dispatch(updateLeaveInList(updatedLeave));
 
-              // Close modals
               setShowApproveStep1Modal(false);
               setShowApproveStep2Modal(false);
 
-              // Only clear selectedLeave if not in detail modal
               if (!showDetailModal) {
                 setSelectedLeave(null);
               }
@@ -613,7 +578,6 @@ export default function LeaveRequestsTab() {
         />
       )}
 
-      {/* Sử dụng memoized modal */}
       {memoizedApproveStep2Modal}
 
       {showRejectModal && selectedLeave && (

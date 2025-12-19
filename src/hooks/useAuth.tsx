@@ -27,14 +27,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.replace("/");
   }, [router]);
 
-  // Check token when component mounts
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem("token");
       if (token) {
         try {
-          // If we have a token, set a basic user object
-          // This prevents the race condition where login succeeds but user is null
           const refreshToken = localStorage.getItem("refreshToken");
           if (refreshToken) {
             setUser({
@@ -42,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               email: "",
               createdAt: "",
               updatedAt: "",
-              name: "Admin User", // Placeholder until we fetch real user info
+              name: "Admin User", 
               role: "admin",
             });
           }
@@ -50,7 +47,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           logout();
         }
       } else {
-        // Only redirect to login for admin pages that require authentication
         const publicPages = ["/", "/start", "/verify-otp", "/student-selection", "/map"];
         const currentPath = window.location.pathname;
         const isAdminPage = currentPath.startsWith("/admin") || currentPath.startsWith("/create-account");
@@ -65,11 +61,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, [logout, router]);
 
-  // Listen for storage changes (cross-tab logout detection)
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "token" && e.newValue === null) {
-        // Token was removed in another tab
         setUser(null);
         const currentPath = window.location.pathname;
         const isAdminPage = currentPath.startsWith("/admin") || currentPath.startsWith("/create-account");

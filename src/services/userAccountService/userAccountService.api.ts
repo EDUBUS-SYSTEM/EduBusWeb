@@ -2,7 +2,6 @@ import { apiService, apiClient } from "@/lib/api";
 import { UserAccount, BasicSuccessResponse } from "@/types";
 import { LockUserRequest, LockMultipleUsersRequest, UnlockMultipleUsersRequest} from "./userAccountService.type"
 
-// Add the UserListResponse interface
 export interface UserListResponse {
   users: UserAccount[];
   totalCount: number;
@@ -26,7 +25,6 @@ export const userAccountService = {
     return await apiService.get<UserAccount>(`/UserAccount/${id}`);
   },
   
-  // Get all users with pagination support
   getUsers: async (params?: GetUsersParams): Promise<UserListResponse> => {
     const queryParams = new URLSearchParams();
     
@@ -44,27 +42,22 @@ export const userAccountService = {
     return await apiService.get<UserListResponse>(url);
   },
 
-  // Lock a single user
   lockUser: async (userId: string, request: LockUserRequest): Promise<BasicSuccessResponse> => {
     return await apiService.post<BasicSuccessResponse>(`/UserAccount/${userId}/lock`, request);
   },
 
-  // Unlock a single user
   unlockUser: async (userId: string): Promise<BasicSuccessResponse> => {
     return await apiService.post<BasicSuccessResponse>(`/UserAccount/${userId}/unlock`);
   },
 
-  // Lock multiple users
   lockMultipleUsers: async (request: LockMultipleUsersRequest): Promise<BasicSuccessResponse> => {
     return await apiService.post<BasicSuccessResponse>("/UserAccount/lock-multiple", request);
   },
 
-  // Unlock multiple users
   unlockMultipleUsers: async (request: UnlockMultipleUsersRequest): Promise<BasicSuccessResponse> => {
     return await apiService.post<BasicSuccessResponse>("/UserAccount/unlock-multiple", request);
   },
 
-  // Get user avatar URL
   getAvatarUrl: (userId: string): string => {
     const baseUrl = apiClient.defaults.baseURL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5223/api';
     return `${baseUrl}/UserAccount/${userId}/user-photo`;

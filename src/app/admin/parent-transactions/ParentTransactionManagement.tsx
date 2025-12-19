@@ -1,11 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
-import { FaSearch, FaEye, FaEdit, FaTrash, FaCalendarAlt, FaUser, FaReceipt } from "react-icons/fa";
+import { FaSearch, FaEye, FaTrash, FaCalendarAlt, FaUser, FaReceipt } from "react-icons/fa";
 import { transactionService } from "@/services/transactionService";
 import { TransactionSummary, TransactionStatus, TransactionListRequest } from "@/types/transaction";
 import TransactionDetailModal from "./TransactionDetailModal";
 import TransactionStatusModal from "./TransactionStatusModal";
-import { formatDate, formatDateTime } from "@/utils/dateUtils";
 
 export default function ParentTransactionManagement() {
   const [transactions, setTransactions] = useState<TransactionSummary[]>([]);
@@ -44,12 +43,10 @@ export default function ParentTransactionManagement() {
     }
   };
 
-  // Load transactions
   useEffect(() => {
     loadTransactions();
   }, [currentPage, refreshTrigger]);
 
-  // Listen for transaction creation events
   useEffect(() => {
     const handleTransactionCreated = () => {
       console.log('Transaction created event received, refreshing list...');
@@ -63,7 +60,6 @@ export default function ParentTransactionManagement() {
     };
   }, []);
 
-  // Filter transactions
   useEffect(() => {
     if (!transactions || !Array.isArray(transactions)) {
       setFilteredTransactions([]);
@@ -72,7 +68,6 @@ export default function ParentTransactionManagement() {
 
     let filtered = transactions;
 
-    // Search filter
     if (searchTerm) {
       filtered = filtered.filter(transaction =>
         transaction.parentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -82,12 +77,10 @@ export default function ParentTransactionManagement() {
       );
     }
 
-    // Status filter
     if (statusFilter !== null) {
       filtered = filtered.filter(transaction => transaction.status === statusFilter);
     }
 
-    // Date filter
     if (dateFilter.from) {
       filtered = filtered.filter(transaction =>
         new Date(transaction.createdAt) >= new Date(dateFilter.from)
@@ -147,7 +140,6 @@ export default function ParentTransactionManagement() {
   const handleDelete = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this transaction?")) {
       try {
-        // await transactionService.deleteTransaction(id);
         console.log('Delete transaction:', id);
         alert('Delete functionality not implemented yet');
         setRefreshTrigger(prev => prev + 1);
@@ -165,7 +157,6 @@ export default function ParentTransactionManagement() {
     }).format(amount);
   };
 
-  // Using centralized formatDate and formatDateTime from @/utils/dateUtils
 
   const getStatusColor = (status: TransactionStatus | string | number | null | undefined) => {
     const value = formatStatus(status);
@@ -199,10 +190,8 @@ export default function ParentTransactionManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Search and Filter Section */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
         <div className="flex flex-col sm:flex-row gap-3">
-          {/* Search */}
           <div className="flex-1">
             <div className="relative">
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
@@ -216,7 +205,6 @@ export default function ParentTransactionManagement() {
             </div>
           </div>
 
-          {/* Status Filter */}
           <div className="w-full sm:w-32">
             <select
               value={statusFilter || ""}
@@ -231,7 +219,6 @@ export default function ParentTransactionManagement() {
             </select>
           </div>
 
-          {/* Date Range */}
           <div className="flex gap-2">
             <input
               type="date"
@@ -249,7 +236,6 @@ export default function ParentTransactionManagement() {
             />
           </div>
 
-          {/* Clear Filters */}
           <button
             onClick={clearFilters}
             className="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm whitespace-nowrap"
@@ -259,7 +245,6 @@ export default function ParentTransactionManagement() {
         </div>
       </div>
 
-      {/* Statistics Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3">
           <div className="flex items-center">
@@ -316,7 +301,6 @@ export default function ParentTransactionManagement() {
         </div>
       </div>
 
-      {/* Transactions Table */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -408,7 +392,6 @@ export default function ParentTransactionManagement() {
         )}
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center items-center space-x-2">
           <button
@@ -433,7 +416,6 @@ export default function ParentTransactionManagement() {
         </div>
       )}
 
-      {/* Modals */}
       {showDetailModal && selectedTransaction && (
         <TransactionDetailModal
           transactionId={selectedTransaction.id}

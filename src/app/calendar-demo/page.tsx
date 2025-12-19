@@ -9,7 +9,7 @@ import { formatDateTime } from '@/utils/dateUtils';
 export default function CalendarDemoPage() {
   const [view, setView] = useState<CalendarView>({
     type: 'week',
-    date: new Date(2024, 8, 10) // September 10, 2024
+    date: new Date(2024, 8, 10) 
   });
 
   const [events] = useState<CalendarEvent[]>(mockCalendarEvents);
@@ -25,7 +25,6 @@ export default function CalendarDemoPage() {
 
   const handleEventCreate = (date: Date) => {
     console.log('Create event for:', date);
-    // Here you would typically open a modal to create a new event
   };
 
   const handleDateChange = (date: Date) => {
@@ -39,7 +38,6 @@ export default function CalendarDemoPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-white to-blue-50 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
             EduBus Calendar Demo
@@ -49,7 +47,6 @@ export default function CalendarDemoPage() {
           </p>
         </div>
 
-        {/* Calendar Component */}
         <div className="mb-8">
           <Calendar
             events={events}
@@ -61,7 +58,6 @@ export default function CalendarDemoPage() {
           />
         </div>
 
-        {/* Event Details Modal */}
         {selectedEvent && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
@@ -159,7 +155,6 @@ export default function CalendarDemoPage() {
           </div>
         )}
 
-        {/* Demo Information */}
         <div className="bg-white rounded-2xl shadow-soft-lg p-6 border border-gray-100">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Demo Features</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

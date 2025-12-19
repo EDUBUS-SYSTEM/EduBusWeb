@@ -7,7 +7,6 @@ export default function CalendarIndexPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-white to-blue-50 p-6">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold text-gray-800 mb-4">
             EduBus Calendar System
@@ -21,9 +20,7 @@ export default function CalendarIndexPage() {
           </div>
         </div>
 
-        {/* Demo Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-          {/* Interactive Demo */}
           <Link href="/calendar-demo" className="group">
             <div className="bg-white rounded-3xl shadow-soft-lg p-8 border border-gray-100 hover:shadow-soft-xl transition-all duration-300 transform hover:scale-105">
               <div className="flex items-center space-x-4 mb-6">
@@ -64,7 +61,6 @@ export default function CalendarIndexPage() {
             </div>
           </Link>
 
-          {/* Design Samples */}
           <Link href="/calendar-samples" className="group">
             <div className="bg-white rounded-3xl shadow-soft-lg p-8 border border-gray-100 hover:shadow-soft-xl transition-all duration-300 transform hover:scale-105">
               <div className="flex items-center space-x-4 mb-6">
@@ -106,7 +102,6 @@ export default function CalendarIndexPage() {
           </Link>
         </div>
 
-        {/* Features Overview */}
         <div className="bg-white rounded-3xl shadow-soft-lg p-8 border border-gray-100">
           <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
             Key Features
@@ -145,7 +140,6 @@ export default function CalendarIndexPage() {
           </div>
         </div>
 
-        {/* Backend Integration */}
         <div className="mt-8 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-3xl shadow-soft-lg p-8 border border-cyan-100">
           <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
             Backend Integration
