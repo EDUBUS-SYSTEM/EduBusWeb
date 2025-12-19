@@ -20,7 +20,7 @@ export default function AdminLoginPage() {
   // Nếu đã đăng nhập (auth context đã load user) thì tự động chuyển vào dashboard
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
-      router.replace("/admin/dashboard");
+      router.replace("/admin");
     }
   }, [authLoading, isAuthenticated, router]);
 
@@ -60,7 +60,7 @@ export default function AdminLoginPage() {
     try {
       await login(formData);
       // Use replace instead of push to avoid back button issues
-      router.replace('/admin/dashboard');
+      router.replace('/admin');
     } catch (error: unknown) {
       let errMsg = "Something went wrong.";
       if (axios.isAxiosError(error)) {

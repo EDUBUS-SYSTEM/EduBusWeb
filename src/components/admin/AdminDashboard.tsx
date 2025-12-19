@@ -18,7 +18,7 @@ import TimelineCard from "./TimelineCard";
 import RevenueChart from "./RevenueChart";
 import AttendanceRateCard from "./AttendanceRateCard";
 import DailyStudentsChart from "./DailyStudentsChart";
-import VehicleRuntimeCard from "./VehicleRuntimeCard";
+
 import RouteStatisticsTable from "./RouteStatisticsTable";
 import SemesterSelector from "./SemesterSelector";
 import { unitPriceService } from "@/services/unitPriceService";
@@ -153,12 +153,7 @@ export default function AdminDashboard() {
         refetchInterval: 30000,
     });
 
-    // Fetch Vehicle Runtime
-    const { data: vehicleRuntime, isLoading: vehicleRuntimeLoading } = useQuery({
-        queryKey: ["vehicleRuntime"],
-        queryFn: () => dashboardService.getVehicleRuntime(),
-        refetchInterval: 30000,
-    });
+
 
     // Fetch Route Statistics
     const { data: routeStatistics, isLoading: routeStatisticsLoading } = useQuery({
@@ -197,7 +192,7 @@ export default function AdminDashboard() {
 
     const attendanceExport = attendanceRate || dashboardStats?.attendanceRate || null;
     const dailyStudentsExport = dailyStudents || dashboardStats?.dailyStudents || null;
-    const vehicleRuntimeExport = vehicleRuntime || dashboardStats?.vehicleRuntime || null;
+
     const routeStatisticsExport = routeStatistics || dashboardStats?.routeStatistics || null;
 
     const buildSheet = (
@@ -308,20 +303,7 @@ export default function AdminDashboard() {
                 })),
             ] : [], "Daily Students");
 
-            // Vehicle runtime sheet
-            buildSheet(workbook, vehicleRuntimeExport ? [
-                {
-                    TotalHoursToday: vehicleRuntimeExport.totalHoursToday,
-                    AverageHoursPerTrip: vehicleRuntimeExport.averageHoursPerTrip,
-                    TotalTripsToday: vehicleRuntimeExport.totalTripsToday,
-                },
-                ...(vehicleRuntimeExport.topVehicles ?? []).map((v, idx) => ({
-                    Rank: idx + 1,
-                    LicensePlate: v.licensePlate,
-                    TotalHours: v.totalHours,
-                    TripCount: v.tripCount,
-                })),
-            ] : [], "Vehicle Runtime");
+
 
             // Route statistics sheet
             buildSheet(
@@ -523,19 +505,19 @@ export default function AdminDashboard() {
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
                                     transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                                    className="text-3xl font-bold mb-1"
+                                    className="text-3xl font-bold mb-1 text-[#463B3B]"
                                 >
                                     {unitPriceData.pricePerKm.toLocaleString()} VND/km
                                 </motion.div>
-                                <p className="text-white/80 text-xs">
+                                <p className="text-gray-800 text-xs font-medium">
                                     Effective from {formatDate(unitPriceData.effectiveFrom)}
                                 </p>
                                 {unitPriceData.description && (
-                                    <p className="text-white/70 text-[10px] mt-2 italic">{unitPriceData.description}</p>
+                                    <p className="text-gray-700 text-[11px] mt-2 font-medium">{unitPriceData.description}</p>
                                 )}
                             </>
                         ) : (
-                            <p className="text-white/80">No active unit price</p>
+                            <p className="text-gray-700">No active unit price</p>
                         )}
                     </div>
                 </motion.div>
@@ -650,13 +632,7 @@ export default function AdminDashboard() {
                     />
                 </div>
 
-                {/* Vehicle Runtime Card */}
-                <div className="mb-6">
-                    <VehicleRuntimeCard
-                        data={vehicleRuntime || dashboardStats?.vehicleRuntime || null}
-                        loading={vehicleRuntimeLoading || dashboardLoading}
-                    />
-                </div>
+
 
                 {/* Route Statistics Table */}
                 <div className="mb-6">

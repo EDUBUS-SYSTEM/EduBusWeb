@@ -19,7 +19,7 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
   errors = {},
 }) => {
   const [formData, setFormData] = useState<DriverAccountData>({
-    email: 'driver_1@gmail.com',
+    email: '',
     driverPhoto: [],
     firstName: '',
     lastName: '',
@@ -66,19 +66,20 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
         <h3 className="text-lg font-semibold text-gray-800 mb-6">
           Driver Information
         </h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input
             label="Email*"
             type="email"
+            placeholder="Enter Email"
             value={formData.email}
             onChange={(e) => handleInputChange('email', e.target.value)}
             error={errors.email}
             required
           />
-          
 
-          
+
+
           <FileUpload
             label="Driver Photo"
             accept="image/*"
@@ -86,7 +87,7 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
             onFileSelect={(files) => handleFileChange('driverPhoto', files)}
             error={errors.driverPhoto}
           />
-          
+
           <Input
             label="First Name*"
             placeholder="Enter First Name"
@@ -95,7 +96,7 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
             error={errors.firstName}
             required
           />
-          
+
           <Input
             label="Last Name*"
             placeholder="Enter Last Name"
@@ -104,7 +105,7 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
             error={errors.lastName}
             required
           />
-          
+
           <Input
             label="Address*"
             placeholder="Enter Address"
@@ -113,7 +114,7 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
             error={errors.address}
             required
           />
-          
+
           <Input
             label="PhoneNumber*"
             placeholder="Enter PhoneNumber"
@@ -122,7 +123,7 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
             error={errors.phoneNumber}
             required
           />
-          
+
           <Select
             label="Gender*"
             options={genderOptions}
@@ -142,7 +143,7 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
             error={errors.dateOfBirth}
             required
           />
-          
+
           <FileUpload
             label="Health Certificate"
             accept="image/*"
@@ -158,7 +159,7 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
         <h3 className="text-lg font-semibold text-gray-800 mb-6">
           Driver&apos;s License Information
         </h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input
             label="Driver's License Number"
@@ -167,7 +168,7 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
             onChange={(e) => handleInputChange('licenseNumber', e.target.value)}
             error={errors.licenseNumber}
           />
-          
+
           <Input
             label="Date of Issue"
             type="date"
@@ -176,7 +177,7 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
             onChange={(e) => handleInputChange('dateOfIssue', e.target.value)}
             error={errors.dateOfIssue}
           />
-          
+
           <Input
             label="Issued By"
             placeholder="Enter issued by"
@@ -184,7 +185,7 @@ const DriverAccountForm: React.FC<DriverAccountFormProps> = ({
             onChange={(e) => handleInputChange('issuedBy', e.target.value)}
             error={errors.issuedBy}
           />
-          
+
           <FileUpload
             label="License Images"
             accept="image/*"

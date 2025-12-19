@@ -24,10 +24,7 @@ export default function SemesterSelector({ value, onChange, className = "" }: Se
     const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedCode = e.target.value;
 
-        if (selectedCode === "all") {
-            onChange(null);
-            return;
-        }
+
 
         const selectedSemester = semesters?.find(s => s.semesterCode === selectedCode);
         if (selectedSemester) {
@@ -47,7 +44,7 @@ export default function SemesterSelector({ value, onChange, className = "" }: Se
             onChange={handleChange}
             className={`px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fad23c] focus:border-transparent bg-white text-[#463B3B] min-w-[280px] ${className}`}
         >
-            <option value="all">All Semesters</option>
+
             {semesters?.map((semester) => {
                 const isCurrent = semester.semesterCode === currentSemester?.semesterCode;
                 return (

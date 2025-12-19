@@ -72,6 +72,7 @@ const SupervisorAccountForm: React.FC<SupervisorAccountFormProps> = ({
           <Input
             label="Email*"
             type="email"
+            placeholder="Enter Email"
             value={formData.email}
             onChange={(e) => handleInputChange('email', e.target.value)}
             error={errors.email}
