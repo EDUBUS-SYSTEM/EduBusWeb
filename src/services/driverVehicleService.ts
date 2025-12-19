@@ -14,9 +14,7 @@ import {
 } from '@/types/driverVehicle';
 
 export class DriverVehicleService {
-  /**
-   * Get all assignments with filters, sorting, and pagination
-   */
+
   async getAssignments(filters: AssignmentFilters): Promise<AssignmentListResponse> {
     const params = new URLSearchParams();
     
@@ -40,9 +38,7 @@ export class DriverVehicleService {
     return apiService.get<AssignmentListResponse>(`/DriverVehicle/assignments?${params.toString()}`);
   }
 
-  /**
-   * Get assignments for a specific driver
-   */
+
   async getDriverAssignments(
     driverId: string,
     isActive?: boolean,
@@ -64,18 +60,13 @@ export class DriverVehicleService {
     );
   }
 
-  /**
-   * Get driver assignment summary
-   */
   async getDriverAssignmentSummary(driverId: string): Promise<DriverAssignmentSummaryResponse> {
     return apiService.get<DriverAssignmentSummaryResponse>(
       `/DriverVehicle/driver/${driverId}/assignments/summary`
     );
   }
 
-  /**
-   * Get drivers assigned to a vehicle
-   */
+
   async getVehicleDrivers(vehicleId: string, isActive?: boolean): Promise<AssignmentListResponse> {
     const params = new URLSearchParams();
     if (isActive !== undefined) params.append('isActive', isActive.toString());
@@ -85,9 +76,6 @@ export class DriverVehicleService {
     );
   }
 
-  /**
-   * Get available drivers not assigned to a vehicle in a time range
-   */
   async getAvailableDrivers(
     vehicleId: string,
     startTimeUtc: string,
@@ -103,9 +91,7 @@ export class DriverVehicleService {
     );
   }
 
-  /**
-   * Assign a driver to a vehicle
-   */
+
   async assignDriver(
     vehicleId: string,
     request: DriverAssignmentRequest
@@ -124,9 +110,7 @@ export class DriverVehicleService {
     }
   }
 
-  /**
-   * Assign driver with validation
-   */
+
   async assignDriverWithValidation(
     vehicleId: string,
     request: DriverAssignmentRequest
@@ -145,9 +129,7 @@ export class DriverVehicleService {
     }
   }
 
-  /**
-   * Update an assignment
-   */
+
   async updateAssignment(
     assignmentId: string,
     request: UpdateAssignmentRequest
@@ -166,9 +148,7 @@ export class DriverVehicleService {
     }
   }
 
-  /**
-   * Update assignment status
-   */
+
   async updateAssignmentStatus(
     assignmentId: string,
     request: UpdateAssignmentStatusRequest
@@ -187,9 +167,7 @@ export class DriverVehicleService {
     }
   }
 
-  /**
-   * Delete (cancel) an assignment
-   */
+
   async deleteAssignment(assignmentId: string): Promise<DeleteAssignmentResponse> {
     try {
       return await apiService.delete<DeleteAssignmentResponse>(
@@ -204,9 +182,7 @@ export class DriverVehicleService {
     }
   }
 
-  /**
-   * Approve an assignment
-   */
+
   async approveAssignment(assignmentId: string, note?: string): Promise<DriverAssignmentResponse> {
     try {
       const params = note ? new URLSearchParams({ note }) : '';
@@ -222,9 +198,7 @@ export class DriverVehicleService {
     }
   }
 
-  /**
-   * Reject an assignment
-   */
+
   async rejectAssignment(assignmentId: string, reason: string): Promise<DriverAssignmentResponse> {
     try {
       const params = new URLSearchParams({ reason });
@@ -240,9 +214,7 @@ export class DriverVehicleService {
     }
   }
 
-  /**
-   * Get active primary driver for a vehicle
-   */
+
   async getPrimaryDriverForVehicle(vehicleId: string): Promise<PrimaryDriverInfo> {
     try {
       return await apiService.get<PrimaryDriverInfo>(`/DriverVehicle/vehicle/${vehicleId}/primary-driver`);
@@ -255,9 +227,7 @@ export class DriverVehicleService {
     }
   }
 
-  /**
-   * Replace driver for an assignment
-   */
+
   async replaceDriver(assignmentId: string, data: ReplaceDriverRequest): Promise<DriverAssignmentResponse> {
     try {
       return await apiService.post<DriverAssignmentResponse>(`/DriverVehicle/assignments/${assignmentId}/replace`, data);
@@ -271,7 +241,7 @@ export class DriverVehicleService {
   }
 }
 
-// Export singleton instance
+
 export const driverVehicleService = new DriverVehicleService();
 export default driverVehicleService;
 

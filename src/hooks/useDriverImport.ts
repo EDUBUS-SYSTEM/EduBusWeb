@@ -15,7 +15,6 @@ export const useDriverImport = () => {
 
   const clearImportResult = useCallback(() => setImportResult(null), []);
 
-  // Test function to validate import result logic
   const testImportResultLogic = useCallback(
     (testResult: ImportDriversResponse) => {
       const successCount = testResult?.successUsers?.length || 0;
@@ -133,6 +132,6 @@ export const useDriverImport = () => {
     handleDownloadTemplate,
     handleExportDrivers,
     clearImportResult,
-    testImportResultLogic, // Export for testing
+    testImportResultLogic, 
   };
 };

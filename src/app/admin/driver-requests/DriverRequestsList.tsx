@@ -48,7 +48,6 @@ export default function DriverRequestsList() {
 
   return (
     <div className="space-y-6 pb-8">
-      {/* Tab Navigation */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
         <div className="border-b border-gray-200">
           <nav className="flex space-x-8 px-6" aria-label="Tabs">
@@ -76,7 +75,6 @@ export default function DriverRequestsList() {
           </nav>
         </div>
 
-        {/* Tab Content */}
         <div className="p-6 pb-8">
           {tabs.find(tab => tab.id === activeTab)?.component}
         </div>

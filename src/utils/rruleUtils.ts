@@ -1,4 +1,3 @@
-// RRule Utilities - Modern and Optimized System
 import { formatDate } from './dateUtils';
 
 export interface RRulePattern {
@@ -26,7 +25,6 @@ export interface ParsedRRule {
   errors: string[];
 }
 
-// Predefined Academic Patterns
 export const ACADEMIC_RRULE_PATTERNS: RRulePattern[] = [
   {
     id: "daily",
@@ -79,7 +77,6 @@ export const ACADEMIC_RRULE_PATTERNS: RRulePattern[] = [
   },
 ];
 
-// Day mapping
 export const DAY_NAMES = {
   MO: { short: "Mon", long: "Monday", value: "MO" },
   TU: { short: "Tue", long: "Tuesday", value: "TU" },
@@ -90,7 +87,6 @@ export const DAY_NAMES = {
   SU: { short: "Sun", long: "Sunday", value: "SU" },
 };
 
-// Month mapping
 export const MONTH_NAMES = {
   1: "January (Semester 2)",
   2: "February",
@@ -107,7 +103,6 @@ export const MONTH_NAMES = {
 };
 
 export class RRuleUtils {
-  // Parse RRule string into structured config
   static parseRRule(rrule: string): ParsedRRule {
     const errors: string[] = [];
     const config: RRuleConfig = {
@@ -122,7 +117,6 @@ export class RRuleUtils {
     try {
       const parts = this.parseRRuleString(rrule);
 
-      // Parse frequency
       const freq = parts.get("FREQ")?.toUpperCase();
       if (freq && ["DAILY", "WEEKLY", "MONTHLY", "YEARLY"].includes(freq)) {
         config.frequency = freq as RRuleConfig["frequency"];
@@ -130,7 +124,6 @@ export class RRuleUtils {
         errors.push("Invalid frequency");
       }
 
-      // Parse interval
       const intervalStr = parts.get("INTERVAL");
       if (intervalStr) {
         const interval = parseInt(intervalStr);
@@ -141,7 +134,6 @@ export class RRuleUtils {
         }
       }
 
-      // Parse BYDAY
       const byDayStr = parts.get("BYDAY");
       if (byDayStr) {
         const days = byDayStr.split(",").map((d) => d.trim().toUpperCase());
@@ -155,7 +147,6 @@ export class RRuleUtils {
         }
       }
 
-      // Parse BYMONTHDAY
       const byMonthDayStr = parts.get("BYMONTHDAY");
       if (byMonthDayStr) {
         const days = byMonthDayStr.split(",").map((d) => parseInt(d.trim()));
@@ -168,7 +159,6 @@ export class RRuleUtils {
         }
       }
 
-      // Parse BYMONTH
       const byMonthStr = parts.get("BYMONTH");
       if (byMonthStr) {
         const months = byMonthStr.split(",").map((m) => parseInt(m.trim()));
@@ -181,7 +171,6 @@ export class RRuleUtils {
         }
       }
 
-      // Parse UNTIL
       const untilStr = parts.get("UNTIL");
       if (untilStr) {
         const until = new Date(untilStr);
@@ -192,7 +181,6 @@ export class RRuleUtils {
         }
       }
 
-      // Parse COUNT
       const countStr = parts.get("COUNT");
       if (countStr) {
         const count = parseInt(countStr);
@@ -210,7 +198,6 @@ export class RRuleUtils {
     }
   }
 
-  // Build RRule string from config
   static buildRRule(config: RRuleConfig): string {
     const parts: string[] = [];
 
@@ -243,7 +230,6 @@ export class RRuleUtils {
     return parts.join(";");
   }
 
-  // Generate human-readable description
   static getDescription(config: RRuleConfig): string {
     const freq = config.frequency;
     const interval = config.interval;
@@ -310,7 +296,6 @@ export class RRuleUtils {
     return description;
   }
 
-  // Validate RRule against backend capabilities
   static validateRRule(rrule: string): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
@@ -324,7 +309,6 @@ export class RRuleUtils {
       errors.push(...parsed.errors);
     }
 
-    // Additional business logic validation
     if (parsed.config.frequency === "WEEKLY" && parsed.config.byDay) {
       const academicDays = ["MO", "TU", "WE", "TH", "FR"];
       const hasAcademicDays = parsed.config.byDay.some((day) =>
@@ -344,39 +328,33 @@ export class RRuleUtils {
     return { isValid: errors.length === 0, errors };
   }
 
-  // Get pattern by RRule
   static getPatternByRRule(rrule: string): RRulePattern | null {
     return (
       ACADEMIC_RRULE_PATTERNS.find((pattern) => pattern.rrule === rrule) || null
     );
   }
 
-  // Check if RRule matches academic pattern
   static isAcademicPattern(rrule: string): boolean {
     const pattern = this.getPatternByRRule(rrule);
     return pattern?.category === "academic" || false;
   }
 
-  // Generate preview dates
   static generatePreviewDates(
     rrule: string,
     startDate: Date,
     count: number = 10
   ): Date[] {
-    // This would typically call the backend API
-    // For now, return mock data
     const dates: Date[] = [];
     const current = new Date(startDate);
 
     for (let i = 0; i < count; i++) {
       dates.push(new Date(current));
-      current.setDate(current.getDate() + 7); // Simple increment for demo
+      current.setDate(current.getDate() + 7); 
     }
 
     return dates;
   }
 
-  // Private helper to parse RRule string
   private static parseRRuleString(rrule: string): Map<string, string> {
     const parts = new Map<string, string>();
     const segments = rrule
@@ -394,7 +372,6 @@ export class RRuleUtils {
   }
 }
 
-// Export convenience functions
 export const parseRRule = RRuleUtils.parseRRule;
 export const buildRRule = RRuleUtils.buildRRule;
 export const getRRuleDescription = RRuleUtils.getDescription;

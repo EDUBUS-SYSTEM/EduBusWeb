@@ -1,4 +1,3 @@
-// src/app/admin/pickup-point-management/page.tsx
 "use client";
 
 import React from 'react';

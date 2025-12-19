@@ -1,4 +1,3 @@
-// src/services/routeService.types.ts
 export interface RouteDto {
   id: string;
   routeName: string;

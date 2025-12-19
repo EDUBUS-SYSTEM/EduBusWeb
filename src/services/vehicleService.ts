@@ -54,7 +54,6 @@ export class VehicleService {
   async getVehicles(filters: VehicleFilters): Promise<VehicleListResponse> {
     const searchParams = new URLSearchParams();
 
-    // Only add status if it's not "all"
     if (filters.status && filters.status !== "all") {
       searchParams.append('status', filters.status);
     }
@@ -80,18 +79,15 @@ export class VehicleService {
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { success?: boolean, error?: string, message?: string, errors?: unknown } } };
 
-      // Handle duplicate license plate error
       if (axiosError.response?.data?.error === 'LICENSE_PLATE_ALREADY_EXISTS') {
         throw new Error(axiosError.response.data.message || 'Vehicle with this license plate already exists.');
       }
 
-      // Handle validation errors
       if (axiosError.response?.data?.errors) {
         const validationErrors = axiosError.response.data.errors;
         throw new Error(JSON.stringify(validationErrors));
       }
 
-      // Handle other errors
       if (axiosError.response?.data?.message) {
         throw new Error(axiosError.response.data.message);
       }
@@ -106,18 +102,15 @@ export class VehicleService {
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { success?: boolean, error?: string, message?: string, errors?: unknown } } };
 
-      // Handle duplicate license plate error
       if (axiosError.response?.data?.error === 'LICENSE_PLATE_ALREADY_EXISTS') {
         throw new Error(axiosError.response.data.message || 'Vehicle with this license plate already exists.');
       }
 
-      // Handle validation errors
       if (axiosError.response?.data?.errors) {
         const validationErrors = axiosError.response.data.errors;
         throw new Error(JSON.stringify(validationErrors));
       }
 
-      // Handle other errors
       if (axiosError.response?.data?.message) {
         throw new Error(axiosError.response.data.message);
       }
@@ -132,18 +125,15 @@ export class VehicleService {
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { success?: boolean, error?: string, message?: string, errors?: unknown } } };
 
-      // Handle duplicate license plate error
       if (axiosError.response?.data?.error === 'LICENSE_PLATE_ALREADY_EXISTS') {
         throw new Error(axiosError.response.data.message || 'Vehicle with this license plate already exists.');
       }
 
-      // Handle validation errors
       if (axiosError.response?.data?.errors) {
         const validationErrors = axiosError.response.data.errors;
         throw new Error(JSON.stringify(validationErrors));
       }
 
-      // Handle other errors
       if (axiosError.response?.data?.message) {
         throw new Error(axiosError.response.data.message);
       }
@@ -166,7 +156,6 @@ export class VehicleService {
 
   async assignDriver(vehicleId: string, request: DriverAssignmentRequest): Promise<DriverAssignmentResponse> {
     try {
-      // Use assign-enhanced endpoint to ensure full time conflict validation
       return await apiService.post<DriverAssignmentResponse>(`/DriverVehicle/vehicle/${vehicleId}/drivers/assign-enhanced`, request);
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { error?: string } } };

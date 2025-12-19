@@ -21,7 +21,6 @@ export default function CreateUnitPriceModal({ onClose, onSuccess }: CreateUnitP
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [existingUnitPrices, setExistingUnitPrices] = useState<UnitPriceResponseDto[]>([]);
 
-  // Load existing unit prices on component mount
   useEffect(() => {
     const loadExistingPrices = async () => {
       try {
@@ -35,25 +34,21 @@ export default function CreateUnitPriceModal({ onClose, onSuccess }: CreateUnitP
     loadExistingPrices();
   }, []);
 
-  // Get the minimum allowed date for effectiveFrom (after the latest end date of existing active unit prices)
   const getMinEffectiveFromDate = () => {
     const activeUnitPrices = existingUnitPrices.filter(up => up.isActive);
     
     if (activeUnitPrices.length === 0) {
-      return new Date().toISOString().split('T')[0]; // Today if no active unit prices
+      return new Date().toISOString().split('T')[0]; 
     }
 
-    // Find the latest end date among active unit prices
     const latestEndDate = activeUnitPrices.reduce((latest, up) => {
       if (up.effectiveTo) {
         const endDate = new Date(up.effectiveTo);
         return endDate > latest ? endDate : latest;
       }
-      // If unit price has no end date (ongoing), return a far future date
       return new Date('2099-12-31');
     }, new Date('1900-01-01'));
 
-    // Return the day after the latest end date
     const minDate = new Date(latestEndDate);
     minDate.setDate(minDate.getDate() + 1);
     
@@ -79,7 +74,6 @@ export default function CreateUnitPriceModal({ onClose, onSuccess }: CreateUnitP
       newErrors.effectiveTo = "Effective to date must be after effective from date";
     }
 
-    // Check for overlapping date ranges with existing unit prices
     if (formData.effectiveFrom) {
       const hasOverlap = existingUnitPrices.some(existing => {
         const existingFrom = new Date(existing.effectiveFrom);
@@ -87,14 +81,11 @@ export default function CreateUnitPriceModal({ onClose, onSuccess }: CreateUnitP
         const newFrom = new Date(formData.effectiveFrom);
         const newTo = formData.effectiveTo ? new Date(formData.effectiveTo) : null;
 
-        // Check if new period overlaps with existing period
         if (newTo) {
-          // New period has end date
           return (existingTo ? newFrom <= existingTo : true) && 
                  (newTo >= existingFrom) && 
                  existing.isActive;
         } else {
-          // New period has no end date (ongoing)
           return (existingTo ? newFrom <= existingTo : true) && existing.isActive;
         }
       });
@@ -129,7 +120,6 @@ export default function CreateUnitPriceModal({ onClose, onSuccess }: CreateUnitP
 
   const handleInputChange = (field: keyof CreateUnitPriceDto, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: "" }));
     }
@@ -149,7 +139,6 @@ export default function CreateUnitPriceModal({ onClose, onSuccess }: CreateUnitP
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Service Package Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Service Package Name *
@@ -168,7 +157,6 @@ export default function CreateUnitPriceModal({ onClose, onSuccess }: CreateUnitP
             )}
           </div>
 
-          {/* Description */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Description
@@ -187,7 +175,6 @@ export default function CreateUnitPriceModal({ onClose, onSuccess }: CreateUnitP
             )}
           </div>
 
-          {/* Price per KM */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Price per KM (VND) *
@@ -209,7 +196,6 @@ export default function CreateUnitPriceModal({ onClose, onSuccess }: CreateUnitP
             )}
           </div>
 
-          {/* Effective From */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Effective From *
@@ -233,7 +219,6 @@ export default function CreateUnitPriceModal({ onClose, onSuccess }: CreateUnitP
             )}
           </div>
 
-          {/* Effective To */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Effective To (Optional)
@@ -252,7 +237,6 @@ export default function CreateUnitPriceModal({ onClose, onSuccess }: CreateUnitP
             )}
           </div>
 
-          {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
             <button
               type="button"
