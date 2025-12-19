@@ -7,6 +7,7 @@ export const formatDate = (dateInput: string | Date | undefined | null): string 
         year: 'numeric',
         month: 'short',
         day: 'numeric',
+        timeZone: 'Asia/Ho_Chi_Minh',
     });
 };
 
@@ -21,6 +22,7 @@ export const formatDateTime = (dateInput: string | Date | undefined | null): str
         hour: 'numeric',
         minute: '2-digit',
         hour12: true,
+        timeZone: 'Asia/Ho_Chi_Minh',
     });
 };
 
@@ -35,6 +37,7 @@ export const formatDateTimeShort = (dateInput: string | Date | undefined | null)
         hour: 'numeric',
         minute: '2-digit',
         hour12: true,
+        timeZone: 'Asia/Ho_Chi_Minh',
     });
 };
 
@@ -47,7 +50,10 @@ export const formatDateForInput = (dateInput: string | Date | undefined | null):
 
     const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
     if (isNaN(date.getTime())) return '';
-    
+
+    // Get local date components (not UTC components)
+    // Note: This uses browser's local time. If precise VN time is needed for inputs,
+    // we would need to adjust. For now, keeping as local.
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -63,6 +69,7 @@ export const formatTime = (dateInput: string | Date | undefined | null): string 
         hour: 'numeric',
         minute: '2-digit',
         hour12: true,
+        timeZone: 'Asia/Ho_Chi_Minh',
     });
 };
 
@@ -73,5 +80,6 @@ export const formatMonthYear = (dateInput: Date | string): string => {
     return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
+        timeZone: 'Asia/Ho_Chi_Minh',
     });
 };

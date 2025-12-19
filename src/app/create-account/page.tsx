@@ -701,61 +701,15 @@ const CreateAccountPage: React.FC = () => {
 
           <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl p-6 mb-6 border-2 border-yellow-200">
             <div className="space-y-4">
-              <div className="text-left">
-                <label className="text-sm font-semibold text-gray-700 mb-1 block">
-                  Email
-                </label>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-white rounded-lg px-4 py-3 border border-gray-200">
-                    <p className="text-gray-800 font-mono text-sm break-all">
-                      {successData?.email}
-                    </p>
-                  </div>
-                  <button
-                    onClick={async () => {
-                      if (successData?.email) {
-                        await navigator.clipboard.writeText(successData.email);
-                        setCopiedField("email");
-                        setTimeout(() => setCopiedField(null), 2000);
-                      }
-                    }}
-                    className={`px-4 py-3 rounded-lg transition-all duration-200 font-semibold text-sm min-w-[80px] ${copiedField === "email"
-                        ? "bg-green-500 text-white"
-                        : "bg-yellow-400 hover:bg-yellow-500 text-gray-800"
-                      }`}
-                    title="Copy email"
-                  >
-                    {copiedField === "email" ? "Copied!" : "Copy"}
-                  </button>
-                </div>
-              </div>
-
-              <div className="text-left">
-                <label className="text-sm font-semibold text-gray-700 mb-1 block">
-                  Temporary Password
-                </label>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-white rounded-lg px-4 py-3 border border-gray-200">
-                    <p className="text-gray-800 font-mono text-sm">
-                      {successData?.password}
-                    </p>
-                  </div>
-                  <button
-                    onClick={async () => {
-                      if (successData?.password) {
-                        await navigator.clipboard.writeText(successData.password);
-                        setCopiedField("password");
-                        setTimeout(() => setCopiedField(null), 2000);
-                      }
-                    }}
-                    className={`px-4 py-3 rounded-lg transition-all duration-200 font-semibold text-sm min-w-[80px] ${copiedField === "password"
-                        ? "bg-green-500 text-white"
-                        : "bg-yellow-400 hover:bg-yellow-500 text-gray-800"
-                      }`}
-                    title="Copy password"
-                  >
-                    {copiedField === "password" ? "Copied!" : "Copy"}
-                  </button>
+              {/* Email Success Message */}
+              <div className="text-center">
+                <p className="text-gray-700 font-medium mb-2">
+                  Account created successfully for:
+                </p>
+                <div className="bg-white rounded-lg px-4 py-3 border border-gray-200 inline-block">
+                  <p className="text-gray-900 font-bold text-lg">
+                    {successData?.email}
+                  </p>
                 </div>
               </div>
             </div>

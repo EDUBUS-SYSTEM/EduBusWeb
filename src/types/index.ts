@@ -382,7 +382,11 @@ export interface StopLocationDto {
 export interface ParentAttendanceDto {
   studentId: string;
   studentName: string;
+  studentImageId?: string;
+  boardStatus?: string;
+  alightStatus?: string;
   boardedAt?: string;
+  alightedAt?: string;
   state: string;
 }
 

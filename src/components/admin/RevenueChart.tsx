@@ -69,7 +69,7 @@ export default function RevenueChart({ data, loading, currency = "VND" }: Revenu
 
     const chartData =
         data.timeline?.map((p) => ({
-            date: new Date(p.date).toLocaleDateString("vi-VN"),
+            date: new Date(p.date).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }),
             amount: p.amount,
         })) || [];
 
@@ -101,7 +101,7 @@ export default function RevenueChart({ data, loading, currency = "VND" }: Revenu
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.3 }}
-                            className="text-gray-600 text-xs"
+                            className="text-gray-700 text-xs font-medium"
                         >
                             Current Semester
                         </motion.p>
@@ -122,7 +122,7 @@ export default function RevenueChart({ data, loading, currency = "VND" }: Revenu
                     transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.4 }}
                     className="mb-6"
                 >
-                    <p className="text-gray-600 text-xs mb-1">Total Revenue</p>
+                    <p className="text-gray-700 text-xs mb-1 font-medium">Total Revenue</p>
                     <p className="text-3xl font-bold text-[#B57300]">{formatCurrency(data.totalRevenue)}</p>
                 </motion.div>
 
@@ -134,24 +134,24 @@ export default function RevenueChart({ data, loading, currency = "VND" }: Revenu
                                 <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#ffffff" stopOpacity={0.8} />
-                                            <stop offset="95%" stopColor="#ffffff" stopOpacity={0} />
+                                            <stop offset="5%" stopColor="#F5D565" stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor="#F5D565" stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
-                                    <XAxis dataKey="date" tick={{ fill: "white", fontSize: 10 }} />
-                                    <YAxis tick={{ fill: "white", fontSize: 10 }} tickFormatter={(v) => `${(v / 1_000_000).toFixed(0)}m`} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(181,115,0,0.1)" />
+                                    <XAxis dataKey="date" tick={{ fill: "#666", fontSize: 10 }} />
+                                    <YAxis tick={{ fill: "#666", fontSize: 10 }} tickFormatter={(v) => `${(v / 1_000_000).toFixed(0)}m`} />
                                     <Tooltip
                                         formatter={(value: number) => formatCurrency(value)}
                                         labelStyle={{ color: "#111" }}
                                         contentStyle={{ borderRadius: "12px" }}
                                     />
-                                    <Area type="monotone" dataKey="amount" stroke="#fff" fill="url(#colorRevenue)" strokeWidth={2} />
+                                    <Area type="monotone" dataKey="amount" stroke="#B57300" fill="url(#colorRevenue)" strokeWidth={2} />
                                 </AreaChart>
                             </ResponsiveContainer>
                         </div>
                     ) : (
-                        <p className="text-white/80 text-xs">No timeline data</p>
+                        <p className="text-gray-500 text-xs">No timeline data</p>
                     )}
                 </div>
 

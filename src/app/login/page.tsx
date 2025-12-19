@@ -19,7 +19,7 @@ export default function AdminLoginPage() {
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
-      router.replace("/admin/dashboard");
+      router.replace("/admin");
     }
   }, [authLoading, isAuthenticated, router]);
 
@@ -58,7 +58,8 @@ export default function AdminLoginPage() {
     setLoading(true);
     try {
       await login(formData);
-      router.replace('/admin/dashboard');
+      // Use replace instead of push to avoid back button issues
+      router.replace('/admin');
     } catch (error: unknown) {
       let errMsg = "Something went wrong.";
       if (axios.isAxiosError(error)) {

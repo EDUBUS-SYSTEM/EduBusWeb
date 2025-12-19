@@ -19,9 +19,9 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
       case 'Scheduled':
         return 'bg-blue-100 text-blue-800';
       case 'InProgress':
-        return 'bg-green-100 text-green-800';
+        return 'bg-amber-100 text-amber-800';
       case 'Completed':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-green-100 text-green-800';
       case 'Cancelled':
         return 'bg-red-100 text-red-800';
       default:
@@ -332,15 +332,42 @@ export default function TripDetails({ trip, onClose, onEdit, onDelete }: TripDet
                                         {attendance.studentName || `Student ${attIndex + 1}`}
                                       </span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${getAttendanceStatusColor(attendance.state)}`}>
-                                        {attendance.state}
-                                      </span>
-                                      {attendance.boardedAt && (
-                                        <span className="text-xs text-gray-500">
-                                          {formatTime(attendance.boardedAt)}
-                                        </span>
-                                      )}
+                                    <div className="flex flex-col items-end justify-center px-2 py-1">
+                                      <div className="flex gap-4">
+                                        {/* Boarded Info */}
+                                        <div className="flex flex-col items-end border-r border-gray-100 pr-4">
+                                          <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-1">Boarded</span>
+                                          <div className="flex items-center gap-2">
+                                            {attendance.boardedAt ? (
+                                              <span className="text-[11px] text-blue-700 font-bold">{formatTime(attendance.boardedAt)}</span>
+                                            ) : (
+                                              <span className="text-[11px] text-gray-300 italic font-medium">--:--</span>
+                                            )}
+                                            {attendance.boardStatus && (
+                                              <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${getAttendanceStatusColor(attendance.boardStatus)}`}>
+                                                {attendance.boardStatus}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+
+                                        {/* Alighted Info */}
+                                        <div className="flex flex-col items-end">
+                                          <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-1">Alighted</span>
+                                          <div className="flex items-center gap-2">
+                                            {attendance.alightedAt ? (
+                                              <span className="text-[11px] text-green-700 font-bold">{formatTime(attendance.alightedAt)}</span>
+                                            ) : (
+                                              <span className="text-[11px] text-gray-300 italic font-medium">--:--</span>
+                                            )}
+                                            {attendance.alightStatus && (
+                                              <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${getAttendanceStatusColor(attendance.alightStatus)}`}>
+                                                {attendance.alightStatus}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
                                     </div>
                                   </div>
                                 ))}

@@ -26,6 +26,7 @@ import {
 import { FaPlus, FaTable, FaCalendarAlt, FaMapMarkedAlt, FaUsers, FaClock } from 'react-icons/fa';
 import LiveTripMonitoring from "@/components/admin/LiveTripMonitoring";
 import { dashboardService, ActiveSemesterDto } from '@/services/dashboardService';
+import { studentService } from "@/services/studentService/studentService.api";
 
 type ViewMode = 'table' | 'calendar' | 'live';
 
@@ -45,6 +46,11 @@ export default function TripManagementPage() {
       setSelectedSemester(currentSemester);
     }
   }, [currentSemester, selectedSemester]);
+
+  const { data: allStudents } = useQuery({
+    queryKey: ['students'],
+    queryFn: () => studentService.getAll(),
+  });
 
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [calendarView, setCalendarView] = useState<CalendarView>({
@@ -70,8 +76,7 @@ export default function TripManagementPage() {
     cancelled: 0,
     totalToday: 0,
     activeRoutes: 0,
-    studentsTransported: 0,
-    onTimePerformance: 0
+    totalStudents: 0
   });
 
   const fetchTripsData = useCallback(() => {
@@ -109,24 +114,6 @@ export default function TripManagementPage() {
 
       const uniqueRoutes = new Set(trips.map(t => t.routeId));
 
-      const studentsTransported = trips
-        .filter(t => t.status === 'Completed')
-        .reduce((sum, trip) => {
-          return sum + (trip.stops?.length || 0);
-        }, 0);
-
-      const onTimeTrips = trips.filter(t => {
-        if (!t.startTime) return false;
-        const plannedStart = new Date(t.plannedStartAt);
-        const actualStart = new Date(t.startTime);
-        const diffMinutes = Math.abs((actualStart.getTime() - plannedStart.getTime()) / (1000 * 60));
-        return diffMinutes <= 5;
-      }).length;
-
-      const onTimePerformance = trips.length > 0
-        ? Math.round((onTimeTrips / trips.length) * 100)
-        : 0;
-
       setStats({
         total: pagination.totalItems,
         scheduled: trips.filter(t => t.status === 'Scheduled').length,
@@ -135,8 +122,7 @@ export default function TripManagementPage() {
         cancelled: trips.filter(t => t.status === 'Cancelled').length,
         totalToday: tripsToday.length,
         activeRoutes: uniqueRoutes.size,
-        studentsTransported: studentsTransported,
-        onTimePerformance: onTimePerformance
+        totalStudents: allStudents?.length || 0
       });
     } else {
       setStats({
@@ -147,8 +133,7 @@ export default function TripManagementPage() {
         cancelled: 0,
         totalToday: 0,
         activeRoutes: 0,
-        studentsTransported: 0,
-        onTimePerformance: 0
+        totalStudents: allStudents?.length || 0
       });
     }
   }, [trips, pagination.totalItems]);
@@ -326,10 +311,10 @@ export default function TripManagementPage() {
       };
 
       const colorMap: Record<string, string> = {
-        'Scheduled': '#3B82F6', 
-        'InProgress': '#10B981', 
-        'Completed': '#6B7280', 
-        'Cancelled': '#EF4444' 
+        'Scheduled': '#3B82F6', // blue
+        'InProgress': '#F59E0B', // amber
+        'Completed': '#10B981', // green
+        'Cancelled': '#EF4444' // red
       };
 
       return {
@@ -421,7 +406,7 @@ export default function TripManagementPage() {
     <div>
       <Sidebar />
       <Header />
-      <main className="ml-64 pt-16 p-6 bg-[#FEFCE8] min-h-screen">
+      <main className="ml-64 pt-20 p-6 bg-[#FEFCE8] min-h-screen">
         <div className="w-full">
           {error && (
             <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
@@ -448,7 +433,8 @@ export default function TripManagementPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          {/* Quick Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
             <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
@@ -473,19 +459,9 @@ export default function TripManagementPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-gray-600">Students</p>
-                  <p className="text-lg font-bold text-orange-600">{stats.studentsTransported}</p>
+                  <p className="text-lg font-bold text-orange-600">{stats.totalStudents}</p>
                 </div>
                 <FaUsers className="w-5 h-5 text-orange-500" />
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-gray-600">On-time</p>
-                  <p className="text-lg font-bold text-blue-600">{stats.onTimePerformance}%</p>
-                </div>
-                <FaClock className="w-5 h-5 text-blue-500" />
               </div>
             </div>
           </div>

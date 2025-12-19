@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { FaRoute, FaUsers, FaCheckCircle, FaClock, FaBus } from "react-icons/fa";
+import { FaRoute, FaUsers, FaCheckCircle, FaBus } from "react-icons/fa";
 import { RouteStatisticsDto } from "@/services/dashboardService";
 
 interface RouteStatisticsTableProps {
@@ -94,10 +94,7 @@ export default function RouteStatisticsTable({ data, loading }: RouteStatisticsT
                                 <FaCheckCircle className="inline mr-1" />
                                 Attendance
                             </th>
-                            <th className="text-center py-3 px-4 text-xs font-semibold text-gray-600">
-                                <FaClock className="inline mr-1" />
-                                Avg Runtime
-                            </th>
+
                             <th className="text-center py-3 px-4 text-xs font-semibold text-gray-600">
                                 <FaBus className="inline mr-1" />
                                 Vehicles
@@ -126,11 +123,10 @@ export default function RouteStatisticsTable({ data, loading }: RouteStatisticsT
                                 </td>
                                 <td className="py-4 px-4 text-center">
                                     <div className="flex flex-col items-center">
-                                        <span className={`text-sm font-bold ${
-                                            route.attendanceRate >= 95 ? 'text-green-600' :
+                                        <span className={`text-sm font-bold ${route.attendanceRate >= 95 ? 'text-green-600' :
                                             route.attendanceRate >= 85 ? 'text-yellow-600' :
-                                            'text-red-600'
-                                        }`}>
+                                                'text-red-600'
+                                            }`}>
                                             {route.attendanceRate.toFixed(1)}%
                                         </span>
                                         <div className="w-16 h-1.5 bg-gray-200 rounded-full mt-1 overflow-hidden">
@@ -138,20 +134,15 @@ export default function RouteStatisticsTable({ data, loading }: RouteStatisticsT
                                                 initial={{ width: 0 }}
                                                 animate={{ width: `${route.attendanceRate}%` }}
                                                 transition={{ duration: 0.8, delay: 0.5 + index * 0.05 }}
-                                                className={`h-full rounded-full ${
-                                                    route.attendanceRate >= 95 ? 'bg-green-500' :
+                                                className={`h-full rounded-full ${route.attendanceRate >= 95 ? 'bg-green-500' :
                                                     route.attendanceRate >= 85 ? 'bg-yellow-500' :
-                                                    'bg-red-500'
-                                                }`}
+                                                        'bg-red-500'
+                                                    }`}
                                             />
                                         </div>
                                     </div>
                                 </td>
-                                <td className="py-4 px-4 text-center">
-                                    <span className="text-sm font-semibold text-[#463B3B]">
-                                        {route.averageRuntime.toFixed(1)}h
-                                    </span>
-                                </td>
+
                                 <td className="py-4 px-4 text-center">
                                     <span className="inline-flex items-center justify-center w-8 h-8 bg-[#FEF3C7] rounded-lg text-xs font-bold text-[#92400E]">
                                         {route.activeVehicles}
@@ -191,7 +182,7 @@ export default function RouteStatisticsTable({ data, loading }: RouteStatisticsT
                         <div>
                             <p className="text-xs text-gray-600">Avg Attendance</p>
                             <p className="text-lg font-bold text-[#463B3B]">
-                                {data.length > 0 
+                                {data.length > 0
                                     ? (data.reduce((sum, r) => sum + r.attendanceRate, 0) / data.length).toFixed(1)
                                     : 0}%
                             </p>
