@@ -28,7 +28,6 @@ interface ValidationRule {
   };
 }
 
-// Validation rules matching backend SchoolWriteRequestBase
 export const schoolValidationRules: Record<string, ValidationRule> = {
   schoolName: {
     required: true,
@@ -138,7 +137,6 @@ export const schoolValidationRules: Record<string, ValidationRule> = {
   }
 };
 
-// Location validation rules matching backend SchoolLocationRequest
 export const locationValidationRules: Record<string, ValidationRule> = {
   latitude: {
     required: true,
@@ -178,7 +176,6 @@ export const locationValidationRules: Record<string, ValidationRule> = {
   }
 };
 
-// Validate a single field
 export function validateField(
   fieldName: string,
   value: unknown,
@@ -189,21 +186,18 @@ export function validateField(
   
   if (!rule) return errors;
 
-  // Check required
   if (rule.required && (!value || (typeof value === 'string' && value.trim() === ''))) {
     errors.push({
       field: fieldName,
       message: rule.messages.required || `${fieldName} is required.`
     });
-    return errors; // Don't check other rules if required fails
+    return errors; 
   }
 
-  // Skip other validations if value is empty and not required
   if (!value || (typeof value === 'string' && value.trim() === '')) {
     return errors;
   }
 
-  // Check string length validations
   if (typeof value === 'string') {
     if (rule.minLength && value.length < rule.minLength) {
       errors.push({
@@ -219,7 +213,6 @@ export function validateField(
       });
     }
 
-    // Check pattern
     if (rule.pattern && !rule.pattern.test(value)) {
       errors.push({
         field: fieldName,
@@ -228,7 +221,6 @@ export function validateField(
     }
   }
 
-  // Check number range validations
   if (typeof value === 'number') {
     if (isNaN(value)) {
       errors.push({
@@ -255,11 +247,9 @@ export function validateField(
   return errors;
 }
 
-// Validate entire school form
 export function validateSchoolForm(data: UpdateSchoolRequest): ValidationResult {
   const errors: ValidationError[] = [];
 
-  // Validate each field
   Object.keys(schoolValidationRules).forEach(fieldName => {
     const fieldErrors = validateField(
       fieldName,
@@ -274,11 +264,9 @@ export function validateSchoolForm(data: UpdateSchoolRequest): ValidationResult 
   };
 }
 
-// Validate location form
 export function validateLocationForm(data: SchoolLocationRequest): ValidationResult {
   const errors: ValidationError[] = [];
 
-  // Validate each field
   Object.keys(locationValidationRules).forEach(fieldName => {
     const fieldErrors = validateField(
       fieldName,
@@ -294,18 +282,15 @@ export function validateLocationForm(data: SchoolLocationRequest): ValidationRes
   };
 }
 
-// Get error message for a specific field
 export function getFieldError(errors: ValidationError[], fieldName: string): string | null {
   const error = errors.find(err => err.field === fieldName);
   return error ? error.message : null;
 }
 
-// Check if a field has error
 export function hasFieldError(errors: ValidationError[], fieldName: string): boolean {
   return errors.some(err => err.field === fieldName);
 }
 
-// Real-time validation for individual field changes
 export function validateFieldOnChange(
   fieldName: string,
   value: unknown

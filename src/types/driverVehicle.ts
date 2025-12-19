@@ -1,16 +1,14 @@
 import { BaseEntity, ApiResponse } from './index';
 
-// Enums
 export type DriverVehicleStatus = "Unassigned" | "Assigned";
 
-// Base Entities
 export interface DriverVehicleDto extends BaseEntity {
   driverId: string;
   vehicleId: string;
   isPrimaryDriver: boolean;
   startTimeUtc: string;
   endTimeUtc?: string;
-  status: number; // 0 = Unassigned, 1 = Assigned
+  status: number; 
   assignmentReason?: string;
   assignedByAdminId: string;
   approvedAt?: string;
@@ -47,7 +45,6 @@ export interface AdminInfoDto {
   email: string;
 }
 
-// Request types
 export interface AssignmentFilters {
   driverId?: string;
   vehicleId?: string;
@@ -118,7 +115,6 @@ export interface PrimaryDriverInfo {
   data?: DriverVehicleDto;
 }
 
-// Response types
 export interface AssignmentListResponse {
   success: boolean;
   data: DriverVehicleDto[];
@@ -158,14 +154,12 @@ export interface DeleteAssignmentResponse {
   error?: string;
 }
 
-// Available drivers response
 export interface AvailableDriversResponse {
   success: boolean;
   data: DriverInfoDto[];
   error?: string;
 }
 
-// Assignment summary for a driver
 export interface DriverAssignmentSummaryDto {
   driverId: string;
   driverName: string;
@@ -192,7 +186,6 @@ export interface DriverAssignmentSummaryResponse {
   error?: string;
 }
 
-// Conflict detection
 export interface AssignmentConflictDto {
   conflictId: string;
   conflictType: string;
@@ -202,7 +195,6 @@ export interface AssignmentConflictDto {
   isResolvable: boolean;
 }
 
-// UI Types
 export interface AssignmentTableRow {
   id: string;
   driverName: string;

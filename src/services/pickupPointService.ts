@@ -1,6 +1,6 @@
 import { apiService } from '@/lib/api';
 
-export type Gender = 1 | 2 | 3; // align with API enum range constraint
+export type Gender = 1 | 2 | 3; 
 
 export interface ParentRegistrationRequestDto {
 	email: string;
@@ -8,7 +8,7 @@ export interface ParentRegistrationRequestDto {
 	lastName: string;
 	phoneNumber: string;
 	address: string;
-	dateOfBirth: string; // ISO date (yyyy-MM-dd)
+	dateOfBirth: string; 
 	gender: Gender;
 }
 
@@ -40,7 +40,7 @@ export interface VerifyOtpWithStudentsResponseDto {
 
 export interface SubmitPickupPointRequestDto {
 	email: string;
-	studentIds: string[]; // Frontend sends string[], backend expects Guid[]
+	studentIds: string[]; 
 	addressText: string;
 	latitude: number;
 	longitude: number;
@@ -57,7 +57,7 @@ export interface SubmitPickupPointRequestResponseDto {
 	createdAt: string;
 }
 
-// Admin interfaces
+
 export interface ParentRegistrationInfoDto {
 	firstName: string;
 	lastName: string;
@@ -79,8 +79,8 @@ export interface PickupPointRequestDetailDto {
 	distanceKm: number;
 	description: string;
 	reason: string;
-	unitPricePerKm: number; // Match backend field name
-	totalFee: number; // Match backend field name
+	unitPricePerKm: number; 
+	totalFee: number; 
 	semesterName: string;
 	academicYear: string;
 	semesterStartDate: string;
@@ -126,12 +126,12 @@ export interface PickupPointsResponse {
 	totalCount: number;
 }
 
-// Semester reset interfaces
+
 export interface GetPickupPointsBySemesterRequest {
 	semesterCode: string;
 	academicYear: string;
-	semesterStartDate: string; // ISO date string
-	semesterEndDate: string; // ISO date string
+	semesterStartDate: string; 
+	semesterEndDate: string; 
 	semesterName?: string;
 }
 
@@ -172,8 +172,8 @@ export interface GetPickupPointsBySemesterResponse {
 export interface ResetPickupPointBySemesterRequest {
 	semesterCode: string;
 	academicYear: string;
-	semesterStartDate: string; // ISO date string
-	semesterEndDate: string; // ISO date string
+	semesterStartDate: string; 
+	semesterEndDate: string; 
 	semesterName?: string;
 }
 
@@ -211,7 +211,7 @@ export interface GetAvailableSemestersResponse {
 }
 
 export interface PickupPointWithStudentStatusDto {
-	id: string; // Backend uses 'Id' not 'pickupPointId'
+	id: string; 
 	description: string;
 	location: string;
 	latitude?: number | null;
@@ -222,7 +222,7 @@ export interface PickupPointWithStudentStatusDto {
 	inactiveStudents: number;
 	createdAt: string;
 	updatedAt?: string | null;
-	assignedStudentCount?: number; // Legacy field from backend
+	assignedStudentCount?: number; 
 	assignedStudents?: Array<{
 		id: string;
 		firstName: string;
@@ -233,29 +233,23 @@ export interface PickupPointWithStudentStatusDto {
 }
 
 export const pickupPointService = {
-	// Public endpoints
 	registerParent: (data: ParentRegistrationRequestDto) =>
 		apiService.post<ParentRegistrationResponseDto>('/PickupPoint/register', data),
 	verifyOtp: (data: VerifyOtpRequest) =>
 		apiService.post<VerifyOtpWithStudentsResponseDto>('/PickupPoint/verify-otp', data),
 	submitRequest: async (data: SubmitPickupPointRequestDto) => {
-		// Custom JSON serialization to handle studentIds conversion
 		const serializedData = JSON.stringify(data, (key, value) => {
 			if (key === 'studentIds' && Array.isArray(value)) {
-				// Convert string[] to proper format for backend
 				return value.map((id: string) => {
-					// If it's already a valid GUID string, use it as is
 					if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
 						return id;
 					}
-					// For numeric IDs, return as string (backend will handle conversion)
 					return id;
 				});
 			}
 			return value;
 		});
 
-		// Use fetch with custom serialization
 		const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/PickupPoint/submit-request`, {
 			method: 'POST',
 			headers: {
@@ -272,7 +266,6 @@ export const pickupPointService = {
 		return response.json();
 	},
 
-	// Admin endpoints
 	listRequests: (query?: PickupPointRequestListQuery) =>
 		apiService.get<PickupPointRequestDetailDto[]>('/PickupPoint/requests', query),
 	approveRequest: (requestId: string, data: ApprovePickupPointRequestDto) =>

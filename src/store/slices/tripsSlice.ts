@@ -2,7 +2,6 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { tripService, GetAllTripsParams } from '@/services/tripService';
 import { TripDto } from '@/types';
 import axios from 'axios';
-// Async thunk for fetching trips
 export const fetchTrips = createAsyncThunk(
   'trips/fetchTrips',
   async (filters: GetAllTripsParams = {}) => {
@@ -11,7 +10,6 @@ export const fetchTrips = createAsyncThunk(
   }
 );
 
-// Async thunk for creating trip
 export const createTrip = createAsyncThunk(
   'trips/createTrip',
   async (
@@ -29,13 +27,11 @@ export const createTrip = createAsyncThunk(
         });
       }
 
-      // Fallback for unexpected errors
       return rejectWithValue({ message: 'Unexpected error occurred' });
     }
   }
 );
 
-// Async thunk for updating trip
 export const updateTrip = createAsyncThunk(
   'trips/updateTrip',
   async (
@@ -44,7 +40,6 @@ export const updateTrip = createAsyncThunk(
   ) => {
     try {
       await tripService.updateTrip(id, data);
-      // Refetch to get updated data
       const response = await tripService.getTripById(id);
       return response;
     } catch (error) {
@@ -59,7 +54,6 @@ export const updateTrip = createAsyncThunk(
   }
 );
 
-// Async thunk for deleting trip
 export const deleteTrip = createAsyncThunk(
   'trips/deleteTrip',
   async (id: string, { rejectWithValue }) => {
@@ -97,9 +91,9 @@ interface TripsState {
     perPage: number;
   };
   filters: GetAllTripsParams;
-  generating: boolean; // Loading state for generate operation
-  generateError: string | null; // Error state for generate operation
-  generatedTripsCount: number; // Count of last generated trips
+  generating: boolean; 
+  generateError: string | null; 
+  generatedTripsCount: number; 
 }
 
 const initialState: TripsState = {
@@ -124,7 +118,6 @@ const tripsSlice = createSlice({
   reducers: {
     setFilters: (state, action: PayloadAction<Partial<GetAllTripsParams>>) => {
       state.filters = { ...state.filters, ...action.payload };
-      // Reset to page 1 when filters change
       state.pagination.currentPage = 1;
     },
     setCurrentPage: (state, action: PayloadAction<number>) => {
@@ -149,7 +142,6 @@ const tripsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch trips
       .addCase(fetchTrips.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -168,7 +160,6 @@ const tripsSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch trips';
       })
-      // Create trip
       .addCase(createTrip.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -181,19 +172,16 @@ const tripsSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || 'Failed to create trip';
       })
-      // Update trip
       .addCase(updateTrip.fulfilled, (state, action) => {
         const index = state.trips.findIndex(trip => trip.id === action.payload.id);
         if (index !== -1) {
           state.trips[index] = action.payload;
         }
       })
-      // Delete trip
       .addCase(deleteTrip.fulfilled, (state, action) => {
         state.trips = state.trips.filter(trip => trip.id !== action.payload);
       })
 
-      // NEW: Generate trips from schedule
       .addCase(generateTripsFromSchedule.pending, (state) => {
         state.generating = true;
         state.generateError = null;
@@ -203,12 +191,9 @@ const tripsSlice = createSlice({
         state.generating = false;
         state.generateError = null;
         state.generatedTripsCount = action.payload.length;
-        // Optionally: Refresh trips list or add generated trips to the list
-        // For now, we'll let the parent component refresh the list
       })
       .addCase(generateTripsFromSchedule.rejected, (state, action) => {
         state.generating = false;
-        // Extract error message from the rejected action
         const errorMessage = action.error.message || 'Failed to generate trips';
         state.generateError = errorMessage;
         state.generatedTripsCount = 0;

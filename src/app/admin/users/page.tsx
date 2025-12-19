@@ -3,7 +3,6 @@ import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 
-// Lazy load AccountManagement for code splitting
 const AccountManagement = lazy(() => import("@/components/admin/AccountManagement"));
 
 export default function UsersPage() {

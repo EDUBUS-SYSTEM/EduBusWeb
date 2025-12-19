@@ -11,7 +11,7 @@ export function useLiveTripMonitoring() {
     ongoingTrips, 
     locationUpdates,
     attendanceUpdates,
-    selectedTripIds, // ✅ Added
+    selectedTripIds, 
     stats,
     loading,
     error 
@@ -20,32 +20,26 @@ export function useLiveTripMonitoring() {
   const hasInitializedRef = useRef(false);
 
   useEffect(() => {
-    // Prevent multiple initializations
     if (hasInitializedRef.current) {
       return;
     }
     hasInitializedRef.current = true;
 
-    // Initialize SignalR connection
     const hubService = getTripHubService();
     hubServiceRef.current = hubService;
 
-    // Connect to SignalR (only if not already connected)
     if (hubService.connectionState !== signalR.HubConnectionState.Connected) {
       hubService.connect().catch((error) => {
         console.error('Failed to connect to TripHub:', error);
       });
     }
 
-    // Load ongoing trips
     dispatch(fetchOngoingTrips());
 
     return () => {
-      // DON'T disconnect - let the singleton keep the connection alive
     };
   }, [dispatch]);
 
-  // Helper functions
   const getLocationUpdate = (tripId: string) => {
     return locationUpdates[tripId];
   };
@@ -59,7 +53,7 @@ export function useLiveTripMonitoring() {
     ongoingTrips,
     locationUpdates,
     attendanceUpdates,
-    selectedTripIds, // ✅ Added
+    selectedTripIds, 
     stats,
     loading,
     error,

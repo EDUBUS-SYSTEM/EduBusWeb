@@ -1,9 +1,7 @@
 import axios, { AxiosRequestConfig } from "axios";
 
-// Configure base URL for API
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
-// Alternative API URLs to try if the default fails
 const FALLBACK_API_URLS = [
   "http://localhost:5000/api",
   "http://localhost:5223/api", 
@@ -11,23 +9,20 @@ const FALLBACK_API_URLS = [
   "https://localhost:7061/api"
 ];
 
-// Create axios instance with default configuration
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000, // 30 seconds - reasonable timeout
+  timeout: 30000, 
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Request interceptor to add token to header
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    // Remove Content-Type header for FormData to let axios set it automatically with boundary
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type'];
     }
@@ -38,19 +33,15 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle errors
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Silently handle AbortError (user-initiated cancellation)
     if (axios.isCancel(error) || error.code === 'ERR_CANCELED' || error.name === 'AbortError' || error.message === 'canceled') {
-      // Don't log or show AbortError - it's expected when navigating
       return Promise.reject(error);
     }
 
     const url = error.config?.url || "";
     if (error.response?.status === 401 && !url.includes("/auth/login") && !url.includes("localhost:5000")) {
-      // Handle when token expires
       localStorage.removeItem("token");
       globalThis.location.href = "/";
     }
@@ -58,7 +49,6 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Function to test API connection and get working URL
 export const testApiConnection = async (): Promise<string> => {
   for (const baseUrl of FALLBACK_API_URLS) {
     try {
@@ -67,7 +57,6 @@ export const testApiConnection = async (): Promise<string> => {
         timeout: 3000,
       });
       
-      // Try to hit a simple endpoint
       await testClient.get('/health/live');
       console.log(`✅ API connection successful: ${baseUrl}`);
       return baseUrl;
@@ -81,9 +70,7 @@ export const testApiConnection = async (): Promise<string> => {
   return API_BASE_URL;
 };
 
-// Helper functions for API calls
 export const apiService = {
-  // GET request
   get: async <T>(
     url: string,
     params?: Record<string, unknown>,
@@ -96,7 +83,6 @@ export const apiService = {
     return response.data;
   },
 
-  // POST request
   post: async <T>(
     url: string,
     data?: unknown,
@@ -106,7 +92,6 @@ export const apiService = {
     return response.data;
   },
 
-  // PUT request
   put: async <T>(
     url: string,
     data?: unknown,
@@ -116,13 +101,11 @@ export const apiService = {
     return response.data;
   },
 
-  // DELETE request
   delete: async <T>(url: string, config?: AxiosRequestConfig): Promise<T> => {
     const response = await apiClient.delete(url, config);
     return response.data;
   },
 
-  // PATCH request
   patch: async <T>(
     url: string,
     data?: unknown,

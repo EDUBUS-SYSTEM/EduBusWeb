@@ -43,36 +43,28 @@ export const tripService = {
     if (params?.sortBy) queryParams.sortBy = params.sortBy;
     if (params?.sortOrder) queryParams.sortOrder = params.sortOrder;
 
-    // The API now returns: { data, total, page, perPage, totalPages, ... }
     const response = await apiService.get<GetAllTripsResponse>('/Trip', queryParams);
 
-    // If your API returns other properties (hasNextPage, etc), you can keep them in the type as well
 
     return response;
   },
 
-  // Get trip by ID
   getTripById: async (id: string): Promise<TripDto> => {
     return await apiService.get<TripDto>(`/Trip/${id}`);
   },
 
-  // Create a new trip
   createTrip: async (data: CreateTripDto): Promise<TripDto> => {
     return await apiService.post<TripDto>("/Trip", data);
   },
 
-  // Update a trip
   updateTrip: async (id: string, data: UpdateTripDto): Promise<void> => {
-    // API returns NoContent, not TripDto
     return await apiService.put<void>(`/Trip/${id}`, data);
   },
 
-  // Delete a trip
   deleteTrip: async (id: string): Promise<void> => {
     return await apiService.delete<void>(`/Trip/${id}`);
   },
 
-  // Generate trips from schedule
   generateTripsFromSchedule: async (
     scheduleId: string,
     startDate: string,
@@ -88,21 +80,18 @@ export const tripService = {
     return response.data;
   },
 
-  // Get trips by route
   getTripsByRoute: async (routeId: string): Promise<TripDto[]> => {
     return await apiService.get<TripDto[]>(`/Trip/route/${routeId}`);
   },
 
-  // Update trip status
   updateTripStatus: async (id: string, status: string, reason?: string): Promise<{ tripId: string; status: string; reason?: string; message: string }> => {
     return await apiService.put<{ tripId: string; status: string; reason?: string; message: string }>(`/Trip/${id}/status`, { status, reason });
   },
 
-  // Get ongoing trips (InProgress status)
   getOngoingTrips: async (): Promise<TripDto[]> => {
     const response = await apiService.get<GetAllTripsResponse>('/Trip', {
       status: 'InProgress',
-      perPage: 100 // Get all ongoing trips
+      perPage: 100 
     });
     return response.data;
   },

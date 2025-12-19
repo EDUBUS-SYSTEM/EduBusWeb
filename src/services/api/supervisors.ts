@@ -5,8 +5,8 @@ export interface CreateSupervisorPayload {
   firstName: string;
   lastName: string;
   phoneNumber: string;
-  gender: number; // 1: Male, 2: Female, 3: Other
-  dateOfBirth: string; // ISO string (yyyy-MM-dd)
+  gender: number; 
+  dateOfBirth: string; 
   address: string;
 }
 
@@ -51,7 +51,6 @@ export interface ImportSupervisorsResponse {
 export const createSupervisor = async (
   payload: CreateSupervisorPayload
 ): Promise<CreateUserResponse> => {
-  // Backend endpoint: POST /api/supervisor
   const result = await apiService.post<CreateUserResponse>("/supervisor", payload);
   return result as unknown as CreateUserResponse;
 };

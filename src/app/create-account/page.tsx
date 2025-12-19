@@ -71,16 +71,14 @@ const CreateAccountPage: React.FC = () => {
 
   const handleAccountTypeChange = (type: AccountType) => {
     setActiveAccountType(type);
-    setErrors({}); // Clear errors when switching account types
-    setFormKey(prev => prev + 1); // Reset form when switching account types
+    setErrors({}); 
+    setFormKey(prev => prev + 1); 
   };
 
   const handleBack = () => {
-    // Navigate back to previous page
     window.history.back();
   };
 
-  // Import handled via hook above
 
   const handleDriverSubmit = async (data: DriverAccountData) => {
     setLoading(true);
@@ -93,7 +91,6 @@ const CreateAccountPage: React.FC = () => {
         return;
       }
 
-      // Map to backend payload
       const dDob = new Date(data.dateOfBirth!);
       const dobDateOnly = `${dDob.getFullYear()}-${String(dDob.getMonth() + 1).padStart(2, "0")}-${String(dDob.getDate()).padStart(2, "0")}`;
 
@@ -139,7 +136,6 @@ const CreateAccountPage: React.FC = () => {
         if (status === 400) {
           const fieldErrors: AccountFormErrors = {};
           if (typeof data === "object" && data) {
-            // ModelState  { Field: ["err1","err2"] }
             const record = data as Record<string, unknown>;
             for (const k of Object.keys(record)) {
               const value = record[k];
@@ -165,7 +161,6 @@ const CreateAccountPage: React.FC = () => {
       }
       console.log("Backend response:", res);
 
-      // Show success modal for driver
       setSuccessData({
         email: data.email,
         password: res.password,
@@ -173,10 +168,8 @@ const CreateAccountPage: React.FC = () => {
       setSuccessAccountType("driver");
       setShowSuccessModal(true);
 
-      // Reset form after successful creation
-      setFormKey(prev => prev + 1); // Force form re-render to reset
+      setFormKey(prev => prev + 1); 
 
-      // Optional uploads (if provided)
       const uploads: Promise<unknown>[] = [];
       if (data.driverPhoto && data.driverPhoto.length > 0) {
         uploads.push(uploadUserPhoto(res.id, data.driverPhoto[0]));
@@ -187,10 +180,8 @@ const CreateAccountPage: React.FC = () => {
         );
       }
 
-      // Driver license creation if all 3 fields provided
       if (data.licenseNumber && data.dateOfIssue && data.issuedBy) {
         try {
-          // Ensure min length and date-only format (yyyy-MM-dd)
           const licenseNumber = String(data.licenseNumber).trim();
           if (licenseNumber.length < 5) {
             throw new Error("License number must be at least 5 characters.");
@@ -265,11 +256,9 @@ const CreateAccountPage: React.FC = () => {
       }
 
 
-      // Map to backend payload
       const dDob = new Date(data.dateOfBirth!);
       const dobDateOnly = `${dDob.getFullYear()}-${String(dDob.getMonth() + 1).padStart(2, "0")}-${String(dDob.getDate()).padStart(2, "0")}`;
 
-      // Convert gender string to number
       const genderMap: Record<string, number> = {
         "male": 1,
         "female": 2,
@@ -296,7 +285,6 @@ const CreateAccountPage: React.FC = () => {
       console.log("Parent data:", parentPayload);
       console.log("Setup data:", setupPayload);
 
-      // Check if we have setup data (students and pickup point)
       const hasSetupData = setupPayload.studentIds.length > 0 &&
         setupPayload.pickupPoint !== null &&
         setupPayload.feeCalculation !== null;
@@ -304,16 +292,13 @@ const CreateAccountPage: React.FC = () => {
       let result;
       try {
         if (hasSetupData) {
-          // Use full setup if we have students and pickup point
           console.log("Creating parent with full setup...");
-          // Type assertion: we know pickupPoint and feeCalculation are not null here
           result = await createParentWithFullSetup(parentPayload, {
             studentIds: setupPayload.studentIds,
             pickupPoint: setupPayload.pickupPoint!,
             feeCalculation: setupPayload.feeCalculation!,
           });
         } else {
-          // Otherwise, just create parent account without setup
           console.log("Creating simple parent account...");
           const parentResponse = await createParent(parentPayload);
           result = {
@@ -370,7 +355,6 @@ const CreateAccountPage: React.FC = () => {
           return;
         }
 
-        // Generic error
         setErrors({
           general:
             msg || "Failed to create parent account with full setup. Please try again.",
@@ -380,7 +364,6 @@ const CreateAccountPage: React.FC = () => {
 
       console.log("Parent created successfully:", result);
 
-      // Show success modal
       setSuccessData({
         email: data.email,
         password: result.password,
@@ -388,7 +371,6 @@ const CreateAccountPage: React.FC = () => {
       setSuccessAccountType("parent");
       setShowSuccessModal(true);
 
-      // Reset form after successful creation
       setFormKey(prev => prev + 1);
 
     } catch (error) {
@@ -540,17 +522,14 @@ const CreateAccountPage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar */}
       <SidebarCreateAccount
         activeAccountType={activeAccountType}
         onAccountTypeChange={handleAccountTypeChange}
         onBack={handleBack}
       />
 
-      {/* Main Content */}
       <div className="flex-1 p-8">
         <div className="max-w-4xl mx-auto">
-          {/* Header */}
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold text-gray-800">
               Create User Account
@@ -620,14 +599,12 @@ const CreateAccountPage: React.FC = () => {
             )}
           </div>
 
-          {/* Error Message */}
           {errors.general && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
               <p className="text-red-600 text-sm">{errors.general}</p>
             </div>
           )}
 
-          {/* Import Results */}
           {driverImportResult && activeAccountType === "driver" && (
             <ImportResults
               result={driverImportResult}
@@ -653,7 +630,6 @@ const CreateAccountPage: React.FC = () => {
             />
           )}
 
-          {/* Form Content */}
           <div className="bg-[#F9F7E3] rounded-2xl p-8 shadow-sm border border-gray-100">
             {activeAccountType === "driver" ? (
               <DriverAccountForm
@@ -681,7 +657,6 @@ const CreateAccountPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Success Modal */}
       <Modal
         isOpen={showSuccessModal}
         onClose={() => {
@@ -695,7 +670,6 @@ const CreateAccountPage: React.FC = () => {
         size="md"
       >
         <div className="text-center">
-          {/* Success Icon */}
           <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mb-6">
             <svg
               className="h-12 w-12 text-green-600"
@@ -712,7 +686,6 @@ const CreateAccountPage: React.FC = () => {
             </svg>
           </div>
 
-          {/* Title */}
           <h3 className="text-2xl font-bold text-gray-800 mb-2">
             {successTitleMap[successTypeForModal]}
           </h3>
@@ -720,14 +693,12 @@ const CreateAccountPage: React.FC = () => {
             Please provide the login credentials to the {successRecipientMap[successTypeForModal]}
           </p>
 
-          {/* Photo upload warning (for supervisor only) */}
           {successTypeForModal === "supervisor" && photoUploadError && (
             <div className="mb-4 p-3 rounded-xl bg-yellow-50 border border-yellow-300 text-sm text-yellow-800 text-left">
               {photoUploadError}
             </div>
           )}
 
-          {/* Credentials Box */}
           <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl p-6 mb-6 border-2 border-yellow-200">
             <div className="space-y-4">
               {/* Email Success Message */}
@@ -744,7 +715,6 @@ const CreateAccountPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Action Button */}
           <button
             onClick={() => {
               setShowSuccessModal(false);

@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import { FaTimes } from "react-icons/fa";
-import { transactionService } from "@/services/transactionService";
 import { TransactionSummary, TransactionStatus } from "@/types/transaction";
 
 interface TransactionStatusModalProps {
@@ -24,7 +23,6 @@ export default function TransactionStatusModal({ transaction, onClose, onSuccess
 
     try {
       setLoading(true);
-      // await transactionService.updateTransactionStatus(transaction.id, newStatus);
       console.log('Update transaction status:', transaction.id, newStatus);
       alert('Update status functionality not implemented yet');
       onSuccess();
@@ -72,7 +70,6 @@ export default function TransactionStatusModal({ transaction, onClose, onSuccess
         </div>
 
         <div className="p-6 space-y-6">
-          {/* Transaction Info */}
           <div className="bg-gray-50 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-[#463B3B] mb-3">Transaction Information</h3>
             <div className="space-y-2 text-sm">
@@ -97,7 +94,6 @@ export default function TransactionStatusModal({ transaction, onClose, onSuccess
             </div>
           </div>
 
-          {/* Status Update Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -115,7 +111,6 @@ export default function TransactionStatusModal({ transaction, onClose, onSuccess
               </select>
             </div>
 
-            {/* Status Preview */}
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">New Status:</span>
@@ -125,7 +120,6 @@ export default function TransactionStatusModal({ transaction, onClose, onSuccess
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex gap-3 pt-4">
               <button
                 type="button"

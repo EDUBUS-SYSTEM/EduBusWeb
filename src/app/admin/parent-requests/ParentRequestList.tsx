@@ -4,7 +4,6 @@ import { FaSearch, FaFilter, FaEye, FaCheck, FaTimes, FaMapMarkerAlt, FaUser, Fa
 import RequestDetailModal from "./RequestDetailModal";
 import { pickupPointService, PickupPointRequestDetailDto } from "@/services/pickupPointService";
 
-// Use the API types directly
 type PickupPointRequest = PickupPointRequestDetailDto;
 
 
@@ -13,17 +12,14 @@ export default function ParentRequestList() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Search and filter states
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = 10;
 
-  // Action states
   const [selectedRequest, setSelectedRequest] = useState<PickupPointRequest | null>(null);
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -35,38 +31,30 @@ export default function ParentRequestList() {
     setError(null);
 
     try {
-      // Calculate pagination
       const skip = (currentPage - 1) * itemsPerPage;
 
-      // Build query parameters
       const query: Record<string, unknown> = {
         skip,
         take: itemsPerPage
       };
 
-      // Add filters
       if (statusFilter) {
         query.status = statusFilter;
       }
 
-      // If search text looks like an email, search by email via API
       if (searchText.trim() && searchText.includes('@')) {
         query.parentEmail = searchText.trim();
       }
 
-      // Fetch data from API
       const data = await pickupPointService.listRequests(query);
 
-      // Apply client-side filtering for name or email (if not already filtered by API)
       let filteredData = data;
       if (searchText.trim()) {
         const searchLower = searchText.toLowerCase();
         filteredData = data.filter(req => {
-          // Search by email
           if (req.parentEmail.toLowerCase().includes(searchLower)) {
             return true;
           }
-          // Search by name
           if (req.parentInfo) {
             const fullName = `${req.parentInfo.firstName} ${req.parentInfo.lastName}`.toLowerCase();
             if (fullName.includes(searchLower)) {
@@ -78,7 +66,6 @@ export default function ParentRequestList() {
       }
 
       setRequests(filteredData);
-      // Note: API doesn't return total count, so we'll estimate based on current page
       setTotalItems(filteredData.length === itemsPerPage ? (currentPage * itemsPerPage) + 1 : currentPage * itemsPerPage);
     } catch (err: unknown) {
       const errorMessage = (err as { response?: { data?: { detail?: string } }; message?: string }).response?.data?.detail ||
@@ -93,11 +80,10 @@ export default function ParentRequestList() {
     }
   }, [currentPage, statusFilter, searchText, itemsPerPage]);
 
-  // Debounce search input and fetch requests
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       fetchRequests();
-    }, searchText ? 300 : 0); // No delay if search is empty
+    }, searchText ? 300 : 0); 
 
     return () => clearTimeout(timeoutId);
   }, [searchText, fetchRequests]);
@@ -108,10 +94,8 @@ export default function ParentRequestList() {
     try {
       await pickupPointService.approveRequest(requestId, { notes });
 
-      // Refresh the requests list
       await fetchRequests();
 
-      // Notify other pages that a transaction was created
       window.dispatchEvent(new CustomEvent('transactionCreated', {
         detail: { requestId, timestamp: Date.now() }
       }));
@@ -137,7 +121,6 @@ export default function ParentRequestList() {
     try {
       await pickupPointService.rejectRequest(requestId, { reason });
 
-      // Refresh the requests list
       await fetchRequests();
 
       setShowRejectModal(false);
@@ -177,10 +160,8 @@ export default function ParentRequestList() {
   };
   return (
     <div className="space-y-6 pb-8">
-      {/* Search and Filter Section */}
       <div className="sticky top-16 z-40 bg-white rounded-3xl shadow-lg p-4 border border-gray-100">
         <div className="flex flex-col lg:flex-row gap-3">
-          {/* Combined Search */}
           <div className="flex-1 relative">
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
             <input
@@ -194,7 +175,6 @@ export default function ParentRequestList() {
             />
           </div>
 
-          {/* Clear Search */}
           {searchText && (
             <button
               onClick={() => setSearchText("")}
@@ -205,7 +185,6 @@ export default function ParentRequestList() {
             </button>
           )}
 
-          {/* Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
             className="flex items-center gap-1.5 px-3 py-2.5 text-sm bg-[#fad23c] text-[#463B3B] rounded-2xl hover:bg-[#FFF085] transition-colors duration-200 font-medium"
@@ -215,7 +194,6 @@ export default function ParentRequestList() {
           </button>
         </div>
 
-        {/* Filter Options */}
         {showFilters && (
           <div className="mt-3 pt-3 border-t border-gray-200">
             <div className="flex flex-wrap gap-3">
@@ -239,14 +217,12 @@ export default function ParentRequestList() {
         )}
       </div>
 
-      {/* Error Message */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4">
           <p className="text-red-800">{error}</p>
         </div>
       )}
 
-      {/* Requests List */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
         {loading ? (
           <div className="flex justify-center items-center py-12">
@@ -380,7 +356,6 @@ export default function ParentRequestList() {
         )}
       </div>
 
-      {/* Pagination */}
       {totalItems > itemsPerPage && (
         <div className="flex justify-center items-center space-x-2 py-6 bg-white rounded-xl border border-gray-200">
           <button
@@ -405,7 +380,6 @@ export default function ParentRequestList() {
         </div>
       )}
 
-      {/* Approve Modal */}
       {showApproveModal && selectedRequest && (
         <ApproveModal
           request={selectedRequest}
@@ -418,7 +392,6 @@ export default function ParentRequestList() {
         />
       )}
 
-      {/* Reject Modal */}
       {showRejectModal && selectedRequest && (
         <RejectModal
           request={selectedRequest}
@@ -431,7 +404,6 @@ export default function ParentRequestList() {
         />
       )}
 
-      {/* Detail Modal */}
       {showDetailModal && selectedRequest && (
         <RequestDetailModal
           request={selectedRequest}
@@ -445,7 +417,6 @@ export default function ParentRequestList() {
   );
 }
 
-// Approve Modal Component
 function ApproveModal({
   request,
   onApprove,
@@ -511,7 +482,6 @@ function ApproveModal({
   );
 }
 
-// Reject Modal Component
 function RejectModal({
   request,
   onReject,

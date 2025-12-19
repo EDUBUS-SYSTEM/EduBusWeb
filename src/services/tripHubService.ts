@@ -21,34 +21,28 @@ export class TripHubService {
   private maxReconnectAttempts = 10;
 
   constructor(apiBaseUrl: string) {
-    // Remove /api suffix if present for SignalR hub URL
     this.apiBaseUrl = apiBaseUrl.replace(/\/api$/, "");
   }
 
   async connect(): Promise<void> {
-    // If already connected, return immediately
     if (this.connection?.state === signalR.HubConnectionState.Connected) {
       return;
     }
 
-    // If connecting, don't start another connection
     if (this.connection?.state === signalR.HubConnectionState.Connecting) {
       console.log('Connection already in progress, waiting...');
       return;
     }
 
-    // If reconnecting, let automatic reconnect handle it
     if (this.connection?.state === signalR.HubConnectionState.Reconnecting) {
       console.log('Connection is reconnecting, waiting...');
       return;
     }
 
-    // Stop existing connection if it exists and is not disconnected
     if (this.connection && this.connection.state !== signalR.HubConnectionState.Disconnected) {
       try {
         await this.connection.stop();
       } catch (error) {
-        // Ignore errors when stopping
       }
       this.connection = null;
     }
@@ -81,7 +75,6 @@ export class TripHubService {
       })
       .build();
 
-    // Set up event handlers that dispatch to Redux
     this.connection.on("ReceiveLocationUpdate", (data: LocationUpdateData) => {
       store.dispatch(updateLocation(data));
     });
@@ -89,7 +82,6 @@ export class TripHubService {
     this.connection.on("TripStatusChanged", (data: TripStatusChangedData) => {
       store.dispatch(updateTripStatus(data));
 
-      // If trip ended, remove from ongoing trips
       if (data.status !== 'InProgress') {
         store.dispatch(removeOngoingTrip(data.tripId));
       }
@@ -156,7 +148,6 @@ export class TripHubService {
       await this.connection.start();
       console.log("TripHub connected successfully");
 
-      // Join admin monitoring group
       await this.joinAdminMonitoring();
 
       store.dispatch(setConnectionStatus('connected'));
@@ -187,15 +178,12 @@ export class TripHubService {
 
     const currentState = this.connection.state;
 
-    // If already disconnected, just clean up
     if (currentState === signalR.HubConnectionState.Disconnected) {
       this.connection = null;
       return;
     }
 
-    // If connecting, wait for it to complete or timeout
     if (currentState === signalR.HubConnectionState.Connecting) {
-      // Wait up to 3 seconds for negotiation to complete
       let waited = 0;
       while (this.connection?.state === signalR.HubConnectionState.Connecting && waited < 3000) {
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -203,12 +191,10 @@ export class TripHubService {
       }
     }
 
-    // Now safely stop
     if (this.connection) {
       try {
         await this.connection.stop();
       } catch (error) {
-        // Connection might already be closed, ignore
       }
       this.connection = null;
       store.dispatch(setConnectionStatus('disconnected'));
@@ -225,7 +211,6 @@ export class TripHubService {
   }
 }
 
-// Singleton instance
 let tripHubServiceInstance: TripHubService | null = null;
 
 export const getTripHubService = (): TripHubService => {

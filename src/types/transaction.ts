@@ -1,4 +1,3 @@
-// Transaction Types
 export interface TransactionDetailResponseDto {
   id: string;
   parentId: string;
@@ -47,8 +46,8 @@ export interface TransportFeeItemSummary {
   studentName: string;
   description: string;
   distanceKm: number;
-  unitPrice?: number; // Optional to handle cases where it might not be present
-  unitPricePerKm?: number; // Backend field name
+  unitPrice?: number; 
+  unitPricePerKm?: number; 
   amount: number;
   semesterName: string;
   academicYear: string;

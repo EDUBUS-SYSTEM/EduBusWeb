@@ -1,12 +1,10 @@
 import { CalendarEvent } from '@/types';
 
-// Mock data based on backend models
 export const mockCalendarEvents: CalendarEvent[] = [
-  // Trip events
   {
     id: '1',
     title: 'Route A - Morning Pickup',
-    start: new Date(2024, 8, 10, 7, 0), // September 10, 2024, 7:00 AM
+    start: new Date(2024, 8, 10, 7, 0), 
     end: new Date(2024, 8, 10, 8, 30),
     type: 'trip',
     status: 'in-progress',
@@ -23,7 +21,7 @@ export const mockCalendarEvents: CalendarEvent[] = [
   {
     id: '2',
     title: 'Route B - Afternoon Drop-off',
-    start: new Date(2024, 8, 10, 15, 0), // September 10, 2024, 3:00 PM
+    start: new Date(2024, 8, 10, 15, 0), 
     end: new Date(2024, 8, 10, 16, 30),
     type: 'trip',
     status: 'planned',
@@ -40,7 +38,7 @@ export const mockCalendarEvents: CalendarEvent[] = [
   {
     id: '3',
     title: 'Route C - Evening Route',
-    start: new Date(2024, 8, 10, 17, 0), // September 10, 2024, 5:00 PM
+    start: new Date(2024, 8, 10, 17, 0), 
     end: new Date(2024, 8, 10, 18, 0),
     type: 'trip',
     status: 'completed',
@@ -57,7 +55,7 @@ export const mockCalendarEvents: CalendarEvent[] = [
   {
     id: '4',
     title: 'Route A - Morning Pickup',
-    start: new Date(2024, 8, 11, 7, 0), // September 11, 2024, 7:00 AM
+    start: new Date(2024, 8, 11, 7, 0), 
     end: new Date(2024, 8, 11, 8, 30),
     type: 'trip',
     status: 'planned',
@@ -74,7 +72,7 @@ export const mockCalendarEvents: CalendarEvent[] = [
   {
     id: '5',
     title: 'Route D - Special Event Transport',
-    start: new Date(2024, 8, 12, 9, 0), // September 12, 2024, 9:00 AM
+    start: new Date(2024, 8, 12, 9, 0), 
     end: new Date(2024, 8, 12, 11, 0),
     type: 'trip',
     status: 'planned',
@@ -89,11 +87,10 @@ export const mockCalendarEvents: CalendarEvent[] = [
     }
   },
 
-  // Schedule events
   {
     id: '6',
     title: 'Regular Schedule - Route A',
-    start: new Date(2024, 8, 10, 6, 30), // September 10, 2024, 6:30 AM
+    start: new Date(2024, 8, 10, 6, 30), 
     end: new Date(2024, 8, 10, 6, 45),
     type: 'schedule',
     description: 'Daily schedule briefing for Route A drivers',
@@ -105,7 +102,7 @@ export const mockCalendarEvents: CalendarEvent[] = [
   {
     id: '7',
     title: 'Weekly Route Planning',
-    start: new Date(2024, 8, 13, 14, 0), // September 13, 2024, 2:00 PM
+    start: new Date(2024, 8, 13, 14, 0), 
     end: new Date(2024, 8, 13, 15, 30),
     type: 'schedule',
     description: 'Weekly planning meeting for all routes',
@@ -115,11 +112,10 @@ export const mockCalendarEvents: CalendarEvent[] = [
     }
   },
 
-  // Maintenance events
   {
     id: '8',
     title: 'Bus-001 - Regular Maintenance',
-    start: new Date(2024, 8, 14, 8, 0), // September 14, 2024, 8:00 AM
+    start: new Date(2024, 8, 14, 8, 0), 
     end: new Date(2024, 8, 14, 12, 0),
     type: 'maintenance',
     description: 'Monthly maintenance check for Bus-001',
@@ -132,7 +128,7 @@ export const mockCalendarEvents: CalendarEvent[] = [
   {
     id: '9',
     title: 'Bus-002 - Oil Change',
-    start: new Date(2024, 8, 15, 9, 0), // September 15, 2024, 9:00 AM
+    start: new Date(2024, 8, 15, 9, 0), 
     end: new Date(2024, 8, 15, 10, 30),
     type: 'maintenance',
     description: 'Oil change and filter replacement',
@@ -143,11 +139,10 @@ export const mockCalendarEvents: CalendarEvent[] = [
     }
   },
 
-  // Other events
   {
     id: '10',
     title: 'Driver Training Session',
-    start: new Date(2024, 8, 16, 10, 0), // September 16, 2024, 10:00 AM
+    start: new Date(2024, 8, 16, 10, 0), 
     end: new Date(2024, 8, 16, 12, 0),
     type: 'other',
     description: 'Safety training session for all drivers',
@@ -159,7 +154,7 @@ export const mockCalendarEvents: CalendarEvent[] = [
   {
     id: '11',
     title: 'Route Optimization Meeting',
-    start: new Date(2024, 8, 17, 13, 0), // September 17, 2024, 1:00 PM
+    start: new Date(2024, 8, 17, 13, 0), 
     end: new Date(2024, 8, 17, 14, 30),
     type: 'other',
     description: 'Meeting to discuss route optimization strategies',
@@ -168,11 +163,10 @@ export const mockCalendarEvents: CalendarEvent[] = [
     }
   },
 
-  // More events for different days
   {
     id: '12',
     title: 'Route E - Weekend Service',
-    start: new Date(2024, 8, 14, 8, 0), // September 14, 2024, 8:00 AM
+    start: new Date(2024, 8, 14, 8, 0), 
     end: new Date(2024, 8, 14, 9, 0),
     type: 'trip',
     status: 'planned',
@@ -189,7 +183,7 @@ export const mockCalendarEvents: CalendarEvent[] = [
   {
     id: '13',
     title: 'Emergency Drill',
-    start: new Date(2024, 8, 18, 11, 0), // September 18, 2024, 11:00 AM
+    start: new Date(2024, 8, 18, 11, 0), 
     end: new Date(2024, 8, 18, 12, 0),
     type: 'other',
     description: 'Emergency evacuation drill for all vehicles',
@@ -200,7 +194,6 @@ export const mockCalendarEvents: CalendarEvent[] = [
   }
 ];
 
-// Sample routes data
 export const mockRoutes = [
   {
     id: 'route-1',
@@ -247,7 +240,6 @@ export const mockRoutes = [
   }
 ];
 
-// Sample schedules data
 export const mockSchedules = [
   {
     id: 'schedule-1',

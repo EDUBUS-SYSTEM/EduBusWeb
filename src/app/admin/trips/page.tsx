@@ -32,7 +32,7 @@ type ViewMode = 'table' | 'calendar' | 'live';
 
 export default function TripManagementPage() {
   const dispatch = useAppDispatch();
-  const { trips, loading, error, pagination, filters } = useAppSelector(state => state.trips);
+  const { trips, error, pagination, filters } = useAppSelector(state => state.trips);
 
   const [selectedSemester, setSelectedSemester] = useState<ActiveSemesterDto | null>(null);
 
@@ -96,12 +96,10 @@ export default function TripManagementPage() {
     dispatch(fetchTrips(params));
   }, [dispatch, pagination.currentPage, routeFilter, statusFilter, dateFilter, selectedSemester, filters.sortBy, filters.sortOrder]);
 
-  // Load trips when filters or pagination changes
   useEffect(() => {
     fetchTripsData();
   }, [fetchTripsData]);
 
-  // Update stats when trips change
   useEffect(() => {
     if (trips && trips.length > 0) {
       const today = new Date();
@@ -142,9 +140,6 @@ export default function TripManagementPage() {
 
   const loadRoutes = async () => {
     try {
-      // TODO: Replace with actual route service
-      // const routesData = await routeService.getAllRoutes();
-      // setRoutes(routesData.map(r => ({ id: r.id, routeName: r.name })));
     } catch (error) {
       console.error('Error loading routes:', error);
     }
@@ -152,9 +147,6 @@ export default function TripManagementPage() {
 
   const loadSchedules = async () => {
     try {
-      // TODO: Replace with actual schedule service
-      // const schedulesData = await scheduleService.getAllSchedules();
-      // setSchedules(schedulesData.map(s => ({ id: s.id, name: s.name })));
     } catch (error) {
       console.error('Error loading schedules:', error);
     }
@@ -189,7 +181,7 @@ export default function TripManagementPage() {
         setShowDetailsModal(false);
         setSelectedTrip(null);
       }
-      fetchTripsData(); // Refresh trips
+      fetchTripsData(); 
     } catch (error) {
       console.error('Error deleting trip:', error);
       alert('Failed to delete trip. Please try again.');
@@ -198,27 +190,21 @@ export default function TripManagementPage() {
 
   const handleGenerateTrips = async (scheduleId: string, startDate: string, endDate: string) => {
     try {
-      // Convert dates to ISO format for API
       const startDateIso = new Date(startDate).toISOString();
       const endDateIso = new Date(endDate).toISOString();
 
-      // Dispatch the generate action
       const result = await dispatch(generateTripsFromSchedule({
         scheduleId,
         startDate: startDateIso,
         endDate: endDateIso
       })).unwrap();
 
-      // Refresh trips list after successful generation
       fetchTripsData();
 
-      // Show success message
       alert(`Successfully generated ${result.length} trip(s)!`);
 
-      // Close modal
       setShowGenerateModal(false);
     } catch (error: unknown) {
-      // Error is handled by Redux, but we need to extract it for the modal
       let errorMessage = 'Failed to generate trips. Please try again.';
 
       if (error && typeof error === 'object' && 'response' in error) {
@@ -243,7 +229,6 @@ export default function TripManagementPage() {
         errorMessage = error.message;
       }
 
-      // Re-throw so modal can display it
       throw new Error(errorMessage);
     }
   };
@@ -271,10 +256,8 @@ export default function TripManagementPage() {
     dispatch(setPerPage(value));
   };
 
-  // No client-side filtering needed since search is removed
   const filteredTrips = trips;
 
-  // Get unique routes from trips for dropdown
   const availableRoutes = useMemo(() => {
     const routeMap = new Map<string, string>();
     trips.forEach(trip => {
@@ -290,18 +273,14 @@ export default function TripManagementPage() {
       }));
   }, [trips]);
 
-  // Convert trips to calendar events
   const calendarEvents: CalendarEvent[] = useMemo(() => {
-    // Filter trips by route if routeFilter is set
     const tripsToShow = routeFilter === 'all'
       ? filteredTrips
       : filteredTrips.filter(trip => trip.routeId === routeFilter);
 
     return tripsToShow.map(trip => {
-      // Use schedule snapshot times if available, otherwise use planned times
       const serviceDate = new Date(trip.serviceDate);
 
-      // Parse schedule times (format: HH:mm or similar)
       const parseTimeString = (timeStr: string) => {
         const [hours, minutes] = timeStr.split(':').map(Number);
         return { hours, minutes };
@@ -324,7 +303,6 @@ export default function TripManagementPage() {
         endDate = new Date(trip.plannedEndAt);
       }
 
-      // Map status to calendar event status
       const statusMap: Record<string, "planned" | "in-progress" | "completed" | "cancelled"> = {
         'Scheduled': 'planned',
         'InProgress': 'in-progress',
@@ -332,7 +310,6 @@ export default function TripManagementPage() {
         'Cancelled': 'cancelled'
       };
 
-      // Color based on status
       const colorMap: Record<string, string> = {
         'Scheduled': '#3B82F6', // blue
         'InProgress': '#F59E0B', // amber
@@ -369,7 +346,6 @@ export default function TripManagementPage() {
   const [initialServiceDate, setInitialServiceDate] = useState<string>('');
 
   const handleCalendarEventCreate = (date: Date) => {
-    // Set the service date to the clicked date (YYYY-MM-DD format) in local timezone
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -411,7 +387,6 @@ export default function TripManagementPage() {
     setCalendarView({ ...calendarView, date });
   };
 
-  // Handle filter changes
   const handleStatusFilterChange = (value: string) => {
     setStatusFilter(value);
     dispatch(setCurrentPage(1));
@@ -433,14 +408,12 @@ export default function TripManagementPage() {
       <Header />
       <main className="ml-64 pt-20 p-6 bg-[#FEFCE8] min-h-screen">
         <div className="w-full">
-          {/* Error Display */}
           {error && (
             <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
               {error}
             </div>
           )}
 
-          {/* Page Header with Create Button */}
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
             <h1 className="text-2xl font-bold text-[#463B3B]">
               Trip Management
@@ -493,7 +466,6 @@ export default function TripManagementPage() {
             </div>
           </div>
 
-          {/* Filters and View Toggle for Table */}
           {viewMode === 'table' && (
             <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100 mb-4">
               <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
@@ -520,7 +492,6 @@ export default function TripManagementPage() {
                   />
                 </div>
 
-                {/* View Toggle */}
                 <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
                   <button
                     onClick={() => setViewMode('table')}
@@ -548,7 +519,6 @@ export default function TripManagementPage() {
             </div>
           )}
 
-          {/* View Toggle for Calendar */}
           {viewMode === 'calendar' && (
             <div className="mb-4 flex justify-end">
               <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
@@ -577,7 +547,6 @@ export default function TripManagementPage() {
             </div>
           )}
 
-          {/* View Toggle for Live */}
           {viewMode === 'live' && (
             <div className="mb-4 flex justify-end">
               <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
@@ -606,7 +575,6 @@ export default function TripManagementPage() {
             </div>
           )}
 
-          {/* Content */}
           {viewMode === 'table' ? (
             <TripTable
               trips={filteredTrips}
@@ -644,7 +612,6 @@ export default function TripManagementPage() {
         </div>
       </main>
 
-      {/* Modals */}
       {showCreateModal && (
         <CreateTripModal
           isOpen={showCreateModal}

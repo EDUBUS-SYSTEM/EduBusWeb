@@ -1,5 +1,4 @@
-// Demo data for testing Parent Requests page
-// This file contains sample data that matches the API response structure
+
 
 export const mockParentRequests = [
   {
@@ -194,12 +193,10 @@ export const mockParentRequests = [
   }
 ];
 
-// Helper function to simulate API delay
 export const simulateApiDelay = (ms: number = 1000) => {
   return new Promise(resolve => setTimeout(resolve, ms));
 };
 
-// Mock API functions for testing
 export const mockApiService = {
   get: async (url: string, params?: Record<string, unknown>) => {
     await simulateApiDelay(500);
@@ -207,7 +204,6 @@ export const mockApiService = {
     if (url.includes('/pickup-point/requests')) {
       let filteredData = [...mockParentRequests];
       
-      // Apply filters
       if (params?.status) {
         filteredData = filteredData.filter(req => req.status === params.status);
       }
@@ -218,7 +214,6 @@ export const mockApiService = {
         );
       }
       
-      // Apply pagination
       const skip = (params?.skip as number) || 0;
       const take = (params?.take as number) || 10;
       const paginatedData = filteredData.slice(skip, skip + take);

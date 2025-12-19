@@ -1,14 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-// Removed unused imports
 import { Calendar } from "@/components/calendar";
 import { mockCalendarEvents } from "@/data/mockCalendarData";
 
 export default function CalendarSamplesPage() {
   const [activeSample, setActiveSample] = useState<string>("week");
 
-  // Different sample data sets
   const sampleData = {
     week: {
       title: "Weekly View - Bus Schedule Overview",
@@ -40,7 +38,6 @@ export default function CalendarSamplesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-white to-blue-50 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
             Calendar Design Samples
@@ -51,7 +48,6 @@ export default function CalendarSamplesPage() {
           </p>
         </div>
 
-        {/* Sample Selector */}
         <div className="mb-8">
           <div className="bg-white rounded-2xl shadow-soft-lg p-6 border border-gray-100">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">
@@ -79,7 +75,6 @@ export default function CalendarSamplesPage() {
           </div>
         </div>
 
-        {/* Current Sample */}
         <div className="mb-8">
           <div className="bg-white rounded-2xl shadow-soft-lg p-6 border border-gray-100 mb-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
@@ -98,9 +93,7 @@ export default function CalendarSamplesPage() {
           />
         </div>
 
-        {/* Design Features */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Color Scheme */}
           <div className="bg-white rounded-2xl shadow-soft-lg p-6 border border-gray-100">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">
               Color Scheme
@@ -147,7 +140,6 @@ export default function CalendarSamplesPage() {
             </div>
           </div>
 
-          {/* UI Features */}
           <div className="bg-white rounded-2xl shadow-soft-lg p-6 border border-gray-100">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">
               UI Features
@@ -245,7 +237,6 @@ export default function CalendarSamplesPage() {
           </div>
         </div>
 
-        {/* Backend Integration Info */}
         <div className="mt-8 bg-white rounded-2xl shadow-soft-lg p-6 border border-gray-100">
           <h3 className="text-xl font-semibold text-gray-800 mb-4">
             Backend Integration

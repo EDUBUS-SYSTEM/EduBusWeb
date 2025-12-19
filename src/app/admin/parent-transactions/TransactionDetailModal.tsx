@@ -37,7 +37,6 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
     }).format(amount);
   };
 
-  // Using centralized formatDateTime from @/utils/dateUtils
 
   const formatStatus = (status: string | number | null | undefined) => {
     if (status === null || status === undefined) return "Unknown";
@@ -144,7 +143,6 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[95vh] overflow-y-auto border border-gray-100">
-        {/* Header */}
         <div className="bg-white border-b border-gray-100 p-6 rounded-t-xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -161,9 +159,7 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
         </div>
 
         <div className="p-6 space-y-6 bg-gray-50">
-          {/* Transaction Overview */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Transaction Information */}
             <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
               <div className="flex items-center space-x-2 mb-4">
                 <FaCreditCard className="w-5 h-5 text-[#8c6a00]" />
@@ -219,7 +215,6 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
               </div>
             </div>
 
-            {/* Parent & Student Information */}
             <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
               <div className="flex items-center space-x-2 mb-4">
                 <FaUser className="w-5 h-5 text-[#8c6a00]" />
@@ -258,7 +253,6 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
             </div>
           </div>
 
-          {/* Description */}
           {transaction.description && (
             <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
               <div className="flex items-center space-x-2 mb-4">
@@ -269,7 +263,6 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
             </div>
           )}
 
-          {/* Transport Fee Items */}
           {transaction.transportFeeItems && transaction.transportFeeItems.length > 0 && (
             <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
               <div className="flex items-center space-x-2 mb-4">
@@ -302,7 +295,6 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
                         <td className="px-4 py-3 text-[#444]">{item.academicYear || 'N/A'}</td>
                         <td className="px-4 py-3 text-[#444]">
                           {(() => {
-                            // Try both unitPrice and unitPricePerKm in case of field name mismatch
                             const price = (item as TransportFeeItemSummary & { unitPricePerKm?: number }).unitPricePerKm ?? item.unitPrice;
                             return price !== null && price !== undefined ? formatCurrency(price) : 'N/A';
                           })()}
@@ -332,7 +324,6 @@ export default function TransactionDetailModal({ transactionId, onClose }: Trans
             </div>
           )}
 
-          {/* Action Button */}
           <div className="flex justify-end pt-4">
             <button
               onClick={onClose}

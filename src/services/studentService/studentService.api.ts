@@ -8,32 +8,26 @@ import {
 } from "./studentService.types";
 
 export const studentService = {
-  // Get all students
   getAll: async (): Promise<StudentDto[]> => {
     return await apiService.get<StudentDto[]>("/Student");
   },
 
-  // Get student by ID
   getById: async (id: string): Promise<StudentDto> => {
     return await apiService.get<StudentDto>(`/Student/${id}`);
   },
 
-  // Get students by parent ID
   getByParent: async (parentId: string): Promise<StudentDto[]> => {
     return await apiService.get<StudentDto[]>(`/Student/parent/${parentId}`);
   },
 
-  // Create new student
   create: async (data: CreateStudentRequest): Promise<StudentDto> => {
     return await apiService.post<StudentDto>("/Student", data);
   },
 
-  // Update student
   update: async (id: string, data: UpdateStudentRequest): Promise<StudentDto> => {
     return await apiService.put<StudentDto>(`/Student/${id}`, data);
   },
 
-  // Import students from Excel
   importFromExcel: async (file: File): Promise<ImportStudentResult> => {
     const formData = new FormData();
     formData.append('file', file);
@@ -57,7 +51,6 @@ export const studentService = {
     return result;
   },
 
-  // Export students to Excel
   exportToExcel: async (): Promise<Blob> => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
     const response = await fetch(`${apiUrl}/Student/export`, {
@@ -75,7 +68,6 @@ export const studentService = {
     return await response.blob();
   },
 
-  // Status management methods
   activate: async (id: string): Promise<StudentDto> => {
     return await apiService.post<StudentDto>(`/Student/${id}/activate`);
   },

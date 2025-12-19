@@ -16,7 +16,6 @@ export default function UnitPriceDetailModal({ unitPrice, onClose }: UnitPriceDe
     }).format(amount);
   };
 
-  // Using centralized formatDate and formatDateTime from @/utils/dateUtils
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -32,7 +31,6 @@ export default function UnitPriceDetailModal({ unitPrice, onClose }: UnitPriceDe
         </div>
 
         <div className="p-6 space-y-6">
-          {/* Service Information */}
           <div className="bg-gray-50 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-[#463B3B] mb-4">Service Information</h3>
             <div className="space-y-3">
@@ -68,7 +66,6 @@ export default function UnitPriceDetailModal({ unitPrice, onClose }: UnitPriceDe
             </div>
           </div>
 
-          {/* Effective Period */}
           <div className="bg-gray-50 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-[#463B3B] mb-4">Effective Period</h3>
             <div className="space-y-3">
@@ -89,7 +86,6 @@ export default function UnitPriceDetailModal({ unitPrice, onClose }: UnitPriceDe
             </div>
           </div>
 
-          {/* Metadata */}
           <div className="bg-gray-50 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-[#463B3B] mb-4">Metadata</h3>
             <div className="space-y-3">
@@ -123,7 +119,6 @@ export default function UnitPriceDetailModal({ unitPrice, onClose }: UnitPriceDe
             </div>
           </div>
 
-          {/* Action Button */}
           <div className="flex justify-end pt-4">
             <button
               onClick={onClose}

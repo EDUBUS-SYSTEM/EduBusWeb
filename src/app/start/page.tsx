@@ -82,7 +82,6 @@ export default function StartPage() {
                 </div>
               </motion.div>
 
-              {/* Back to Home Button */}
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

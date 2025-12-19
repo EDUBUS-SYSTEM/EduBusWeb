@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { FaPlus, FaSearch, FaEdit, FaTrash, FaToggleOn, FaToggleOff, FaEye } from "react-icons/fa";
 import { unitPriceService } from "@/services/unitPriceService";
-import { UnitPriceResponseDto, CreateUnitPriceDto, UpdateUnitPriceDto } from "@/types/unitPrice";
+import { UnitPriceResponseDto, } from "@/types/unitPrice";
 import CreateUnitPriceModal from "./CreateUnitPriceModal";
 import EditUnitPriceModal from "./EditUnitPriceModal";
 import UnitPriceDetailModal from "./UnitPriceDetailModal";
@@ -20,12 +20,10 @@ export default function UnitPriceManagement() {
   const [selectedUnitPrice, setSelectedUnitPrice] = useState<UnitPriceResponseDto | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Load unit prices
   useEffect(() => {
     loadUnitPrices();
   }, [refreshTrigger]);
 
-  // Filter unit prices
   useEffect(() => {
     if (!unitPrices || !Array.isArray(unitPrices)) {
       setFilteredPrices([]);
@@ -34,7 +32,6 @@ export default function UnitPriceManagement() {
 
     let filtered = unitPrices;
 
-    // Search filter
     if (searchTerm) {
       filtered = filtered.filter(price =>
         price.byAdminName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -43,7 +40,6 @@ export default function UnitPriceManagement() {
       );
     }
 
-    // Active filter
     if (filterActive !== null) {
       filtered = filtered.filter(price => price.isActive === filterActive);
     }
@@ -118,7 +114,6 @@ export default function UnitPriceManagement() {
     }).format(amount);
   };
 
-  // Using centralized formatDate from @/utils/dateUtils
 
   if (loading) {
     return (
@@ -130,7 +125,6 @@ export default function UnitPriceManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Search and Filter Section */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Search */}
@@ -147,7 +141,6 @@ export default function UnitPriceManagement() {
             </div>
           </div>
 
-          {/* Filter Buttons */}
           <div className="flex gap-2">
             <button
               onClick={() => setFilterActive(null)}
@@ -178,7 +171,6 @@ export default function UnitPriceManagement() {
             </button>
           </div>
 
-          {/* Create Button */}
           <button
             onClick={() => setShowCreateModal(true)}
             className="px-3 py-1.5 bg-[#fad23c] text-[#463B3B] rounded-lg font-medium hover:bg-[#FFF085] transition-colors flex items-center gap-2 whitespace-nowrap"
@@ -189,7 +181,6 @@ export default function UnitPriceManagement() {
         </div>
       </div>
 
-      {/* Unit Prices Table */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -309,7 +300,6 @@ export default function UnitPriceManagement() {
         )}
       </div>
 
-      {/* Modals */}
       {showCreateModal && (
         <CreateUnitPriceModal
           onClose={() => setShowCreateModal(false)}
