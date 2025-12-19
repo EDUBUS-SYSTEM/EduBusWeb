@@ -193,23 +193,38 @@ const getTripRouteCoordinates = async (
   }
 };
 
-// Create bus icon HTML
+// Create bus icon HTML - School bus style
 const createBusIcon = (color: string): string => {
   return `
     <div style="
-      width: 32px;
-      height: 32px;
-      background-color: ${color};
+      width: 40px;
+      height: 40px;
+      background-color: #FFD700;
       border: 3px solid white;
-      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      border-radius: 8px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.4);
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
     ">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
-        <path d="M4 6h16v10H4V6zm2 2v6h12V8H6zm-2 8h16v2H4v-2zm2-8h12v6H6V8z"/>
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+        <!-- Bus body -->
+        <rect x="2" y="6" width="20" height="11" rx="2" fill="white"/>
+        <!-- Windows -->
+        <rect x="4" y="8" width="3" height="4" rx="0.5" fill="${color}"/>
+        <rect x="8.5" y="8" width="3" height="4" rx="0.5" fill="${color}"/>
+        <rect x="13" y="8" width="3" height="4" rx="0.5" fill="${color}"/>
+        <rect x="17.5" y="8" width="2.5" height="4" rx="0.5" fill="${color}"/>
+        <!-- Wheels -->
+        <circle cx="6" cy="17" r="2" fill="#333"/>
+        <circle cx="6" cy="17" r="1" fill="#666"/>
+        <circle cx="18" cy="17" r="2" fill="#333"/>
+        <circle cx="18" cy="17" r="1" fill="#666"/>
+        <!-- Front lights -->
+        <rect x="20" y="13" width="2" height="2" rx="0.5" fill="#FFD700"/>
+        <!-- Roof line -->
+        <rect x="3" y="5" width="18" height="1.5" rx="0.5" fill="white" opacity="0.8"/>
       </svg>
     </div>
   `;
@@ -465,47 +480,43 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
             console.log(`[addRoutePolylines] Stop location: (${stop.location.latitude}, ${stop.location.longitude})`);
 
             try {
-              // Add the main stop marker (bus icon)
+              // Determine if stop is completed (has actualDeparture)
+              const isCompleted = !!stop.actualDeparture;
+              const pinColor = isCompleted ? '#22C55E' : '#9CA3AF'; // Green for completed, gray for pending
+              const displayContent = isCompleted ? '✓' : stop.sequence;
+
+              // Add the stop marker (pin with sequence number or checkmark)
               const stopMarker = new vietmapgl.Marker({
                 element: (() => {
                   const el = document.createElement('div');
-                  el.innerHTML = '🚌';
-                  el.style.fontSize = '12px';
-                  el.style.backgroundColor = 'white';
-                  el.style.borderRadius = '50%';
-                  el.style.padding = '4px';
-                  el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-                  el.style.border = `2px solid ${color}`;
-                  el.style.textAlign = 'center';
-                  el.style.lineHeight = '1';
+                  el.innerHTML = `
+                    <div style="
+                      position: relative;
+                      width: 30px;
+                      height: 42px;
+                    ">
+                      <svg width="30" height="42" viewBox="0 0 30 42" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Pin shape -->
+                        <path d="M15 0C6.716 0 0 6.716 0 15c0 10.5 15 27 15 27s15-16.5 15-27C30 6.716 23.284 0 15 0z" fill="${pinColor}"/>
+                        <!-- White circle background for number/checkmark -->
+                        <circle cx="15" cy="14" r="9" fill="white"/>
+                      </svg>
+                      <span style="
+                        position: absolute;
+                        top: ${isCompleted ? '4px' : '6px'};
+                        left: 0;
+                        right: 0;
+                        text-align: center;
+                        font-size: ${isCompleted ? '14px' : '12px'};
+                        font-weight: bold;
+                        color: ${pinColor};
+                      ">${displayContent}</span>
+                    </div>
+                  `;
+                  el.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))';
                   return el;
                 })(),
-                anchor: 'center'
-              })
-                .setLngLat([stop.location.longitude, stop.location.latitude])
-                .addTo(mapInstanceRef.current!);
-
-              // Add sequence number marker
-              const orderMarker = new vietmapgl.Marker({
-                element: (() => {
-                  const el = document.createElement('div');
-                  el.innerHTML = `${stop.sequence}`;
-                  el.style.backgroundColor = color;
-                  el.style.color = 'white';
-                  el.style.borderRadius = '50%';
-                  el.style.width = '18px';
-                  el.style.height = '18px';
-                  el.style.display = 'flex';
-                  el.style.alignItems = 'center';
-                  el.style.justifyContent = 'center';
-                  el.style.fontSize = '10px';
-                  el.style.fontWeight = 'bold';
-                  el.style.border = '2px solid white';
-                  el.style.boxShadow = '0 1px 2px rgba(0,0,0,0.3)';
-                  return el;
-                })(),
-                anchor: 'center',
-                offset: [12, -12]
+                anchor: 'bottom'
               })
                 .setLngLat([stop.location.longitude, stop.location.latitude])
                 .addTo(mapInstanceRef.current!);
@@ -529,20 +540,21 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
 
               // Store markers for cleanup
               stopMarkersRef.current.push(stopMarker);
-              stopMarkersRef.current.push(orderMarker);
 
-              console.log(`[addRoutePolylines] ✅ Added markers for stop ${stop.sequence}`);
+              console.log(`[addRoutePolylines] ✅ Added marker for stop ${stop.sequence}`);
             } catch (error) {
               console.error(`[addRoutePolylines] ❌ Error adding marker for stop ${stop.sequence}:`, error);
             }
           });
 
-          console.log(`[addRoutePolylines] ✅ Total stop markers added for this trip: ${stopsWithLocation.length * 2}`);
+          console.log(`[addRoutePolylines] ✅ Total stop markers added for this trip: ${stopsWithLocation.length}`);
         }
       } else {
         console.warn(`[addRoutePolylines] ⚠️ Trip ${trip.id} has no stops or stops array is empty`);
       }
 
+      // Route polylines disabled - uncomment below to enable
+      /*
       // Add route polyline
       try {
         console.log(`[addRoutePolylines] Getting route coordinates for trip ${trip.id}...`);
@@ -596,6 +608,7 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
       } catch (error) {
         console.error(`[addRoutePolylines] ❌ Error adding route for trip ${trip.id}:`, error);
       }
+      */
     }
 
     console.log(`\n=== [addRoutePolylines] FINISHED ===`);
