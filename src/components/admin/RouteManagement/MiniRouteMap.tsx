@@ -17,8 +17,8 @@ interface MiniRouteMapProps {
 
 // Stable color assignment - same as VietMapComponent
 const ROUTE_COLORS = [
-  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-  '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
+  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FF6347',
+  '#DDA0DD', '#98D8C8', '#20B2AA', '#BB8FCE', '#85C1E9'
 ];
 
 // Hash function for stable color assignment based on route ID
@@ -98,9 +98,9 @@ const MiniRouteMap: React.FC<MiniRouteMapProps> = ({
             strokeWeight={3}
             schoolLocation={schoolLocation}
           />
-          
+
           {/* Click overlay to open modal */}
-          <div 
+          <div
             className="absolute inset-0 cursor-pointer"
             onClick={() => setIsModalOpen(true)}
           />
@@ -114,15 +114,15 @@ const MiniRouteMap: React.FC<MiniRouteMapProps> = ({
               {selectedRouteIds.map((routeId) => {
                 const route = routes.find(r => r.id === routeId);
                 if (!route) return null;
-                
+
                 // Use stable color based on route ID - same as map
                 const color = getRouteColor(routeId);
-                
+
                 return (
                   <div key={routeId} className="flex items-center justify-between text-xs">
                     <div className="flex items-center">
-                      <div 
-                        className="w-3 h-3 rounded-full mr-2" 
+                      <div
+                        className="w-3 h-3 rounded-full mr-2"
                         style={{ backgroundColor: color }}
                       />
                       <span className="text-gray-700 truncate max-w-32">

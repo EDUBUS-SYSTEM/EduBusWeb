@@ -22,8 +22,8 @@ interface LiveVehicleMapModalProps {
 
 // Helper function (same as in LiveVehicleMap)
 const VEHICLE_COLORS = [
-  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-  '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
+  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FF6347',
+  '#DDA0DD', '#98D8C8', '#20B2AA', '#BB8FCE', '#85C1E9'
 ];
 
 const hashString = (str: string): number => {
@@ -136,14 +136,13 @@ const LiveVehicleMapModal: React.FC<LiveVehicleMapModalProps> = ({
                     return (
                       <div
                         key={trip.id}
-                        className={`p-3 rounded-lg border transition-colors ${
-                          isSelected
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 bg-white hover:bg-gray-50'
-                        }`}
+                        className={`p-3 rounded-lg border transition-colors ${isSelected
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 bg-white hover:bg-gray-50'
+                          }`}
                       >
                         <div className="flex items-start justify-between">
-                          <div 
+                          <div
                             className="flex-1 cursor-pointer"
                             onClick={() => onTripToggle(trip.id)}
                           >
@@ -216,14 +215,14 @@ const LiveVehicleMapModal: React.FC<LiveVehicleMapModalProps> = ({
                     {selectedTripIds.map((tripId) => {
                       const trip = trips.find(t => t.id === tripId);
                       if (!trip) return null;
-                      
+
                       const color = getVehicleColor(tripId);
-                      
+
                       return (
                         <div key={tripId} className="flex items-center justify-between text-xs">
                           <div className="flex items-center flex-1">
-                            <div 
-                              className="w-3 h-3 rounded-full mr-2" 
+                            <div
+                              className="w-3 h-3 rounded-full mr-2"
                               style={{ backgroundColor: color }}
                             />
                             <span className="text-gray-700 truncate max-w-32">
@@ -231,7 +230,6 @@ const LiveVehicleMapModal: React.FC<LiveVehicleMapModalProps> = ({
                             </span>
                           </div>
                           <div className="flex items-center gap-1">
-                            {/* ✅ Added: Focus button in legend */}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();

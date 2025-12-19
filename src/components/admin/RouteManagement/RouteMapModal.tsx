@@ -18,8 +18,8 @@ interface RouteMapModalProps {
 
 // Stable color assignment - same as VietMapComponent
 const ROUTE_COLORS = [
-  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-  '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
+  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FF6347',
+  '#DDA0DD', '#98D8C8', '#20B2AA', '#BB8FCE', '#85C1E9'
 ];
 
 // Hash function for stable color assignment based on route ID
@@ -87,7 +87,7 @@ const RouteMapModal: React.FC<RouteMapModalProps> = ({
           <div className="w-80 border-l bg-gray-50 overflow-y-auto">
             <div className="p-4">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Route Selection</h3>
-              
+
               {/* Quick Actions */}
               <div className="flex space-x-2 mb-4">
                 <button
@@ -114,21 +114,20 @@ const RouteMapModal: React.FC<RouteMapModalProps> = ({
                   // Use stable color based on route ID - same as map
                   const color = getRouteColor(route.id);
                   const totalStudents = route.pickupPoints.reduce((sum, point) => sum + point.studentCount, 0);
-                  
+
                   return (
                     <div
                       key={route.id}
-                      className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                        isSelected 
-                          ? 'border-blue-500 bg-blue-50' 
+                      className={`p-3 rounded-lg border cursor-pointer transition-colors ${isSelected
+                          ? 'border-blue-500 bg-blue-50'
                           : 'border-gray-200 bg-white hover:bg-gray-50'
-                      }`}
+                        }`}
                       onClick={() => onRouteToggle(route.id)}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center flex-1">
-                          <div 
-                            className="w-4 h-4 rounded-full mr-3" 
+                          <div
+                            className="w-4 h-4 rounded-full mr-3"
                             style={{ backgroundColor: color }}
                           />
                           <div className="flex-1">
@@ -170,8 +169,8 @@ const RouteMapModal: React.FC<RouteMapModalProps> = ({
                       const color = getRouteColor(routeId);
                       return (
                         <div key={routeId} className="flex items-center text-xs">
-                          <div 
-                            className="w-3 h-3 rounded-full mr-2" 
+                          <div
+                            className="w-3 h-3 rounded-full mr-2"
                             style={{ backgroundColor: color }}
                           />
                           <span className="text-green-700">{route.routeName}</span>
