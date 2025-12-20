@@ -744,7 +744,7 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
         console.warn('Error fitting bounds:', err);
       }
     }
-  }, [isMapLoaded, trips, selectedTripIds]);
+  }, [isMapLoaded]);
 
   // ✅ Reset initial fit when selection changes significantly
   useEffect(() => {
