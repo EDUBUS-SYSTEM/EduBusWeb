@@ -23,8 +23,8 @@ const DEFAULT_SCHOOL_LOCATION = {
 
 // Stable color assignment - colors will remain consistent regardless of route order
 const ROUTE_COLORS = [
-  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-  '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
+  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FF6347',
+  '#DDA0DD', '#98D8C8', '#20B2AA', '#BB8FCE', '#85C1E9'
 ];
 
 // Hash function for stable color assignment based on route ID
@@ -87,7 +87,7 @@ const getRouteCoordinates = async (
 ): Promise<number[][]> => {
   try {
     const sortedPoints = route.pickupPoints.sort((a, b) => a.sequenceOrder - b.sequenceOrder);
-    
+
     if (sortedPoints.length === 0) {
       return [];
     }
@@ -104,7 +104,7 @@ const getRouteCoordinates = async (
         { lat: firstPoint.latitude, lng: firstPoint.longitude },
         'car'
       );
-      
+
       if (routeResult.paths && routeResult.paths.length > 0) {
         const decodedPoints = decodePolyline(routeResult.paths[0].points);
         allCoordinates.push(...decodedPoints);
@@ -116,13 +116,13 @@ const getRouteCoordinates = async (
     for (let i = 0; i < sortedPoints.length - 1; i++) {
       const currentPickupPoint = sortedPoints[i].location;
       const nextPickupPoint = sortedPoints[i + 1].location;
-      
+
       const routeResult = await vietmapService.getRoute(
         { lat: currentPickupPoint.latitude, lng: currentPickupPoint.longitude },
         { lat: nextPickupPoint.latitude, lng: nextPickupPoint.longitude },
         'car'
       );
-      
+
       if (routeResult.paths && routeResult.paths.length > 0) {
         const decodedPoints = decodePolyline(routeResult.paths[0].points);
         // Skip first point to avoid duplication
@@ -138,7 +138,7 @@ const getRouteCoordinates = async (
         schoolLocation,
         'car'
       );
-      
+
       if (routeResult.paths && routeResult.paths.length > 0) {
         const decodedPoints = decodePolyline(routeResult.paths[0].points);
         // Skip first point to avoid duplication
@@ -149,7 +149,7 @@ const getRouteCoordinates = async (
     return allCoordinates;
   } catch (error) {
     console.error(`Error getting route coordinates for ${route.routeName}:`, error);
-    
+
     // Fallback to straight line if routing fails
     const sortedPoints = route.pickupPoints.sort((a, b) => a.sequenceOrder - b.sequenceOrder);
     const coordinates = [
@@ -193,8 +193,6 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
   // Clear existing markers and polylines
   const clearMapElements = useCallback(() => {
     try {
-      console.log('Clearing map elements...');
-
       // Clear markers
       markersRef.current.forEach(marker => {
         if (marker) {
@@ -210,7 +208,6 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
           try {
             if (mapInstanceRef.current?.getLayer(layerId)) {
               mapInstanceRef.current.removeLayer(layerId);
-              console.log(`Removed layer: ${layerId}`);
             }
           } catch (err) {
             console.warn('Error removing layer:', layerId, err);
@@ -223,7 +220,6 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
           try {
             if (mapInstanceRef.current?.getSource(sourceId)) {
               mapInstanceRef.current.removeSource(sourceId);
-              console.log(`Removed source: ${sourceId}`);
             }
           } catch (err) {
             console.warn('Error removing source:', sourceId, err);
@@ -239,10 +235,6 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
   // Add route markers and polylines
   const addRouteElements = useCallback(async () => {
     if (!mapInstanceRef.current || !isMapLoaded) {
-      console.log('Map not ready:', {
-        hasMap: !!mapInstanceRef.current,
-        isMapLoaded
-      });
       return;
     }
 
@@ -253,75 +245,69 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
     }
 
     const selectedRoutes = routes.filter(route => selectedRouteIds.includes(route.id));
-    console.log('Adding route elements:', {
-      totalRoutes: routes.length,
-      selectedRoutes: selectedRoutes.length,
-      selectedRouteIds
-    });
 
     // Process routes sequentially to avoid API rate limits
     for (const route of selectedRoutes) {
       // Use stable color based on route ID
       const color = getRouteColor(route.id);
-      console.log(`Processing route ${route.routeName} (${route.id}) with color ${color}`);
 
       // Add pickup point markers
       // Add pickup point markers using symbol markers
       route.pickupPoints
         .sort((a, b) => a.sequenceOrder - b.sequenceOrder)
         .forEach((point, pointIndex) => {
-    // Add the main bus marker
-    const busMarker = new vietmapgl.Marker({
-      element: (() => {
-        const el = document.createElement('div');
-        el.innerHTML = '🚌';
-        el.style.fontSize = `${currentMarkerSize.fontSize}px`;
-        el.style.backgroundColor = 'white';
-        el.style.borderRadius = '50%';
-        el.style.padding = '4px';
-        el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-        el.style.border = `2px solid ${color}`;
-        el.style.textAlign = 'center';
-        el.style.lineHeight = '1';
-        return el;
-      })(),
-      anchor: 'center'
-    })
-      .setLngLat([point.location.longitude, point.location.latitude])
-      .addTo(mapInstanceRef.current!);
+          // Add the main bus marker
+          const busMarker = new vietmapgl.Marker({
+            element: (() => {
+              const el = document.createElement('div');
+              el.innerHTML = '🚌';
+              el.style.fontSize = `${currentMarkerSize.fontSize}px`;
+              el.style.backgroundColor = 'white';
+              el.style.borderRadius = '50%';
+              el.style.padding = '4px';
+              el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+              el.style.border = `2px solid ${color}`;
+              el.style.textAlign = 'center';
+              el.style.lineHeight = '1';
+              return el;
+            })(),
+            anchor: 'center'
+          })
+            .setLngLat([point.location.longitude, point.location.latitude])
+            .addTo(mapInstanceRef.current!);
 
-    // Add order number marker slightly offset
-    const orderMarker = new vietmapgl.Marker({
-      element: (() => {
-        const el = document.createElement('div');
-        el.innerHTML = `${point.sequenceOrder}`;
-        el.style.backgroundColor = color;
-        el.style.color = 'white';
-        el.style.borderRadius = '50%';
-        el.style.width = '18px';
-        el.style.height = '18px';
-        el.style.display = 'flex';
-        el.style.alignItems = 'center';
-        el.style.justifyContent = 'center';
-        el.style.fontSize = '10px';
-        el.style.fontWeight = 'bold';
-        el.style.border = '2px solid white';
-        el.style.boxShadow = '0 1px 2px rgba(0,0,0,0.3)';
-        return el;
-      })(),
-      anchor: 'center',
-      offset: [12, -12] // Offset to position near the bus icon
-    })
-      .setLngLat([point.location.longitude, point.location.latitude])
-      .addTo(mapInstanceRef.current!);
+          // Add order number marker slightly offset
+          const orderMarker = new vietmapgl.Marker({
+            element: (() => {
+              const el = document.createElement('div');
+              el.innerHTML = `${point.sequenceOrder}`;
+              el.style.backgroundColor = color;
+              el.style.color = 'white';
+              el.style.borderRadius = '50%';
+              el.style.width = '18px';
+              el.style.height = '18px';
+              el.style.display = 'flex';
+              el.style.alignItems = 'center';
+              el.style.justifyContent = 'center';
+              el.style.fontSize = '10px';
+              el.style.fontWeight = 'bold';
+              el.style.border = '2px solid white';
+              el.style.boxShadow = '0 1px 2px rgba(0,0,0,0.3)';
+              return el;
+            })(),
+            anchor: 'center',
+            offset: [12, -12] // Offset to position near the bus icon
+          })
+            .setLngLat([point.location.longitude, point.location.latitude])
+            .addTo(mapInstanceRef.current!);
 
-    // Add popup to the main marker
-    const popup = new vietmapgl.Popup({ 
-      offset: 25,
-      closeButton: true,
-      closeOnClick: false
-    })
-      .setHTML(`
+          // Add popup to the main marker
+          const popup = new vietmapgl.Popup({
+            offset: 25,
+            closeButton: true,
+            closeOnClick: false
+          })
+            .setHTML(`
         <div class="p-2">
           <h3 class="font-semibold text-sm">${point.location.address}</h3>
           <p class="text-xs text-gray-600">Students: ${point.studentCount}</p>
@@ -329,73 +315,67 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
           <p class="text-xs text-gray-500">Stop ${point.sequenceOrder}</p>
         </div>
       `);
-    
-    busMarker.setPopup(popup);
-    
-    // Store both markers for cleanup
-    markersRef.current.push(busMarker);
-    markersRef.current.push(orderMarker);
-  });
+
+          busMarker.setPopup(popup);
+
+          // Store both markers for cleanup
+          markersRef.current.push(busMarker);
+          markersRef.current.push(orderMarker);
+        });
 
       // Add route polyline using actual road routes
       if (route.pickupPoints.length > 0) {
         try {
           const currentSchoolLocation = schoolLocation || DEFAULT_SCHOOL_LOCATION;
-          console.log(`Getting actual route coordinates for ${route.routeName}...`);
           const coordinates = await getRouteCoordinates(route, currentSchoolLocation);
-          console.log(`Got ${coordinates.length} coordinates for route ${route.routeName}`);
 
-        const sourceId = `route-${route.id}`;
-        const layerId = `route-layer-${route.id}`;
+          const sourceId = `route-${route.id}`;
+          const layerId = `route-layer-${route.id}`;
 
-        // Check if source already exists
-        if (mapInstanceRef.current && !mapInstanceRef.current.getSource(sourceId)) {
-          try {
-            // Add source
-            mapInstanceRef.current.addSource(sourceId, {
-              type: 'geojson',
-              data: {
-                type: 'Feature',
-                properties: {},
-                geometry: {
-                  type: 'LineString',
-                  coordinates: coordinates
+          // Check if source already exists
+          if (mapInstanceRef.current && !mapInstanceRef.current.getSource(sourceId)) {
+            try {
+              // Add source
+              mapInstanceRef.current.addSource(sourceId, {
+                type: 'geojson',
+                data: {
+                  type: 'Feature',
+                  properties: {},
+                  geometry: {
+                    type: 'LineString',
+                    coordinates: coordinates
+                  }
                 }
-              }
-            });
-            sourcesRef.current.push(sourceId);
-            console.log(`Added source: ${sourceId}`);
+              });
+              sourcesRef.current.push(sourceId);
 
-            // Add layer
-            mapInstanceRef.current.addLayer({
-              id: layerId,
-              type: 'line',
-              source: sourceId,
-              layout: {
-                'line-join': 'round',
-                'line-cap': 'round'
-              },
-              paint: {
-                'line-color': color,
-                'line-width': strokeWeight
-              }
-            });
-            polylinesRef.current.push(layerId);
-            console.log(`Added layer: ${layerId} with color ${color}`);
-          } catch (err) {
-            console.error(`Error adding route ${route.routeName}:`, err);
-          }
+              // Add layer
+              mapInstanceRef.current.addLayer({
+                id: layerId,
+                type: 'line',
+                source: sourceId,
+                layout: {
+                  'line-join': 'round',
+                  'line-cap': 'round'
+                },
+                paint: {
+                  'line-color': color,
+                  'line-width': strokeWeight
+                }
+              });
+              polylinesRef.current.push(layerId);
+            } catch (err) {
+              console.error(`Error adding route ${route.routeName}:`, err);
+            }
           } else {
             console.warn(`Source ${sourceId} already exists, skipping`);
           }
         } catch (error) {
           console.error(`Error getting route coordinates for ${route.routeName}:`, error);
         }
-      } else {
-        console.log(`Route ${route.routeName} has no pickup points, skipping polyline`);
       }
     }
-  }, [routes, selectedRouteIds, isMapLoaded, currentMarkerSize.size, strokeWeight, schoolLocation]);
+  }, [routes, selectedRouteIds, isMapLoaded, markerSize, strokeWeight, schoolLocation]);
 
   // Initialize map
   useEffect(() => {
@@ -431,7 +411,7 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
         // Add school marker with custom icon
         const schoolIcon = document.createElement('div');
         schoolIcon.innerHTML = '🏫';
-        schoolIcon.style.fontSize = '20px';
+        schoolIcon.style.fontSize = '40px';
         schoolIcon.style.textAlign = 'center';
         schoolIcon.style.lineHeight = '1';
 
@@ -457,25 +437,12 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
         // Handle map load
         map.on('load', () => {
           if (isMounted) {
-            console.log('Map loaded successfully');
             setIsMapLoaded(true);
             setError('');
           }
         });
 
         // Handle style load - redraw route elements if needed
-        map.on('styledata', () => {
-          if (isMounted && map.isStyleLoaded()) {
-            console.log('Map style loaded, redrawing route elements');
-            // Redraw route elements when style is loaded
-            setTimeout(async () => {
-              if (mapInstanceRef.current && mapInstanceRef.current.isStyleLoaded()) {
-                clearMapElements();
-                await addRouteElements();
-              }
-            }, 100);
-          }
-        });
 
         map.on('error', (e) => {
           if (isMounted) {
@@ -529,11 +496,6 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
   useEffect(() => {
     if (!isMapLoaded) return;
 
-    console.log('Route selection changed, updating map elements:', {
-      selectedRouteIds,
-      totalRoutes: routes.length
-    });
-
     // Cancel any ongoing requests
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -557,7 +519,7 @@ const VietMapComponent: React.FC<VietMapComponentProps> = ({
         abortControllerRef.current.abort();
       }
     };
-  }, [routes, selectedRouteIds, isMapLoaded, addRouteElements, clearMapElements]);
+  }, [routes, selectedRouteIds, isMapLoaded]);
 
   if (error) {
     return (

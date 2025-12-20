@@ -27,8 +27,8 @@ const DEFAULT_SCHOOL_LOCATION = {
 
 // Colors for different trips (same as route management)
 const VEHICLE_COLORS = [
-  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-  '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
+  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FF6347',
+  '#DDA0DD', '#98D8C8', '#20B2AA', '#BB8FCE', '#85C1E9'
 ];
 
 // Hash function for stable color assignment
@@ -96,7 +96,7 @@ const getTripRouteCoordinates = async (
 
     // Sort stops by sequence
     const sortedStops = [...trip.stops].sort((a, b) => a.sequence - b.sequence);
-    
+
     // Filter stops that have location data
     const stopsWithLocation = sortedStops.filter(
       stop => stop.location && stop.location.latitude && stop.location.longitude
@@ -121,7 +121,7 @@ const getTripRouteCoordinates = async (
         { lat: firstStop.location.latitude, lng: firstStop.location.longitude },
         'car'
       );
-      
+
       if (routeResult.paths && routeResult.paths.length > 0) {
         const decodedPoints = decodePolyline(routeResult.paths[0].points);
         allCoordinates.push(...decodedPoints);
@@ -134,7 +134,7 @@ const getTripRouteCoordinates = async (
     for (let i = 0; i < stopsWithLocation.length - 1; i++) {
       const currentStop = stopsWithLocation[i];
       const nextStop = stopsWithLocation[i + 1];
-      
+
       if (currentStop.location && nextStop.location) {
         console.log(`[getTripRouteCoordinates] Getting route: Stop ${i + 1} → Stop ${i + 2}`);
         const routeResult = await vietmapService.getRoute(
@@ -142,7 +142,7 @@ const getTripRouteCoordinates = async (
           { lat: nextStop.location.latitude, lng: nextStop.location.longitude },
           'car'
         );
-        
+
         if (routeResult.paths && routeResult.paths.length > 0) {
           const decodedPoints = decodePolyline(routeResult.paths[0].points);
           // Skip first point to avoid duplication
@@ -161,7 +161,7 @@ const getTripRouteCoordinates = async (
         schoolLocation,
         'car'
       );
-      
+
       if (routeResult.paths && routeResult.paths.length > 0) {
         const decodedPoints = decodePolyline(routeResult.paths[0].points);
         // Skip first point to avoid duplication
@@ -174,16 +174,16 @@ const getTripRouteCoordinates = async (
     return allCoordinates;
   } catch (error) {
     console.error(`[getTripRouteCoordinates] Error getting route coordinates for trip ${trip.id}:`, error);
-    
+
     // Fallback to straight line if routing fails
     const sortedStops = [...trip.stops].sort((a, b) => a.sequence - b.sequence);
     const stopsWithLocation = sortedStops.filter(
       stop => stop.location && stop.location.latitude && stop.location.longitude
     );
-    
+
     const coordinates = [
       [schoolLocation.lng, schoolLocation.lat],
-      ...stopsWithLocation.map(stop => 
+      ...stopsWithLocation.map(stop =>
         stop.location ? [stop.location.longitude, stop.location.latitude] : null
       ).filter((coord): coord is number[] => coord !== null),
       [schoolLocation.lng, schoolLocation.lat]
@@ -193,23 +193,38 @@ const getTripRouteCoordinates = async (
   }
 };
 
-// Create bus icon HTML
+// Create bus icon HTML - School bus style
 const createBusIcon = (color: string): string => {
   return `
     <div style="
-      width: 32px;
-      height: 32px;
-      background-color: ${color};
+      width: 40px;
+      height: 40px;
+      background-color: #FFD700;
       border: 3px solid white;
-      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      border-radius: 8px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.4);
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
     ">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
-        <path d="M4 6h16v10H4V6zm2 2v6h12V8H6zm-2 8h16v2H4v-2zm2-8h12v6H6V8z"/>
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+        <!-- Bus body -->
+        <rect x="2" y="6" width="20" height="11" rx="2" fill="white"/>
+        <!-- Windows -->
+        <rect x="4" y="8" width="3" height="4" rx="0.5" fill="${color}"/>
+        <rect x="8.5" y="8" width="3" height="4" rx="0.5" fill="${color}"/>
+        <rect x="13" y="8" width="3" height="4" rx="0.5" fill="${color}"/>
+        <rect x="17.5" y="8" width="2.5" height="4" rx="0.5" fill="${color}"/>
+        <!-- Wheels -->
+        <circle cx="6" cy="17" r="2" fill="#333"/>
+        <circle cx="6" cy="17" r="1" fill="#666"/>
+        <circle cx="18" cy="17" r="2" fill="#333"/>
+        <circle cx="18" cy="17" r="1" fill="#666"/>
+        <!-- Front lights -->
+        <rect x="20" y="13" width="2" height="2" rx="0.5" fill="#FFD700"/>
+        <!-- Roof line -->
+        <rect x="3" y="5" width="18" height="1.5" rx="0.5" fill="white" opacity="0.8"/>
       </svg>
     </div>
   `;
@@ -239,7 +254,7 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
     () => schoolLocation || DEFAULT_SCHOOL_LOCATION,
     [schoolLocation]
   );
-  
+
   // ✅ Track which vehicle we're following (only when focused)
   const followingVehicleRef = useRef<string | null>(null);
   // ✅ Track if initial fit has been done
@@ -313,7 +328,7 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
 
     const tripId = followingVehicleRef.current;
     const locationUpdate = locationUpdates[tripId];
-    
+
     if (!locationUpdate) {
       return;
     }
@@ -324,7 +339,7 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
       Math.pow(currentCenter.lng - locationUpdate.longitude, 2) +
       Math.pow(currentCenter.lat - locationUpdate.latitude, 2)
     );
-    
+
     // Only follow if vehicle moved more than ~100 meters (roughly 0.001 degrees)
     if (distance > 0.001) {
       mapInstanceRef.current.easeTo({
@@ -412,7 +427,7 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
         hasStops: !!(t.stops && t.stops.length > 0)
       }))
     });
-    
+
     // Clear existing routes and markers
     clearRoutePolylines();
 
@@ -427,7 +442,7 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
       console.log(`\n[addRoutePolylines] Processing trip: ${trip.routeName || trip.id} (${trip.id})`);
       console.log(`[addRoutePolylines] Trip color: ${color}`);
       console.log(`[addRoutePolylines] Trip stops count: ${trip.stops?.length || 0}`);
-      
+
       // ✅ Add stop markers (like route management)
       if (trip.stops && trip.stops.length > 0) {
         console.log(`[addRoutePolylines] Trip has ${trip.stops.length} stops, processing...`);
@@ -443,7 +458,7 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
             address: s.location.address
           } : null
         })));
-        
+
         const stopsWithLocation = sortedStops.filter(
           stop => stop.location && stop.location.latitude && stop.location.longitude
         );
@@ -465,53 +480,49 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
             console.log(`[addRoutePolylines] Stop location: (${stop.location.latitude}, ${stop.location.longitude})`);
 
             try {
-              // Add the main stop marker (bus icon)
+              // Determine if stop is completed (has actualDeparture)
+              const isCompleted = !!stop.actualDeparture;
+              const pinColor = isCompleted ? '#22C55E' : '#9CA3AF'; // Green for completed, gray for pending
+              const displayContent = isCompleted ? '✓' : stop.sequence;
+
+              // Add the stop marker (pin with sequence number or checkmark)
               const stopMarker = new vietmapgl.Marker({
                 element: (() => {
                   const el = document.createElement('div');
-                  el.innerHTML = '🚌';
-                  el.style.fontSize = '12px';
-                  el.style.backgroundColor = 'white';
-                  el.style.borderRadius = '50%';
-                  el.style.padding = '4px';
-                  el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-                  el.style.border = `2px solid ${color}`;
-                  el.style.textAlign = 'center';
-                  el.style.lineHeight = '1';
+                  el.innerHTML = `
+                    <div style="
+                      position: relative;
+                      width: 30px;
+                      height: 42px;
+                    ">
+                      <svg width="30" height="42" viewBox="0 0 30 42" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Pin shape -->
+                        <path d="M15 0C6.716 0 0 6.716 0 15c0 10.5 15 27 15 27s15-16.5 15-27C30 6.716 23.284 0 15 0z" fill="${pinColor}"/>
+                        <!-- White circle background for number/checkmark -->
+                        <circle cx="15" cy="14" r="9" fill="white"/>
+                      </svg>
+                      <span style="
+                        position: absolute;
+                        top: ${isCompleted ? '4px' : '6px'};
+                        left: 0;
+                        right: 0;
+                        text-align: center;
+                        font-size: ${isCompleted ? '14px' : '12px'};
+                        font-weight: bold;
+                        color: ${pinColor};
+                      ">${displayContent}</span>
+                    </div>
+                  `;
+                  el.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))';
                   return el;
                 })(),
-                anchor: 'center'
-              })
-                .setLngLat([stop.location.longitude, stop.location.latitude])
-                .addTo(mapInstanceRef.current!);
-
-              // Add sequence number marker
-              const orderMarker = new vietmapgl.Marker({
-                element: (() => {
-                  const el = document.createElement('div');
-                  el.innerHTML = `${stop.sequence}`;
-                  el.style.backgroundColor = color;
-                  el.style.color = 'white';
-                  el.style.borderRadius = '50%';
-                  el.style.width = '18px';
-                  el.style.height = '18px';
-                  el.style.display = 'flex';
-                  el.style.alignItems = 'center';
-                  el.style.justifyContent = 'center';
-                  el.style.fontSize = '10px';
-                  el.style.fontWeight = 'bold';
-                  el.style.border = '2px solid white';
-                  el.style.boxShadow = '0 1px 2px rgba(0,0,0,0.3)';
-                  return el;
-                })(),
-                anchor: 'center',
-                offset: [12, -12]
+                anchor: 'bottom'
               })
                 .setLngLat([stop.location.longitude, stop.location.latitude])
                 .addTo(mapInstanceRef.current!);
 
               // Add popup
-              const popup = new vietmapgl.Popup({ 
+              const popup = new vietmapgl.Popup({
                 offset: 25,
                 closeButton: true,
                 closeOnClick: false
@@ -524,31 +535,32 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
                     <p class="text-xs text-gray-500">Stop ${stop.sequence}</p>
                   </div>
                 `);
-              
+
               stopMarker.setPopup(popup);
-              
+
               // Store markers for cleanup
               stopMarkersRef.current.push(stopMarker);
-              stopMarkersRef.current.push(orderMarker);
-              
-              console.log(`[addRoutePolylines] ✅ Added markers for stop ${stop.sequence}`);
+
+              console.log(`[addRoutePolylines] ✅ Added marker for stop ${stop.sequence}`);
             } catch (error) {
               console.error(`[addRoutePolylines] ❌ Error adding marker for stop ${stop.sequence}:`, error);
             }
           });
-          
-          console.log(`[addRoutePolylines] ✅ Total stop markers added for this trip: ${stopsWithLocation.length * 2}`);
+
+          console.log(`[addRoutePolylines] ✅ Total stop markers added for this trip: ${stopsWithLocation.length}`);
         }
       } else {
         console.warn(`[addRoutePolylines] ⚠️ Trip ${trip.id} has no stops or stops array is empty`);
       }
-      
+
+      // Route polylines disabled - uncomment below to enable
+      /*
       // Add route polyline
       try {
         console.log(`[addRoutePolylines] Getting route coordinates for trip ${trip.id}...`);
         const coordinates = await getTripRouteCoordinates(trip, effectiveSchoolLocation);
         console.log(`[addRoutePolylines] Got ${coordinates.length} coordinates for trip ${trip.id}`);
-        
+
         if (coordinates.length === 0) {
           console.warn(`[addRoutePolylines] No coordinates for trip ${trip.id}, skipping polyline`);
           continue;
@@ -596,8 +608,9 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
       } catch (error) {
         console.error(`[addRoutePolylines] ❌ Error adding route for trip ${trip.id}:`, error);
       }
+      */
     }
-    
+
     console.log(`\n=== [addRoutePolylines] FINISHED ===`);
     console.log(`[addRoutePolylines] Total stop markers on map: ${stopMarkersRef.current.length}`);
     console.log(`[addRoutePolylines] Total route layers: ${polylinesRef.current.length}`);
@@ -609,7 +622,7 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
     if (!mapInstanceRef.current || !isMapLoaded) return;
 
     // Only show markers for selected trips (or all if none selected)
-    const tripsToShow = selectedTripIds.length > 0 
+    const tripsToShow = selectedTripIds.length > 0
       ? trips.filter(t => selectedTripIds.includes(t.id))
       : trips;
 
@@ -706,8 +719,8 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
   // ✅ Initial fit to bounds (only once on first load)
   useEffect(() => {
     if (!isMapLoaded || !mapInstanceRef.current || initialFitDoneRef.current) return;
-    
-    const tripsToShow = selectedTripIds.length > 0 
+
+    const tripsToShow = selectedTripIds.length > 0
       ? trips.filter(t => selectedTripIds.includes(t.id))
       : trips;
 
@@ -715,7 +728,7 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
       try {
         const bounds = new vietmapgl.LngLatBounds();
         bounds.extend([effectiveSchoolLocation.lng, effectiveSchoolLocation.lat]);
-        
+
         vehicleMarkersRef.current.forEach((marker) => {
           const lngLat = marker.getLngLat();
           bounds.extend([lngLat.lng, lngLat.lat]);
@@ -725,13 +738,13 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
           padding: { top: 50, bottom: 50, left: 50, right: 50 },
           maxZoom: 15
         });
-        
+
         initialFitDoneRef.current = true;
       } catch (err) {
         console.warn('Error fitting bounds:', err);
       }
     }
-  }, [isMapLoaded, trips, selectedTripIds]);
+  }, [isMapLoaded]);
 
   // ✅ Reset initial fit when selection changes significantly
   useEffect(() => {
@@ -780,7 +793,7 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
             align-items: center;
             justify-content: center;
           ">
-            <span style="color: white; font-size: 12px; font-weight: bold;">🏫</span>
+            <span style="color: white; font-size: 40px; font-weight: bold;">🏫</span>
           </div>
         `;
 
@@ -804,17 +817,7 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
           }
         });
 
-        map.on('styledata', () => {
-          if (isMounted && map.isStyleLoaded()) {
-            console.log('[initMap] Map style loaded, redrawing routes');
-            setTimeout(async () => {
-              if (mapInstanceRef.current && mapInstanceRef.current.isStyleLoaded()) {
-                clearRoutePolylines();
-                await addRoutePolylines();
-              }
-            }, 100);
-          }
-        });
+        // Removed styledata handler - it was causing markers to be cleared multiple times
 
         map.on('error', (e) => {
           console.error('[initMap] Map error:', e);
@@ -859,7 +862,7 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
     console.log('[useEffect] isStyleLoaded:', mapInstanceRef.current?.isStyleLoaded());
     console.log('[useEffect] selectedTripIds:', selectedTripIds);
     console.log('[useEffect] trips count:', trips.length);
-    
+
     if (!isMapLoaded || !mapInstanceRef.current) {
       console.log('[useEffect] Map not loaded yet, waiting...');
       return;
@@ -886,7 +889,7 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
       console.log('[useEffect] Waiting for map style to load...');
       let retryCount = 0;
       const maxRetries = 10;
-      
+
       const retryCheck = () => {
         retryCount++;
         if (mapInstanceRef.current?.isStyleLoaded()) {
@@ -898,9 +901,9 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
           console.warn('[useEffect] Max retries reached, map style still not loaded');
         }
       };
-      
+
       const timeoutId = setTimeout(retryCheck, 200);
-      
+
       // Also listen for styledata event as backup
       const handleStyleData = () => {
         if (mapInstanceRef.current?.isStyleLoaded()) {
@@ -910,9 +913,9 @@ const LiveVehicleMap: React.FC<LiveVehicleMapProps> = ({
           mapInstanceRef.current.off('styledata', handleStyleData);
         }
       };
-      
+
       mapInstanceRef.current.on('styledata', handleStyleData);
-      
+
       return () => {
         clearTimeout(timeoutId);
         if (mapInstanceRef.current) {

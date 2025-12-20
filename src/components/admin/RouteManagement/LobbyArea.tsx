@@ -40,11 +40,10 @@ const LobbyArea: React.FC<LobbyAreaProps> = ({ lobby }) => {
             <div
               {...provided.droppableProps}
               ref={provided.innerRef}
-              className={`flex-1 flex items-center gap-3 overflow-x-auto px-5 py-4 min-h-[120px] transition-all duration-300 custom-scrollbar ${
-                snapshot.isDraggingOver 
-                  ? "bg-gradient-to-r from-[#FEF3C7] to-[#FDE68A] border-2 border-dashed border-[#fad23c]" 
+              className={`flex-1 flex items-center gap-3 overflow-x-auto px-5 py-4 min-h-[120px] transition-all duration-300 custom-scrollbar ${snapshot.isDraggingOver
+                  ? "bg-gradient-to-r from-[#FEF3C7] to-[#FDE68A] border-2 border-dashed border-[#fad23c]"
                   : "bg-gradient-to-r from-[#FEFCE8]/30 to-[#FEF3C7]/30"
-              }`}
+                }`}
             >
               {lobby.length === 0 ? (
                 <div className="flex-1 flex items-center justify-center text-[#463B3B]/40 text-sm">

@@ -36,22 +36,6 @@ const ApplySuggestionsModal: React.FC<ApplySuggestionsModalProps> = ({
 
         {/* Warning Content */}
         <div className="mb-6">
-          <div className="flex items-center mb-3">
-            <FaExclamationTriangle className="text-orange-500 mr-2" size={20} />
-            <span className="font-semibold text-orange-600">Warning</span>
-          </div>
-          
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
-            <p className="text-gray-700 mb-2">
-              Applying these suggestions will:
-            </p>
-            <ul className="list-disc list-inside text-gray-600 space-y-1 text-sm">
-              <li><strong>Delete all existing routes</strong> permanently</li>
-              <li>Replace them with <strong>{suggestedRoutesCount} new optimized routes</strong></li>
-              <li>This action <strong>cannot be undone</strong></li>
-            </ul>
-          </div>
-
           <p className="text-gray-600 text-sm">
             Are you sure you want to proceed with applying these route suggestions?
           </p>
