@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { FaSyncAlt, FaSearch, FaCheckCircle, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
+import { FaSyncAlt, FaSearch, FaCheckCircle, FaExclamationTriangle, FaSpinner, FaMapMarkerAlt } from 'react-icons/fa';
 import { pickupPointService, GetPickupPointsBySemesterRequest, ResetPickupPointBySemesterRequest, AvailableSemesterDto, GetPickupPointsBySemesterResponse, ResetPickupPointBySemesterResponse, PickupPointWithStudentsDto, StudentUpdateFailure } from '@/services/pickupPointService';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -23,7 +23,7 @@ const ResetSemesterTab: React.FC = () => {
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [resetResult, setResetResult] = useState<ResetPickupPointBySemesterResponse | null>(null);
-  
+
   // Pagination for preview list
   const [previewPage, setPreviewPage] = useState(1);
   const [previewItemsPerPage] = useState(10);
@@ -70,7 +70,7 @@ const ResetSemesterTab: React.FC = () => {
       // Otherwise, extract date part from ISO string
       return dateStr.split('T')[0];
     };
-    
+
     setFormData({
       semesterCode: semester.semesterCode,
       academicYear: semester.academicYear,
@@ -124,11 +124,11 @@ const ResetSemesterTab: React.FC = () => {
         semesterEndDate: formData.semesterEndDate,
         semesterName: formData.semesterName,
       };
-      
+
       const result = await pickupPointService.resetPickupPointBySemester(resetRequest);
       setResetResult(result);
       toast.success(result.message);
-      
+
       // Clear preview after successful reset
       setPreviewData(null);
       setPreviewPage(1);
@@ -141,7 +141,7 @@ const ResetSemesterTab: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="w-full">
       {/* Form */}
       <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
         <div className="flex items-end gap-3">
@@ -158,7 +158,7 @@ const ResetSemesterTab: React.FC = () => {
               <select
                 value={selectedSemesterId}
                 onChange={(e) => {
-                  const semester = availableSemesters.find(s => 
+                  const semester = availableSemesters.find(s =>
                     `${s.semesterCode}-${s.academicYear}-${s.semesterStartDate}` === e.target.value
                   );
                   handleSemesterSelect(semester || null);
@@ -167,7 +167,7 @@ const ResetSemesterTab: React.FC = () => {
               >
                 <option value="">-- Select a semester --</option>
                 {availableSemesters.map((semester) => (
-                  <option 
+                  <option
                     key={`${semester.semesterCode}-${semester.academicYear}-${semester.semesterStartDate}`}
                     value={`${semester.semesterCode}-${semester.academicYear}-${semester.semesterStartDate}`}
                   >
@@ -226,7 +226,7 @@ const ResetSemesterTab: React.FC = () => {
               )}
             </button>
           </div>
-          
+
           <div className="grid grid-cols-3 gap-3 mb-3">
             <div className="bg-white rounded-lg p-3">
               <p className="text-xs text-gray-600 mb-1">Pickup Points</p>
@@ -247,16 +247,41 @@ const ResetSemesterTab: React.FC = () => {
               <p className="text-xs font-medium text-gray-700 mb-2">
                 Pickup Points ({previewData.pickupPoints.length}):
               </p>
-              <div className="max-h-48 overflow-y-auto space-y-1.5 mb-3">
+              <div className="max-h-[600px] overflow-y-auto space-y-3 mb-4 custom-scrollbar pr-2">
                 {previewData.pickupPoints
                   .slice((previewPage - 1) * previewItemsPerPage, previewPage * previewItemsPerPage)
                   .map((pp: PickupPointWithStudentsDto) => (
-                  <div key={pp.pickupPointId} className="bg-white rounded p-2 text-xs border border-gray-200">
-                    <p className="font-medium text-[#463B3B]">{pp.description || 'No description'}</p>
-                    <p className="text-gray-500 text-xs truncate">{pp.location}</p>
-                    <p className="text-gray-600 mt-0.5">{pp.studentCount} student(s)</p>
-                  </div>
-                ))}
+                    <div key={pp.pickupPointId} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                          <p className="font-bold text-[#463B3B] text-base mb-1">{pp.description || 'No description'}</p>
+                          <p className="text-gray-600 text-sm flex items-start gap-1.5">
+                            <FaMapMarkerAlt className="text-red-500 mt-1 flex-shrink-0" />
+                            <span>{pp.location}</span>
+                          </p>
+                        </div>
+                        <span className="ml-3 inline-flex items-center justify-center bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
+                          {pp.studentCount} student{pp.studentCount !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+
+                      {pp.students && pp.students.length > 0 ? (
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Assigned Students:</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {pp.students.map((student) => (
+                              <div key={student.studentId} className="flex items-center gap-2 text-sm text-gray-700 bg-gray-50 px-2 py-1.5 rounded border border-gray-100">
+                                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                <span className="font-medium">{student.firstName} {student.lastName}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-2 text-sm text-gray-500 italic">No assigned students</div>
+                      )}
+                    </div>
+                  ))}
               </div>
               {previewData.pickupPoints.length > previewItemsPerPage && (
                 <div className="bg-gray-50 px-3 py-2 rounded border border-gray-200">
@@ -288,7 +313,7 @@ const ResetSemesterTab: React.FC = () => {
             <FaCheckCircle className="text-green-600" />
             Reset Completed
           </h3>
-          
+
           <div className="grid grid-cols-3 gap-3 mb-3">
             <div className="bg-white rounded-lg p-3">
               <p className="text-xs text-gray-600 mb-1">Found</p>

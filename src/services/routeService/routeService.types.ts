@@ -17,6 +17,7 @@ export interface PickupPointInfoDto {
   sequenceOrder: number;
   location: LocationInfoDto;
   studentCount: number;
+  studentNames?: string[];
 }
 
 export interface LocationInfoDto {
@@ -56,7 +57,7 @@ export interface UpdateBulkRouteResponse {
 }
 
 export interface RoutePickupPointRequest {
-  pickupPointId: string; 
+  pickupPointId: string;
   sequenceOrder: number;
 }
 

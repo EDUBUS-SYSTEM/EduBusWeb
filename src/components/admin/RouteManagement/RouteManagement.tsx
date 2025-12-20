@@ -1,4 +1,3 @@
-// EduBusWeb/src/components/admin/RouteManagement/RouteManagement.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { FaPlus, FaSave, FaMagic, FaTimes, FaCheck, FaBus } from 'react-icons/fa';
@@ -67,6 +66,19 @@ const RouteManagement: React.FC = () => {
 
   // Store original routes for comparison
   const originalRoutesRef = useRef<RouteDto[]>([]);
+  // Store student names map for enrichment
+  const studentNamesMapRef = useRef<Map<string, string[]>>(new Map());
+
+  // Helper to enrich routes with student names
+  const enrichRoutesWithNames = (routesToEnrich: RouteDto[]): RouteDto[] => {
+    return routesToEnrich.map(route => ({
+      ...route,
+      pickupPoints: route.pickupPoints.map(pp => ({
+        ...pp,
+        studentNames: studentNamesMapRef.current.get(pp.pickupPointId) || []
+      }))
+    }));
+  };
 
   const convertToPickupPointInfo = (unassignedPoint: PickupPointDto): PickupPointInfoDto => ({
     pickupPointId: unassignedPoint.id,
@@ -122,18 +134,38 @@ const RouteManagement: React.FC = () => {
       try {
         setIsLoading(true);
 
-        // Fetch routes, unassigned pickup points, and school location in parallel
-        const [routesData, unassignedData, schoolData] = await Promise.all([
+        // Fetch routes, unassigned pickup points, school location, and student details in parallel
+        const [routesData, unassignedData, schoolData, studentsStatusData] = await Promise.all([
           routeService.getAll(),
           pickupPointService.getUnassignedPickupPoints(),
-          schoolService.getForAdmin().catch(() => null) // Don't fail if school data is not available
+          schoolService.getForAdmin().catch(() => null), // Don't fail if school data is not available
+          pickupPointService.getPickupPointsWithStudentStatus().catch(() => [])
         ]);
 
-        setRoutes(routesData);
-        originalRoutesRef.current = JSON.parse(JSON.stringify(routesData)); // Deep copy
+        // Create a map for quick lookup of student names
+        const namesMap = new Map<string, string[]>();
+        if (studentsStatusData) {
+          studentsStatusData.forEach(p => {
+            if (p.assignedStudents) {
+              const names = p.assignedStudents.map(s => `${s.firstName} ${s.lastName}`);
+              namesMap.set(p.id, names);
+            }
+          });
+        }
+        studentNamesMapRef.current = namesMap;
 
-        // Convert unassigned pickup points to PickupPointInfoDto format
-        const lobbyPickupPoints = unassignedData.pickupPoints.map(convertToPickupPointInfo);
+        // Enrich routes using helper function
+        const enrichedRoutes = enrichRoutesWithNames(routesData);
+
+        setRoutes(enrichedRoutes);
+        originalRoutesRef.current = JSON.parse(JSON.stringify(enrichedRoutes)); // Deep copy using enriched data
+
+        // Convert unassigned pickup points to PickupPointInfoDto format and enrich
+        const lobbyPickupPoints = unassignedData.pickupPoints.map(p => {
+          const info = convertToPickupPointInfo(p);
+          info.studentNames = studentNamesMapRef.current.get(p.id) || [];
+          return info;
+        });
         setLobby(lobbyPickupPoints);
 
         // Set school location if available
@@ -156,10 +188,10 @@ const RouteManagement: React.FC = () => {
 
     fetchData();
   }, []);
-  
+
   const handleRouteMapToggle = (routeId: string) => {
-    setSelectedRouteIds(prev => 
-      prev.includes(routeId) 
+    setSelectedRouteIds(prev =>
+      prev.includes(routeId)
         ? prev.filter(id => id !== routeId)
         : [...prev, routeId]
     );
@@ -257,8 +289,11 @@ const RouteManagement: React.FC = () => {
         const generatedRoutes = response.routes.map((suggestion, index) =>
           convertSuggestionToRoute(suggestion, index)
         );
-        setRoutes(generatedRoutes);
-        originalRoutesRef.current = generatedRoutes.map(route => ({ ...route }));
+        // Enrich generated routes with student names
+        const enrichedGeneratedRoutes = enrichRoutesWithNames(generatedRoutes);
+
+        setRoutes(enrichedGeneratedRoutes);
+        originalRoutesRef.current = enrichedGeneratedRoutes.map(route => ({ ...route }));
         setModifiedRoutes(new Set());
         setLobby([]);
         setHasSuggestions(true);
@@ -559,7 +594,7 @@ const RouteManagement: React.FC = () => {
 
               <div className="flex items-center gap-3">
                 {/* Save Changes Button */}
-                {modifiedRoutes.size > 0 && !hasSuggestions &&(
+                {modifiedRoutes.size > 0 && !hasSuggestions && (
                   <button
                     onClick={handleSaveChanges}
                     disabled={isSaving}
@@ -596,7 +631,7 @@ const RouteManagement: React.FC = () => {
                     Apply Suggestions ({routes.length})
                   </button>
                 )}
-                
+
                 {!hasSuggestions && modifiedRoutes.size === 0 && (
                   <button
                     onClick={handleGenerateRoutes}
@@ -630,8 +665,8 @@ const RouteManagement: React.FC = () => {
               <RouteRow
                 key={route.id}
                 route={route}
-                onScheduleClick={handleScheduleClick} 
-                onRouteClick={handleRouteClick} 
+                onScheduleClick={handleScheduleClick}
+                onRouteClick={handleRouteClick}
                 onRouteMapToggle={handleRouteMapToggle}
                 isModified={isRouteModified(route.id)}
                 isDraft={hasSuggestions}
@@ -644,7 +679,7 @@ const RouteManagement: React.FC = () => {
           </div>
         </div>
       </DragDropContext>
-      
+
       {/* Mini Route Map */}
       <MiniRouteMap
         routes={routes}

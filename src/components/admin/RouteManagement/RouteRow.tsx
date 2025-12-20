@@ -15,31 +15,7 @@ interface RouteRowProps {
   isSelectedInMap?: boolean;
 }
 
-// Simple Tooltip Component
-const Tooltip: React.FC<{
-  children: React.ReactNode;
-  content: React.ReactNode;
-  className?: string;
-}> = ({ children, content, className = "" }) => {
-  const [isVisible, setIsVisible] = useState(false);
 
-  return (
-    <div
-      className={`relative ${className}`}
-      onMouseEnter={() => setIsVisible(true)}
-      onMouseLeave={() => setIsVisible(false)}
-    >
-      {children}
-      {isVisible && (
-        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg z-50 whitespace-nowrap">
-          {content}
-          {/* Tooltip arrow */}
-          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 const RouteRow: React.FC<RouteRowProps> = ({
   route,
@@ -56,19 +32,11 @@ const RouteRow: React.FC<RouteRowProps> = ({
     return text.substring(0, maxLength) + '...';
   };
 
-  const tooltipContent = (
-    <div>
-      <div className="font-semibold">{route.routeName}</div>
-      <div className="text-xs text-gray-300">Plate: {route.vehicleNumberPlate}</div>
-      {isSelectedInMap && (
-        <div className="text-xs text-green-300 mt-1">📍 Visible on map</div>
-      )}
-    </div>
-  );
+
 
   const currentStudents = route.pickupPoints.reduce((sum, point) => sum + point.studentCount, 0);
   const utilizationPercentage = route.vehicleCapacity > 0 ? (currentStudents / route.vehicleCapacity) * 100 : 0;
-  
+
   // Determine utilization color
   const getUtilizationColor = (percentage: number) => {
     if (percentage >= 90) return 'text-red-600 bg-red-50';
@@ -80,14 +48,14 @@ const RouteRow: React.FC<RouteRowProps> = ({
     <Droppable droppableId={route.id} direction="horizontal">
       {(provided) => (
         <div className={`bg-gradient-to-r from-[#FEF3C7] to-[#FDE68A] border-2 border-[#fad23c] rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 flex items-center relative overflow-hidden bus-container ${isModified ? 'ring-2 ring-red-400 border-red-300' : ''} ${isSelectedInMap ? 'ring-4 ring-[#fad23c]/50 border-[#fad23c] shadow-2xl' : ''}`}>
-          
+
           {/* Bus Body Background */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#fad23c]/20 via-[#FEF3C7]/80 to-[#fad23c]/20 pointer-events-none rounded-3xl"></div>
-          
+
           {/* Bus Windows Effect */}
           <div className="absolute top-2 left-8 right-8 h-3 bg-gradient-to-r from-[#87CEEB]/30 to-[#87CEEB]/50 rounded-full opacity-60"></div>
           <div className="absolute top-6 left-8 right-8 h-2 bg-gradient-to-r from-[#87CEEB]/20 to-[#87CEEB]/40 rounded-full opacity-40"></div>
-          
+
           {/* Modification Indicator */}
           {isModified && (
             <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-lg z-10">
@@ -103,54 +71,51 @@ const RouteRow: React.FC<RouteRowProps> = ({
           )}
 
           {/* Route Info Section */}
-          <Tooltip content={tooltipContent}>
-            <div
-              className="w-48 flex-shrink-0 cursor-pointer hover:scale-105 transition-transform duration-200 relative z-10"
-              onClick={() => onRouteMapToggle(route.id)}
-            >
-              {/* Route Header */}
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-bold text-[#463B3B] leading-tight">
-                  {truncateText(route.routeName, 15)}
-                </h3>
-                <div className={`px-2 py-1 rounded-full text-xs font-semibold ${getUtilizationColor(utilizationPercentage)}`}>
-                  {utilizationPercentage.toFixed(0)}%
-                </div>
-              </div>
-
-              {/* Capacity Info */}
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-[#FEF3C7] rounded-full flex items-center justify-center">
-                    <FaBus className="text-[#fad23c]" size={14} />
-                  </div>
-                  <span className="text-sm font-medium text-[#463B3B]">
-                    {route.vehicleNumberPlate}
-                  </span>
-                </div>
-                <div className="text-sm font-semibold text-[#463B3B]/80">
-                  {currentStudents}/{route.vehicleCapacity}
-                </div>
-              </div>
-
-              {/* Capacity Progress Bar */}
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-1">
-                <div 
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    utilizationPercentage >= 90 ? 'bg-red-500' :
-                    utilizationPercentage >= 70 ? 'bg-orange-500' : 'bg-green-500'
-                  }`}
-                  style={{ width: `${Math.min(utilizationPercentage, 100)}%` }}
-                ></div>
-              </div>
-              
-              {/* Pickup Points Count */}
-              <div className="text-xs text-[#463B3B]/60 flex items-center">
-                <FaMapMarkerAlt className="mr-1 text-[#fad23c]" size={10} />
-                {route.pickupPoints.length} pickup points
+          <div
+            className="w-48 flex-shrink-0 cursor-pointer relative z-10"
+            onClick={() => onRouteMapToggle(route.id)}
+          >
+            {/* Route Header */}
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-bold text-[#463B3B] leading-tight">
+                {truncateText(route.routeName, 15)}
+              </h3>
+              <div className={`px-2 py-1 rounded-full text-xs font-semibold ${getUtilizationColor(utilizationPercentage)}`}>
+                {utilizationPercentage.toFixed(0)}%
               </div>
             </div>
-          </Tooltip>
+
+            {/* Capacity Info */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-[#FEF3C7] rounded-full flex items-center justify-center">
+                  <FaBus className="text-[#fad23c]" size={14} />
+                </div>
+                <span className="text-sm font-medium text-[#463B3B]">
+                  {route.vehicleNumberPlate}
+                </span>
+              </div>
+              <div className="text-sm font-semibold text-[#463B3B]/80">
+                {currentStudents}/{route.vehicleCapacity}
+              </div>
+            </div>
+
+            {/* Capacity Progress Bar */}
+            <div className="w-full bg-gray-200 rounded-full h-2 mb-1">
+              <div
+                className={`h-2 rounded-full transition-all duration-300 ${utilizationPercentage >= 90 ? 'bg-red-500' :
+                  utilizationPercentage >= 70 ? 'bg-orange-500' : 'bg-green-500'
+                  }`}
+                style={{ width: `${Math.min(utilizationPercentage, 100)}%` }}
+              ></div>
+            </div>
+
+            {/* Pickup Points Count */}
+            <div className="text-xs text-[#463B3B]/60 flex items-center">
+              <FaMapMarkerAlt className="mr-1 text-[#fad23c]" size={10} />
+              {route.pickupPoints.length} pickup points
+            </div>
+          </div>
 
           {/* Action Buttons */}
           <div className="flex-shrink-0 ml-4 flex gap-2 relative z-10"
@@ -191,7 +156,7 @@ const RouteRow: React.FC<RouteRowProps> = ({
                 ))}
               </div>
             </div>
-            
+
             {route.pickupPoints.length === 0 && (
               <div className="flex items-center justify-center w-full text-[#463B3B]/40 text-sm relative z-10">
                 <FaMapMarkerAlt className="mr-2 text-[#fad23c]/60" />
