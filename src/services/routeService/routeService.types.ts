@@ -16,13 +16,29 @@ export interface PickupPointInfoDto {
   sequenceOrder: number;
   location: LocationInfoDto;
   studentCount: number;
-  studentNames?: string[];
+  students: StudentInfoDto[];
 }
 
 export interface LocationInfoDto {
   latitude: number;
   longitude: number;
   address: string;
+}
+
+export interface StudentInfoDto {
+  id: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  status: StudentStatus;
+  pickupPointAssignedAt?: string | null;
+}
+
+export enum StudentStatus {
+  Available = 0,
+  Pending = 1,
+  Active = 2,
+  Inactive = 3
 }
 
 export interface CreateRouteRequest {
@@ -91,6 +107,14 @@ export interface RoutePickupPointInfoDto {
   sequenceOrder: number;
   studentCount: number;
   arrivalTime: string;
+  students: RouteStudentInfo[];
+}
+
+export interface RouteStudentInfo {
+  id: string;
+  firstName: string;
+  lastName: string;
+  parentEmail: string;
 }
 
 export interface RouteVehicleInfo {

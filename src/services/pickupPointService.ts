@@ -1,6 +1,7 @@
 import { apiService } from '@/lib/api';
+import { StudentInfoDto } from './routeService/routeService.types';
 
-export type Gender = 1 | 2 | 3; 
+export type Gender = 1 | 2 | 3;
 
 export interface ParentRegistrationRequestDto {
 	email: string;
@@ -8,7 +9,7 @@ export interface ParentRegistrationRequestDto {
 	lastName: string;
 	phoneNumber: string;
 	address: string;
-	dateOfBirth: string; 
+	dateOfBirth: string;
 	gender: Gender;
 }
 
@@ -40,7 +41,7 @@ export interface VerifyOtpWithStudentsResponseDto {
 
 export interface SubmitPickupPointRequestDto {
 	email: string;
-	studentIds: string[]; 
+	studentIds: string[];
 	addressText: string;
 	latitude: number;
 	longitude: number;
@@ -79,8 +80,8 @@ export interface PickupPointRequestDetailDto {
 	distanceKm: number;
 	description: string;
 	reason: string;
-	unitPricePerKm: number; 
-	totalFee: number; 
+	unitPricePerKm: number;
+	totalFee: number;
 	semesterName: string;
 	academicYear: string;
 	semesterStartDate: string;
@@ -119,6 +120,7 @@ export interface PickupPointDto {
 	studentCount: number;
 	createdAt: string;
 	updatedAt?: string;
+	students: StudentInfoDto[];
 }
 
 export interface PickupPointsResponse {
@@ -130,8 +132,8 @@ export interface PickupPointsResponse {
 export interface GetPickupPointsBySemesterRequest {
 	semesterCode: string;
 	academicYear: string;
-	semesterStartDate: string; 
-	semesterEndDate: string; 
+	semesterStartDate: string;
+	semesterEndDate: string;
 	semesterName?: string;
 }
 
@@ -172,8 +174,8 @@ export interface GetPickupPointsBySemesterResponse {
 export interface ResetPickupPointBySemesterRequest {
 	semesterCode: string;
 	academicYear: string;
-	semesterStartDate: string; 
-	semesterEndDate: string; 
+	semesterStartDate: string;
+	semesterEndDate: string;
 	semesterName?: string;
 }
 
@@ -211,7 +213,7 @@ export interface GetAvailableSemestersResponse {
 }
 
 export interface PickupPointWithStudentStatusDto {
-	id: string; 
+	id: string;
 	description: string;
 	location: string;
 	latitude?: number | null;
@@ -222,7 +224,7 @@ export interface PickupPointWithStudentStatusDto {
 	inactiveStudents: number;
 	createdAt: string;
 	updatedAt?: string | null;
-	assignedStudentCount?: number; 
+	assignedStudentCount?: number;
 	assignedStudents?: Array<{
 		id: string;
 		firstName: string;

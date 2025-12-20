@@ -35,6 +35,12 @@ const normalizePickupPoint = (point: AnyObject): RoutePickupPointInfoDto => ({
   sequenceOrder: getValue(point, ["sequenceOrder", "SequenceOrder"], 0),
   studentCount: getValue(point, ["studentCount", "StudentCount"], 0),
   arrivalTime: getValue(point, ["arrivalTime", "ArrivalTime"], ""),
+  students: getValue<AnyObject[]>(point, ["students", "Students"], []).map((s: AnyObject) => ({
+    id: getValue(s, ["id", "Id"], ""),
+    firstName: getValue(s, ["firstName", "FirstName"], ""),
+    lastName: getValue(s, ["lastName", "LastName"], ""),
+    parentEmail: getValue(s, ["parentEmail", "ParentEmail"], ""),
+  }))
 });
 
 const normalizeVehicle = (vehicle: AnyObject | null | undefined): RouteVehicleInfo | null => {
@@ -67,7 +73,37 @@ const normalizeRouteSuggestionResponse = (data: AnyObject): RouteSuggestionRespo
 
 export const routeService = {
   getAll: async (): Promise<RouteDto[]> => {
-    return await apiService.get<RouteDto[]>("/routes");
+    const response = await apiService.get<unknown[]>("/routes");
+
+    return (response as AnyObject[]).map((route: AnyObject) => ({
+      id: route.id || route.Id,
+      routeName: route.routeName || route.RouteName,
+      isActive: route.isActive !== undefined ? route.isActive : route.IsActive,
+      vehicleId: route.vehicleId || route.VehicleId,
+      vehicleCapacity: route.vehicleCapacity || route.VehicleCapacity || 0,
+      vehicleNumberPlate: route.vehicleNumberPlate || route.VehicleNumberPlate || "",
+      createdAt: route.createdAt || route.CreatedAt,
+      updatedAt: route.updatedAt || route.UpdatedAt,
+      isDeleted: route.isDeleted !== undefined ? route.isDeleted : route.IsDeleted,
+      pickupPoints: ((route.pickupPoints || route.PickupPoints || []) as AnyObject[]).map((pp: AnyObject) => ({
+        pickupPointId: pp.pickupPointId || pp.PickupPointId,
+        sequenceOrder: pp.sequenceOrder || pp.SequenceOrder,
+        location: {
+          latitude: (pp.location as AnyObject)?.latitude || (pp.Location as AnyObject)?.Latitude || 0,
+          longitude: (pp.location as AnyObject)?.longitude || (pp.Location as AnyObject)?.Longitude || 0,
+          address: (pp.location as AnyObject)?.address || (pp.Location as AnyObject)?.Address || "",
+        },
+        studentCount: pp.studentCount || pp.StudentCount || 0,
+        students: ((pp.students || pp.Students || []) as AnyObject[]).map((s: AnyObject) => ({
+          id: s.id || s.Id,
+          firstName: s.firstName || s.FirstName || "",
+          lastName: s.lastName || s.LastName || "",
+          fullName: s.fullName || s.FullName || `${s.firstName || s.FirstName || ""} ${s.lastName || s.LastName || ""}`.trim(),
+          status: s.status !== undefined ? s.status : (s.Status !== undefined ? s.Status : 0),
+          pickupPointAssignedAt: s.pickupPointAssignedAt || s.PickupPointAssignedAt || null,
+        })),
+      })),
+    })) as RouteDto[];
   },
 
   getById: async (id: string): Promise<RouteDto> => {
@@ -99,7 +135,7 @@ export const routeService = {
       "/routes/suggestions",
       undefined,
       {
-        timeout: 120000, 
+        timeout: 120000,
       }
     );
     const normalized = normalizeRouteSuggestionResponse(raw);
