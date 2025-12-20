@@ -82,7 +82,7 @@ const RouteManagement: React.FC = () => {
   const convertSuggestionToRoute = (suggestion: RouteSuggestionDto, index: number): RouteDto => {
     return {
       id: `generated-route-${index + 1}-${Date.now()}`, // Temporary ID for UI
-      routeName: `Generated Route ${index + 1}`,
+      routeName: `Route ${index + 1}`,
       isActive: true,
       vehicleId: suggestion.vehicle?.vehicleId || '',
       vehicleCapacity: suggestion.vehicle?.capacity || 0,
