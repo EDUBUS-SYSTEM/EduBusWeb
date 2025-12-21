@@ -47,6 +47,10 @@ export interface RouteStatisticsDto {
     attendanceRate: number;
     averageRuntime: number;
     activeVehicles: number;
+    // Status indicators
+    isDeleted: boolean;
+    isActive: boolean;
+    status: string; // "Active" | "Inactive" | "Deleted"
 }
 
 export interface DashboardStatisticsDto {

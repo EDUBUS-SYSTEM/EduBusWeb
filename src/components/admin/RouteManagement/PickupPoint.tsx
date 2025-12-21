@@ -1,4 +1,3 @@
-// EduBusWeb/src/components/admin/RouteManagement/PickupPoint.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Draggable } from '@hello-pangea/dnd';
@@ -109,20 +108,22 @@ const PickupPoint: React.FC<PickupPointProps> = ({ point, index, className = "" 
             </span>
           </div>
 
-          {point.studentNames && point.studentNames.length > 0 ? (
+          {point.students && point.students.length > 0 ? (
             <div className="max-h-[200px] overflow-y-auto custom-scrollbar pr-1">
               <ul className="text-sm text-blue-50 space-y-1.5">
-                {point.studentNames.map((name, i) => (
-                  <li key={i} className="flex items-start">
+                {point.students.map((student, i) => (
+                  <li key={student.id} className="flex items-start">
                     <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-2 mt-1.5 flex-shrink-0 shadow-[0_0_4px_rgba(74,222,128,0.5)]"></span>
-                    <span className="leading-tight">{name}</span>
+                    <span className="leading-tight">
+                      {student.fullName || `${student.firstName} ${student.lastName}`}
+                    </span>
                   </li>
                 ))}
               </ul>
             </div>
           ) : (
             <div className="text-xs text-blue-300/60 italic py-1">
-              Student names not loaded
+              No students assigned
             </div>
           )}
         </div>

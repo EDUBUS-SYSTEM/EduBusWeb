@@ -157,9 +157,17 @@ export default function AdminDashboard() {
 
     // Fetch Route Statistics
     const { data: routeStatistics, isLoading: routeStatisticsLoading } = useQuery({
-        queryKey: ["routeStatistics"],
-        queryFn: () => dashboardService.getRouteStatistics(),
-        refetchInterval: 60000, // Refetch every minute
+        queryKey: ["routeStatistics", selectedSemester?.semesterCode],
+        queryFn: () => {
+            if (!selectedSemester) return Promise.resolve([]);
+            return dashboardService.getRouteStatistics(
+                undefined,
+                selectedSemester.semesterStartDate,
+                selectedSemester.semesterEndDate
+            );
+        },
+        enabled: !!selectedSemester,
+        refetchInterval: 60000,
     });
 
     const totalUsers = (parentData?.totalCount || 0) + (driverData?.totalCount || 0) + (supervisorData?.totalCount || 0);

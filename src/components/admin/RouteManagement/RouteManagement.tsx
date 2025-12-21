@@ -66,19 +66,6 @@ const RouteManagement: React.FC = () => {
 
   // Store original routes for comparison
   const originalRoutesRef = useRef<RouteDto[]>([]);
-  // Store student names map for enrichment
-  const studentNamesMapRef = useRef<Map<string, string[]>>(new Map());
-
-  // Helper to enrich routes with student names
-  const enrichRoutesWithNames = (routesToEnrich: RouteDto[]): RouteDto[] => {
-    return routesToEnrich.map(route => ({
-      ...route,
-      pickupPoints: route.pickupPoints.map(pp => ({
-        ...pp,
-        studentNames: studentNamesMapRef.current.get(pp.pickupPointId) || []
-      }))
-    }));
-  };
 
   const convertToPickupPointInfo = (unassignedPoint: PickupPointDto): PickupPointInfoDto => ({
     pickupPointId: unassignedPoint.id,
@@ -88,13 +75,14 @@ const RouteManagement: React.FC = () => {
       longitude: unassignedPoint.longitude,
       address: unassignedPoint.location
     },
-    studentCount: unassignedPoint.studentCount
+    studentCount: unassignedPoint.studentCount,
+    students: unassignedPoint.students || []
   });
 
   const convertSuggestionToRoute = (suggestion: RouteSuggestionDto, index: number): RouteDto => {
     return {
       id: `generated-route-${index + 1}-${Date.now()}`, // Temporary ID for UI
-      routeName: `Generated Route ${index + 1}`,
+      routeName: `Route ${index + 1}`,
       isActive: true,
       vehicleId: suggestion.vehicle?.vehicleId || '',
       vehicleCapacity: suggestion.vehicle?.capacity || 0,
@@ -107,7 +95,15 @@ const RouteManagement: React.FC = () => {
           longitude: pp.longitude,
           address: pp.address
         },
-        studentCount: pp.studentCount
+        studentCount: pp.studentCount,
+        students: (pp.students || []).map(s => ({
+          id: s.id,
+          firstName: s.firstName,
+          lastName: s.lastName,
+          fullName: `${s.firstName} ${s.lastName}`,
+          status: 2,
+          pickupPointAssignedAt: null
+        }))
       })),
       createdAt: suggestion.generatedAt,
       updatedAt: suggestion.generatedAt,
@@ -135,37 +131,17 @@ const RouteManagement: React.FC = () => {
         setIsLoading(true);
 
         // Fetch routes, unassigned pickup points, school location, and student details in parallel
-        const [routesData, unassignedData, schoolData, studentsStatusData] = await Promise.all([
+        const [routesData, unassignedData, schoolData] = await Promise.all([
           routeService.getAll(),
           pickupPointService.getUnassignedPickupPoints(),
-          schoolService.getForAdmin().catch(() => null), // Don't fail if school data is not available
-          pickupPointService.getPickupPointsWithStudentStatus().catch(() => [])
+          schoolService.getForAdmin().catch(() => null)
         ]);
 
-        // Create a map for quick lookup of student names
-        const namesMap = new Map<string, string[]>();
-        if (studentsStatusData) {
-          studentsStatusData.forEach(p => {
-            if (p.assignedStudents) {
-              const names = p.assignedStudents.map(s => `${s.firstName} ${s.lastName}`);
-              namesMap.set(p.id, names);
-            }
-          });
-        }
-        studentNamesMapRef.current = namesMap;
+        setRoutes(routesData);
+        originalRoutesRef.current = JSON.parse(JSON.stringify(routesData)); // Deep copy
 
-        // Enrich routes using helper function
-        const enrichedRoutes = enrichRoutesWithNames(routesData);
-
-        setRoutes(enrichedRoutes);
-        originalRoutesRef.current = JSON.parse(JSON.stringify(enrichedRoutes)); // Deep copy using enriched data
-
-        // Convert unassigned pickup points to PickupPointInfoDto format and enrich
-        const lobbyPickupPoints = unassignedData.pickupPoints.map(p => {
-          const info = convertToPickupPointInfo(p);
-          info.studentNames = studentNamesMapRef.current.get(p.id) || [];
-          return info;
-        });
+        // Convert unassigned pickup points to PickupPointInfoDto format
+        const lobbyPickupPoints = unassignedData.pickupPoints.map(convertToPickupPointInfo);
         setLobby(lobbyPickupPoints);
 
         // Set school location if available
@@ -289,11 +265,9 @@ const RouteManagement: React.FC = () => {
         const generatedRoutes = response.routes.map((suggestion, index) =>
           convertSuggestionToRoute(suggestion, index)
         );
-        // Enrich generated routes with student names
-        const enrichedGeneratedRoutes = enrichRoutesWithNames(generatedRoutes);
 
-        setRoutes(enrichedGeneratedRoutes);
-        originalRoutesRef.current = enrichedGeneratedRoutes.map(route => ({ ...route }));
+        setRoutes(generatedRoutes);
+        originalRoutesRef.current = generatedRoutes.map(route => ({ ...route }));
         setModifiedRoutes(new Set());
         setLobby([]);
         setHasSuggestions(true);
@@ -399,14 +373,12 @@ const RouteManagement: React.FC = () => {
     }
   };
 
-  // ✅ NEW: Handle closing the apply suggestions modal
   const handleCloseApplySuggestionsModal = () => {
     if (!isApplying) {
       setIsApplySuggestionsModalOpen(false);
     }
   };
 
-  // ✅ NEW: Handle discarding suggestions (refetch original routes)
   const handleDiscardChanges = async () => {
     try {
       setIsLoading(true);
