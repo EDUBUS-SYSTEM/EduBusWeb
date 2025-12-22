@@ -130,21 +130,45 @@ const RouteManagement: React.FC = () => {
       try {
         setIsLoading(true);
 
-        // Fetch routes, unassigned pickup points, school location, and student details in parallel
-        const [routesData, unassignedData, schoolData] = await Promise.all([
+        const [routesData, unassignedData, pickupPointsWithStudents, schoolData] = await Promise.all([
           routeService.getAll(),
           pickupPointService.getUnassignedPickupPoints(),
+          pickupPointService.getPickupPointsWithStudentStatus().catch(() => []),
           schoolService.getForAdmin().catch(() => null)
         ]);
 
-        setRoutes(routesData);
-        originalRoutesRef.current = JSON.parse(JSON.stringify(routesData)); // Deep copy
+        const pickupPointStudentMap = new Map(
+          pickupPointsWithStudents.map(pp => [
+            pp.id,
+            pp.assignedStudents || []
+          ])
+        );
 
-        // Convert unassigned pickup points to PickupPointInfoDto format
+        const enrichedRoutes = routesData.map(route => ({
+          ...route,
+          pickupPoints: route.pickupPoints.map(pp => {
+            const studentsForPickupPoint = pickupPointStudentMap.get(pp.pickupPointId) || [];
+            return {
+              ...pp,
+              students: studentsForPickupPoint.map(s => ({
+                id: s.id,
+                firstName: s.firstName,
+                lastName: s.lastName,
+                fullName: `${s.firstName} ${s.lastName}`.trim(),
+                status: s.status,
+                pickupPointAssignedAt: s.pickupPointAssignedAt
+              })),
+              studentCount: studentsForPickupPoint.length
+            };
+          })
+        }));
+
+        setRoutes(enrichedRoutes);
+        originalRoutesRef.current = JSON.parse(JSON.stringify(enrichedRoutes)); // Deep copy
+
         const lobbyPickupPoints = unassignedData.pickupPoints.map(convertToPickupPointInfo);
         setLobby(lobbyPickupPoints);
 
-        // Set school location if available
         if (schoolData?.latitude && schoolData?.longitude) {
           setSchoolLocation({
             lat: schoolData.latitude,
@@ -152,7 +176,6 @@ const RouteManagement: React.FC = () => {
           });
         }
 
-        // Clear any existing modifications when fetching fresh data
         setModifiedRoutes(new Set());
       } catch (error) {
         console.error('Failed to fetch data:', error);
@@ -172,16 +195,12 @@ const RouteManagement: React.FC = () => {
         : [...prev, routeId]
     );
   };
-
-  // Helper function to compare pickup points arrays
   const arePickupPointsEqual = (a: PickupPointInfoDto[], b: PickupPointInfoDto[]): boolean => {
     if (a.length !== b.length) return false;
 
-    // Create maps for easier comparison
     const mapA = new Map(a.map(point => [point.pickupPointId, point.sequenceOrder]));
     const mapB = new Map(b.map(point => [point.pickupPointId, point.sequenceOrder]));
 
-    // Check if all pickup points have the same sequence order
     for (const [pickupPointId, sequenceOrder] of mapA) {
       if (mapB.get(pickupPointId) !== sequenceOrder) {
         return false;
@@ -191,7 +210,6 @@ const RouteManagement: React.FC = () => {
     return true;
   };
 
-  // Check if a route has been modified by comparing with original
   const isRouteModified = (routeId: string): boolean => {
     const currentRoute = routes.find(r => r.id === routeId);
     const originalRoute = originalRoutesRef.current.find(r => r.id === routeId);
@@ -201,7 +219,6 @@ const RouteManagement: React.FC = () => {
     return !arePickupPointsEqual(currentRoute.pickupPoints, originalRoute.pickupPoints);
   };
 
-  // Update modified routes based on current state
   const updateModifiedRoutes = () => {
     const newModifiedRoutes = new Set<string>();
 
@@ -214,14 +231,12 @@ const RouteManagement: React.FC = () => {
     setModifiedRoutes(newModifiedRoutes);
   };
 
-  // Call this whenever routes change to update modification status
   useEffect(() => {
     updateModifiedRoutes();
   }, [routes]);
 
   const handleRouteCreated = (newRoute: RouteDto) => {
     setRoutes(prevRoutes => [...prevRoutes, newRoute]);
-    // Add to original routes as well
     originalRoutesRef.current = [...originalRoutesRef.current, newRoute];
   };
 
@@ -240,11 +255,10 @@ const RouteManagement: React.FC = () => {
       if (route.id === updatedRoute.id) {
         return {
           ...route,
-          routeName: updatedRoute.routeName,        // Update name
-          vehicleId: updatedRoute.vehicleId,       // Update vehicle
+          routeName: updatedRoute.routeName,
+          vehicleId: updatedRoute.vehicleId,
           vehicleCapacity: updatedRoute.vehicleCapacity,
           vehicleNumberPlate: updatedRoute.vehicleNumberPlate
-          // ✅ IMPORTANT: Do NOT update pickupPoints - keep original!
         };
       }
       return route;
@@ -303,7 +317,6 @@ const RouteManagement: React.FC = () => {
     setIsApplySuggestionsModalOpen(true);
   };
 
-  // ✅ NEW: Handle applying the suggestions (calls replace-all API and refetches)
   const handleConfirmApplySuggestions = async () => {
     setIsApplying(true);
     try {
@@ -325,11 +338,9 @@ const RouteManagement: React.FC = () => {
       const response = await routeService.replaceAll(replaceRequest);
 
       if (response.success) {
-        // ✅ Close modal and clear suggestions flag
         setIsApplySuggestionsModalOpen(false);
         setHasSuggestions(false);
 
-        // ✅ Refetch routes to get the latest data from database
         const [routesData, unassignedData] = await Promise.all([
           routeService.getAll(),
           pickupPointService.getUnassignedPickupPoints()
@@ -338,11 +349,9 @@ const RouteManagement: React.FC = () => {
         setRoutes(routesData);
         originalRoutesRef.current = JSON.parse(JSON.stringify(routesData));
 
-        // Convert unassigned pickup points to PickupPointInfoDto format
         const lobbyPickupPoints = unassignedData.pickupPoints.map(convertToPickupPointInfo);
         setLobby(lobbyPickupPoints);
 
-        // Clear any existing modifications
         setModifiedRoutes(new Set());
 
         toast.success(`Successfully applied suggestions! Deleted ${response.deletedRoutes} old routes and created ${response.successfulRoutes} new routes.`);

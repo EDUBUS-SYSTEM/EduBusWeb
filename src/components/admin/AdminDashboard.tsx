@@ -104,7 +104,6 @@ export default function AdminDashboard() {
         enabled: !!selectedSemester,
     });
 
-    // Fetch revenue statistics based on paid transactions
     const { data: revenueStatistics, isLoading: revenueLoading } = useQuery({
         queryKey: ["revenue", selectedSemester?.semesterCode],
         queryFn: () => {
@@ -616,40 +615,42 @@ export default function AdminDashboard() {
             </div>
 
             {/* Dashboard Analytics Section */}
-            <div>
-                <motion.h2
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.5 }}
-                    className="text-xl font-bold text-[#463B3B] mb-4"
-                >
-                    Analytics & Insights
-                </motion.h2>
+            {selectedSemester && semesterData && selectedSemester.semesterCode === semesterData.semesterCode && (
+                <div>
+                    <motion.h2
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.5 }}
+                        className="text-xl font-bold text-[#463B3B] mb-4"
+                    >
+                        Analytics & Insights
+                    </motion.h2>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-                    {/* Attendance Rate Card */}
-                    <AttendanceRateCard
-                        data={attendanceRate || dashboardStats?.attendanceRate || null}
-                        loading={attendanceRateLoading || dashboardLoading}
-                    />
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                        {/* Attendance Rate Card */}
+                        <AttendanceRateCard
+                            data={attendanceRate || dashboardStats?.attendanceRate || null}
+                            loading={attendanceRateLoading || dashboardLoading}
+                        />
 
-                    {/* Daily Students Chart */}
-                    <DailyStudentsChart
-                        data={dailyStudents || dashboardStats?.dailyStudents || null}
-                        loading={dailyStudentsLoading || dashboardLoading}
-                    />
+                        {/* Daily Students Chart */}
+                        <DailyStudentsChart
+                            data={dailyStudents || dashboardStats?.dailyStudents || null}
+                            loading={dailyStudentsLoading || dashboardLoading}
+                        />
+                    </div>
+
+
+
+                    {/* Route Statistics Table */}
+                    <div className="mb-6">
+                        <RouteStatisticsTable
+                            data={routeStatistics || dashboardStats?.routeStatistics || null}
+                            loading={routeStatisticsLoading || dashboardLoading}
+                        />
+                    </div>
                 </div>
-
-
-
-                {/* Route Statistics Table */}
-                <div className="mb-6">
-                    <RouteStatisticsTable
-                        data={routeStatistics || dashboardStats?.routeStatistics || null}
-                        loading={routeStatisticsLoading || dashboardLoading}
-                    />
-                </div>
-            </div>
+            )}
 
             {/* Revenue Statistics */}
             <div>

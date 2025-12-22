@@ -45,8 +45,8 @@ export default function DailyStudentsChart({ data, loading }: DailyStudentsChart
         data.today,
         data.yesterday
     );
-    const todayChange = data.yesterday > 0 
-        ? ((data.today - data.yesterday) / data.yesterday) * 100 
+    const todayChange = data.yesterday > 0
+        ? ((data.today - data.yesterday) / data.yesterday) * 100
         : 0;
     const isPositive = todayChange >= 0;
 
@@ -88,7 +88,7 @@ export default function DailyStudentsChart({ data, loading }: DailyStudentsChart
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -130,62 +130,56 @@ export default function DailyStudentsChart({ data, loading }: DailyStudentsChart
                     <p className="text-xs text-gray-600 mb-1">Week Avg</p>
                     <p className="text-2xl font-bold text-[#92400E]">{data.thisWeek}</p>
                 </motion.div>
-
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7 }}
-                    className="bg-gradient-to-br from-[#FEF3C7] to-[#FDE68A] rounded-xl p-4"
-                >
-                    <p className="text-xs text-gray-600 mb-1">Month Avg</p>
-                    <p className="text-2xl font-bold text-[#92400E]">{data.thisMonth}</p>
-                </motion.div>
             </div>
 
             {/* Chart */}
-            <div className="space-y-2">
-                <p className="text-xs font-medium text-gray-600 mb-3">Last 7 Days Trend</p>
-                <div className="flex items-end justify-between gap-2 h-48">
+            <div className="space-y-4">
+                <p className="text-xs font-medium text-gray-600">Last 7 Days Trend</p>
+                <div className="flex items-end justify-between gap-2 h-64">
                     {data.last7Days.map((day, index) => {
-                        const height = maxCount > 0 ? (day.count / maxCount) * 100 : 0;
+                        const maxBaseline = Math.max(maxCount, 50); // Minimum scale of 50
+                        const percentage = maxBaseline > 0 ? (day.count / maxBaseline) * 100 : 0;
                         const isToday = new Date(day.date).toDateString() === new Date().toDateString();
-                        
+
                         return (
-                            <motion.div
+                            <div
                                 key={day.date}
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: `${height}%`, opacity: 1 }}
-                                transition={{ duration: 0.5, delay: 0.8 + index * 0.1 }}
-                                className="flex-1 flex flex-col items-center gap-2"
+                                className="flex-1 h-full flex flex-col justify-end items-center gap-2"
                             >
-                                <div className="relative w-full h-full flex items-end">
+                                <div className="relative w-full flex-1 flex items-end justify-center group">
                                     <motion.div
-                                        whileHover={{ scale: 1.1 }}
-                                        className={`w-full rounded-t-lg ${
-                                            isToday 
-                                                ? 'bg-gradient-to-t from-[#FDC700] to-[#F59E0B]' 
-                                                : 'bg-gradient-to-t from-[#FEF3C7] to-[#FDE68A]'
-                                        } ${isToday ? 'ring-2 ring-[#FDC700] ring-offset-2' : ''}`}
-                                        style={{ height: `${height}%` }}
-                                    />
-                                    {isToday && (
-                                        <motion.div
-                                            initial={{ scale: 0 }}
-                                            animate={{ scale: 1 }}
-                                            transition={{ delay: 1.5 }}
-                                            className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-[#FDC700] text-white text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap"
-                                        >
-                                            Today
-                                        </motion.div>
-                                    )}
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: `${percentage}%`, opacity: 1 }}
+                                        transition={{ duration: 0.5, delay: 0.8 + index * 0.1 }}
+                                        className={`w-full rounded-t-lg relative ${isToday
+                                            ? 'bg-gradient-to-t from-[#FDC700] to-[#F59E0B]'
+                                            : 'bg-gradient-to-t from-[#FEF3C7] to-[#FDE68A] group-hover:from-[#FDE68A] group-hover:to-[#FDC700]'
+                                            } transition-colors duration-300 ${isToday ? 'ring-2 ring-[#FDC700] ring-offset-2' : ''}`}
+                                    >
+                                        {/* Tooltip on Hover */}
+                                        <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded transition-opacity duration-200 whitespace-nowrap z-10 pointer-events-none">
+                                            {day.count} Students
+                                        </div>
+
+                                        {isToday && (
+                                            <motion.div
+                                                initial={{ scale: 0 }}
+                                                animate={{ scale: 1 }}
+                                                transition={{ delay: 1.5 }}
+                                                className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-[#FDC700] text-white text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap"
+                                            >
+                                                Today
+                                            </motion.div>
+                                        )}
+                                    </motion.div>
                                 </div>
-                                <div className="text-center">
+                                <div className="text-center h-10 flex flex-col justify-start">
                                     <p className="text-[10px] font-bold text-[#463B3B]">{day.count}</p>
-                                    <p className="text-[9px] text-gray-500 mt-1">
-                                        {formatDate(day.date)}
+                                    <p className="text-[9px] text-gray-500">
+                                        {formatDate(day.date).split(',')[0]}
                                     </p>
                                 </div>
-                            </motion.div>
+                            </div>
                         );
                     })}
                 </div>
