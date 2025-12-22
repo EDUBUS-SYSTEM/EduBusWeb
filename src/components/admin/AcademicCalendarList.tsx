@@ -195,11 +195,11 @@ export default function AcademicCalendarList({
   // Function to get semester legend color
   const getSemesterLegendColor = (index: number) => {
     const colors = [
-      'bg-yellow-500', // Semester 1
-      'bg-orange-500', // Semester 2
-      'bg-amber-500',  // Semester 3
-      'bg-yellow-600', // Semester 4
-      'bg-orange-600', // Semester 5
+      'bg-blue-500',   // Distinct Blue
+      'bg-purple-500', // Distinct Purple
+      'bg-teal-500',   // Distinct Teal
+      'bg-pink-500',   // Distinct Pink
+      'bg-orange-500', // Keep Orange as it is distinct from others
     ];
     return colors[index % colors.length];
   };
@@ -739,7 +739,7 @@ export default function AcademicCalendarList({
                         </div>
                         <div className="mt-2 space-y-1 text-xs">
                           <div className="flex items-center">
-                            <div className="w-8 h-2 bg-yellow-500 rounded mr-2"></div>
+                            <div className="w-8 h-2 bg-blue-500 rounded mr-2"></div>
                             <span className="text-blue-700">Top line = Semester</span>
                           </div>
                           <div className="flex items-center">

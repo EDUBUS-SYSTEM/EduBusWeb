@@ -57,7 +57,7 @@ export default function TimelineCard({ semesterData, loading }: TimelineCardProp
     const endDate = new Date(semesterData.semesterEndDate);
     const today = new Date();
     const totalDays = Math.max(Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)), 1);
-    const daysPassed = Math.max(Math.ceil((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)), 0);
+    const daysPassed = Math.min(Math.max(Math.ceil((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)), 0), totalDays);
     const progress = Math.min(Math.max((daysPassed / totalDays) * 100, 0), 100);
 
     return (

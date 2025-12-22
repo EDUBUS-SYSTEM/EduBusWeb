@@ -22,10 +22,10 @@ import {
   FaUserCog,
   FaSchool,
   FaMapMarkerAlt,
-  FaKey
+  FaKey,
 } from "react-icons/fa";
 
-const SIDEBAR_SCROLL_KEY = 'sidebar_scroll_position';
+const SIDEBAR_SCROLL_KEY = "sidebar_scroll_position";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -34,59 +34,90 @@ export default function Sidebar() {
 
   const links = [
     { href: "/admin", label: "Admin Dashboard", icon: <FaHome /> },
-    {
-      href: "/admin/dashboard",
-      label: "Personal Profile",
-      icon: <FaUserCircle />,
-    },
-    { href: "/admin/change-password", label: "Change Password", icon: <FaKey /> },
-    { href: "/admin/users", label: "User Management", icon: <FaUsers /> },
-    { href: "/admin/driver-requests", label: "Driver's Requests", icon: <FaFileAlt /> },
-    { href: "/admin/parent-requests", label: "Parent Requests", icon: <FaUserCheck /> },
-    {
-      href: "/admin/trips",
-      label: "Trip Management",
-      icon: <FaMapMarkedAlt />,
-    },
+  
     { href: "/admin/students", label: "Students List", icon: <FaList /> },
+    { href: "/admin/users", label: "User Management", icon: <FaUsers /> },
+    { href: "/admin/school", label: "School Management", icon: <FaSchool /> },
     {
-      href: "/admin/schedules",
-      label: "Schedule Management",
-      icon: <FaClock />,
+      href: "/admin/unit-price",
+      label: "Unit Price Management",
+      icon: <FaDollarSign />,
     },
     {
       href: "/admin/academic-calendar",
       label: "Academic Calendar",
       icon: <FaCalendarAlt />,
     },
+
+    {
+      href: "/admin/schedules",
+      label: "Schedule Management",
+      icon: <FaClock />,
+    },
+     {
+      href: "/admin/parent-requests",
+      label: "Parent Requests",
+      icon: <FaUserCheck />,
+    },
+        {
+      href: "/admin/parent-transactions",
+      label: "Parent Transactions",
+      icon: <FaReceipt />,
+    }, 
+       
+        {
+      href: "/admin/pickup-point-management",
+      label: "Registration Settings",
+      icon: <FaMapMarkerAlt />,
+    },   
     { href: "/admin/vehicle", label: "Vehicles", icon: <FaBus /> },
-    { href: "/admin/driver-vehicles", label: "Vehicle Assignments", icon: <FaUserCog /> },
-    { href: "/admin/routes", label: "Route Management", icon: <FaRoute /> },
-    { href: "/admin/unit-price", label: "Unit Price Management", icon: <FaDollarSign /> },
-    { href: "/admin/parent-transactions", label: "Parent Transactions", icon: <FaReceipt /> },
-    { href: "/admin/pickup-point-management", label: "Pickup Points", icon: <FaMapMarkerAlt /> },
-    { href: "/admin/school", label: "School Management", icon: <FaSchool /> },
+    {
+      href: "/admin/driver-vehicles",
+      label: "Vehicle Assignments",
+      icon: <FaUserCog />,
+    },
+
+     { href: "/admin/routes", label: "Route Management", icon: <FaRoute /> },
+    {
+      href: "/admin/trips",
+      label: "Trip Management",
+      icon: <FaMapMarkedAlt />,
+    },
+    {
+      href: "/admin/driver-requests",
+      label: "Driver's Requests",
+      icon: <FaFileAlt />,
+    },
+      {
+      href: "/admin/dashboard",
+      label: "Personal Profile",
+      icon: <FaUserCircle />,
+    },
+    {
+      href: "/admin/change-password",
+      label: "Change Password",
+      icon: <FaKey />,
+    },
   ];
 
-  // Save scroll position when scrolling (but not when we're restoring)
   useEffect(() => {
     const nav = navRef.current;
     if (!nav) return;
 
     const handleScroll = () => {
-      if (typeof window !== 'undefined' && !isRestoringRef.current) {
+      if (typeof window !== "undefined" && !isRestoringRef.current) {
         sessionStorage.setItem(SIDEBAR_SCROLL_KEY, nav.scrollTop.toString());
       }
     };
 
-    nav.addEventListener('scroll', handleScroll);
-    return () => nav.removeEventListener('scroll', handleScroll);
+    nav.addEventListener("scroll", handleScroll);
+    return () => nav.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Restore scroll position after navigation - use useLayoutEffect to prevent flickering
   useLayoutEffect(() => {
     const nav = navRef.current;
-    if (!nav || typeof window === 'undefined') return;
+    if (!nav || typeof window === "undefined") return;
 
     const savedScrollPosition = sessionStorage.getItem(SIDEBAR_SCROLL_KEY);
     if (savedScrollPosition) {
@@ -130,14 +161,18 @@ export default function Sidebar() {
             href={link.href}
             prefetch={true}
             className={`px-5 py-4 flex items-center gap-3 transition-colors duration-200 block
-              ${pathname === link.href
-                ? "bg-[#fad23c] font-semibold"
-                : "hover:bg-[#FFF085]"
+              ${
+                pathname === link.href
+                  ? "bg-[#fad23c] font-semibold"
+                  : "hover:bg-[#FFF085]"
               }`}
             onClick={() => {
               // Save current scroll position before navigation
-              if (navRef.current && typeof window !== 'undefined') {
-                sessionStorage.setItem(SIDEBAR_SCROLL_KEY, navRef.current.scrollTop.toString());
+              if (navRef.current && typeof window !== "undefined") {
+                sessionStorage.setItem(
+                  SIDEBAR_SCROLL_KEY,
+                  navRef.current.scrollTop.toString()
+                );
               }
             }}
           >

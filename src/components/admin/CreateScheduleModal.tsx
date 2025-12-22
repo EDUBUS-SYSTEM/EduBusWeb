@@ -517,8 +517,8 @@ export default function CreateScheduleModal({
                   handleInputChange("tripType", Number(e.target.value))
                 }
                 className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${errors.tripType
-                    ? "border-red-300 bg-red-50"
-                    : "border-gray-200"
+                  ? "border-red-300 bg-red-50"
+                  : "border-gray-200"
                   }`}
               >
                 {tripTypes.map((type) => (
@@ -553,8 +553,8 @@ export default function CreateScheduleModal({
                   handleInputChange("academicYear", e.target.value)
                 }
                 className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${errors.academicYear
-                    ? "border-red-300 bg-red-50"
-                    : "border-gray-200"
+                  ? "border-red-300 bg-red-50"
+                  : "border-gray-200"
                   }`}
                 disabled={loadingAcademicYears}
               >
@@ -642,10 +642,10 @@ export default function CreateScheduleModal({
                   }
                   disabled={!!formData.academicYear}
                   className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${errors.effectiveFrom
-                      ? "border-red-300 bg-red-50"
-                      : formData.academicYear
-                        ? "border-gray-200 bg-gray-50"
-                        : "border-gray-200"
+                    ? "border-red-300 bg-red-50"
+                    : formData.academicYear
+                      ? "border-gray-200 bg-gray-50"
+                      : "border-gray-200"
                     }`}
                 />
                 {errors.effectiveFrom && (
@@ -680,10 +680,10 @@ export default function CreateScheduleModal({
                   }
                   disabled={!!formData.academicYear}
                   className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${errors.effectiveTo
-                      ? "border-red-300 bg-red-50"
-                      : formData.academicYear
-                        ? "border-gray-200 bg-gray-50"
-                        : "border-gray-200"
+                    ? "border-red-300 bg-red-50"
+                    : formData.academicYear
+                      ? "border-gray-200 bg-gray-50"
+                      : "border-gray-200"
                     }`}
                 />
                 {errors.effectiveTo && (
@@ -780,34 +780,7 @@ export default function CreateScheduleModal({
               </div>
             )}
 
-            {/* Actions */}
-            <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
-              <button
-                type="button"
-                onClick={handleClose}
-                className="px-6 py-3 text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors duration-200"
-                disabled={loading}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-6 py-3 bg-gradient-to-r from-[#fad23c] to-[#FDC700] text-[#463B3B] rounded-xl hover:from-[#FDC700] hover:to-[#D08700] transition-all duration-300 flex items-center gap-2 shadow-soft hover:shadow-soft-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-semibold"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-[#463B3B] border-t-transparent rounded-full animate-spin"></div>
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <FaSave className="w-4 h-4" />
-                    Create Schedule
-                  </>
-                )}
-              </button>
-            </div>
+
           </form>
         </div>
 
